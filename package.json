@@ -1,0 +1,64 @@
+{
+  "name": "fe-truco-to-three",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"src/**/*.{ts,html,scss,json}\"",
+    "prepare": "husky"
+  },
+  "private": true,
+  "packageManager": "pnpm@11.2.2",
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{html,scss,json}": [
+      "prettier --write"
+    ]
+  },
+  "dependencies": {
+    "@angular/animations": "^21.2.14",
+    "@angular/cdk": "^21.2.12",
+    "@angular/common": "^21.2.0",
+    "@angular/compiler": "^21.2.0",
+    "@angular/core": "^21.2.0",
+    "@angular/forms": "^21.2.0",
+    "@angular/material": "^21.2.12",
+    "@angular/platform-browser": "^21.2.0",
+    "@angular/router": "^21.2.0",
+    "@ngrx/component-store": "^21.1.0",
+    "@ngrx/devtools": "^1.4.0",
+    "@ngrx/effects": "^21.1.0",
+    "@ngrx/entity": "^21.1.0",
+    "@ngrx/signals": "^21.1.0",
+    "@ngrx/store": "^21.1.0",
+    "@stomp/stompjs": "^7.3.0",
+    "rxjs": "~7.8.0",
+    "sockjs-client": "^1.6.1",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^21.2.12",
+    "@angular/cli": "^21.2.12",
+    "@angular/compiler-cli": "^21.2.0",
+    "@openapitools/openapi-generator-cli": "^2.34.0",
+    "@types/sockjs-client": "^1.5.4",
+    "@typescript-eslint/eslint-plugin": "^8.59.4",
+    "@typescript-eslint/parser": "^8.59.4",
+    "eslint": "^10.4.0",
+    "eslint-plugin-angular": "^5.0.0",
+    "husky": "^9.1.7",
+    "jsdom": "^28.0.0",
+    "lint-staged": "^17.0.5",
+    "prettier": "^3.8.1",
+    "typescript": "~5.9.2",
+    "vitest": "^4.0.8"
+  }
+}

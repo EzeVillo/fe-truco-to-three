@@ -1,9 +1,13 @@
 import { inject } from '@angular/core';
-import type { CanActivateFn } from '@angular/router';
+import type { CanMatchFn } from '@angular/router';
 import { Router } from '@angular/router';
-import { AuthStore } from '../stores/auth.store';
+import { AuthStore } from '../auth/auth.store';
 
-export const authGuard: CanActivateFn = () => {
+/**
+ * Guard que protege rutas que requieren autenticación.
+ * Usa CanMatchFn para que Angular no descargue el chunk lazy si el guard rechaza.
+ */
+export const authGuard: CanMatchFn = (_route, segments) => {
   const authStore = inject(AuthStore);
   const router = inject(Router);
 
@@ -11,5 +15,6 @@ export const authGuard: CanActivateFn = () => {
     return true;
   }
 
-  return router.createUrlTree(['/auth/login']);
+  const returnUrl = '/' + segments.map((s) => s.path).join('/');
+  return router.createUrlTree(['/login'], { queryParams: { returnUrl } });
 };

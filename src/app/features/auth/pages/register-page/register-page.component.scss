@@ -1,0 +1,5 @@
+// RegisterPage — reutiliza los estilos definidos en login-page.component.scss
+// (cargados globalmente porque ambos componentes los usan).
+// Mantener este archivo permite component-scoped overrides futuros.
+
+@use '../login-page/login-page.component.scss';

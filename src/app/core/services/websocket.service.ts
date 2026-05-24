@@ -1,9 +1,10 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import type { OnDestroy } from '@angular/core';
 import { Client, type IMessage, type StompSubscription } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { Subject, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { AuthStore } from '../stores/auth.store';
+import { AuthStore } from '../auth/auth.store';
 
 @Injectable({ providedIn: 'root' })
 export class WebSocketService implements OnDestroy {
@@ -21,7 +22,7 @@ export class WebSocketService implements OnDestroy {
     this.client = new Client({
       webSocketFactory: () => new SockJS(environment.wsUrl) as unknown as WebSocket,
       connectHeaders: {
-        Authorization: `Bearer ${this.authStore.token() ?? ''}`,
+        Authorization: `Bearer ${this.authStore.accessToken() ?? ''}`,
       },
       reconnectDelay: 5000,
       onConnect: () => {

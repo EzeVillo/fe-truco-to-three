@@ -1,0 +1,74 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <!-- Logo emblema -->
+    <img src="icon2.png" alt="Truco a 3" class="auth-card__logo" />
+
+    <!-- Tabs -->
+    <nav class="auth-tabs" role="tablist">
+      <a routerLink="/login" class="auth-tabs__tab" role="tab" aria-selected="false">
+        Iniciar sesión
+      </a>
+      <button type="button" class="auth-tabs__tab auth-tabs__tab--active" role="tab" aria-selected="true">
+        Crear cuenta
+      </button>
+    </nav>
+
+    <!-- Formulario de Registro -->
+    <form class="auth-form" [formGroup]="registerForm" (ngSubmit)="submit()" novalidate>
+      <div class="auth-field">
+        <label class="auth-field__label" for="register-username">Nombre de usuario</label>
+        <input
+          id="register-username"
+          class="auth-field__input"
+          type="text"
+          formControlName="username"
+          autocomplete="username"
+          placeholder="ej. Ezequiel"
+        />
+        <p class="auth-field__hint">Solo letras y números, mínimo 3 letras</p>
+        @if (registerForm.get('username')?.hasError('required') && registerForm.get('username')?.touched) {
+          <p class="auth-field__error">El nombre de usuario es obligatorio</p>
+        } @else if (registerForm.get('username')?.hasError('pattern') && registerForm.get('username')?.touched) {
+          <p class="auth-field__error">Solo se permiten letras y números</p>
+        } @else if (registerForm.get('username')?.hasError('minLetters') && registerForm.get('username')?.touched) {
+          <p class="auth-field__error">Necesita al menos 3 letras</p>
+        } @else if (registerForm.get('username')?.hasError('usernameTaken')) {
+          <p class="auth-field__error">Ese nombre de usuario ya está en uso</p>
+        }
+      </div>
+
+      <div class="auth-field">
+        <label class="auth-field__label" for="register-password">Contraseña</label>
+        <input
+          id="register-password"
+          class="auth-field__input"
+          type="password"
+          formControlName="password"
+          autocomplete="new-password"
+          placeholder="••••••••"
+        />
+        <p class="auth-field__hint">Mínimo 5 caracteres, con al menos un número y un símbolo</p>
+        @if (registerForm.get('password')?.hasError('required') && registerForm.get('password')?.touched) {
+          <p class="auth-field__error">La contraseña es obligatoria</p>
+        } @else if (registerForm.get('password')?.hasError('minlength') && registerForm.get('password')?.touched) {
+          <p class="auth-field__error">La contraseña debe tener al menos 5 caracteres</p>
+        } @else if (registerForm.get('password')?.hasError('passwordStrength') && registerForm.get('password')?.touched) {
+          <p class="auth-field__error">Debe incluir al menos un número y un símbolo</p>
+        }
+      </div>
+
+      @if (error() && error()?.kind !== 'username-taken') {
+        <p class="auth-form__error" role="alert">{{ errorMessage() }}</p>
+      }
+
+      <button type="submit" class="auth-form__submit" [disabled]="loading()">
+        @if (loading()) {
+          <mat-spinner diameter="20" class="loading-spinner"></mat-spinner>
+          <span>Registrando...</span>
+        } @else {
+          <span>Crear cuenta</span>
+        }
+      </button>
+    </form>
+  </div>
+</div>

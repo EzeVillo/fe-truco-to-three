@@ -1,0 +1,77 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <!-- Logo emblema -->
+    <img src="icon2.png" alt="Truco a 3" class="auth-card__logo" />
+
+    <!-- Tabs -->
+    <nav class="auth-tabs" role="tablist">
+      <button type="button" class="auth-tabs__tab auth-tabs__tab--active" role="tab" aria-selected="true">
+        Iniciar sesión
+      </button>
+      <a routerLink="/register" class="auth-tabs__tab" role="tab" aria-selected="false">
+        Crear cuenta
+      </a>
+    </nav>
+
+    <!-- Formulario de Login -->
+    <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="submit()" novalidate>
+      <div class="auth-field">
+        <label class="auth-field__label" for="login-username">Usuario</label>
+        <input
+          id="login-username"
+          class="auth-field__input"
+          type="text"
+          formControlName="username"
+          autocomplete="username"
+          placeholder="ej. Ezequiel"
+        />
+        @if (loginForm.get('username')?.hasError('required') && loginForm.get('username')?.touched) {
+          <p class="auth-field__error">El usuario es obligatorio</p>
+        }
+      </div>
+
+      <div class="auth-field">
+        <label class="auth-field__label" for="login-password">Contraseña</label>
+        <input
+          id="login-password"
+          class="auth-field__input"
+          type="password"
+          formControlName="password"
+          autocomplete="current-password"
+          placeholder="••••••••"
+        />
+        @if (loginForm.get('password')?.hasError('required') && loginForm.get('password')?.touched) {
+          <p class="auth-field__error">La contraseña es obligatoria</p>
+        }
+        @if (loginForm.get('password')?.hasError('minlength') && loginForm.get('password')?.touched) {
+          <p class="auth-field__error">Al menos 5 caracteres</p>
+        }
+      </div>
+
+      @if (error()) {
+        <p class="auth-form__error" role="alert">{{ errorMessage() }}</p>
+      }
+
+      <button
+        type="submit"
+        class="auth-form__submit"
+        [disabled]="loading()"
+      >
+        @if (loading()) {
+          <mat-spinner diameter="20" class="loading-spinner"></mat-spinner>
+          <span>Ingresando...</span>
+        } @else {
+          <span>Entrar</span>
+        }
+      </button>
+    </form>
+
+    <!-- Separador "o" -->
+    <div class="auth-divider">
+      <span>o</span>
+    </div>
+
+    <!-- CTA Invitado -->
+    <app-guest-cta [returnUrl]="returnUrl"></app-guest-cta>
+  </div>
+</div>

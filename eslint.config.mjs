@@ -10,6 +10,8 @@ export default [
       'node_modules/**',
       'coverage/**',
       '**/*.spec.ts',
+      '**/*.html',
+      'public/**',
     ],
   },
   {

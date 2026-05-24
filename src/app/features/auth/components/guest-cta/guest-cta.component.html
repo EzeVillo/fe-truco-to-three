@@ -1,0 +1,21 @@
+<div class="guest-cta">
+  <button
+    type="button"
+    class="guest-cta__button"
+    [disabled]="loading()"
+    (click)="playAsGuest()"
+    aria-label="Jugar como invitado"
+  >
+    @if (loading()) {
+      <mat-spinner diameter="18" class="loading-spinner"></mat-spinner>
+      <span>Ingresando...</span>
+    } @else {
+      <span class="guest-cta__icon" aria-hidden="true">▶</span>
+      <span>Jugar como invitado</span>
+    }
+  </button>
+
+  @if (error()) {
+    <p class="guest-cta__error" role="alert">{{ errorMessage() }}</p>
+  }
+</div>

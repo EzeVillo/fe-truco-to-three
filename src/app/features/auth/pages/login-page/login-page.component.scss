@@ -1,0 +1,227 @@
+// Auth page styles — consume design tokens globales (ver src/styles.scss)
+// Mobile-first: estilos base ≥360px; @media (min-width: …) escala progresivamente.
+// Compartido con register-page via @use.
+
+:host {
+  display: block;
+  min-height: 100%;
+}
+
+.auth-page {
+  // height (no min-height) para que el flex container tenga dimensión real
+  // y align-items: center pueda centrar el card correctamente.
+  // overflow-y: auto permite scroll si el contenido supera la pantalla.
+  height: calc(100dvh - var(--t3-header-height));
+  overflow-y: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(ellipse at top, var(--t3-green-700) 0%, var(--t3-bg-deep) 80%),
+    var(--t3-bg);
+  padding: 24px 16px;
+
+  @media (min-width: 600px) {
+    padding: 48px 24px;
+  }
+}
+
+.auth-card {
+  background: var(--t3-card-bg);
+  border: 1px solid var(--t3-card-border);
+  border-radius: var(--t3-radius-lg);
+  padding: 24px 20px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: var(--t3-shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  backdrop-filter: blur(6px);
+
+  @media (min-width: 600px) {
+    padding: 32px 28px;
+    gap: 20px;
+  }
+
+
+  &__logo {
+    display: block;
+    width: 80px;
+    height: 80px;
+    margin: 4px auto 0;
+    object-fit: contain;
+    border-radius: 50%;
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+
+    @media (min-width: 600px) {
+      width: 92px;
+      height: 92px;
+    }
+
+  }
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.18);
+  padding: 4px;
+  border-radius: var(--t3-radius-md);
+
+  &__tab {
+    flex: 1;
+    padding: 10px 8px;
+    border: none;
+    background: transparent;
+    color: var(--t3-text-muted);
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.18s ease;
+    font-family: inherit;
+
+    &:hover:not(&--active) {
+      color: var(--t3-text);
+    }
+
+    &--active {
+      background: var(--t3-gold-500);
+      color: #1a1a1a;
+      box-shadow: 0 2px 8px rgba(232, 183, 58, 0.3);
+    }
+
+    @media (min-width: 600px) {
+      padding: 10px 12px;
+      font-size: 0.9rem;
+    }
+  }
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  &__error {
+    margin: 0;
+    padding: 8px 12px;
+    background: var(--t3-danger-bg);
+    border: 1px solid var(--t3-danger-border);
+    border-radius: var(--t3-radius-sm);
+    color: #f0a4a4;
+    font-size: 0.85rem;
+    text-align: center;
+  }
+
+  &__submit {
+    margin-top: 4px;
+    width: 100%;
+    height: 46px;
+    border: none;
+    border-radius: var(--t3-radius-md);
+    background: linear-gradient(180deg, var(--t3-gold-400) 0%, var(--t3-gold-500) 100%);
+    color: #1a1a1a;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: inherit;
+    transition: transform 0.1s ease, box-shadow 0.18s ease, filter 0.18s ease;
+    box-shadow: var(--t3-shadow-gold);
+
+    &:hover:not(:disabled) {
+      filter: brightness(1.05);
+      box-shadow: 0 6px 18px rgba(232, 183, 58, 0.35);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &__label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--t3-text-muted);
+    letter-spacing: 0.02em;
+  }
+
+  &__input {
+    width: 100%;
+    height: 44px;
+    padding: 0 14px;
+    background: var(--t3-input-bg);
+    border: 1px solid var(--t3-input-border);
+    border-radius: var(--t3-radius-md);
+    color: var(--t3-text);
+    font-size: 16px; // 16px previene zoom automático en iOS Safari
+    font-family: inherit;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+
+    &::placeholder {
+      color: var(--t3-text-dim);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--t3-input-border-focus);
+      box-shadow: 0 0 0 3px rgba(232, 183, 58, 0.12);
+    }
+  }
+
+  &__hint {
+    margin: 2px 0 0;
+    font-size: 0.75rem;
+    color: var(--t3-text-dim);
+    line-height: 1.4;
+  }
+
+  &__error {
+    margin: 2px 0 0;
+    font-size: 0.78rem;
+    color: var(--t3-danger);
+  }
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--t3-text-muted);
+  font-size: 0.8rem;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+
+.loading-spinner {
+  display: inline-block;
+
+  ::ng-deep circle {
+    stroke: #1a1a1a !important;
+  }
+}

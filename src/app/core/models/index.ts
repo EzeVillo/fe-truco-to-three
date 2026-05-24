@@ -1,26 +1,7 @@
-// Modelos de dominio del juego de Truco
+// Barrel de modelos de dominio
+// Fuente única de verdad para tipos del dominio
 
-export interface Player {
-  id: string;
-  username: string;
-  avatarUrl?: string;
-}
-
-export interface Room {
-  id: string;
-  name: string;
-  players: Player[];
-  maxPlayers: 2 | 4 | 6;
-  status: 'waiting' | 'playing' | 'finished';
-}
-
-export interface AuthResponse {
-  token: string;
-  username: string;
-}
-
-export interface ApiError {
-  message: string;
-  status: number;
-  timestamp: string;
-}
+export * from './enums';
+export * from './auth.models';
+export * from './match.models';
+export * from './ws.models';

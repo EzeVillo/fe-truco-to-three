@@ -11,9 +11,9 @@
 //
 // Estándar responsive del proyecto:
 //   - Ancho mínimo soportado: 360px (iPhone SE 2/3, Pixel base)
-//   - Mobile-first: estilos base hasta 599px; @media (min-width: …) escala.
-//   - Breakpoints: 600px (sm), 905px (md), 1240px (lg), 1440px (xl).
-//     Alineados con M3 window size classes.
+//   - Mobile-first: estilos base cubren 360px – 1023px (portrait).
+//   - Único breakpoint: @media (min-width: 1024px) escala a desktop.
+//   - Landscape mobile fuera de scope (no agregar reglas de max-height).
 // =============================================================================
 
 :root {
@@ -94,6 +94,41 @@ body {
     -apple-system,
     sans-serif;
   margin: 0;
-  min-height: 100%;
+  min-height: 100dvh;
+  // height fijo evita que cualquier hijo "empuje" al body más allá del viewport.
+  // Las pantallas que necesiten scroll lo hacen internamente con overflow-y: auto.
+  height: 100dvh;
   min-width: var(--t3-min-width);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+// =============================================================================
+// Layout shell global — el documento nunca scrollea: el contenido lo hace
+// internamente si excede el viewport.
+//
+// Cadena de flex columns para que el alto del viewport se propague:
+//   body (100dvh, flex col) → app-root (flex:1, flex col) → .app-main (flex:1,
+//   flex col) → componente routed (flex:1, flex col, hermano de router-outlet).
+//
+// `<router-outlet>` se oculta porque Angular renderiza el componente como
+// hermano del outlet, no como hijo.
+// =============================================================================
+app-root {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+router-outlet {
+  display: none;
+}
+
+.app-main > router-outlet + * {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }

@@ -42,6 +42,19 @@ pnpm format
 
 > El gestor de paquetes es **pnpm** (v11). No usar npm ni yarn.
 
+## Diseño Responsivo
+
+La aplicación soporta dos tamaños de pantalla. El ancho mínimo soportado es **360 px**.
+
+| Nombre  | Resolución de referencia | Rango de ancho   |
+|---------|--------------------------|------------------|
+| Mobile  | 360 × 780                | 360 px – 1023 px |
+| Desktop | 1440 × 900               | 1024 px+         |
+
+> El modo paisaje en mobile (landscape) no es un caso de uso contemplado en este proyecto.
+> No agregar media queries de `max-height` ni sub-breakpoints dentro del rango mobile;
+> mobile-first con un único `@media (min-width: 1024px)` para escalar a desktop.
+
 ## Stack tecnológico
 
 - **Angular 21** con componentes standalone (sin NgModules)

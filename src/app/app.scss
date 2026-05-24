@@ -6,9 +6,9 @@
   z-index: 10;
   display: flex;
   align-items: center;
-  gap: var(--t3-gap-md);
+  gap: var(--t3-gap-sm);
   height: var(--t3-header-height);
-  padding: 0 16px;
+  padding: 0 12px;
   background: linear-gradient(180deg, var(--t3-green-900) 0%, var(--t3-green-800) 100%);
   border-bottom: 1px solid var(--t3-card-border);
   color: var(--t3-text);
@@ -24,14 +24,14 @@
   }
 
   &__brand-logo {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     object-fit: contain;
     border-radius: 50%;
   }
 
   &__brand-text {
-    font-size: 1rem;
+    font-size: 0.95rem;
     color: var(--t3-text);
   }
 
@@ -46,8 +46,13 @@
   }
 
   &__user {
+    display: none; // se muestra el badge en lobby; no en el header en mobile
     font-size: 0.85rem;
     color: var(--t3-text-muted);
+
+    @media (min-width: 1024px) {
+      display: inline;
+    }
   }
 
   &__logout {
@@ -68,28 +73,27 @@
     }
   }
 
-  // -- Mobile (< 480px): compactar ----------------------------------------------
-  @media (max-width: 479px) {
-    padding: 0 12px;
-    gap: var(--t3-gap-sm);
+  // -- Desktop (≥1024px): expandir spacing y tipografía -----------------------
+  @media (min-width: 1024px) {
+    gap: var(--t3-gap-md);
+    padding: 0 16px;
 
     &__brand-logo {
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
     }
 
     &__brand-text {
-      font-size: 0.95rem;
-    }
-
-    &__user {
-      display: none; // se mantiene el badge en lobby, no en el header
+      font-size: 1rem;
     }
   }
 }
 
 .app-main {
-  // Asegura que el contenido ocupe el resto de la pantalla bajo el header sticky
-  min-height: calc(100dvh - var(--t3-header-height));
-  display: block;
+  // Ocupa el alto restante del body (flex column). No usar calc(100dvh - header)
+  // porque sumado al header en flujo provocaba scroll cuando 100dvh ≠ 100vh.
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }

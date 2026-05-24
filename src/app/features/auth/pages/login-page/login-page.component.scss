@@ -1,17 +1,15 @@
 // Auth page styles — consume design tokens globales (ver src/styles.scss)
-// Mobile-first: estilos base ≥360px; @media (min-width: …) escala progresivamente.
+// Mobile-first: estilos base cubren 360–1023px; @media (min-width: 1024px) escala a desktop.
 // Compartido con register-page via @use.
 
-:host {
-  display: block;
-  min-height: 100%;
-}
+// :host recibe flex:1 + min-height:0 desde la regla global en styles.scss
+// (`.app-main > router-outlet + *`), por lo que no hace falta redefinirlo aquí.
 
 .auth-page {
-  // height (no min-height) para que el flex container tenga dimensión real
-  // y align-items: center pueda centrar el card correctamente.
-  // overflow-y: auto permite scroll si el contenido supera la pantalla.
-  height: calc(100dvh - var(--t3-header-height));
+  // Ocupa el alto del host (que ya es el restante bajo el header).
+  // overflow-y: auto permite scroll interno si el contenido supera la pantalla.
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   display: flex;
   align-items: center;
@@ -19,9 +17,9 @@
   background:
     radial-gradient(ellipse at top, var(--t3-green-700) 0%, var(--t3-bg-deep) 80%),
     var(--t3-bg);
-  padding: 24px 16px;
+  padding: 12px 16px;
 
-  @media (min-width: 600px) {
+  @media (min-width: 1024px) {
     padding: 48px 24px;
   }
 }
@@ -30,16 +28,16 @@
   background: var(--t3-card-bg);
   border: 1px solid var(--t3-card-border);
   border-radius: var(--t3-radius-lg);
-  padding: 24px 20px;
+  padding: 16px 20px;
   width: 100%;
   max-width: 380px;
   box-shadow: var(--t3-shadow-card);
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
   backdrop-filter: blur(6px);
 
-  @media (min-width: 600px) {
+  @media (min-width: 1024px) {
     padding: 32px 28px;
     gap: 20px;
   }
@@ -47,14 +45,14 @@
 
   &__logo {
     display: block;
-    width: 80px;
-    height: 80px;
-    margin: 4px auto 0;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto;
     object-fit: contain;
     border-radius: 50%;
     filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
 
-    @media (min-width: 600px) {
+    @media (min-width: 1024px) {
       width: 92px;
       height: 92px;
     }
@@ -94,7 +92,7 @@
       box-shadow: 0 2px 8px rgba(232, 183, 58, 0.3);
     }
 
-    @media (min-width: 600px) {
+    @media (min-width: 1024px) {
       padding: 10px 12px;
       font-size: 0.9rem;
     }
@@ -104,7 +102,11 @@
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
+
+  @media (min-width: 1024px) {
+    gap: 14px;
+  }
 
   &__error {
     margin: 0;

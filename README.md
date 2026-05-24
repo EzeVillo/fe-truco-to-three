@@ -2,6 +2,17 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.12.
 
+## Diseño Responsivo
+
+La aplicación soporta dos tamaños de pantalla. El ancho mínimo soportado es **360 px**.
+
+| Nombre  | Resolución de referencia | Rango de ancho   |
+|---------|--------------------------|------------------|
+| Mobile  | 360 × 780                | 360 px – 1023 px |
+| Desktop | 1440 × 900               | 1024 px+         |
+
+> El modo paisaje en mobile (landscape) no es un caso de uso contemplado en este proyecto.
+
 ## Development server
 
 To start a local development server, run:

@@ -1,0 +1,23 @@
+.match-screen {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding-top: var(--t3-gap-xs);
+  background-color: var(--t3-bg);
+  overflow-y: auto;
+}
+
+@media (min-width: 1024px) {
+  .match-screen {
+    align-items: center;
+    justify-content: flex-start;
+    padding: var(--t3-gap-md);
+    padding-top: var(--t3-gap-sm);
+  }
+
+  .match-screen > * {
+    width: 100%;
+    max-width: 720px;
+  }
+}

@@ -1,0 +1,130 @@
+.truco-response-panel {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  width: 100%;
+  padding: var(--t3-gap-sm) var(--t3-gap-md) 0;
+}
+
+.truco-response-panel__tab-group {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  border-radius: var(--t3-radius-md) var(--t3-radius-md) 0 0;
+  overflow: hidden;
+}
+
+.truco-response-panel__tab-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 var(--t3-gap-xs);
+  border: none;
+  font:
+    var(--mat-sys-label-large),
+    Inter,
+    system-ui,
+    sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition:
+    color 120ms ease,
+    background-color 120ms ease;
+}
+
+// ── Quiero (izquierda) ──────────────────────────────────────────────────────
+.truco-response-panel__tab-btn--quiero {
+  background-color: var(--t3-truco-quiero-bg);
+  color: var(--t3-white);
+  border-right: 1px solid var(--t3-truco-tab-divider);
+}
+
+.truco-response-panel__tab-btn--quiero:hover {
+  background-color: var(--t3-truco-quiero-bg-hover);
+}
+
+.truco-response-panel__tab-btn--quiero:active {
+  background-color: var(--t3-truco-quiero-bg-hover);
+}
+
+// ── No Quiero (centro) ──────────────────────────────────────────────────────
+.truco-response-panel__tab-btn--no-quiero {
+  background-color: var(--t3-truco-no-quiero-bg);
+  color: var(--t3-white);
+  border-right: 1px solid var(--t3-truco-tab-divider);
+}
+
+.truco-response-panel__tab-btn--no-quiero:hover {
+  background-color: var(--t3-truco-no-quiero-bg-hover);
+}
+
+.truco-response-panel__tab-btn--no-quiero:active {
+  background-color: var(--t3-truco-no-quiero-bg-hover);
+}
+
+// ── Quiero y me voy al mazo (derecha, advertencia / riesgo) ─────────────────
+.truco-response-panel__tab-btn--mazo {
+  background-color: var(--t3-truco-mazo-bg);
+  color: var(--t3-white);
+}
+
+.truco-response-panel__tab-btn--mazo:hover {
+  background-color: var(--t3-truco-mazo-bg-hover);
+}
+
+.truco-response-panel__tab-btn--mazo:active {
+  background-color: var(--t3-truco-mazo-bg-hover);
+}
+
+// ── Labels responsive ───────────────────────────────────────────────────────
+.truco-response-panel__label--full {
+  display: none;
+}
+
+.truco-response-panel__label--stacked {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.2;
+}
+
+.truco-response-panel__label-line {
+  display: block;
+}
+
+// ── Responsive ──────────────────────────────────────────────────────────────
+@media (max-width: 1023px) {
+  .truco-response-panel__tab-btn {
+    min-height: 44px;
+    font-size: 0.8125rem;
+  }
+
+  .truco-response-panel__label--stacked {
+    display: flex;
+  }
+}
+
+@media (min-width: 1024px) {
+  .truco-response-panel__tab-btn {
+    min-height: 40px;
+    font-size: 0.875rem;
+  }
+
+  .truco-response-panel__label--full {
+    display: inline;
+  }
+
+  .truco-response-panel__label--stacked {
+    display: none;
+  }
+}

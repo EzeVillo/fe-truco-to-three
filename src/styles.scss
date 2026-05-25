@@ -31,11 +31,14 @@
   --t3-danger: #f08a8a;
   --t3-danger-bg: rgba(220, 53, 53, 0.12);
   --t3-danger-border: rgba(220, 53, 53, 0.3);
+  --t3-danger-bg-hover: rgba(220, 53, 53, 0.22);
+  --t3-danger-border-hover: rgba(220, 53, 53, 0.5);
 
   // -- Tokens complementarios -------------------------------------------------
   --t3-white: #ffffff; // blanco puro (avatares, texto sobre fondo verde oscuro)
   --t3-text-on-gold: #1a1a1a; // texto oscuro sobre fondos dorados
   --t3-gold-bg-subtle: rgba(232, 183, 58, 0.08); // fondo sutil dorado (hover outline)
+  --t3-gold-bg-hover: rgba(232, 183, 58, 0.16); // fondo dorado más intenso en hover
   --t3-gold-border-hover: rgba(232, 183, 58, 0.40); // borde dorado en hover
   --t3-tabs-bg: rgba(0, 0, 0, 0.18); // fondo de tabs/toggles de selección
   --t3-divider-line: rgba(255, 255, 255, 0.08); // línea divisora sutil sobre fondo oscuro
@@ -82,8 +85,34 @@
   --t3-segmented-active-text: var(--t3-text-on-gold);
   --t3-segmented-inactive-text: var(--t3-text-muted);
 
+  // -- Match screen tokens ----------------------------------------------------
+  --t3-table-felt: #083a22;
+  --t3-card-slot-border: rgba(255, 255, 255, 0.14);
+  --t3-card-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+
   // -- Overlay del modal de confirmación --------------------------------------
   --t3-surface-overlay: rgba(6, 38, 24, 0.72);
+
+  // -- Fondos de barra de acciones --------------------------------------------
+  --t3-action-bar-bg: rgba(0, 0, 0, 0.22);
+  --t3-action-bar-bg-hover: rgba(255, 255, 255, 0.06);
+
+  // -- Respuesta de envido (panel de respuesta) -------------------------------
+  // Verdes más claros para que resalten sobre el paño oscuro de la mesa.
+  --t3-envido-quiero-bg: #1e7a52;
+  --t3-envido-quiero-bg-hover: #248a5e;
+  --t3-envido-no-quiero-bg: #7a2a2a;
+  --t3-envido-no-quiero-bg-hover: #8a3232;
+  --t3-envido-tab-divider: rgba(255, 255, 255, 0.25);
+
+  // -- Respuesta de truco (panel de respuesta) --------------------------------
+  --t3-truco-quiero-bg: #1e7a52;
+  --t3-truco-quiero-bg-hover: #248a5e;
+  --t3-truco-no-quiero-bg: #7a2a2a;
+  --t3-truco-no-quiero-bg-hover: #8a3232;
+  --t3-truco-mazo-bg: #c87a0a;
+  --t3-truco-mazo-bg-hover: #d88a1a;
+  --t3-truco-tab-divider: rgba(255, 255, 255, 0.25);
 }
 
 // =============================================================================

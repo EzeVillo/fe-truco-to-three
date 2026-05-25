@@ -1,0 +1,216 @@
+.envido-response-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+
+  // Fondo transparente: solo la fila inferior tiene fondo de barra de acciones.
+}
+
+// ── Fila superior (Quiero / No Quiero) ──────────────────────────────────────
+// Posicionada absolutamente encima del panel, saliendo hacia arriba sin
+// empujar el contenido. El fondo alrededor de los botones es transparente.
+.envido-response-panel__top-row {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  width: 100%;
+  padding: var(--t3-gap-sm) var(--t3-gap-md) 0;
+}
+
+// Contenedor de tabs: ocupa el 50 % del ancho (2 de las 4 opciones de abajo).
+.envido-response-panel__tab-group {
+  display: flex;
+  flex-direction: row;
+  width: 50%;
+  border-radius: var(--t3-radius-md) var(--t3-radius-md) 0 0;
+  overflow: hidden;
+}
+
+.envido-response-panel__tab-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 var(--t3-gap-xs);
+  border: none;
+  font:
+    var(--mat-sys-label-large),
+    Inter,
+    system-ui,
+    sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition:
+    color 120ms ease,
+    background-color 120ms ease;
+}
+
+.envido-response-panel__tab-btn--quiero {
+  background-color: var(--t3-envido-quiero-bg);
+  color: var(--t3-white);
+  border-right: 1px solid var(--t3-envido-tab-divider);
+}
+
+.envido-response-panel__tab-btn--quiero:hover {
+  background-color: var(--t3-envido-quiero-bg-hover);
+}
+
+.envido-response-panel__tab-btn--quiero:active {
+  background-color: var(--t3-envido-quiero-bg-hover);
+}
+
+.envido-response-panel__tab-btn--no-quiero {
+  background-color: var(--t3-envido-no-quiero-bg);
+  color: var(--t3-white);
+}
+
+.envido-response-panel__tab-btn--no-quiero:hover {
+  background-color: var(--t3-envido-no-quiero-bg-hover);
+}
+
+.envido-response-panel__tab-btn--no-quiero:active {
+  background-color: var(--t3-envido-no-quiero-bg-hover);
+}
+
+// ── Fila inferior (sub-opciones sobre la barra de acciones) ─────────────────
+.envido-response-panel__bottom-row {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  background-color: var(--t3-action-bar-bg);
+  border-top: 1px solid var(--t3-divider-line);
+}
+
+.envido-response-panel__sub-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 var(--t3-gap-xs);
+  background-color: transparent;
+  color: var(--t3-text-dim);
+  border: none;
+  font:
+    var(--mat-sys-label-large),
+    Inter,
+    system-ui,
+    sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: not-allowed;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition:
+    color 120ms ease,
+    background-color 120ms ease;
+}
+
+.envido-response-panel__sub-btn--enabled {
+  color: var(--t3-white);
+  cursor: pointer;
+}
+
+.envido-response-panel__sub-btn--enabled:hover {
+  background-color: var(--t3-gold-bg-subtle);
+  color: var(--t3-white);
+}
+
+.envido-response-panel__sub-btn--enabled:active {
+  background-color: var(--t3-gold-bg-hover);
+}
+
+.envido-response-panel__sub-btn--back {
+  color: var(--t3-text-dim);
+  cursor: not-allowed;
+}
+
+// ── Dividers ────────────────────────────────────────────────────────────────
+.envido-response-panel__divider {
+  width: 1px;
+  flex-shrink: 0;
+  background-color: var(--t3-divider-line);
+}
+
+// ── Labels responsive ───────────────────────────────────────────────────────
+.envido-response-panel__label--full {
+  display: none;
+}
+
+.envido-response-panel__label--stacked {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.2;
+}
+
+.envido-response-panel__label-line {
+  display: block;
+}
+
+// ── Responsive ──────────────────────────────────────────────────────────────
+@media (max-width: 1023px) {
+  .envido-response-panel__tab-btn {
+    min-height: 44px;
+    font-size: 0.8125rem;
+  }
+
+  .envido-response-panel__tab-divider {
+    margin: 8px 0;
+  }
+
+  .envido-response-panel__sub-btn {
+    min-height: 52px;
+    font-size: 0.8125rem;
+  }
+
+  .envido-response-panel__divider {
+    margin: 8px 0;
+  }
+
+  .envido-response-panel__label--stacked {
+    display: flex;
+  }
+}
+
+@media (min-width: 1024px) {
+  .envido-response-panel__tab-btn {
+    min-height: 40px;
+    font-size: 0.875rem;
+  }
+
+  .envido-response-panel__tab-divider {
+    margin: 10px 0;
+  }
+
+  .envido-response-panel__sub-btn {
+    min-height: 48px;
+    font-size: 0.875rem;
+  }
+
+  .envido-response-panel__divider {
+    margin: 10px 0;
+  }
+
+  .envido-response-panel__label--full {
+    display: inline;
+  }
+
+  .envido-response-panel__label--stacked {
+    display: none;
+  }
+}

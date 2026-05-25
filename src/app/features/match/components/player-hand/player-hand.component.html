@@ -1,0 +1,9 @@
+<div class="player-hand">
+  @if (cards(); as hand) {
+    @for (card of hand; track card.suit + card.number) {
+      <app-card-view [card]="card" />
+    }
+  } @else {
+    <div class="player-hand__empty">Sin cartas</div>
+  }
+</div>

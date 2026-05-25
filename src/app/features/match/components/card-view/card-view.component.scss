@@ -1,0 +1,16 @@
+:host {
+  display: block;
+}
+
+.card-view__image {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--t3-radius-sm);
+  box-shadow: var(--t3-card-shadow);
+}
+
+.card-view__image--hidden {
+  opacity: 0.85;
+}

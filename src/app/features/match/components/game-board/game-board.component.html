@@ -1,0 +1,15 @@
+<div class="game-board">
+  <app-match-status-panel [view]="view()" />
+  <app-opponent-area [opponent]="view().opponent" />
+  <app-played-cards-area
+    [selfPlayedInCurrentHand]="view().self.playedInCurrentHand"
+    [opponentPlayedInCurrentHand]="view().opponent.playedInCurrentHand"
+    [selfPlayedInPreviousHands]="view().self.playedInPreviousHands"
+    [opponentPlayedInPreviousHands]="view().opponent.playedInPreviousHands"
+  />
+  <app-player-area [self]="view().self" />
+  <app-available-actions-panel
+    [availableActions]="view().availableActions"
+    [currentTrucoCall]="view().currentTrucoCall"
+  />
+</div>

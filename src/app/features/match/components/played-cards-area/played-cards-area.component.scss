@@ -1,0 +1,36 @@
+.played-cards-area {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: var(--t3-gap-xs);
+}
+
+.played-cards-area__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(48px, 60px));
+  grid-template-rows: repeat(2, auto);
+  gap: var(--t3-gap-xs);
+  place-content: center;
+  width: 100%;
+  max-width: 220px;
+}
+
+.played-cards-area__item {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+}
+
+.played-cards-area__slot-empty {
+  border: 1px dashed var(--t3-card-slot-border);
+  border-radius: var(--t3-radius-md);
+}
+
+@media (min-width: 1024px) {
+  .played-cards-area__grid {
+    grid-template-columns: repeat(3, minmax(64px, 80px));
+    gap: var(--t3-gap-sm);
+    max-width: 300px;
+  }
+}

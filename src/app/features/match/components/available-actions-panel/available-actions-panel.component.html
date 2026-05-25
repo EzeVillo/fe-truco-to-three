@@ -1,0 +1,38 @@
+@if (showWaiting()) {
+  <div class="actions-panel actions-panel--waiting">
+    <span class="actions-panel__waiting-text">Esperando al rival...</span>
+  </div>
+} @else if (isTrucoResponseMode()) {
+  <div class="actions-panel">
+    <app-truco-response-panel
+      (quieroClicked)="onAction('TRUCO_QUIERO')"
+      (noQuieroClicked)="onAction('TRUCO_NO_QUIERO')"
+      (quieroYMazoClicked)="onAction('TRUCO_QUIERO_Y_ME_VOY_AL_MAZO')"
+    />
+    <app-action-bar
+      [availableActions]="availableActions()"
+      [currentTrucoCall]="currentTrucoCall()"
+      (actionClicked)="onAction($event)"
+      (envidoClicked)="onEnvidoClick()"
+    />
+  </div>
+} @else if (isEnvidoResponseMode()) {
+  <app-envido-response-panel
+    [options]="envidoResponseOptions()"
+    (quieroClicked)="onAction('ENVIDO_QUIERO')"
+    (noQuieroClicked)="onAction('ENVIDO_NO_QUIERO')"
+    (envidoOptionClicked)="onAction($event)"
+  />
+} @else if (envidoSubmenuOpen()) {
+  <app-envido-submenu
+    (optionClicked)="onAction($event)"
+    (backClicked)="onBackClick()"
+  />
+} @else {
+  <app-action-bar
+    [availableActions]="availableActions()"
+    [currentTrucoCall]="currentTrucoCall()"
+    (actionClicked)="onAction($event)"
+    (envidoClicked)="onEnvidoClick()"
+  />
+}

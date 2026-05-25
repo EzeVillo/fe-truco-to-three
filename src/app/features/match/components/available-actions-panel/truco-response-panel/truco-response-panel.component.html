@@ -1,0 +1,29 @@
+<div class="truco-response-panel">
+  <div class="truco-response-panel__tab-group">
+    <button
+      class="truco-response-panel__tab-btn truco-response-panel__tab-btn--quiero"
+      (click)="quieroClicked.emit()"
+      type="button"
+    >
+      Quiero
+    </button>
+    <button
+      class="truco-response-panel__tab-btn truco-response-panel__tab-btn--no-quiero"
+      (click)="noQuieroClicked.emit()"
+      type="button"
+    >
+      No Quiero
+    </button>
+    <button
+      class="truco-response-panel__tab-btn truco-response-panel__tab-btn--mazo"
+      (click)="quieroYMazoClicked.emit()"
+      type="button"
+    >
+      <span class="truco-response-panel__label--stacked">
+        <span class="truco-response-panel__label-line">Quiero y me</span>
+        <span class="truco-response-panel__label-line">voy al mazo</span>
+      </span>
+      <span class="truco-response-panel__label--full">Quiero y me voy al mazo</span>
+    </button>
+  </div>
+</div>

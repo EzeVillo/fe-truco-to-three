@@ -1,0 +1,63 @@
+.opponent-area {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  min-height: 0;
+  padding: var(--t3-gap-xs);
+}
+
+.opponent-area__cards {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  height: 56px;
+}
+
+.opponent-area__card-wrapper {
+  width: 40px;
+  flex-shrink: 0;
+  transform-origin: bottom center;
+  margin-left: -20px;
+
+  &:first-child {
+    margin-left: 0;
+  }
+
+  // 3-card fan
+  &:nth-child(1):nth-last-child(3) {
+    transform: rotate(-14deg) translateY(4px);
+  }
+
+  &:nth-child(2):nth-last-child(2) {
+    transform: rotate(0deg) translateY(-2px);
+  }
+
+  &:nth-child(3):nth-last-child(1) {
+    transform: rotate(14deg) translateY(4px);
+  }
+
+  // 2-card fan
+  &:nth-child(1):nth-last-child(2) {
+    transform: rotate(-8deg) translateY(2px);
+  }
+
+  &:nth-child(2):nth-last-child(1) {
+    transform: rotate(8deg) translateY(2px);
+  }
+
+  // 1-card
+  &:nth-child(1):nth-last-child(1) {
+    transform: translateY(-1px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .opponent-area__cards {
+    height: 72px;
+  }
+
+  .opponent-area__card-wrapper {
+    width: 48px;
+    margin-left: -24px;
+  }
+}

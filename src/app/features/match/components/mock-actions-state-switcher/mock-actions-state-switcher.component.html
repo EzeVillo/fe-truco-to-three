@@ -1,0 +1,14 @@
+<div class="mock-switcher">
+  <span class="mock-switcher__label">Mock:</span>
+  <div class="mock-switcher__options">
+    @for (opt of options; track opt.key) {
+      <button
+        class="mock-switcher__btn"
+        type="button"
+        (click)="selected.emit(opt.key)"
+      >
+        {{ opt.label }}
+      </button>
+    }
+  </div>
+</div>

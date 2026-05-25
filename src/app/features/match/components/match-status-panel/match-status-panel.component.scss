@@ -1,0 +1,168 @@
+.status-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--t3-gap-xs);
+}
+
+.status-panel__center {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px var(--t3-gap-sm);
+  background-color: var(--t3-card-bg);
+  border: 1px solid var(--t3-card-border);
+  border-radius: var(--t3-radius-lg);
+  min-width: 0;
+  max-width: 480px;
+}
+
+.status-panel__players-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--t3-gap-xs);
+  width: 100%;
+}
+
+.status-panel__player-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  min-width: 0;
+}
+
+.status-panel__player-col--right {
+  align-items: flex-end;
+}
+
+.status-panel__player-header {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.status-panel__player-header--right {
+  flex-direction: row-reverse;
+}
+
+.status-panel__turn-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: transparent;
+  flex-shrink: 0;
+
+  &.active {
+    background-color: var(--t3-gold-500);
+    box-shadow: 0 0 3px var(--t3-gold-500);
+  }
+}
+
+.status-panel__label {
+  font-size: 0.5rem;
+  color: var(--t3-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.status-panel__player-name {
+  font-size: 0.75rem;
+  color: var(--t3-text);
+  font-weight: 500;
+  max-width: 70px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-panel__score-col {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.status-panel__score {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--t3-gold-500);
+  line-height: 1;
+}
+
+.status-panel__divider {
+  font-size: 1rem;
+  color: var(--t3-text-muted);
+  font-weight: 300;
+}
+
+.status-panel__series-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--t3-gap-xs);
+  width: 100%;
+}
+
+.status-panel__series-text {
+  font-size: 0.5rem;
+  color: var(--t3-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.status-panel__squares {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.status-panel__square {
+  width: 6px;
+  height: 6px;
+  border: 1px solid var(--t3-card-border);
+  border-radius: 1px;
+
+  &.filled {
+    background-color: var(--t3-gold-500);
+    border-color: var(--t3-gold-500);
+  }
+}
+
+@media (min-width: 1024px) {
+  .status-panel {
+    padding: var(--t3-gap-sm) var(--t3-gap-lg);
+  }
+
+  .status-panel__center {
+    padding: var(--t3-gap-xs) var(--t3-gap-md);
+    max-width: 560px;
+  }
+
+  .status-panel__player-name {
+    font-size: 0.875rem;
+    max-width: 120px;
+  }
+
+  .status-panel__score {
+    font-size: 2.5rem;
+  }
+
+  .status-panel__divider {
+    font-size: 1.5rem;
+  }
+
+  .status-panel__label,
+  .status-panel__series-text {
+    font-size: 0.625rem;
+  }
+
+  .status-panel__square {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+  }
+}

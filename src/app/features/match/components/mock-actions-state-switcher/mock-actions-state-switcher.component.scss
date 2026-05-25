@@ -1,0 +1,71 @@
+.mock-switcher {
+  display: flex;
+  flex-direction: column;
+  gap: var(--t3-gap-xs);
+  padding: var(--t3-gap-xs);
+  background-color: var(--t3-bg-deep);
+  border-bottom: 1px solid var(--t3-divider-line);
+  flex-shrink: 0;
+}
+
+.mock-switcher__label {
+  color: var(--t3-text-muted);
+  font:
+    var(--mat-sys-label-small),
+    Inter,
+    system-ui,
+    sans-serif;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.mock-switcher__options {
+  display: flex;
+  flex-flow: row wrap;
+  gap: var(--t3-gap-xs);
+}
+
+.mock-switcher__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  background-color: var(--t3-input-bg);
+  color: var(--t3-text-muted);
+  border: 1px solid var(--t3-input-border);
+  border-radius: var(--t3-radius-sm);
+  font:
+    var(--mat-sys-label-small),
+    Inter,
+    system-ui,
+    sans-serif;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition:
+    background-color 100ms ease,
+    border-color 100ms ease,
+    color 100ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mock-switcher__btn:hover {
+  background-color: var(--t3-gold-bg-subtle);
+  border-color: var(--t3-gold-border-hover);
+  color: var(--t3-gold-300);
+}
+
+.mock-switcher__btn:active {
+  transform: translateY(1px);
+}
+
+@media (min-width: 1024px) {
+  .mock-switcher {
+    padding: var(--t3-gap-sm);
+    gap: var(--t3-gap-sm);
+  }
+
+  .mock-switcher__options {
+    gap: var(--t3-gap-sm);
+  }
+}

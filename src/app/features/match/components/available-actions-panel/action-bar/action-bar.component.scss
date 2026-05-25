@@ -1,0 +1,78 @@
+.action-bar {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  background-color: var(--t3-action-bar-bg);
+  border-top: 1px solid var(--t3-divider-line);
+}
+
+.action-bar__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 var(--t3-gap-xs);
+  background-color: transparent;
+  color: var(--t3-white);
+  border: none;
+  font:
+    var(--mat-sys-label-large),
+    Inter,
+    system-ui,
+    sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: not-allowed;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition:
+    color 120ms ease,
+    background-color 120ms ease;
+}
+
+.action-bar__btn--enabled {
+  color: var(--t3-white);
+  cursor: pointer;
+}
+
+.action-bar__btn--enabled:hover {
+  background-color: var(--t3-gold-bg-subtle);
+  color: var(--t3-white);
+}
+
+.action-bar__btn--enabled:active {
+  background-color: var(--t3-gold-bg-hover);
+}
+
+.action-bar__divider {
+  width: 1px;
+  flex-shrink: 0;
+  background-color: var(--t3-divider-line);
+  margin: var(--t3-gap-xs) 0;
+}
+
+@media (max-width: 1023px) {
+  .action-bar__btn {
+    min-height: 52px;
+    font-size: 0.8125rem;
+  }
+
+  .action-bar__divider {
+    margin: 8px 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .action-bar__btn {
+    min-height: 48px;
+    font-size: 0.875rem;
+  }
+
+  .action-bar__divider {
+    margin: 10px 0;
+  }
+}

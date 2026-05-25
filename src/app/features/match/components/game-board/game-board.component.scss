@@ -1,0 +1,30 @@
+.game-board {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: var(--t3-gap-xs);
+  padding: var(--t3-gap-xs);
+  background-color: var(--t3-table-felt);
+  border-radius: var(--t3-radius-lg) var(--t3-radius-lg) 0 0;
+  overflow-y: auto;
+}
+
+.game-board app-available-actions-panel {
+  margin-inline: calc(-1 * var(--t3-gap-xs));
+  margin-bottom: calc(-1 * var(--t3-gap-xs));
+  margin-top: auto;
+  width: auto;
+}
+
+@media (min-width: 1024px) {
+  .game-board {
+    gap: var(--t3-gap-sm);
+    padding: var(--t3-gap-sm);
+  }
+
+  .game-board app-available-actions-panel {
+    margin-inline: calc(-1 * var(--t3-gap-sm));
+    margin-bottom: calc(-1 * var(--t3-gap-sm));
+  }
+}

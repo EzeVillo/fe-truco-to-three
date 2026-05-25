@@ -1,0 +1,16 @@
+.player-hand {
+  display: flex;
+  gap: var(--t3-gap-xs);
+  justify-content: center;
+  padding: var(--t3-gap-xs);
+}
+
+.player-hand app-card-view {
+  width: 64px;
+}
+
+@media (min-width: 1024px) {
+  .player-hand app-card-view {
+    width: 88px;
+  }
+}

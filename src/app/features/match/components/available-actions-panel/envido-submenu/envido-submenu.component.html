@@ -1,0 +1,27 @@
+<div class="envido-submenu">
+  @for (opt of options; track opt.call; let last = $last) {
+    <button
+      class="envido-submenu__btn"
+      (click)="optionClicked.emit(opt.call)"
+      type="button"
+    >
+      <span class="envido-submenu__btn-label--stacked">
+        @for (line of opt.stackedLines; track line) {
+          <span class="envido-submenu__btn-label-line">{{ line }}</span>
+        }
+      </span>
+      <span class="envido-submenu__btn-label--full">{{ opt.label }}</span>
+    </button>
+    @if (!last) {
+      <div class="envido-submenu__divider"></div>
+    }
+  }
+  <div class="envido-submenu__divider"></div>
+  <button
+    class="envido-submenu__btn envido-submenu__btn--back"
+    (click)="backClicked.emit()"
+    type="button"
+  >
+    Volver
+  </button>
+</div>

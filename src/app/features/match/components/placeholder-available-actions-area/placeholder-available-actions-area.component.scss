@@ -1,0 +1,14 @@
+.placeholder-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--t3-gap-xs);
+  min-height: 32px;
+}
+
+.placeholder-actions__label {
+  font-size: 0.625rem;
+  color: var(--t3-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}

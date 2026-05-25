@@ -1,5 +1,10 @@
 import { inject } from '@angular/core';
-import type { HttpInterceptorFn, HttpRequest, HttpHandlerFn, HttpEvent } from '@angular/common/http';
+import type {
+  HttpInterceptorFn,
+  HttpRequest,
+  HttpHandlerFn,
+  HttpEvent,
+} from '@angular/common/http';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { catchError, switchMap, throwError, Subject, take, filter } from 'rxjs';

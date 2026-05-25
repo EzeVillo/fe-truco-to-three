@@ -1,0 +1,14 @@
+.series-format {
+  width: 100%;
+  display: flex;
+
+  ::ng-deep .mat-button-toggle {
+    flex: 1;
+    font-size: 0.8rem;
+  }
+
+  ::ng-deep .mat-button-toggle-label-content {
+    line-height: 36px;
+    padding: 0 8px;
+  }
+}

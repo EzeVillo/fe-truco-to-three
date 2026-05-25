@@ -8,7 +8,12 @@
       <a routerLink="/login" class="auth-tabs__tab" role="tab" aria-selected="false">
         Iniciar sesión
       </a>
-      <button type="button" class="auth-tabs__tab auth-tabs__tab--active" role="tab" aria-selected="true">
+      <button
+        type="button"
+        class="auth-tabs__tab auth-tabs__tab--active"
+        role="tab"
+        aria-selected="true"
+      >
         Crear cuenta
       </button>
     </nav>
@@ -26,11 +31,19 @@
           placeholder="ej. Ezequiel"
         />
         <p class="auth-field__hint">Solo letras y números, mínimo 3 letras</p>
-        @if (registerForm.get('username')?.hasError('required') && registerForm.get('username')?.touched) {
+        @if (
+          registerForm.get('username')?.hasError('required') &&
+          registerForm.get('username')?.touched
+        ) {
           <p class="auth-field__error">El nombre de usuario es obligatorio</p>
-        } @else if (registerForm.get('username')?.hasError('pattern') && registerForm.get('username')?.touched) {
+        } @else if (
+          registerForm.get('username')?.hasError('pattern') && registerForm.get('username')?.touched
+        ) {
           <p class="auth-field__error">Solo se permiten letras y números</p>
-        } @else if (registerForm.get('username')?.hasError('minLetters') && registerForm.get('username')?.touched) {
+        } @else if (
+          registerForm.get('username')?.hasError('minLetters') &&
+          registerForm.get('username')?.touched
+        ) {
           <p class="auth-field__error">Necesita al menos 3 letras</p>
         } @else if (registerForm.get('username')?.hasError('usernameTaken')) {
           <p class="auth-field__error">Ese nombre de usuario ya está en uso</p>
@@ -48,11 +61,20 @@
           placeholder="••••••••"
         />
         <p class="auth-field__hint">Mínimo 5 caracteres, con al menos un número y un símbolo</p>
-        @if (registerForm.get('password')?.hasError('required') && registerForm.get('password')?.touched) {
+        @if (
+          registerForm.get('password')?.hasError('required') &&
+          registerForm.get('password')?.touched
+        ) {
           <p class="auth-field__error">La contraseña es obligatoria</p>
-        } @else if (registerForm.get('password')?.hasError('minlength') && registerForm.get('password')?.touched) {
+        } @else if (
+          registerForm.get('password')?.hasError('minlength') &&
+          registerForm.get('password')?.touched
+        ) {
           <p class="auth-field__error">La contraseña debe tener al menos 5 caracteres</p>
-        } @else if (registerForm.get('password')?.hasError('passwordStrength') && registerForm.get('password')?.touched) {
+        } @else if (
+          registerForm.get('password')?.hasError('passwordStrength') &&
+          registerForm.get('password')?.touched
+        ) {
           <p class="auth-field__error">Debe incluir al menos un número y un símbolo</p>
         }
       </div>

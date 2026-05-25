@@ -14,12 +14,7 @@ import type { HttpErrorResponse } from '@angular/common/http';
 @Component({
   selector: 'app-register-page',
   standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    RouterLink,
-    MatProgressSpinnerModule,
-  ],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, MatProgressSpinnerModule],
   templateUrl: './register-page.component.html',
   styleUrl: './register-page.component.scss',
 })

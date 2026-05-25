@@ -1,0 +1,11 @@
+<mat-button-toggle-group
+  class="series-format"
+  aria-label="Formato de serie"
+  [value]="format()"
+  (change)="onChange($event)"
+  hideSingleSelectionIndicator
+>
+  @for (opt of options; track opt.value) {
+    <mat-button-toggle [value]="opt.value">{{ opt.label }}</mat-button-toggle>
+  }
+</mat-button-toggle-group>

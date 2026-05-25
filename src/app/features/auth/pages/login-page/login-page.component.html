@@ -5,7 +5,12 @@
 
     <!-- Tabs -->
     <nav class="auth-tabs" role="tablist">
-      <button type="button" class="auth-tabs__tab auth-tabs__tab--active" role="tab" aria-selected="true">
+      <button
+        type="button"
+        class="auth-tabs__tab auth-tabs__tab--active"
+        role="tab"
+        aria-selected="true"
+      >
         Iniciar sesión
       </button>
       <a routerLink="/register" class="auth-tabs__tab" role="tab" aria-selected="false">
@@ -25,7 +30,9 @@
           autocomplete="username"
           placeholder="ej. Ezequiel"
         />
-        @if (loginForm.get('username')?.hasError('required') && loginForm.get('username')?.touched) {
+        @if (
+          loginForm.get('username')?.hasError('required') && loginForm.get('username')?.touched
+        ) {
           <p class="auth-field__error">El usuario es obligatorio</p>
         }
       </div>
@@ -40,10 +47,14 @@
           autocomplete="current-password"
           placeholder="••••••••"
         />
-        @if (loginForm.get('password')?.hasError('required') && loginForm.get('password')?.touched) {
+        @if (
+          loginForm.get('password')?.hasError('required') && loginForm.get('password')?.touched
+        ) {
           <p class="auth-field__error">La contraseña es obligatoria</p>
         }
-        @if (loginForm.get('password')?.hasError('minlength') && loginForm.get('password')?.touched) {
+        @if (
+          loginForm.get('password')?.hasError('minlength') && loginForm.get('password')?.touched
+        ) {
           <p class="auth-field__error">Al menos 5 caracteres</p>
         }
       </div>
@@ -52,11 +63,7 @@
         <p class="auth-form__error" role="alert">{{ errorMessage() }}</p>
       }
 
-      <button
-        type="submit"
-        class="auth-form__submit"
-        [disabled]="loading()"
-      >
+      <button type="submit" class="auth-form__submit" [disabled]="loading()">
         @if (loading()) {
           <mat-spinner diameter="20" class="loading-spinner"></mat-spinner>
           <span>Ingresando...</span>

@@ -33,15 +33,43 @@ describe('BotsApiService', () => {
     expect(result).toEqual(bots);
   });
 
-  it('createBotMatch(): POST /matches/bot con body y mapea la respuesta', () => {
-    const response: CreateBotMatchResponse = { matchId: 'm-123' };
+  it('createBotMatch(): POST /matches/bot con gamesToPlay: 1', () => {
+    const response: CreateBotMatchResponse = { matchId: 'm-001' };
     let result: CreateBotMatchResponse | null = null;
 
-    service.createBotMatch({ botId: 'b1', gamesToPlay: 2 }).subscribe((r) => (result = r));
+    service.createBotMatch({ botId: 'b1', gamesToPlay: 1 }).subscribe((r) => (result = r));
 
     const req = httpMock.expectOne(`${environment.apiUrl}/matches/bot`);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ botId: 'b1', gamesToPlay: 2 });
+    expect(req.request.body).toEqual({ botId: 'b1', gamesToPlay: 1 });
+    req.flush(response);
+
+    expect(result).toEqual(response);
+  });
+
+  it('createBotMatch(): POST /matches/bot con gamesToPlay: 3 (BEST_OF_3 → 3, nunca 2)', () => {
+    const response: CreateBotMatchResponse = { matchId: 'm-003' };
+    let result: CreateBotMatchResponse | null = null;
+
+    service.createBotMatch({ botId: 'b2', gamesToPlay: 3 }).subscribe((r) => (result = r));
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/matches/bot`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ botId: 'b2', gamesToPlay: 3 });
+    req.flush(response);
+
+    expect(result).toEqual(response);
+  });
+
+  it('createBotMatch(): POST /matches/bot con gamesToPlay: 5', () => {
+    const response: CreateBotMatchResponse = { matchId: 'm-005' };
+    let result: CreateBotMatchResponse | null = null;
+
+    service.createBotMatch({ botId: 'b3', gamesToPlay: 5 }).subscribe((r) => (result = r));
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/matches/bot`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ botId: 'b3', gamesToPlay: 5 });
     req.flush(response);
 
     expect(result).toEqual(response);

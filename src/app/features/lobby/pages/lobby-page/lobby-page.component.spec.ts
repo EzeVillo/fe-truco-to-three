@@ -31,4 +31,42 @@ describe('LobbyPageComponent', () => {
 
     expect(navSpy).toHaveBeenCalledWith('/lobby/vs-bots');
   });
+
+  // T005 — US1: tests de layout y tokens
+  it('US1: el CTA no usa mat-flat-button', () => {
+    const fixture = TestBed.createComponent(LobbyPageComponent);
+    fixture.detectChanges();
+    const matBtn = fixture.debugElement.query(By.css('[mat-flat-button]'));
+    expect(matBtn).toBeNull();
+  });
+
+  it('US1: el CTA tiene título y descripción en spans separados', () => {
+    const fixture = TestBed.createComponent(LobbyPageComponent);
+    fixture.detectChanges();
+    const title = fixture.debugElement.query(By.css('.lobby__cta-title'));
+    const subtitle = fixture.debugElement.query(By.css('.lobby__cta-subtitle'));
+    expect(title).toBeTruthy();
+    expect(subtitle).toBeTruthy();
+    expect(title.nativeElement.textContent.trim()).toBe('Jugar contra bots');
+    expect(subtitle.nativeElement.textContent.trim()).toBeTruthy();
+  });
+
+  it('US1: el CTA tiene jerarquía vertical (título sobre descripción)', () => {
+    const fixture = TestBed.createComponent(LobbyPageComponent);
+    fixture.detectChanges();
+    const cta = fixture.debugElement.query(By.css('.lobby__cta'));
+    const title = fixture.debugElement.query(By.css('.lobby__cta-title'));
+    const subtitle = fixture.debugElement.query(By.css('.lobby__cta-subtitle'));
+
+    // Ambos spans deben ser hijos directos del CTA
+    expect(cta.nativeElement.contains(title.nativeElement)).toBe(true);
+    expect(cta.nativeElement.contains(subtitle.nativeElement)).toBe(true);
+
+    // El título debe aparecer antes que el subtítulo en el DOM
+    const children = Array.from(cta.nativeElement.children) as Element[];
+    const titleIdx = children.findIndex((el) => el.classList.contains('lobby__cta-title'));
+    const subtitleIdx = children.findIndex((el) => el.classList.contains('lobby__cta-subtitle'));
+    expect(titleIdx).toBeGreaterThanOrEqual(0);
+    expect(subtitleIdx).toBeGreaterThan(titleIdx);
+  });
 });

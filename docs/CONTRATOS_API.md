@@ -2156,10 +2156,10 @@ Request:
 }
 ```
 
-| Campo         | Tipo            | Descripcion                                        |
-|---------------|-----------------|----------------------------------------------------|
-| `gamesToPlay` | `integer`       | Partidas a ganar para terminar el match (minimo 1) |
-| `botId`       | `string (UUID)` | ID del bot elegido (obtenido de `GET /api/bots`)   |
+| Campo         | Tipo            | Descripcion                                                           |
+|---------------|-----------------|-----------------------------------------------------------------------|
+| `gamesToPlay` | `integer`       | Partidas totales de la serie (mejor de N). Valores válidos: 1, 3, 5  |
+| `botId`       | `string (UUID)` | ID del bot elegido (obtenido de `GET /api/bots`)                      |
 
 Response `200`:
 
@@ -2177,7 +2177,7 @@ Errores:
 | Codigo | Descripcion                                                                                             |
 |--------|---------------------------------------------------------------------------------------------------------|
 | `404`  | El `botId` no existe en el catalogo de bots                                                             |
-| `422`  | `gamesToPlay` invalido (menor a 1), el jugador ya tiene una partida activa, o tiene una revancha `OPEN` |
+| `422`  | `gamesToPlay` fuera del conjunto `{1, 3, 5}`, el jugador ya tiene una partida activa, tiene una revancha `OPEN`, o ya está en cola |
 
 ### 9.3 Quick Match (emparejamiento automatico)
 

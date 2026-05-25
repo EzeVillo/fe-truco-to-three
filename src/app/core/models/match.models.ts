@@ -61,22 +61,22 @@ export const SERIES_FORMAT_LABELS: Record<SeriesFormat, string> = {
   BEST_OF_5: 'Mejor de 5',
 };
 
-export function seriesFormatToGamesToPlay(f: SeriesFormat): 1 | 2 | 3 {
+export function seriesFormatToGamesToPlay(f: SeriesFormat): 1 | 3 | 5 {
   switch (f) {
     case 'BEST_OF_1':
       return 1;
     case 'BEST_OF_3':
-      return 2;
-    case 'BEST_OF_5':
       return 3;
+    case 'BEST_OF_5':
+      return 5;
   }
 }
 
 export interface CreateBotMatchRequest {
   /** UUID del bot seleccionado. */
   botId: string;
-  /** Partidas a ganar para terminar el match. 1 | 2 | 3 (mapeado desde SeriesFormat). */
-  gamesToPlay: 1 | 2 | 3;
+  /** Partidas totales de la serie (mejor de N). Valores válidos: 1, 3, 5. */
+  gamesToPlay: 1 | 3 | 5;
 }
 
 export interface CreateBotMatchResponse {

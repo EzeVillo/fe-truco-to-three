@@ -83,7 +83,8 @@ describe('BotsConfigPageComponent', () => {
     expect(fixture.componentInstance.canCreate()).toBe(true);
   });
 
-  it('(e) POST dispara con body correcto y navega a /match/:matchId al éxito', async () => {
+  // T009 — US2: BEST_OF_3 → gamesToPlay: 3 (nunca 2)
+  it('(e) POST dispara con body correcto (BEST_OF_3 → gamesToPlay: 3) y navega a /match/:matchId', async () => {
     const createSpy = vi.fn().mockReturnValue(of({ matchId: 'm-99' } as CreateBotMatchResponse));
     setup({ getBots: () => of(BOTS), createBotMatch: createSpy });
 
@@ -93,11 +94,46 @@ describe('BotsConfigPageComponent', () => {
     const navSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
     fixture.componentInstance.onSelectBot('b2');
+    fixture.componentInstance.onChangeFormat('BEST_OF_3');
+    fixture.componentInstance.onCreate();
+
+    // BEST_OF_3 → gamesToPlay: 3 (no 2)
+    expect(createSpy).toHaveBeenCalledWith({ botId: 'b2', gamesToPlay: 3 });
+    expect(navSpy).toHaveBeenCalledWith(['/match', 'm-99']);
+  });
+
+  // T009 — US2: BEST_OF_1 → gamesToPlay: 1
+  it('BEST_OF_1 → gamesToPlay: 1', () => {
+    const createSpy = vi.fn().mockReturnValue(of({ matchId: 'm-1' } as CreateBotMatchResponse));
+    setup({ getBots: () => of(BOTS), createBotMatch: createSpy });
+
+    const fixture = TestBed.createComponent(BotsConfigPageComponent);
+    fixture.detectChanges();
+    const router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    fixture.componentInstance.onSelectBot('b1');
+    fixture.componentInstance.onChangeFormat('BEST_OF_1');
+    fixture.componentInstance.onCreate();
+
+    expect(createSpy).toHaveBeenCalledWith({ botId: 'b1', gamesToPlay: 1 });
+  });
+
+  // T009 — US2: BEST_OF_5 → gamesToPlay: 5
+  it('BEST_OF_5 → gamesToPlay: 5', () => {
+    const createSpy = vi.fn().mockReturnValue(of({ matchId: 'm-5' } as CreateBotMatchResponse));
+    setup({ getBots: () => of(BOTS), createBotMatch: createSpy });
+
+    const fixture = TestBed.createComponent(BotsConfigPageComponent);
+    fixture.detectChanges();
+    const router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    fixture.componentInstance.onSelectBot('b3');
     fixture.componentInstance.onChangeFormat('BEST_OF_5');
     fixture.componentInstance.onCreate();
 
-    expect(createSpy).toHaveBeenCalledWith({ botId: 'b2', gamesToPlay: 3 });
-    expect(navSpy).toHaveBeenCalledWith(['/match', 'm-99']);
+    expect(createSpy).toHaveBeenCalledWith({ botId: 'b3', gamesToPlay: 5 });
   });
 
   it('(f) error 404 al crear: recarga catálogo y resetea selección', () => {
@@ -140,6 +176,129 @@ describe('BotsConfigPageComponent', () => {
       'No pudimos crear la partida. Reintentá en unos segundos.',
     );
     expect(fixture.componentInstance.creatingMatch()).toBe(false);
+  });
+
+  // T009 — US2: InvalidGamesToPlayException (422) no expone ApiError.message crudo
+  it('error 422 InvalidGamesToPlayException: muestra copy del catálogo, no ApiError.message', () => {
+    const createSpy = vi.fn().mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 422,
+            error: { code: 'InvalidGamesToPlayException', message: 'raw backend message' },
+          }),
+      ),
+    );
+    setup({ getBots: () => of(BOTS), createBotMatch: createSpy });
+
+    const fixture = TestBed.createComponent(BotsConfigPageComponent);
+    fixture.detectChanges();
+    fixture.componentInstance.onSelectBot('b1');
+    fixture.componentInstance.onCreate();
+    fixture.detectChanges();
+
+    const errorText = fixture.componentInstance.createMatchError();
+    expect(errorText).toBeTruthy();
+    expect(errorText).not.toContain('raw backend message');
+  });
+
+  // T009 — US2: BotNotFoundException (404) no expone ApiError.message crudo
+  it('error 404 BotNotFoundException: el copy del catálogo no contiene ApiError.message', () => {
+    const createSpy = vi.fn().mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 404,
+            error: { code: 'BotNotFoundException', message: 'raw backend message' },
+          }),
+      ),
+    );
+    setup({ getBots: () => of(BOTS), createBotMatch: createSpy });
+
+    const fixture = TestBed.createComponent(BotsConfigPageComponent);
+    fixture.detectChanges();
+    fixture.componentInstance.onSelectBot('b1');
+    fixture.componentInstance.onCreate();
+    fixture.detectChanges();
+
+    const errorText = fixture.componentInstance.createMatchError();
+    expect(errorText).toBeTruthy();
+    expect(errorText).not.toContain('raw backend message');
+  });
+
+  // T009 — US2: PlayerHasActiveMatchException (422) no expone ApiError.message crudo
+  it('error 422 PlayerHasActiveMatchException: muestra copy del catálogo, no ApiError.message', () => {
+    const createSpy = vi.fn().mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 422,
+            error: { code: 'PlayerHasActiveMatchException', message: 'raw backend message' },
+          }),
+      ),
+    );
+    setup({ getBots: () => of(BOTS), createBotMatch: createSpy });
+
+    const fixture = TestBed.createComponent(BotsConfigPageComponent);
+    fixture.detectChanges();
+    fixture.componentInstance.onSelectBot('b1');
+    fixture.componentInstance.onCreate();
+    fixture.detectChanges();
+
+    const errorText = fixture.componentInstance.createMatchError();
+    expect(errorText).toBeTruthy();
+    expect(errorText).not.toContain('raw backend message');
+  });
+
+  // T009 — US2: PlayerHasOpenRematchSessionException (422) no expone ApiError.message crudo
+  it('error 422 PlayerHasOpenRematchSessionException: copy correcto', () => {
+    const createSpy = vi.fn().mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 422,
+            error: {
+              code: 'PlayerHasOpenRematchSessionException',
+              message: 'raw backend message',
+            },
+          }),
+      ),
+    );
+    setup({ getBots: () => of(BOTS), createBotMatch: createSpy });
+
+    const fixture = TestBed.createComponent(BotsConfigPageComponent);
+    fixture.detectChanges();
+    fixture.componentInstance.onSelectBot('b1');
+    fixture.componentInstance.onCreate();
+    fixture.detectChanges();
+
+    const errorText = fixture.componentInstance.createMatchError();
+    expect(errorText).toBeTruthy();
+    expect(errorText).not.toContain('raw backend message');
+  });
+
+  // T009 — US2: PlayerAlreadyInQueueException (422) no expone ApiError.message crudo
+  it('error 422 PlayerAlreadyInQueueException: copy correcto', () => {
+    const createSpy = vi.fn().mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 422,
+            error: { code: 'PlayerAlreadyInQueueException', message: 'raw backend message' },
+          }),
+      ),
+    );
+    setup({ getBots: () => of(BOTS), createBotMatch: createSpy });
+
+    const fixture = TestBed.createComponent(BotsConfigPageComponent);
+    fixture.detectChanges();
+    fixture.componentInstance.onSelectBot('b1');
+    fixture.componentInstance.onCreate();
+    fixture.detectChanges();
+
+    const errorText = fixture.componentInstance.createMatchError();
+    expect(errorText).toBeTruthy();
+    expect(errorText).not.toContain('raw backend message');
   });
 
   it('(h) doble tap dispara una sola request', () => {

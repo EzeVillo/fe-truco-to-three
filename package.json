@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.{ts,html,scss,json}\"",
+    "lint:styles": "stylelint \"src/app/features/**/*.scss\"",
     "prepare": "husky"
   },
   "private": true,
@@ -21,6 +22,9 @@
     ],
     "*.{html,scss,json}": [
       "prettier --write"
+    ],
+    "src/app/features/**/*.scss": [
+      "stylelint --fix"
     ]
   },
   "dependencies": {
@@ -49,6 +53,7 @@
     "@angular/cli": "^21.2.12",
     "@angular/compiler-cli": "^21.2.0",
     "@openapitools/openapi-generator-cli": "^2.34.0",
+    "@types/node": "^25.9.1",
     "@types/sockjs-client": "^1.5.4",
     "@typescript-eslint/eslint-plugin": "^8.59.4",
     "@typescript-eslint/parser": "^8.59.4",
@@ -58,6 +63,8 @@
     "jsdom": "^28.0.0",
     "lint-staged": "^17.0.5",
     "prettier": "^3.8.1",
+    "stylelint": "^17.12.0",
+    "stylelint-config-standard-scss": "^17.0.0",
     "typescript": "~5.9.2",
     "vitest": "^4.0.8"
   }

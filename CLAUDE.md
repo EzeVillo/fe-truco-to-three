@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/004-lobby-bots-fixes/plan.md`
+`specs/005-unify-cta-palette/plan.md`
 <!-- SPECKIT END -->
 
 ## Reglas del juego (truco-to-three)
@@ -47,8 +47,11 @@ pnpm test
 pnpm lint
 pnpm lint:fix
 
-# Lint de estilos (SCSS de features — verifica colores hardcodeados)
+# Lint de estilos — SCSS bajo features/ y shared/components/ (verifica colores hardcodeados)
 pnpm lint:styles
+
+# Lint de templates — detecta mat-flat-button / mat-raised-button / color="primary|accent|warn"
+pnpm lint:themes
 
 # Formatear código
 pnpm format
@@ -137,16 +140,17 @@ Las cartas españolas están en `public/cards/` con formato `{número}_{palo}.pn
 
 ## Guardarraíles — Reglas Obligatorias
 
-### 1. Design tokens obligatorios en SCSS de features
+### 1. Design tokens obligatorios en SCSS de features y shared/components
 
-**Todo** color, espaciado, radio de borde y sombra en los archivos SCSS bajo `src/app/features/**/*.scss` **debe** usar exclusivamente tokens CSS del proyecto (`var(--t3-…)`). Está prohibido usar:
+**Todo** color, espaciado, radio de borde y sombra en los archivos SCSS bajo `src/app/features/**/*.scss` y `src/app/shared/components/**/*.scss` **debe** usar exclusivamente tokens CSS del proyecto (`var(--t3-…)`). Está prohibido usar:
 
 - Colores hexadecimales (`#fff`, `#1a1a1a`, etc.)
 - Funciones de color literales (`rgb(...)`, `rgba(...)`, `hsl(...)`, `hsla(...)`) directamente como valor de propiedad
+- Colores nombrados (`red`, `white`, `black`, etc.) — bloqueados por la regla `color-named: "never"` de stylelint
 
 Los tokens están definidos en `src/styles.scss`. Si se necesita un valor nuevo, primero **agregar el token** allí y luego consumirlo.
 
-**Verificación**: `pnpm lint:styles` falla si se introducen colores hardcodeados en SCSS de features. Este comando corre automáticamente en el pre-commit via lint-staged.
+**Verificación**: `pnpm lint:styles` falla si se introducen colores hardcodeados. El glob cubre `src/app/{features,shared/components}/**/*.scss`. Corre automáticamente en el pre-commit via lint-staged.
 
 ### 2. Validación cruzada con `docs/CONTRATOS_API.md` antes de tipar/consumir endpoints
 
@@ -159,11 +163,20 @@ Reglas específicas:
 
 **Verificación**: `pnpm test` incluye los contract tests. Si se modifica `CreateBotMatchRequest` o `CreateBotMatchResponse`, el test `src/tests/contract/create-bot-match.contract.spec.ts` falla si hay divergencia con `docs/CONTRATOS_API.md §9.2`.
 
-### 3. CTAs con título + descripción apilados verticalmente
+### 3. CTAs tematizados — prohibición de botones Material crudos
 
-Los botones de llamada a la acción (CTA) que tienen título y descripción deben presentarlos en **dos líneas separadas y apiladas verticalmente**, con separación mínima de `var(--t3-gap-xs)` entre título y subtítulo.
+**Nunca** usar `mat-flat-button`, `mat-raised-button`, `mat-fab`, `mat-mini-fab` ni `color="primary|accent|warn"` en templates bajo `src/app/features/**` ni `src/app/shared/components/**`. Usar siempre las variantes tematizadas del producto:
+
+| Variante | Clase CSS | Uso |
+|----------|-----------|-----|
+| Primaria | `t3-btn t3-btn--primary` | CTA principal ("Crear partida") |
+| Neutral | `t3-btn t3-btn--neutral` | Acción secundaria ("Volver", "Cancelar") |
+| Destructiva | `t3-btn t3-btn--destructive` | Acción peligrosa ("Salir", confirmar eliminación) |
+
+**Verificación**: `pnpm lint:themes` (script `scripts/check-themed-templates.mjs`) falla si se detecta alguno de los patrones prohibidos en templates de feature o shared. Corre automáticamente en el pre-commit via lint-staged.
+
+Para CTAs que tienen título y descripción apilados verticalmente:
 
 - Usar `display: flex; flex-direction: column` en el elemento CTA.
 - El título va en un `<span class="*-title">` y la descripción en un `<span class="*-subtitle">`.
-- **No usar `mat-flat-button`** para CTAs que requieren jerarquía visual interna (Angular Material aplana el contenido en un solo label).
 - Altura máxima sugerida en mobile: ≤ 96 px.

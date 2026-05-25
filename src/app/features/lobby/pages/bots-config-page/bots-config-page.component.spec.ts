@@ -374,4 +374,46 @@ describe('BotsConfigPageComponent', () => {
     expect(bottomBar).toBeTruthy();
     expect(scroll.contains(bottomBar)).toBe(false);
   });
+
+  // US3: CTA "Crear partida" usa clase t3-btn--primary
+  it('US3: CTA "Crear partida" tiene clase t3-btn--primary cuando está habilitado', () => {
+    setup({ getBots: () => of(BOTS), createBotMatch: () => of({ matchId: 'x' }) });
+    const fixture = TestBed.createComponent(BotsConfigPageComponent);
+    fixture.detectChanges();
+
+    fixture.componentInstance.onSelectBot('b1');
+    fixture.detectChanges();
+
+    const cta = fixture.debugElement.query(By.css('.bots-config__cta'));
+    expect(cta).toBeTruthy();
+    expect((cta.nativeElement as HTMLElement).classList.contains('t3-btn--primary')).toBe(true);
+  });
+
+  // US3: CTA deshabilitado cuando no hay selección
+  it('US3: CTA tiene atributo disabled cuando canCreate() es false', () => {
+    setup({ getBots: () => of(BOTS), createBotMatch: () => of({ matchId: 'x' }) });
+    const fixture = TestBed.createComponent(BotsConfigPageComponent);
+    fixture.detectChanges();
+
+    // Sin selección → disabled
+    const cta = fixture.debugElement.query(By.css('.bots-config__cta'));
+    expect((cta.nativeElement as HTMLElement).hasAttribute('disabled')).toBe(true);
+  });
+
+  // US3: estado busy muestra spinner y aria-busy
+  it('US3: estado busy muestra aria-busy="true" durante la creación', () => {
+    const createSubj = new Subject<CreateBotMatchResponse>();
+    setup({ getBots: () => of(BOTS), createBotMatch: () => createSubj.asObservable() });
+
+    const fixture = TestBed.createComponent(BotsConfigPageComponent);
+    fixture.detectChanges();
+
+    fixture.componentInstance.onSelectBot('b1');
+    fixture.componentInstance.onCreate();
+    fixture.detectChanges();
+
+    const cta = fixture.debugElement.query(By.css('.bots-config__cta'));
+    expect((cta.nativeElement as HTMLElement).getAttribute('aria-busy')).toBe('true');
+  });
+
 });

@@ -63,6 +63,27 @@
   // -- Sombras ----------------------------------------------------------------
   --t3-shadow-card: 0 12px 40px rgba(0, 0, 0, 0.45);
   --t3-shadow-gold: 0 4px 14px rgba(232, 183, 58, 0.25);
+
+  // -- Botones / CTAs (capa semántica) ----------------------------------------
+  --t3-cta-bg: var(--t3-gold-500);
+  --t3-cta-bg-hover: var(--t3-gold-400);
+  --t3-cta-text-on: var(--t3-text-on-gold);
+  --t3-cta-disabled-bg: rgba(232, 183, 58, 0.25);
+  --t3-cta-disabled-text: rgba(26, 26, 26, 0.55);
+
+  // -- Botones neutros / secundarios ------------------------------------------
+  --t3-btn-neutral-border: var(--t3-card-border);
+  --t3-btn-neutral-text: var(--t3-gold-500);
+  --t3-btn-neutral-bg-hover: var(--t3-gold-bg-subtle);
+
+  // -- Segmented control ------------------------------------------------------
+  --t3-segmented-bg: var(--t3-tabs-bg);
+  --t3-segmented-active-bg: var(--t3-gold-500);
+  --t3-segmented-active-text: var(--t3-text-on-gold);
+  --t3-segmented-inactive-text: var(--t3-text-muted);
+
+  // -- Overlay del modal de confirmación --------------------------------------
+  --t3-surface-overlay: rgba(6, 38, 24, 0.72);
 }
 
 // =============================================================================
@@ -139,4 +160,22 @@ router-outlet {
   min-height: 0;
   display: flex;
   flex-direction: column;
+}
+
+// =============================================================================
+// Theming del modal de confirmación tematizado (ConfirmDialogComponent)
+// Sobreescribe los CSS custom properties MDC dentro del panel `.t3-confirm-dialog`
+// para que la superficie use la paleta del sistema en lugar de la de Material.
+// No afecta ningún otro MatDialog de la aplicación.
+// =============================================================================
+.t3-confirm-dialog {
+  --mdc-dialog-container-color: var(--t3-card-bg);
+  --mdc-dialog-subhead-color: var(--t3-text);
+  --mdc-dialog-supporting-text-color: var(--t3-text-muted);
+  --mdc-dialog-container-shape: var(--t3-radius-lg);
+  box-shadow: var(--t3-shadow-card);
+}
+
+.cdk-overlay-backdrop.t3-confirm-backdrop {
+  background-color: var(--t3-surface-overlay);
 }

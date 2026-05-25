@@ -1,0 +1,135 @@
+.t3-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--t3-gap-md);
+  padding: var(--t3-gap-md);
+
+  &__title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--t3-text);
+  }
+
+  &__message {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--t3-text-muted);
+    line-height: 1.5;
+  }
+
+  &__actions {
+    display: flex;
+    gap: var(--t3-gap-sm);
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Variantes de botón tematizadas (sin Material crudos)
+// ---------------------------------------------------------------------------
+
+.t3-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--t3-gap-xs);
+  min-height: 44px;
+  padding: 0 var(--t3-gap-md);
+  border-radius: var(--t3-radius-md);
+  border: 1px solid transparent;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+
+  &:disabled,
+  &[disabled] {
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}
+
+// Variante neutral — "Cancelar", "Volver"
+.t3-btn--neutral {
+  background: transparent;
+  border-color: var(--t3-btn-neutral-border);
+  color: var(--t3-btn-neutral-text);
+
+  &:hover {
+    background: var(--t3-btn-neutral-bg-hover);
+    border-color: var(--t3-gold-400);
+  }
+
+  &:active {
+    background: var(--t3-btn-neutral-bg-hover);
+    border-color: var(--t3-gold-500);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--t3-gold-400);
+    outline-offset: 2px;
+  }
+
+  &:disabled,
+  &[disabled] {
+    opacity: 0.45;
+  }
+}
+
+// Variante destructiva — "Salir", "Eliminar"
+.t3-btn--destructive {
+  background: var(--t3-danger-bg);
+  border-color: var(--t3-danger-border);
+  color: var(--t3-danger);
+
+  &:hover {
+    background: var(--t3-danger-bg);
+    border-color: var(--t3-danger);
+  }
+
+  &:active {
+    background: var(--t3-danger-bg);
+    border-color: var(--t3-danger);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--t3-gold-400);
+    outline-offset: 2px;
+  }
+
+  &:disabled,
+  &[disabled] {
+    opacity: 0.45;
+  }
+}
+
+// Variante primaria — "Confirmar", acción positiva
+.t3-btn--primary {
+  background: var(--t3-cta-bg);
+  border-color: transparent;
+  color: var(--t3-cta-text-on);
+
+  &:hover {
+    background: var(--t3-cta-bg-hover);
+  }
+
+  &:active {
+    background: var(--t3-cta-bg-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--t3-gold-400);
+    outline-offset: 2px;
+  }
+
+  &:disabled,
+  &[disabled] {
+    background: var(--t3-cta-disabled-bg);
+    color: var(--t3-cta-disabled-text);
+    cursor: not-allowed;
+  }
+}

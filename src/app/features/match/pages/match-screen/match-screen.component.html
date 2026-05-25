@@ -1,5 +1,6 @@
 @if (matchView(); as view) {
   <div class="match-screen">
+    <app-mock-actions-state-switcher (selected)="onFixtureSelected($event)" />
     <app-game-board [view]="view" />
   </div>
 }

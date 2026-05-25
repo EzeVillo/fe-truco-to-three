@@ -1,55 +1,36 @@
 .played-cards-area {
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
-  gap: var(--t3-gap-sm);
-  padding: var(--t3-gap-md);
+  align-items: center;
   flex: 1 1 auto;
   min-height: 0;
-  background-color: var(--t3-table-felt);
-  border: 1px solid var(--t3-card-border);
+  padding: var(--t3-gap-xs);
+}
+
+.played-cards-area__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(48px, 60px));
+  grid-template-rows: repeat(2, auto);
+  gap: var(--t3-gap-xs);
+  place-content: center;
+  width: 100%;
+  max-width: 220px;
+}
+
+.played-cards-area__item {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+}
+
+.played-cards-area__slot-empty {
+  border: 1px dashed var(--t3-card-slot-border);
   border-radius: var(--t3-radius-md);
 }
 
-.played-cards-area__current {
-  display: flex;
-  gap: var(--t3-gap-md);
-  justify-content: center;
-  align-items: center;
-}
-
-.played-cards-area__slot {
-  width: 60px;
-  height: 90px;
-  border: 2px dashed var(--t3-card-slot-border);
-  border-radius: var(--t3-radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.played-cards-area__slot app-card-view {
-  width: 100%;
-  height: 100%;
-}
-
-.played-cards-area__previous {
-  display: flex;
-  gap: var(--t3-gap-xs);
-}
-
-.played-cards-area__previous app-card-view {
-  width: 40px;
-}
-
 @media (min-width: 1024px) {
-  .played-cards-area__slot {
-    width: 72px;
-    height: 108px;
-  }
-
-  .played-cards-area__previous app-card-view {
-    width: 48px;
+  .played-cards-area__grid {
+    grid-template-columns: repeat(3, minmax(64px, 80px));
+    gap: var(--t3-gap-sm);
+    max-width: 300px;
   }
 }

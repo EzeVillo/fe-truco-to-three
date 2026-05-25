@@ -1,0 +1,70 @@
+<div class="envido-response-panel">
+  <!-- Fila superior: Quiero / No Quiero (tabs flotantes, sin borde superior) -->
+  <div class="envido-response-panel__top-row">
+    <div class="envido-response-panel__tab-group">
+      <button
+        class="envido-response-panel__tab-btn envido-response-panel__tab-btn--quiero"
+        (click)="quieroClicked.emit()"
+        type="button"
+      >
+        Quiero
+      </button>
+      <button
+        class="envido-response-panel__tab-btn envido-response-panel__tab-btn--no-quiero"
+        (click)="noQuieroClicked.emit()"
+        type="button"
+      >
+        No Quiero
+      </button>
+    </div>
+  </div>
+
+  <!-- Fila inferior: sub-opciones (barra de acciones) -->
+  <div class="envido-response-panel__bottom-row">
+    <button
+      class="envido-response-panel__sub-btn"
+      [class.envido-response-panel__sub-btn--enabled]="options().envido"
+      [disabled]="!options().envido"
+      (click)="envidoOptionClicked.emit('ENVIDO')"
+      type="button"
+    >
+      Envido
+    </button>
+    <div class="envido-response-panel__divider"></div>
+    <button
+      class="envido-response-panel__sub-btn"
+      [class.envido-response-panel__sub-btn--enabled]="options().realEnvido"
+      [disabled]="!options().realEnvido"
+      (click)="envidoOptionClicked.emit('REAL_ENVIDO')"
+      type="button"
+    >
+      <span class="envido-response-panel__label--stacked">
+        <span class="envido-response-panel__label-line">Real</span>
+        <span class="envido-response-panel__label-line">Envido</span>
+      </span>
+      <span class="envido-response-panel__label--full">Real Envido</span>
+    </button>
+    <div class="envido-response-panel__divider"></div>
+    <button
+      class="envido-response-panel__sub-btn"
+      [class.envido-response-panel__sub-btn--enabled]="options().faltaEnvido"
+      [disabled]="!options().faltaEnvido"
+      (click)="envidoOptionClicked.emit('FALTA_ENVIDO')"
+      type="button"
+    >
+      <span class="envido-response-panel__label--stacked">
+        <span class="envido-response-panel__label-line">Falta</span>
+        <span class="envido-response-panel__label-line">Envido</span>
+      </span>
+      <span class="envido-response-panel__label--full">Falta Envido</span>
+    </button>
+    <div class="envido-response-panel__divider"></div>
+    <button
+      class="envido-response-panel__sub-btn envido-response-panel__sub-btn--back"
+      disabled
+      type="button"
+    >
+      Volver
+    </button>
+  </div>
+</div>

@@ -1,0 +1,100 @@
+.envido-submenu {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  background-color: var(--t3-action-bar-bg);
+  border-top: 1px solid var(--t3-divider-line);
+}
+
+.envido-submenu__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 var(--t3-gap-xs);
+  background-color: transparent;
+  color: var(--t3-white);
+  border: none;
+  font:
+    var(--mat-sys-label-large),
+    Inter,
+    system-ui,
+    sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition:
+    color 120ms ease,
+    background-color 120ms ease;
+}
+
+.envido-submenu__btn:hover {
+  background-color: var(--t3-gold-bg-subtle);
+  color: var(--t3-white);
+}
+
+.envido-submenu__btn:active {
+  background-color: var(--t3-gold-bg-hover);
+}
+
+.envido-submenu__divider {
+  width: 1px;
+  flex-shrink: 0;
+  background-color: var(--t3-divider-line);
+  margin: var(--t3-gap-xs) 0;
+}
+
+.envido-submenu__btn-label--full {
+  display: none;
+}
+
+.envido-submenu__btn-label--stacked {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.2;
+}
+
+.envido-submenu__btn-label-line {
+  display: block;
+}
+
+@media (max-width: 1023px) {
+  .envido-submenu__btn {
+    min-height: 52px;
+    font-size: 0.8125rem;
+  }
+
+  .envido-submenu__divider {
+    margin: 8px 0;
+  }
+
+  .envido-submenu__btn-label--stacked {
+    display: flex;
+  }
+}
+
+@media (min-width: 1024px) {
+  .envido-submenu__btn {
+    min-height: 48px;
+    font-size: 0.875rem;
+  }
+
+  .envido-submenu__divider {
+    margin: 10px 0;
+  }
+
+  .envido-submenu__btn-label--full {
+    display: inline;
+  }
+
+  .envido-submenu__btn-label--stacked {
+    display: none;
+  }
+}

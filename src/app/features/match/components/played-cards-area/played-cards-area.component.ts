@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import type { Card } from '../../../../core/models/match.models';
 import { CardViewComponent } from '../card-view/card-view.component';
@@ -16,4 +16,14 @@ export class PlayedCardsAreaComponent {
   readonly opponentPlayedInCurrentHand = input<Card | null>(null);
   readonly selfPlayedInPreviousHands = input<(Card | null)[]>([]);
   readonly opponentPlayedInPreviousHands = input<(Card | null)[]>([]);
+
+  readonly selfRow = computed(() => [
+    ...this.selfPlayedInPreviousHands(),
+    this.selfPlayedInCurrentHand(),
+  ]);
+
+  readonly opponentRow = computed(() => [
+    ...this.opponentPlayedInPreviousHands(),
+    this.opponentPlayedInCurrentHand(),
+  ]);
 }

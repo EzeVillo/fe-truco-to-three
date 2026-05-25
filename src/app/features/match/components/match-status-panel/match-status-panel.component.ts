@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import type { MatchView } from '../../utils/derive-match-view';
 
 @Component({
@@ -10,4 +10,6 @@ import type { MatchView } from '../../utils/derive-match-view';
 })
 export class MatchStatusPanelComponent {
   readonly view = input.required<MatchView>();
+
+  readonly totalGamesWon = computed(() => this.view().self.gamesWon + this.view().opponent.gamesWon);
 }

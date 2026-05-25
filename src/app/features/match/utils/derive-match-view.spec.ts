@@ -79,4 +79,24 @@ describe('deriveMatchView', () => {
     expect(view.self.handCards).toHaveLength(3);
     expect(view.playedHandsCount).toBe(0);
   });
+
+  it('maps availableActions from roundGame', () => {
+    const view = deriveMatchView(mockMatchViewerPlayerOne);
+    expect(view.availableActions).toEqual([
+      { type: 'CALL_TRUCO' },
+      { type: 'CALL_ENVIDO' },
+      { type: 'FOLD' },
+    ]);
+  });
+
+  it('maps currentTrucoCall from roundGame', () => {
+    const view = deriveMatchView(mockMatchViewerPlayerOne);
+    expect(view.currentTrucoCall).toBeNull();
+  });
+
+  it('returns empty availableActions when roundGame is null', () => {
+    const stateWithoutRound = { ...mockMatchEmptyTable, roundGame: null };
+    const view = deriveMatchView(stateWithoutRound);
+    expect(view.availableActions).toEqual([]);
+  });
 });

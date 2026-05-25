@@ -23,8 +23,9 @@ export const mockMatchViewerPlayerOne: MatchState = {
     currentTrucoCall: null,
     winner: null,
     availableActions: [
-      { type: 'PLAY_CARD' },
       { type: 'CALL_TRUCO' },
+      { type: 'CALL_ENVIDO' },
+      { type: 'FOLD' },
     ],
     playedHands: [
       {
@@ -64,8 +65,9 @@ export const mockMatchViewerPlayerTwo: MatchState = {
     currentTrucoCall: null,
     winner: null,
     availableActions: [
-      { type: 'PLAY_CARD' },
       { type: 'CALL_TRUCO' },
+      { type: 'CALL_ENVIDO' },
+      { type: 'FOLD' },
     ],
     playedHands: [
       {
@@ -106,8 +108,9 @@ export const mockMatchEmptyTable: MatchState = {
     currentTrucoCall: null,
     winner: null,
     availableActions: [
-      { type: 'PLAY_CARD' },
       { type: 'CALL_TRUCO' },
+      { type: 'CALL_ENVIDO' },
+      { type: 'FOLD' },
     ],
     playedHands: [],
     currentHand: {
@@ -140,7 +143,9 @@ export const mockMatchAsymmetricHand: MatchState = {
     currentTrucoCall: null,
     winner: null,
     availableActions: [
-      { type: 'PLAY_CARD' },
+      { type: 'CALL_TRUCO' },
+      { type: 'CALL_ENVIDO' },
+      { type: 'FOLD' },
     ],
     playedHands: [
       {

@@ -1,11 +1,36 @@
 <div class="status-panel">
-  <div class="status-panel__scores">
-    <span class="status-panel__score">{{ view().self.score }}</span>
-    <span class="status-panel__divider">—</span>
-    <span class="status-panel__score">{{ view().opponent.score }}</span>
-  </div>
-  <div class="status-panel__meta">
-    <span class="status-panel__series">{{ view().seriesLabel }}</span>
-    <span class="status-panel__turn">{{ view().currentTurnIsSelf === null ? 'Esperando' : view().currentTurnIsSelf ? 'Tu turno' : 'Turno del rival' }}</span>
+  <div class="status-panel__center">
+    <div class="status-panel__players-row">
+      <div class="status-panel__player-col">
+        <div class="status-panel__player-header">
+          <span class="status-panel__turn-dot" [class.active]="view().currentTurnIsSelf"></span>
+          <span class="status-panel__label">VOS</span>
+        </div>
+        <span class="status-panel__player-name">{{ view().self.username }}</span>
+      </div>
+
+      <div class="status-panel__score-col">
+        <span class="status-panel__score">{{ view().self.score }}</span>
+        <span class="status-panel__divider">—</span>
+        <span class="status-panel__score">{{ view().opponent.score }}</span>
+      </div>
+
+      <div class="status-panel__player-col status-panel__player-col--right">
+        <div class="status-panel__player-header status-panel__player-header--right">
+          <span class="status-panel__label">RIVAL</span>
+          <span class="status-panel__turn-dot" [class.active]="view().currentTurnIsSelf === false"></span>
+        </div>
+        <span class="status-panel__player-name">{{ view().opponent.username }}</span>
+      </div>
+    </div>
+
+    <div class="status-panel__series-row">
+      <span class="status-panel__series-text">GAME · {{ view().seriesLabel }} · {{ view().self.gamesWon }}-{{ view().opponent.gamesWon }}</span>
+      <div class="status-panel__squares">
+        @for (_ of [].constructor(view().gamesToPlay); track $index) {
+          <span class="status-panel__square" [class.filled]="$index < totalGamesWon()"></span>
+        }
+      </div>
+    </div>
   </div>
 </div>

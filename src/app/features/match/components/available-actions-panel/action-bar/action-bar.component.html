@@ -1,0 +1,16 @@
+<div class="action-bar">
+  @for (item of items(); track item.label; let last = $last) {
+    <button
+      class="action-bar__btn"
+      [class.action-bar__btn--enabled]="item.enabled"
+      [disabled]="!item.enabled"
+      (click)="onClick(item)"
+      type="button"
+    >
+      {{ item.label }}
+    </button>
+    @if (!last) {
+      <div class="action-bar__divider"></div>
+    }
+  }
+</div>

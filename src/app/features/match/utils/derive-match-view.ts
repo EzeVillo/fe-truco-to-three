@@ -1,4 +1,5 @@
-import type { MatchState, ViewerSeat, Card, PlayedHand } from '../../../core/models/match.models';
+import type { MatchState, ViewerSeat, Card, PlayedHand, AvailableAction } from '../../../core/models/match.models';
+import type { TrucoCall } from '../../../core/models/enums';
 
 export interface SeatView {
   seat: ViewerSeat;
@@ -19,8 +20,15 @@ export interface MatchView {
   self: SeatView;
   opponent: SeatView;
   currentTurnIsSelf: boolean | null;
+  currentTurnUsername: string | null;
   roundStatus: string | null;
   playedHandsCount: number;
+  availableActions: AvailableAction[];
+  currentTrucoCall: TrucoCall | null;
+}
+
+export function getInitials(username: string): string {
+  return username.slice(0, 2).toUpperCase();
 }
 
 function oppositeSeat(seat: ViewerSeat): ViewerSeat {
@@ -83,8 +91,11 @@ export function deriveMatchView(state: MatchState): MatchView {
         playedInPreviousHands: [],
       },
       currentTurnIsSelf: null,
+      currentTurnUsername: null,
       roundStatus: null,
       playedHandsCount: 0,
+      availableActions: [],
+      currentTrucoCall: null,
     };
   }
 
@@ -104,6 +115,7 @@ export function deriveMatchView(state: MatchState): MatchView {
     : round.currentTurn === opponentUsername
       ? false
       : null;
+  const currentTurnUsername = round.currentTurn ?? null;
 
   return {
     matchId: state.matchId,
@@ -131,7 +143,10 @@ export function deriveMatchView(state: MatchState): MatchView {
       playedInPreviousHands: round.playedHands.map((h: PlayedHand) => seatCard(h, oppSeat)),
     },
     currentTurnIsSelf,
+    currentTurnUsername,
     roundStatus: round.roundStatus,
     playedHandsCount: round.playedHands.length,
+    availableActions: round.availableActions,
+    currentTrucoCall: round.currentTrucoCall,
   };
 }

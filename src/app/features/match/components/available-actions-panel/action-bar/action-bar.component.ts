@@ -1,0 +1,73 @@
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import type { AvailableActionType } from '../../../../../core/models/enums';
+import type { TrucoCall } from '../../../../../core/models/enums';
+
+export interface ActionBarItem {
+  label: string;
+  actionType: AvailableActionType | 'BACK';
+  enabled: boolean;
+}
+
+function trucoLabel(call: TrucoCall | null): string {
+  switch (call) {
+    case 'RETRUCO':
+      return 'Retruco';
+    case 'VALE_CUATRO':
+      return 'Vale 4';
+    default:
+      return 'Truco';
+  }
+}
+
+function actionEnabled(actions: ReadonlyArray<{ type: AvailableActionType }>, type: AvailableActionType): boolean {
+  return actions.some((a) => a.type === type);
+}
+
+@Component({
+  selector: 'app-action-bar',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './action-bar.component.html',
+  styleUrl: './action-bar.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ActionBarComponent {
+  readonly availableActions = input.required<ReadonlyArray<{ type: AvailableActionType }>>();
+  readonly currentTrucoCall = input<TrucoCall | null>(null);
+
+  readonly actionClicked = output<AvailableActionType>();
+  readonly envidoClicked = output<void>();
+
+  readonly items = computed<ActionBarItem[]>(() => {
+    const actions = this.availableActions();
+    return [
+      {
+        label: trucoLabel(this.currentTrucoCall()),
+        actionType: 'CALL_TRUCO',
+        enabled: actionEnabled(actions, 'CALL_TRUCO'),
+      },
+      {
+        label: 'Envido',
+        actionType: 'CALL_ENVIDO',
+        enabled: actionEnabled(actions, 'CALL_ENVIDO'),
+      },
+      {
+        label: 'Mazo',
+        actionType: 'FOLD',
+        enabled: actionEnabled(actions, 'FOLD'),
+      },
+    ];
+  });
+
+  onClick(item: ActionBarItem): void {
+    if (!item.enabled) {
+      return;
+    }
+    if (item.actionType === 'CALL_ENVIDO') {
+      this.envidoClicked.emit();
+      return;
+    }
+    this.actionClicked.emit(item.actionType as AvailableActionType);
+  }
+}

@@ -8,5 +8,8 @@
     [opponentPlayedInPreviousHands]="view().opponent.playedInPreviousHands"
   />
   <app-player-area [self]="view().self" />
-  <app-placeholder-available-actions-area />
+  <app-available-actions-panel
+    [availableActions]="view().availableActions"
+    [currentTrucoCall]="view().currentTrucoCall"
+  />
 </div>

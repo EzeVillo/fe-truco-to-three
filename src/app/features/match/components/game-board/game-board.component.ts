@@ -5,7 +5,7 @@ import { OpponentAreaComponent } from '../opponent-area/opponent-area.component'
 import { PlayedCardsAreaComponent } from '../played-cards-area/played-cards-area.component';
 import { PlayerAreaComponent } from '../player-area/player-area.component';
 import { MatchStatusPanelComponent } from '../match-status-panel/match-status-panel.component';
-import { PlaceholderAvailableActionsAreaComponent } from '../placeholder-available-actions-area/placeholder-available-actions-area.component';
+import { AvailableActionsPanelComponent } from '../available-actions-panel/available-actions-panel.component';
 
 @Component({
   selector: 'app-game-board',
@@ -16,7 +16,7 @@ import { PlaceholderAvailableActionsAreaComponent } from '../placeholder-availab
     PlayedCardsAreaComponent,
     PlayerAreaComponent,
     MatchStatusPanelComponent,
-    PlaceholderAvailableActionsAreaComponent,
+    AvailableActionsPanelComponent,
   ],
   templateUrl: './game-board.component.html',
   styleUrl: './game-board.component.scss',

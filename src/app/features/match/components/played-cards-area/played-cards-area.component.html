@@ -1,20 +1,27 @@
 <div class="played-cards-area">
-  <div class="played-cards-area__previous">
-    @for (card of selfPlayedInPreviousHands(); track $index) {
-      <app-card-view [card]="card" />
+  <div class="played-cards-area__grid">
+    <!-- Row 0: opponent -->
+    @for (card of opponentRow(); track $index) {
+      @if (card) {
+        <app-card-view [card]="card" class="played-cards-area__item" />
+      } @else {
+        <div class="played-cards-area__slot-empty played-cards-area__item"></div>
+      }
     }
-  </div>
-  <div class="played-cards-area__current">
-    <div class="played-cards-area__slot">
-      <app-card-view [card]="selfPlayedInCurrentHand()" />
-    </div>
-    <div class="played-cards-area__slot">
-      <app-card-view [card]="opponentPlayedInCurrentHand()" />
-    </div>
-  </div>
-  <div class="played-cards-area__previous">
-    @for (card of opponentPlayedInPreviousHands(); track $index) {
-      <app-card-view [card]="card" />
+    @for (_ of [].constructor(3 - opponentRow().length); track $index) {
+      <div class="played-cards-area__slot-empty played-cards-area__item"></div>
+    }
+
+    <!-- Row 1: player -->
+    @for (card of selfRow(); track $index) {
+      @if (card) {
+        <app-card-view [card]="card" class="played-cards-area__item" />
+      } @else {
+        <div class="played-cards-area__slot-empty played-cards-area__item"></div>
+      }
+    }
+    @for (_ of [].constructor(3 - selfRow().length); track $index) {
+      <div class="played-cards-area__slot-empty played-cards-area__item"></div>
     }
   </div>
 </div>

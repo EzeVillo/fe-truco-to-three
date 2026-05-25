@@ -587,6 +587,10 @@ Response `200`:
 {
   "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
   "status": "IN_PROGRESS",
+  "viewerSeat": "PLAYER_ONE",
+  "playerOneUsername": "juancho",
+  "playerTwoUsername": "martina",
+  "gamesToPlay": 3,
   "scorePlayerOne": 2,
   "scorePlayerTwo": 1,
   "gamesWonPlayerOne": 1,
@@ -643,6 +647,14 @@ Response `200`:
 - `roundGame` es `null` si la partida no está `IN_PROGRESS`
 - `myCards` contiene solo las cartas del jugador autenticado
 - `availableActions` refleja las acciones disponibles para el jugador autenticado
+- `viewerSeat` indica qué asiento (`PLAYER_ONE` | `PLAYER_TWO`) ocupa el jugador autenticado en
+  esta partida. Permite al FE mapear `scorePlayerOne`/`scorePlayerTwo` y los seats de eventos WS
+  (`CARD_PLAYED.seat`, `TURN_CHANGED.seat`, etc.) a "jugador propio / rival" sin recordar estado
+  previo ni hacer lookup por username.
+- `playerOneUsername` y `playerTwoUsername` exponen los usernames de cada asiento para mostrarlos
+  en la UI sin necesidad de cruzar con eventos `PLAYER_JOINED` ni `MATCH_FINISHED`.
+- `gamesToPlay` (`1` | `3` | `5`) refleja el formato de la serie con el que se creó la partida
+  ("mejor de N"). La UI deriva la etiqueta de presentación a partir de este número.
 
 Errores:
 

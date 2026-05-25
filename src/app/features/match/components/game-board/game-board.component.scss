@@ -1,0 +1,17 @@
+.game-board {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: var(--t3-gap-sm);
+  padding: var(--t3-gap-sm);
+  background-color: var(--t3-table-felt);
+  border-radius: var(--t3-radius-lg);
+}
+
+@media (min-width: 1024px) {
+  .game-board {
+    gap: var(--t3-gap-md);
+    padding: var(--t3-gap-md);
+  }
+}

@@ -1,0 +1,17 @@
+.placeholder-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--t3-gap-sm);
+  margin-top: var(--t3-gap-xs);
+  border: 1px dashed var(--t3-card-border);
+  border-radius: var(--t3-radius-sm);
+  min-height: 48px;
+}
+
+.placeholder-actions__label {
+  font-size: 0.75rem;
+  color: var(--t3-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}

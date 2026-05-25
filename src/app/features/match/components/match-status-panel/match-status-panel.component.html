@@ -1,0 +1,11 @@
+<div class="status-panel">
+  <div class="status-panel__scores">
+    <span class="status-panel__score">{{ view().self.score }}</span>
+    <span class="status-panel__divider">—</span>
+    <span class="status-panel__score">{{ view().opponent.score }}</span>
+  </div>
+  <div class="status-panel__meta">
+    <span class="status-panel__series">{{ view().seriesLabel }}</span>
+    <span class="status-panel__turn">{{ view().currentTurnIsSelf === null ? 'Esperando' : view().currentTurnIsSelf ? 'Tu turno' : 'Turno del rival' }}</span>
+  </div>
+</div>

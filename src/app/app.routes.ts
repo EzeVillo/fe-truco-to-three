@@ -35,6 +35,14 @@ export const routes: Routes = [
         (m) => m.BotsConfigPageComponent,
       ),
   },
+  {
+    path: 'match',
+    canMatch: [authGuard],
+    loadComponent: () =>
+      import('./features/match/pages/match-screen/match-screen.component').then(
+        (m) => m.MatchScreenComponent,
+      ),
+  },
   { path: '', pathMatch: 'full', redirectTo: 'login' },
   { path: '**', redirectTo: 'login' },
 ];

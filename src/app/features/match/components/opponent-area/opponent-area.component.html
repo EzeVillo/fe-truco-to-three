@@ -1,0 +1,8 @@
+<div class="opponent-area">
+  <span class="opponent-area__name">{{ opponent().username }}</span>
+  <div class="opponent-area__cards">
+    @for (_ of [].constructor(opponent().handCount); track $index) {
+      <app-card-view [card]="null" />
+    }
+  </div>
+</div>

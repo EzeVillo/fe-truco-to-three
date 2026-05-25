@@ -1,0 +1,27 @@
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import type { MatchView } from '../../utils/derive-match-view';
+import { OpponentAreaComponent } from '../opponent-area/opponent-area.component';
+import { PlayedCardsAreaComponent } from '../played-cards-area/played-cards-area.component';
+import { PlayerAreaComponent } from '../player-area/player-area.component';
+import { MatchStatusPanelComponent } from '../match-status-panel/match-status-panel.component';
+import { PlaceholderAvailableActionsAreaComponent } from '../placeholder-available-actions-area/placeholder-available-actions-area.component';
+
+@Component({
+  selector: 'app-game-board',
+  standalone: true,
+  imports: [
+    CommonModule,
+    OpponentAreaComponent,
+    PlayedCardsAreaComponent,
+    PlayerAreaComponent,
+    MatchStatusPanelComponent,
+    PlaceholderAvailableActionsAreaComponent,
+  ],
+  templateUrl: './game-board.component.html',
+  styleUrl: './game-board.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class GameBoardComponent {
+  readonly view = input.required<MatchView>();
+}

@@ -1,0 +1,20 @@
+.match-screen {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  background-color: var(--t3-bg);
+}
+
+@media (min-width: 1024px) {
+  .match-screen {
+    align-items: center;
+    justify-content: center;
+    padding: var(--t3-gap-lg);
+  }
+
+  .match-screen > * {
+    width: 100%;
+    max-width: 720px;
+  }
+}

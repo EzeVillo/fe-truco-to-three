@@ -82,6 +82,11 @@
   --t3-segmented-active-text: var(--t3-text-on-gold);
   --t3-segmented-inactive-text: var(--t3-text-muted);
 
+  // -- Match screen tokens ----------------------------------------------------
+  --t3-table-felt: #083a22;
+  --t3-card-slot-border: rgba(255, 255, 255, 0.14);
+  --t3-card-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+
   // -- Overlay del modal de confirmación --------------------------------------
   --t3-surface-overlay: rgba(6, 38, 24, 0.72);
 }

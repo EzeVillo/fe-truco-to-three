@@ -1,0 +1,20 @@
+<div class="played-cards-area">
+  <div class="played-cards-area__previous">
+    @for (card of selfPlayedInPreviousHands(); track $index) {
+      <app-card-view [card]="card" />
+    }
+  </div>
+  <div class="played-cards-area__current">
+    <div class="played-cards-area__slot">
+      <app-card-view [card]="selfPlayedInCurrentHand()" />
+    </div>
+    <div class="played-cards-area__slot">
+      <app-card-view [card]="opponentPlayedInCurrentHand()" />
+    </div>
+  </div>
+  <div class="played-cards-area__previous">
+    @for (card of opponentPlayedInPreviousHands(); track $index) {
+      <app-card-view [card]="card" />
+    }
+  </div>
+</div>

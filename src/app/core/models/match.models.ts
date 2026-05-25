@@ -37,9 +37,16 @@ export interface RoundState {
   currentHand: CurrentHand;
 }
 
+export type ViewerSeat = 'PLAYER_ONE' | 'PLAYER_TWO';
+
 export interface MatchState {
   matchId: string;
   status: MatchStatus;
+  // Nuevos campos del contrato §4.14 (feature 006-match-screen-ui)
+  viewerSeat: ViewerSeat;
+  playerOneUsername: string;
+  playerTwoUsername: string;
+  gamesToPlay: 1 | 3 | 5;
   scorePlayerOne: number;
   scorePlayerTwo: number;
   gamesWonPlayerOne: number;

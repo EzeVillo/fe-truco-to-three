@@ -1,11 +1,19 @@
-<mat-button-toggle-group
+<div
   class="series-format"
+  role="radiogroup"
   aria-label="Formato de serie"
-  [value]="format()"
-  (change)="onChange($event)"
-  hideSingleSelectionIndicator
 >
   @for (opt of options; track opt.value) {
-    <mat-button-toggle [value]="opt.value">{{ opt.label }}</mat-button-toggle>
+    <button
+      type="button"
+      role="radio"
+      class="series-format__option"
+      [class.series-format__option--active]="format() === opt.value"
+      [attr.aria-checked]="format() === opt.value"
+      [attr.aria-label]="opt.ariaLabel"
+      (click)="select(opt.value)"
+    >
+      {{ opt.label }}
+    </button>
   }
-</mat-button-toggle-group>
+</div>

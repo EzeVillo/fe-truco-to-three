@@ -1,0 +1,33 @@
+<div
+  class="t3-confirm"
+  [attr.role]="variant === 'destructive' ? 'alertdialog' : 'dialog'"
+  aria-modal="true"
+  aria-labelledby="confirm-dialog-title"
+  [attr.aria-describedby]="data.message ? 'confirm-dialog-desc' : null"
+  mat-dialog-content
+>
+  <h2 id="confirm-dialog-title" class="t3-confirm__title">{{ data.title }}</h2>
+
+  @if (data.message) {
+    <p id="confirm-dialog-desc" class="t3-confirm__message">{{ data.message }}</p>
+  }
+
+  <div class="t3-confirm__actions">
+    <button
+      type="button"
+      class="t3-btn t3-btn--neutral"
+      cdkFocusInitial
+      (click)="cancel()"
+    >
+      {{ cancelLabel }}
+    </button>
+
+    <button
+      type="button"
+      [class]="variant === 'destructive' ? 't3-btn t3-btn--destructive' : 't3-btn t3-btn--primary'"
+      (click)="confirm()"
+    >
+      {{ confirmLabel }}
+    </button>
+  </div>
+</div>

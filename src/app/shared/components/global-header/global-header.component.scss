@@ -66,7 +66,7 @@
       border-color 0.18s ease;
 
     &:hover {
-      background: rgba(232, 183, 58, 0.08);
+      background: var(--t3-gold-bg-subtle);
       border-color: var(--t3-gold-500);
     }
 

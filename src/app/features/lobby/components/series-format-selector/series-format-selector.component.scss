@@ -1,14 +1,38 @@
 .series-format {
-  width: 100%;
   display: flex;
+  background: var(--t3-segmented-bg);
+  border-radius: var(--t3-radius-md);
+  padding: var(--t3-gap-xs);
+  gap: var(--t3-gap-xs);
+  width: 100%;
 
-  ::ng-deep .mat-button-toggle {
+  &__option {
     flex: 1;
+    padding: var(--t3-gap-sm) var(--t3-gap-sm);
+    border-radius: var(--t3-radius-sm);
+    border: none;
+    background: transparent;
+    color: var(--t3-segmented-inactive-text);
+    font-family: inherit;
     font-size: 0.8rem;
-  }
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease;
+    white-space: nowrap;
 
-  ::ng-deep .mat-button-toggle-label-content {
-    line-height: 36px;
-    padding: 0 8px;
+    &:focus-visible {
+      outline: 2px solid var(--t3-gold-400);
+      outline-offset: 1px;
+    }
+
+    &--active {
+      background: var(--t3-segmented-active-bg);
+      color: var(--t3-segmented-active-text);
+      font-weight: 600;
+    }
+
+    &:not(&--active):hover {
+      color: var(--t3-btn-neutral-text);
+    }
   }
 }

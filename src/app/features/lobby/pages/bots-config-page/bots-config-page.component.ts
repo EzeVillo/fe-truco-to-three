@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type { OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { BotCardComponent } from '../../components/bot-card/bot-card.component';
 import { SeriesFormatSelectorComponent } from '../../components/series-format-selector/series-format-selector.component';
@@ -21,7 +20,6 @@ import { HttpErrorResponse } from '@angular/common/http';
   imports: [
     BotCardComponent,
     SeriesFormatSelectorComponent,
-    MatButtonModule,
     MatProgressSpinnerModule,
   ],
   templateUrl: './bots-config-page.component.html',

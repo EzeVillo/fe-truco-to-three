@@ -2,8 +2,7 @@
   <div class="bots-config__topbar">
     <button
       type="button"
-      mat-button
-      class="bots-config__back"
+      class="t3-btn t3-btn--neutral bots-config__back"
       (click)="goBack()"
       aria-label="Volver al lobby"
     >
@@ -21,12 +20,12 @@
     } @else if (catalogError()) {
       <div class="bots-config__state bots-config__state--error" role="alert">
         <p>{{ catalogError() }}</p>
-        <button type="button" mat-stroked-button (click)="retry()">Reintentar</button>
+        <button type="button" class="t3-btn t3-btn--neutral" (click)="retry()">Reintentar</button>
       </div>
     } @else if (bots().length === 0) {
       <div class="bots-config__state" role="status">
         <p>No hay bots disponibles en este momento.</p>
-        <button type="button" mat-stroked-button (click)="retry()">Reintentar</button>
+        <button type="button" class="t3-btn t3-btn--neutral" (click)="retry()">Reintentar</button>
       </div>
     } @else {
       <div class="bots-config__grid" role="radiogroup" aria-label="Catálogo de bots">
@@ -50,14 +49,16 @@
 
     <button
       type="button"
-      mat-flat-button
-      color="primary"
-      class="bots-config__cta"
+      class="t3-btn t3-btn--primary bots-config__cta"
       [disabled]="!canCreate()"
+      [attr.aria-busy]="creatingMatch() ? 'true' : null"
       (click)="onCreate()"
     >
       @if (creatingMatch()) {
-        <mat-spinner diameter="20" />
+        <mat-spinner
+          diameter="18"
+          class="bots-config__spinner"
+        />
         <span>Creando…</span>
       } @else {
         <span>Crear partida</span>

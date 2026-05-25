@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/003-lobby-bots/plan.md`
+`specs/004-lobby-bots-fixes/plan.md`
 <!-- SPECKIT END -->
 
 ## Reglas del juego (truco-to-three)
@@ -46,6 +46,9 @@ pnpm test
 # Lint
 pnpm lint
 pnpm lint:fix
+
+# Lint de estilos (SCSS de features — verifica colores hardcodeados)
+pnpm lint:styles
 
 # Formatear código
 pnpm format
@@ -131,3 +134,36 @@ Puntos críticos del contrato:
 ### Imágenes de cartas
 
 Las cartas españolas están en `public/cards/` con formato `{número}_{palo}.png` (ej. `1_espada.png`, `7_oro.png`). El dorso es `dorso.png`. Palos válidos: `copa`, `espada`, `basto`, `oro`.
+
+## Guardarraíles — Reglas Obligatorias
+
+### 1. Design tokens obligatorios en SCSS de features
+
+**Todo** color, espaciado, radio de borde y sombra en los archivos SCSS bajo `src/app/features/**/*.scss` **debe** usar exclusivamente tokens CSS del proyecto (`var(--t3-…)`). Está prohibido usar:
+
+- Colores hexadecimales (`#fff`, `#1a1a1a`, etc.)
+- Funciones de color literales (`rgb(...)`, `rgba(...)`, `hsl(...)`, `hsla(...)`) directamente como valor de propiedad
+
+Los tokens están definidos en `src/styles.scss`. Si se necesita un valor nuevo, primero **agregar el token** allí y luego consumirlo.
+
+**Verificación**: `pnpm lint:styles` falla si se introducen colores hardcodeados en SCSS de features. Este comando corre automáticamente en el pre-commit via lint-staged.
+
+### 2. Validación cruzada con `docs/CONTRATOS_API.md` antes de tipar/consumir endpoints
+
+Antes de tipar un DTO o consumir un endpoint del backend, **verificar campo a campo** contra `docs/CONTRATOS_API.md`. Esta documentación es la fuente autoritativa del contrato REST + WebSocket.
+
+Reglas específicas:
+- `gamesToPlay` en `POST /api/matches/bot` acepta **exactamente** `{1, 3, 5}` (partidas totales de la serie). Nunca `2`.
+- La función `seriesFormatToGamesToPlay()` en `src/app/core/models/match.models.ts` mapea: `BEST_OF_1 → 1`, `BEST_OF_3 → 3`, `BEST_OF_5 → 5`.
+- Los tests de contrato en `src/tests/contract/` verifican la paridad entre los tipos TypeScript y el doc del contrato.
+
+**Verificación**: `pnpm test` incluye los contract tests. Si se modifica `CreateBotMatchRequest` o `CreateBotMatchResponse`, el test `src/tests/contract/create-bot-match.contract.spec.ts` falla si hay divergencia con `docs/CONTRATOS_API.md §9.2`.
+
+### 3. CTAs con título + descripción apilados verticalmente
+
+Los botones de llamada a la acción (CTA) que tienen título y descripción deben presentarlos en **dos líneas separadas y apiladas verticalmente**, con separación mínima de `var(--t3-gap-xs)` entre título y subtítulo.
+
+- Usar `display: flex; flex-direction: column` en el elemento CTA.
+- El título va en un `<span class="*-title">` y la descripción en un `<span class="*-subtitle">`.
+- **No usar `mat-flat-button`** para CTAs que requieren jerarquía visual interna (Angular Material aplana el contenido en un solo label).
+- Altura máxima sugerida en mobile: ≤ 96 px.

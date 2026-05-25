@@ -42,6 +42,13 @@
 
 [Gates determined based on constitution file]
 
+> **Checklist obligatorio para este proyecto (truco-to-three)**:
+> - [ ] **Tokens CSS**: Todo color/espaciado/radio/sombra en SCSS de feature usa `var(--t3-…)`. Verificar con `pnpm lint:styles`.
+> - [ ] **Validación de contrato**: DTOs verificados campo a campo contra `docs/CONTRATOS_API.md` antes de tipar/consumir endpoints. Los tests de contrato en `src/tests/contract/` comprueban paridad.
+> - [ ] **CTAs verticales**: CTAs con título + descripción usan `display: flex; flex-direction: column` con `var(--t3-gap-xs)` mínimo entre elementos. No usar `mat-flat-button` para CTAs con jerarquía interna.
+> - [ ] **Copy de errores**: Ningún path de error muestra `ApiError.message` crudo; se usa `getErrorCopy()` mapeado por scope + HTTP status.
+> - [ ] **Reglas de juego**: Series son mejor de 1/3/5. `gamesToPlay ∈ {1,3,5}` (partidas totales, no partidas a ganar).
+
 ## Project Structure
 
 ### Documentation (this feature)

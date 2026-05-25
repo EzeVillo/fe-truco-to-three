@@ -1,50 +1,61 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# Truco-to-Three Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Design Tokens Obligatorios en SCSS de Features
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+Todo color, espaciado, radio de borde y sombra en archivos SCSS bajo `src/app/features/**/*.scss` debe consumirse exclusivamente vía tokens CSS del proyecto (`var(--t3-…)` definidos en `src/styles.scss`).
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+Está prohibido usar colores hexadecimales literales (`#fff`, `#1a1a1a`, etc.) ni funciones de color directas (`rgb(...)`, `rgba(...)`, `hsl(...)`, `hsla(...)`) como valor de propiedad en SCSS de feature.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+**Guardarraíl**: `pnpm lint:styles` (stylelint con `color-no-hex` y `declaration-property-value-disallowed-list`) corre en pre-commit via lint-staged. Un PR que introduzca colores hardcodeados fallará el CI.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### II. Validación Cruzada con `docs/CONTRATOS_API.md` antes de Tipar Endpoints
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+Antes de tipar un DTO o consumir un endpoint del backend, verificar campo a campo contra `docs/CONTRATOS_API.md`. Esta documentación es la fuente autoritativa del contrato.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+Puntos críticos:
+- `gamesToPlay` en `POST /api/matches/bot` acepta **{1, 3, 5}** (partidas totales). Nunca `2`.
+- `seriesFormatToGamesToPlay()` mapea: `BEST_OF_1 → 1`, `BEST_OF_3 → 3`, `BEST_OF_5 → 5`.
+- Si el backend diverge en runtime del contrato documentado, **actualizar `docs/CONTRATOS_API.md`** primero y luego alinear el cliente.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+**Guardarraíl**: `pnpm test` incluye `src/tests/contract/` que parsea `docs/CONTRATOS_API.md §9.2` y verifica paridad con `CreateBotMatchRequest`/`CreateBotMatchResponse` vía `satisfies`.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### III. CTAs con Título + Descripción Apilados Verticalmente
+
+Los botones de llamada a la acción (CTA) que exponen título y descripción deben presentarlos en **dos líneas separadas y apiladas verticalmente**:
+
+- Usar `display: flex; flex-direction: column` en el botón CTA.
+- Título en `<span class="*-title">` y descripción en `<span class="*-subtitle">`.
+- Separación mínima entre título y subtítulo: `var(--t3-gap-xs)`.
+- **No usar `mat-flat-button`** para CTAs con jerarquía visual interna (Angular Material aplana el contenido).
+- Altura máxima en mobile: ≤ 96 px.
+
+## Restricciones Adicionales
+
+- **Idioma del producto**: español (copy de UI, artefactos de Spec Kit, mensajes de error del front).
+- **Copy de errores**: nunca mostrar `ApiError.message` del backend; usar el catálogo de copy del front mapeado por scope + HTTP status (`getErrorCopy()`).
+- **Reglas del juego**: una partida se gana llegando exactamente a 3 puntos (pasarse pierde). Las series son mejor de 1, 3 o 5 partidas. No modificar estos valores sin aprobación del producto.
+- **Mobile floor**: 360 px. Landscape mobile fuera de scope. Un único breakpoint `@media (min-width: 1024px)`.
+- **Package manager**: pnpm (v11). No usar npm ni yarn.
+- **Componentes standalone**: no usar NgModules en código nuevo.
+
+## Gates de Calidad
+
+Todos los PRs deben pasar antes del merge:
+
+| Gate | Comando | Qué verifica |
+|------|---------|--------------|
+| Lint TS/HTML | `pnpm lint` | ESLint — errores de código |
+| Lint estilos | `pnpm lint:styles` | Colores hardcodeados en SCSS de feature |
+| Tests | `pnpm test` | Unit tests + contract tests |
+| Build | `pnpm build` | Compilación Angular sin errores |
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+Esta constitution es la referencia normativa del proyecto. Cualquier modificación requiere:
+1. Documentar el motivo en el spec de la feature que introduce el cambio.
+2. Actualizar `CLAUDE.md` con la regla operativa correspondiente.
+3. Agregar un test o guardarraíl que prevenga regresiones.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-05-24 | **Last Amended**: 2026-05-24

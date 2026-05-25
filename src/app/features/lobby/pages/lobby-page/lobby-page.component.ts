@@ -1,11 +1,10 @@
 import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-lobby-page',
   standalone: true,
-  imports: [MatButtonModule],
+  imports: [],
   templateUrl: './lobby-page.component.html',
   styleUrl: './lobby-page.component.scss',
 })

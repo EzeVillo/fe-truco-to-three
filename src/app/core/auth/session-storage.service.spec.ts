@@ -32,11 +32,9 @@ describe('SessionStorageService', () => {
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation((key: string) => {
       return fakeStorage[key] ?? null;
     });
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(
-      (key, value) => {
-        fakeStorage[key] = value;
-      },
-    );
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation((key, value) => {
+      fakeStorage[key] = value;
+    });
     vi.spyOn(Storage.prototype, 'removeItem').mockImplementation((key) => {
       delete fakeStorage[key];
     });

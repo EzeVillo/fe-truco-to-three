@@ -5,8 +5,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/001-auth-models-foundation/plan.md`
+`specs/003-lobby-bots/plan.md`
 <!-- SPECKIT END -->
+
+## Reglas del juego (truco-to-three)
+
+Este proyecto es una **variante propia de truco** con una mecánica de puntaje distinta a las variantes tradicionales (criollo, argentino, uruguayo). Las reglas clave que afectan al producto:
+
+- **Una partida individual se gana llegando a exactamente 3 puntos**. Es lo que da nombre al proyecto (`truco-to-three`).
+- **Pasarse de 3 puntos hace perder** la partida (regla de "punto exacto"). Esto debe reflejarse en la UI del marcador, en validaciones de scoring y en cualquier copy que explique la modalidad.
+- Las **series** (cuando se ofrecen) son **mejor de 1, 3 o 5 partidas**. "Mejor de 1" = partida única; "mejor de 3" = primero a 2 partidas ganadas; "mejor de 5" = primero a 3 partidas ganadas.
+- El formato por defecto de una serie es **"mejor de 3"** cuando hay que elegir un default sensato.
+
+Estas reglas son del dominio del producto, no preferencias visuales: cualquier feature que toque scoring, formato de partida o selectores de "a cuántas" debe respetarlas.
 
 ## Idioma de Trabajo (Spec Kit)
 

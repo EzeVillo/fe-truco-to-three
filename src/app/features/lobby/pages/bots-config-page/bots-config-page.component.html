@@ -1,0 +1,67 @@
+<section class="bots-config">
+  <div class="bots-config__topbar">
+    <button
+      type="button"
+      mat-button
+      class="bots-config__back"
+      (click)="goBack()"
+      aria-label="Volver al lobby"
+    >
+      ← Volver
+    </button>
+    <h1 class="bots-config__title">Elegí tu oponente</h1>
+  </div>
+
+  <div class="bots-config__scroll">
+    @if (loadingCatalog()) {
+      <div class="bots-config__state" role="status" aria-live="polite">
+        <mat-spinner diameter="36" />
+        <span>Cargando bots…</span>
+      </div>
+    } @else if (catalogError()) {
+      <div class="bots-config__state bots-config__state--error" role="alert">
+        <p>{{ catalogError() }}</p>
+        <button type="button" mat-stroked-button (click)="retry()">Reintentar</button>
+      </div>
+    } @else if (bots().length === 0) {
+      <div class="bots-config__state" role="status">
+        <p>No hay bots disponibles en este momento.</p>
+        <button type="button" mat-stroked-button (click)="retry()">Reintentar</button>
+      </div>
+    } @else {
+      <div class="bots-config__grid" role="radiogroup" aria-label="Catálogo de bots">
+        @for (bot of bots(); track bot.botId) {
+          <app-bot-card
+            [bot]="bot"
+            [selected]="selectedBotId() === bot.botId"
+            (select)="onSelectBot($event)"
+          />
+        }
+      </div>
+    }
+
+    @if (createMatchError()) {
+      <p class="bots-config__create-error" role="alert">{{ createMatchError() }}</p>
+    }
+  </div>
+
+  <footer class="bots-config__bottom-bar" role="region" aria-label="Acciones de partida">
+    <app-series-format-selector [format]="seriesFormat()" (formatChange)="onChangeFormat($event)" />
+
+    <button
+      type="button"
+      mat-flat-button
+      color="primary"
+      class="bots-config__cta"
+      [disabled]="!canCreate()"
+      (click)="onCreate()"
+    >
+      @if (creatingMatch()) {
+        <mat-spinner diameter="20" />
+        <span>Creando…</span>
+      } @else {
+        <span>Crear partida</span>
+      }
+    </button>
+  </footer>
+</section>

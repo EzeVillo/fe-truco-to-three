@@ -22,7 +22,9 @@
     justify-content: center;
     gap: 10px;
     font-family: inherit;
-    transition: background-color 0.18s ease, border-color 0.18s ease;
+    transition:
+      background-color 0.18s ease,
+      border-color 0.18s ease;
 
     &:hover:not(:disabled) {
       background: rgba(232, 183, 58, 0.08);

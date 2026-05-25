@@ -47,3 +47,39 @@ export interface MatchState {
   matchWinner: string | null;
   roundGame: RoundState | null; // null si status !== 'IN_PROGRESS'
 }
+
+// ---------- Feature 003-lobby-bots: formato de serie + creación vs bots ----------
+// Fuente: specs/003-lobby-bots/data-model.md §SeriesFormat / §CreateBotMatch*
+
+export type SeriesFormat = 'BEST_OF_1' | 'BEST_OF_3' | 'BEST_OF_5';
+
+export const DEFAULT_SERIES_FORMAT: SeriesFormat = 'BEST_OF_3';
+
+export const SERIES_FORMAT_LABELS: Record<SeriesFormat, string> = {
+  BEST_OF_1: 'Mejor de 1',
+  BEST_OF_3: 'Mejor de 3',
+  BEST_OF_5: 'Mejor de 5',
+};
+
+export function seriesFormatToGamesToPlay(f: SeriesFormat): 1 | 2 | 3 {
+  switch (f) {
+    case 'BEST_OF_1':
+      return 1;
+    case 'BEST_OF_3':
+      return 2;
+    case 'BEST_OF_5':
+      return 3;
+  }
+}
+
+export interface CreateBotMatchRequest {
+  /** UUID del bot seleccionado. */
+  botId: string;
+  /** Partidas a ganar para terminar el match. 1 | 2 | 3 (mapeado desde SeriesFormat). */
+  gamesToPlay: 1 | 2 | 3;
+}
+
+export interface CreateBotMatchResponse {
+  /** UUID del match recién creado. Usado para navegar a /match/:matchId. */
+  matchId: string;
+}

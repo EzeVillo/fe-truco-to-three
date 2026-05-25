@@ -22,10 +22,17 @@ export const routes: Routes = [
   {
     path: 'lobby',
     canMatch: [authGuard],
-    // TODO (feature de lobby): reemplazar con el LobbyPageComponent real
     loadComponent: () =>
-      import('./features/auth/pages/login-page/login-page.component').then(
-        (m) => m.LoginPageComponent,
+      import('./features/lobby/pages/lobby-page/lobby-page.component').then(
+        (m) => m.LobbyPageComponent,
+      ),
+  },
+  {
+    path: 'lobby/vs-bots',
+    canMatch: [authGuard],
+    loadComponent: () =>
+      import('./features/lobby/pages/bots-config-page/bots-config-page.component').then(
+        (m) => m.BotsConfigPageComponent,
       ),
   },
   { path: '', pathMatch: 'full', redirectTo: 'login' },

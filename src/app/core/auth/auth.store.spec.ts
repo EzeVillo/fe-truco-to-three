@@ -30,11 +30,9 @@ describe('AuthStore', () => {
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation((key: string) => {
       return fakeStorage[key] ?? null;
     });
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(
-      (key, value) => {
-        fakeStorage[key] = value;
-      },
-    );
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation((key, value) => {
+      fakeStorage[key] = value;
+    });
     vi.spyOn(Storage.prototype, 'removeItem').mockImplementation((key) => {
       delete fakeStorage[key];
     });
@@ -158,7 +156,7 @@ describe('AuthStore', () => {
         return fakeStorage[key] ?? null;
       });
       vi.spyOn(Storage.prototype, 'removeItem').mockImplementation((key) => {
-      delete fakeStorage[key];
+        delete fakeStorage[key];
       });
       const freshStore = TestBed.inject(AuthStore);
 

@@ -32,4 +32,5 @@ export function setupFakeStorage(): Record<string, string> {
 }
 
 // eslint workaround: vi is a global in vitest
-declare const vi: (typeof import('vitest'))['vi'];
+import type * as Vitest from 'vitest';
+declare const vi: Vitest.VitestUtils;

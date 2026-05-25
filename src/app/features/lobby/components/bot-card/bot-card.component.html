@@ -1,0 +1,13 @@
+<button
+  type="button"
+  class="bot-card"
+  [class.bot-card--selected]="selected()"
+  [attr.aria-pressed]="selected()"
+  [attr.aria-label]="'Seleccionar ' + displayName()"
+  (click)="onClick()"
+>
+  <span class="bot-card__avatar" aria-hidden="true" [style.background-color]="avatarColor()">{{
+    initials()
+  }}</span>
+  <span class="bot-card__name">{{ displayName() }}</span>
+</button>

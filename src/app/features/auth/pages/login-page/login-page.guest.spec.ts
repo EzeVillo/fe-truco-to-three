@@ -30,14 +30,10 @@ describe('LoginPageComponent — flujo invitado (US1)', () => {
     };
 
     const fakeStorage: Record<string, string> = {};
-    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(
-      (key) => fakeStorage[key] ?? null,
-    );
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(
-      (key, value) => {
-        fakeStorage[key] = value;
-      },
-    );
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation((key) => fakeStorage[key] ?? null);
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation((key, value) => {
+      fakeStorage[key] = value;
+    });
     vi.spyOn(Storage.prototype, 'removeItem').mockImplementation((key) => {
       delete fakeStorage[key];
     });

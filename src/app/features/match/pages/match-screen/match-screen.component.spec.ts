@@ -6,7 +6,7 @@ import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { MatchScreenComponent } from './match-screen.component';
 import { MatchStateService } from '../../services/match-state.service';
-import { RoundWonDialogComponent } from '../../components/round-won-dialog/round-won-dialog.component';
+import { GameWonDialogComponent } from '../../components/game-won-dialog/game-won-dialog.component';
 import { EnvidoResultDialogComponent } from '../../components/envido-result-dialog/envido-result-dialog.component';
 import { mockMatchViewerPlayerOne } from '../../mocks/match-state.mocks';
 
@@ -16,7 +16,7 @@ describe('MatchScreenComponent', () => {
 
   function setupComponent(params: Record<string, string> = {}): void {
     TestBed.configureTestingModule({
-      imports: [MatchScreenComponent, MatDialogModule, RoundWonDialogComponent, EnvidoResultDialogComponent],
+      imports: [MatchScreenComponent, MatDialogModule, GameWonDialogComponent, EnvidoResultDialogComponent],
       providers: [
         provideRouter([]),
         {
@@ -498,7 +498,7 @@ describe('MatchScreenComponent', () => {
     });
   });
 
-  it('opens RoundWonDialog on roundEnded$ when local player wins', () => {
+  it('opens GameWonDialog on gameWon$ when local player wins', () => {
     setupComponent({ matchId: 'test-match' });
     matchStateService.loading.set(false);
     matchStateService.state.set(mockMatchViewerPlayerOne);
@@ -506,18 +506,18 @@ describe('MatchScreenComponent', () => {
 
     const dialogSpy = vi.spyOn(fixture.componentInstance['dialog'], 'open');
 
-    matchStateService.roundEnded$.next({ winnerSeat: 'PLAYER_ONE' });
+    matchStateService.gameWon$.next({ winnerSeat: 'PLAYER_ONE' });
 
     expect(dialogSpy).toHaveBeenCalledOnce();
     const call = dialogSpy.mock.calls[0];
-    expect(call[0]).toBe(RoundWonDialogComponent);
+    expect(call[0]).toBe(GameWonDialogComponent);
     expect(call[1]?.['data']).toMatchObject({
       matchFinished: false,
       localWonMatch: true,
     });
   });
 
-  it('opens RoundWonDialog on roundEnded$ when local player loses', () => {
+  it('opens GameWonDialog on gameWon$ when local player loses', () => {
     setupComponent({ matchId: 'test-match' });
     matchStateService.loading.set(false);
     matchStateService.state.set(mockMatchViewerPlayerOne);
@@ -525,11 +525,11 @@ describe('MatchScreenComponent', () => {
 
     const dialogSpy = vi.spyOn(fixture.componentInstance['dialog'], 'open');
 
-    matchStateService.roundEnded$.next({ winnerSeat: 'PLAYER_TWO' });
+    matchStateService.gameWon$.next({ winnerSeat: 'PLAYER_TWO' });
 
     expect(dialogSpy).toHaveBeenCalledOnce();
     const call = dialogSpy.mock.calls[0];
-    expect(call[0]).toBe(RoundWonDialogComponent);
+    expect(call[0]).toBe(GameWonDialogComponent);
     expect(call[1]?.['data']).toMatchObject({
       matchFinished: false,
       localWonMatch: false,

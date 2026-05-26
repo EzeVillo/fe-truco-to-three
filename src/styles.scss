@@ -241,9 +241,9 @@ router-outlet {
 }
 
 // =============================================================================
-// Theming del modal de ronda ganada (RoundWonDialogComponent)
+// Theming del modal de partida ganada (GameWonDialogComponent)
 // =============================================================================
-.t3-round-won-dialog {
+.t3-game-won-dialog {
   --mdc-dialog-container-color: transparent;
   --mdc-dialog-subhead-color: var(--t3-text);
   --mdc-dialog-supporting-text-color: var(--t3-text-muted);
@@ -262,6 +262,6 @@ router-outlet {
   }
 }
 
-.cdk-overlay-backdrop.t3-round-won-backdrop {
+.cdk-overlay-backdrop.t3-game-won-backdrop {
   background-color: var(--t3-surface-overlay);
 }

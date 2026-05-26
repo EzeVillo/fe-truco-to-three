@@ -2,38 +2,38 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 
-export interface RoundWonDialogData {
+export interface GameWonDialogData {
   /** Nombre del jugador local. */
   playerName: string;
   /** Nombre del rival. */
   opponentName: string;
-  /** Rondas ganadas por el jugador local. */
-  playerRoundsWon: number;
-  /** Rondas ganadas por el rival. */
-  opponentRoundsWon: number;
-  /** Total de rondas de la serie (1, 3 o 5). */
-  roundsToPlay: 1 | 3 | 5;
-  /** Número de la ronda que acaba de terminar. */
-  roundNumber: number;
-  /** `true` si la serie ya terminó con esta ronda. */
+  /** Partidas ganadas por el jugador local en la serie. */
+  playerGamesWon: number;
+  /** Partidas ganadas por el rival en la serie. */
+  opponentGamesWon: number;
+  /** Total de partidas de la serie (1, 3 o 5). */
+  gamesToPlay: 1 | 3 | 5;
+  /** Número de la partida individual que acaba de terminar. */
+  gameNumber: number;
+  /** `true` si la serie ya terminó con esta partida. */
   matchFinished: boolean;
   /** `true` si el jugador local ganó la serie (solo relevante si matchFinished). */
   localWonMatch: boolean;
 }
 
 @Component({
-  selector: 'app-round-won-dialog',
+  selector: 'app-game-won-dialog',
   standalone: true,
   imports: [CommonModule, MatDialogModule],
-  templateUrl: './round-won-dialog.component.html',
-  styleUrl: './round-won-dialog.component.scss',
+  templateUrl: './game-won-dialog.component.html',
+  styleUrl: './game-won-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RoundWonDialogComponent {
-  readonly data = inject<RoundWonDialogData>(MAT_DIALOG_DATA);
-  private readonly dialogRef = inject<MatDialogRef<RoundWonDialogComponent, void>>(MatDialogRef);
+export class GameWonDialogComponent {
+  readonly data = inject<GameWonDialogData>(MAT_DIALOG_DATA);
+  private readonly dialogRef = inject<MatDialogRef<GameWonDialogComponent, void>>(MatDialogRef);
 
-  /** `true` si el jugador local ganó la serie (ya sea en esta ronda o previamente). */
+  /** `true` si el jugador local ganó la serie. */
   get isMatchWon(): boolean {
     return this.data.matchFinished && this.data.localWonMatch;
   }
@@ -43,8 +43,8 @@ export class RoundWonDialogComponent {
     return this.data.matchFinished && !this.data.localWonMatch;
   }
 
-  /** `true` si solo ganó la ronda pero la serie sigue. */
-  get isRoundOnly(): boolean {
+  /** `true` si solo ganó la partida individual pero la serie sigue. */
+  get isGameOnly(): boolean {
     return !this.data.matchFinished;
   }
 
@@ -56,7 +56,7 @@ export class RoundWonDialogComponent {
     if (this.isMatchLost) {
       return 'Serie perdida';
     }
-    return '¡Ronda ganada!';
+    return '¡Partida ganada!';
   }
 
   /** Subtítulo de victoria/derrota. */
@@ -67,7 +67,7 @@ export class RoundWonDialogComponent {
     if (this.isMatchLost) {
       return 'Perdiste la partida...';
     }
-    return `¡Ganaste la ronda ${this.data.roundNumber}!`;
+    return `¡Ganaste la partida ${this.data.gameNumber}!`;
   }
 
   /** Texto de contexto según el estado de la serie. */
@@ -78,10 +78,10 @@ export class RoundWonDialogComponent {
     if (this.isMatchLost) {
       return '¡La próxima será!';
     }
-    if (this.data.playerRoundsWon === this.data.opponentRoundsWon) {
+    if (this.data.playerGamesWon === this.data.opponentGamesWon) {
       return 'Serie empatada';
     }
-    if (this.data.playerRoundsWon > this.data.opponentRoundsWon) {
+    if (this.data.playerGamesWon > this.data.opponentGamesWon) {
       return 'Vas arriba en la serie';
     }
     return 'Seguís en carrera';

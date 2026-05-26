@@ -6,11 +6,11 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { deriveMatchView, type MatchView } from '../../utils/derive-match-view';
 import { callDisplayMapper } from '../../utils/call-display-mapper';
 import { GameBoardComponent } from '../../components/game-board/game-board.component';
-import { RoundWonDialogComponent, type RoundWonDialogData } from '../../components/round-won-dialog/round-won-dialog.component';
+import { GameWonDialogComponent, type GameWonDialogData } from '../../components/game-won-dialog/game-won-dialog.component';
 import { EnvidoResultDialogComponent, type EnvidoResultDialogData } from '../../components/envido-result-dialog/envido-result-dialog.component';
 import { MatchStateService } from '../../services/match-state.service';
 import { getErrorCopy } from '../../../../shared/error-copy/error-copy';
-import type { MatchEndedEvent, MatchWsEvent, RoundEndedPayload, EnvidoResolvedPayload } from '../../models/match-ws-events';
+import type { MatchEndedEvent, MatchWsEvent, GameWonPayload, EnvidoResolvedPayload } from '../../models/match-ws-events';
 import type { Subscription } from 'rxjs';
 
 @Component({
@@ -53,8 +53,8 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
       this.openResultDialog(event);
     });
 
-    const roundSub = this.matchStateService.roundEnded$.subscribe((event) => {
-      this.openRoundResultDialog(event);
+    const gameWonSub = this.matchStateService.gameWon$.subscribe((event) => {
+      this.openGameWonDialog(event);
     });
 
     const envidoSub = this.matchStateService.envidoResolved$.subscribe((event) => {
@@ -67,7 +67,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
 
     // Store subscriptions for cleanup
     this._endedSub = endedSub;
-    this._roundSub = roundSub;
+    this._gameWonSub = gameWonSub;
     this._envidoSub = envidoSub;
     this._eventSub = eventSub;
 
@@ -78,7 +78,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this._endedSub?.unsubscribe();
-    this._roundSub?.unsubscribe();
+    this._gameWonSub?.unsubscribe();
     this._envidoSub?.unsubscribe();
     this._eventSub?.unsubscribe();
     this.clearAllCallDisplayTimers();
@@ -181,14 +181,14 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     const state = this.matchStateService.state();
     if (!state) {return;}
 
-    const data: RoundWonDialogData = this.mapMatchEndedToDialogData(event, state);
+    const data: GameWonDialogData = this.mapMatchEndedToDialogData(event, state);
 
-    const dialogRef = this.dialog.open<RoundWonDialogComponent, RoundWonDialogData, void>(
-      RoundWonDialogComponent,
+    const dialogRef = this.dialog.open<GameWonDialogComponent, GameWonDialogData, void>(
+      GameWonDialogComponent,
       {
         data,
-        panelClass: 't3-round-won-dialog',
-        backdropClass: 't3-round-won-backdrop',
+        panelClass: 't3-game-won-dialog',
+        backdropClass: 't3-game-won-backdrop',
         disableClose: true,
       }
     );
@@ -198,7 +198,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     });
   }
 
-  private openRoundResultDialog(event: RoundEndedPayload): void {
+  private openGameWonDialog(event: GameWonPayload): void {
     const state = this.matchStateService.state();
     if (!state) {return;}
 
@@ -207,26 +207,26 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
 
     const playerName = isPlayerOne ? state.playerOneUsername : state.playerTwoUsername;
     const opponentName = isPlayerOne ? state.playerTwoUsername : state.playerOneUsername;
-    const playerRoundsWon = isPlayerOne ? state.gamesWonPlayerOne : state.gamesWonPlayerTwo;
-    const opponentRoundsWon = isPlayerOne ? state.gamesWonPlayerTwo : state.gamesWonPlayerOne;
+    const playerGamesWon = isPlayerOne ? state.gamesWonPlayerOne : state.gamesWonPlayerTwo;
+    const opponentGamesWon = isPlayerOne ? state.gamesWonPlayerTwo : state.gamesWonPlayerOne;
 
-    const data: RoundWonDialogData = {
+    const data: GameWonDialogData = {
       playerName,
       opponentName,
-      playerRoundsWon,
-      opponentRoundsWon,
-      roundsToPlay: state.gamesToPlay,
-      roundNumber: state.gamesWonPlayerOne + state.gamesWonPlayerTwo + 1,
+      playerGamesWon,
+      opponentGamesWon,
+      gamesToPlay: state.gamesToPlay,
+      gameNumber: state.gamesWonPlayerOne + state.gamesWonPlayerTwo,
       matchFinished: false,
       localWonMatch: event.winnerSeat === viewerSeat,
     };
 
-    this.dialog.open<RoundWonDialogComponent, RoundWonDialogData, void>(
-      RoundWonDialogComponent,
+    this.dialog.open<GameWonDialogComponent, GameWonDialogData, void>(
+      GameWonDialogComponent,
       {
         data,
-        panelClass: 't3-round-won-dialog',
-        backdropClass: 't3-round-won-backdrop',
+        panelClass: 't3-game-won-dialog',
+        backdropClass: 't3-game-won-backdrop',
         disableClose: false,
       }
     );
@@ -260,7 +260,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     );
   }
 
-  private mapMatchEndedToDialogData(event: MatchEndedEvent, state: ReturnType<typeof this.matchStateService.state>): RoundWonDialogData {
+  private mapMatchEndedToDialogData(event: MatchEndedEvent, state: ReturnType<typeof this.matchStateService.state>): GameWonDialogData {
     if (!state) {
       throw new Error('State is null when mapping match ended data');
     }
@@ -270,23 +270,23 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
 
     const playerName = isPlayerOne ? state.playerOneUsername : state.playerTwoUsername;
     const opponentName = isPlayerOne ? state.playerTwoUsername : state.playerOneUsername;
-    const playerRoundsWon = isPlayerOne ? event.gamesWonPlayerOne : event.gamesWonPlayerTwo;
-    const opponentRoundsWon = isPlayerOne ? event.gamesWonPlayerTwo : event.gamesWonPlayerOne;
+    const playerGamesWon = isPlayerOne ? event.gamesWonPlayerOne : event.gamesWonPlayerTwo;
+    const opponentGamesWon = isPlayerOne ? event.gamesWonPlayerTwo : event.gamesWonPlayerOne;
 
     return {
       playerName,
       opponentName,
-      playerRoundsWon,
-      opponentRoundsWon,
-      roundsToPlay: state.gamesToPlay,
-      roundNumber: event.gamesWonPlayerOne + event.gamesWonPlayerTwo,
+      playerGamesWon,
+      opponentGamesWon,
+      gamesToPlay: state.gamesToPlay,
+      gameNumber: event.gamesWonPlayerOne + event.gamesWonPlayerTwo,
       matchFinished: true,
       localWonMatch: event.winnerSeat === viewerSeat,
     };
   }
 
   private _endedSub?: Subscription;
-  private _roundSub?: Subscription;
+  private _gameWonSub?: Subscription;
   private _envidoSub?: Subscription;
   private _eventSub?: Subscription;
 }

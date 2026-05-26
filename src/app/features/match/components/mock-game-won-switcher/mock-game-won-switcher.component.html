@@ -1,0 +1,8 @@
+<div class="mock-game-won-switcher">
+  <span class="mock-game-won-switcher__label">Probar modal partida ganada:</span>
+  @for (opt of options; track opt.key) {
+    <button type="button" class="mock-game-won-switcher__btn" (click)="select(opt.key)">
+      {{ opt.label }}
+    </button>
+  }
+</div>

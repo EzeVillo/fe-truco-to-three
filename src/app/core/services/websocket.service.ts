@@ -1,7 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import type { OnDestroy } from '@angular/core';
 import { Client, type IMessage, type StompSubscription } from '@stomp/stompjs';
-import SockJS from 'sockjs-client';
 import { Subject, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthStore } from '../auth/auth.store';
@@ -20,11 +19,12 @@ export class WebSocketService implements OnDestroy {
     }
 
     this.client = new Client({
-      webSocketFactory: () => new SockJS(environment.wsUrl) as unknown as WebSocket,
+      brokerURL: environment.wsUrl.replace(/^http/, 'ws'),
       connectHeaders: {
         Authorization: `Bearer ${this.authStore.accessToken() ?? ''}`,
       },
       reconnectDelay: 5000,
+      debug: (str) => console.log('[STOMP]', str),
       onConnect: () => {
         this.connected$.next(true);
       },
@@ -32,8 +32,14 @@ export class WebSocketService implements OnDestroy {
         this.connected$.next(false);
       },
       onStompError: (frame) => {
-        console.error('STOMP error', frame);
+        console.error('STOMP error — message:', frame.headers['message'], '| body:', frame.body);
         this.connected$.next(false);
+      },
+      onWebSocketError: (evt) => {
+        console.error('WS error', evt);
+      },
+      onWebSocketClose: (evt) => {
+        console.warn('WS closed — code:', (evt as CloseEvent).code, 'reason:', (evt as CloseEvent).reason);
       },
     });
 

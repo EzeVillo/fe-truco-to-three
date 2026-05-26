@@ -1,8 +1,21 @@
-@if (matchView(); as view) {
+@if (matchStateService.loading()) {
   <div class="match-screen">
-    <app-mock-actions-state-switcher (selected)="onFixtureSelected($event)" />
-    <app-mock-envido-result-switcher (selected)="onEnvidoResultMockSelected($event)" />
-    <app-mock-round-won-switcher (selected)="onRoundWonMockSelected($event)" />
+    <div class="match-screen__spinner">
+      <mat-progress-spinner mode="indeterminate" diameter="48" />
+    </div>
+  </div>
+} @else if (matchStateService.error()) {
+  <div class="match-screen">
+    <div class="match-screen__error">
+      <p class="match-screen__error-text">{{ errorMessage() }}</p>
+      <div class="match-screen__error-actions">
+        <button class="t3-btn t3-btn--neutral" (click)="retry()">Reintentar</button>
+        <button class="t3-btn t3-btn--destructive" (click)="goToLobby()">Volver al lobby</button>
+      </div>
+    </div>
+  </div>
+} @else if (matchView(); as view) {
+  <div class="match-screen">
     <app-game-board [view]="view" [matchId]="matchId()" />
   </div>
 }

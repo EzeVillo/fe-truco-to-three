@@ -5,8 +5,8 @@ import { CommonModule } from '@angular/common';
 export interface EnvidoResultDialogData {
   /** Nombre del jugador mano (quien empieza cantando). Siempre tiene puntaje. */
   manoName: string;
-  /** Puntaje del mano. Siempre numérico. */
-  manoScore: number;
+  /** Puntaje del mano. `null` o `undefined` muestra "Son buenas". */
+  manoScore: number | null | undefined;
   /** Nombre del jugador pie (rival). */
   pieName: string;
   /** Puntaje del pie. `null` o `undefined` muestra "Son buenas". */
@@ -26,6 +26,12 @@ export interface EnvidoResultDialogData {
 export class EnvidoResultDialogComponent {
   readonly data = inject<EnvidoResultDialogData>(MAT_DIALOG_DATA);
   private readonly dialogRef = inject(MatDialogRef<EnvidoResultDialogComponent, void>);
+
+  get manoScoreDisplay(): string {
+    return this.data.manoScore !== null && this.data.manoScore !== undefined
+      ? String(this.data.manoScore)
+      : '"Son buenas"';
+  }
 
   get pieScoreDisplay(): string {
     return this.data.pieScore !== null && this.data.pieScore !== undefined

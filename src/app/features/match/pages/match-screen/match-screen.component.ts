@@ -20,10 +20,14 @@ import { MockActionsStateSwitcherComponent } from '../../components/mock-actions
 export class MatchScreenComponent implements OnInit {
   readonly matchState = signal<MatchState | null>(null);
   readonly matchView = signal<MatchView | null>(null);
+  readonly matchId = signal<string>('');
 
   private readonly route = inject(ActivatedRoute);
 
   ngOnInit(): void {
+    const matchId = this.route.snapshot.paramMap.get('matchId') ?? '';
+    this.matchId.set(matchId);
+
     const fixtureKey = this.route.snapshot.queryParamMap.get('fixture');
     const state = getFixture(fixtureKey);
     this.setState(state);

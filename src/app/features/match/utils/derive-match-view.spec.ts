@@ -83,6 +83,7 @@ describe('deriveMatchView', () => {
   it('maps availableActions from roundGame', () => {
     const view = deriveMatchView(mockMatchViewerPlayerOne);
     expect(view.availableActions).toEqual([
+      { type: 'PLAY_CARD' },
       { type: 'CALL_TRUCO' },
       { type: 'CALL_ENVIDO' },
       { type: 'FOLD' },

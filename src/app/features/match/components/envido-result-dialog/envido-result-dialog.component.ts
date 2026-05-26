@@ -1,0 +1,39 @@
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { CommonModule } from '@angular/common';
+
+export interface EnvidoResultDialogData {
+  /** Nombre del jugador mano (quien empieza cantando). Siempre tiene puntaje. */
+  manoName: string;
+  /** Puntaje del mano. Siempre numérico. */
+  manoScore: number;
+  /** Nombre del jugador pie (rival). */
+  pieName: string;
+  /** Puntaje del pie. `null` o `undefined` muestra "Son buenas". */
+  pieScore: number | null | undefined;
+  /** `true` si el jugador local ganó el envido. */
+  won: boolean;
+}
+
+@Component({
+  selector: 'app-envido-result-dialog',
+  standalone: true,
+  imports: [CommonModule, MatDialogModule],
+  templateUrl: './envido-result-dialog.component.html',
+  styleUrl: './envido-result-dialog.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class EnvidoResultDialogComponent {
+  readonly data = inject<EnvidoResultDialogData>(MAT_DIALOG_DATA);
+  private readonly dialogRef = inject(MatDialogRef<EnvidoResultDialogComponent, void>);
+
+  get pieScoreDisplay(): string {
+    return this.data.pieScore !== null && this.data.pieScore !== undefined
+      ? String(this.data.pieScore)
+      : '"Son buenas"';
+  }
+
+  close(): void {
+    this.dialogRef.close();
+  }
+}

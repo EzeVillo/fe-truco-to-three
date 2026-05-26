@@ -1,0 +1,8 @@
+<div class="mock-round-won-switcher">
+  <span class="mock-round-won-switcher__label">Probar modal ronda ganada:</span>
+  @for (opt of options; track opt.key) {
+    <button type="button" class="mock-round-won-switcher__btn" (click)="select(opt.key)">
+      {{ opt.label }}
+    </button>
+  }
+</div>

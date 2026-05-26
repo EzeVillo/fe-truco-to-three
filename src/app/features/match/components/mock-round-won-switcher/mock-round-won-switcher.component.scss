@@ -1,0 +1,39 @@
+.mock-round-won-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--t3-gap-sm);
+  padding: var(--t3-gap-sm) var(--t3-gap-md);
+  background: var(--t3-card-bg);
+  border-bottom: 1px solid var(--t3-card-border);
+
+  &__label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--t3-text-muted);
+    margin-right: var(--t3-gap-sm);
+  }
+
+  &__btn {
+    padding: 6px 12px;
+    border-radius: var(--t3-radius-sm);
+    border: 1px solid var(--t3-card-border);
+    background: var(--t3-input-bg);
+    color: var(--t3-text);
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 120ms ease, border-color 120ms ease;
+
+    &:hover {
+      background: var(--t3-btn-neutral-bg-hover);
+      border-color: var(--t3-gold-border-hover);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--t3-gold-400);
+      outline-offset: 2px;
+    }
+  }
+}

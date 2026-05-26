@@ -1,0 +1,36 @@
+.envido-result-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--t3-gap-xs);
+  justify-content: center;
+  padding: var(--t3-gap-xs) var(--t3-gap-sm);
+  background: var(--t3-action-bar-bg);
+  border-radius: var(--t3-radius-md);
+
+  &__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    padding: 0 var(--t3-gap-sm);
+    border-radius: var(--t3-radius-sm);
+    border: 1px solid var(--t3-btn-neutral-border);
+    background: transparent;
+    color: var(--t3-btn-neutral-text);
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background-color 120ms ease, border-color 120ms ease;
+
+    &:hover {
+      background: var(--t3-btn-neutral-bg-hover);
+      border-color: var(--t3-gold-400);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--t3-gold-400);
+      outline-offset: 2px;
+    }
+  }
+}

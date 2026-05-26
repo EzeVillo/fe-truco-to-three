@@ -1,0 +1,39 @@
+<div class="envido-result" role="dialog" aria-modal="true" aria-labelledby="envido-result-title" mat-dialog-content>
+  <h2 id="envido-result-title" class="envido-result__title">Envido</h2>
+
+  <p
+    class="envido-result__status"
+    [class.envido-result__status--win]="data.won"
+    [class.envido-result__status--lose]="!data.won"
+  >
+    {{ data.won ? '¡Ganaste!' : 'Perdiste...' }}
+  </p>
+
+  <div class="envido-result__scores">
+    <div class="envido-result__score">
+      <span class="envido-result__name">{{ data.manoName }}:</span>
+      <span
+        class="envido-result__points"
+        [class.envido-result__points--win]="data.won"
+        [class.envido-result__points--lose]="!data.won"
+      >
+        {{ data.manoScore }}
+      </span>
+    </div>
+
+    <div class="envido-result__score">
+      <span class="envido-result__name">{{ data.pieName }}:</span>
+      <span
+        class="envido-result__points"
+        [class.envido-result__points--win]="data.won"
+        [class.envido-result__points--lose]="!data.won"
+      >
+        {{ pieScoreDisplay }}
+      </span>
+    </div>
+  </div>
+
+  <button type="button" class="t3-btn t3-btn--primary envido-result__accept" cdkFocusInitial (click)="close()">
+    ACEPTAR
+  </button>
+</div>

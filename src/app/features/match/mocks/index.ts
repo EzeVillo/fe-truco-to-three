@@ -73,3 +73,18 @@ export {
   mockMatchActionsRespondEnvido,
   mockMatchActionsRespondTruco,
 } from './match-action-fixtures.mocks';
+
+export {
+  mockEnvidoResultWinAsMano,
+  mockEnvidoResultLoseAsPie,
+  mockEnvidoResultWinAsPie,
+  mockEnvidoResultLoseAsMano,
+} from './envido-result.mocks';
+
+export {
+  mockRoundWonFirstRound,
+  mockRoundWonTieSeries,
+  mockRoundWonDecisive,
+  mockRoundWonSingleRound,
+  mockRoundLostDecisive,
+} from './round-won.mocks';

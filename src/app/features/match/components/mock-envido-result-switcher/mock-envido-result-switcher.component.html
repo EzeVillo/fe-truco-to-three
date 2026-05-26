@@ -1,0 +1,7 @@
+<div class="envido-result-switcher">
+  @for (opt of options; track opt.key) {
+    <button type="button" class="envido-result-switcher__btn" (click)="selected.emit(opt.key)">
+      {{ opt.label }}
+    </button>
+  }
+</div>

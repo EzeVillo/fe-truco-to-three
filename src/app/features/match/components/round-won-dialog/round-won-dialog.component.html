@@ -1,0 +1,39 @@
+<div class="round-won" role="dialog" aria-modal="true" [attr.aria-labelledby]="'round-won-title'" mat-dialog-content>
+  <h2 id="round-won-title" class="round-won__title" [class.round-won__title--match-won]="isMatchWon" [class.round-won__title--match-lost]="isMatchLost">
+    {{ titleText }}
+  </h2>
+
+  <p class="round-won__status" [class.round-won__status--win]="!isMatchLost" [class.round-won__status--lose]="isMatchLost">
+    {{ statusText }}
+  </p>
+
+  <div class="round-won__series">
+    <span class="round-won__series-label">Serie</span>
+
+    <div class="round-won__scoreboard">
+      <div class="round-won__player">
+        <span class="round-won__player-name">{{ data.playerName }}</span>
+        <span class="round-won__player-games" [class.round-won__player-games--win]="data.playerRoundsWon >= data.opponentRoundsWon" [class.round-won__player-games--lose]="data.playerRoundsWon < data.opponentRoundsWon">
+          {{ data.playerRoundsWon }}
+        </span>
+      </div>
+
+      <span class="round-won__divider">—</span>
+
+      <div class="round-won__player">
+        <span class="round-won__player-name">{{ data.opponentName }}</span>
+        <span class="round-won__player-games" [class.round-won__player-games--win]="data.opponentRoundsWon > data.playerRoundsWon" [class.round-won__player-games--lose]="data.opponentRoundsWon <= data.playerRoundsWon">
+          {{ data.opponentRoundsWon }}
+        </span>
+      </div>
+    </div>
+
+    <p class="round-won__context" [class.round-won__context--match-won]="isMatchWon" [class.round-won__context--match-lost]="isMatchLost">
+      {{ contextMessage }}
+    </p>
+  </div>
+
+  <button type="button" class="t3-btn t3-btn--primary round-won__accept" cdkFocusInitial (click)="close()">
+    Continuar
+  </button>
+</div>

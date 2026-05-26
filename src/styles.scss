@@ -113,6 +113,11 @@
   --t3-truco-mazo-bg: #c87a0a;
   --t3-truco-mazo-bg-hover: #d88a1a;
   --t3-truco-tab-divider: rgba(255, 255, 255, 0.25);
+
+  // -- Resultado de envido (modal) --------------------------------------------
+  --t3-envido-result-bg: rgba(6, 10, 6, 0.96);
+  --t3-envido-win-text: #8eea8e;
+  --t3-envido-lose-text: #e87a3a;
 }
 
 // =============================================================================
@@ -206,5 +211,57 @@ router-outlet {
 }
 
 .cdk-overlay-backdrop.t3-confirm-backdrop {
+  background-color: var(--t3-surface-overlay);
+}
+
+// =============================================================================
+// Theming del modal de resultado de envido (EnvidoResultDialogComponent)
+// =============================================================================
+.t3-envido-result-dialog {
+  --mdc-dialog-container-color: transparent;
+  --mdc-dialog-subhead-color: var(--t3-text);
+  --mdc-dialog-supporting-text-color: var(--t3-text-muted);
+  --mdc-dialog-container-shape: var(--t3-radius-lg);
+  overflow: hidden;
+  border-radius: var(--t3-radius-lg);
+  box-shadow: var(--t3-shadow-card);
+
+  .mat-mdc-dialog-container {
+    background-color: transparent !important;
+  }
+
+  .mdc-dialog__surface {
+    background-color: var(--t3-envido-result-bg) !important;
+    border-radius: var(--t3-radius-lg);
+  }
+}
+
+.cdk-overlay-backdrop.t3-envido-result-backdrop {
+  background-color: var(--t3-surface-overlay);
+}
+
+// =============================================================================
+// Theming del modal de ronda ganada (RoundWonDialogComponent)
+// =============================================================================
+.t3-round-won-dialog {
+  --mdc-dialog-container-color: transparent;
+  --mdc-dialog-subhead-color: var(--t3-text);
+  --mdc-dialog-supporting-text-color: var(--t3-text-muted);
+  --mdc-dialog-container-shape: var(--t3-radius-lg);
+  overflow: hidden;
+  border-radius: var(--t3-radius-lg);
+  box-shadow: var(--t3-shadow-card);
+
+  .mat-mdc-dialog-container {
+    background-color: transparent !important;
+  }
+
+  .mdc-dialog__surface {
+    background-color: var(--t3-envido-result-bg) !important;
+    border-radius: var(--t3-radius-lg);
+  }
+}
+
+.cdk-overlay-backdrop.t3-round-won-backdrop {
   background-color: var(--t3-surface-overlay);
 }

@@ -7,7 +7,7 @@
 
 import { HttpErrorResponse } from '@angular/common/http';
 
-export type ErrorCopyScope = 'BOT_CATALOG' | 'CREATE_BOT_MATCH';
+export type ErrorCopyScope = 'BOT_CATALOG' | 'CREATE_BOT_MATCH' | 'MATCH_LOAD';
 
 const FALLBACK = 'Ocurrió un error inesperado. Reintentá.';
 
@@ -30,22 +30,41 @@ export function getErrorCopy(scope: ErrorCopyScope, error: unknown): string {
     }
   }
 
-  // scope === 'CREATE_BOT_MATCH'
+  if (scope === 'CREATE_BOT_MATCH') {
+    switch (status) {
+      case 401:
+        return '';
+      case 403:
+        return 'No tenés permiso para crear esta partida.';
+      case 404:
+        return 'El bot ya no está disponible, actualizá la lista.';
+      case 409:
+      case 422:
+        return 'La configuración elegida no es válida.';
+      case 0:
+        return 'No pudimos crear la partida. Reintentá en unos segundos.';
+      default:
+        if (status >= 500 && status < 600) {
+          return 'No pudimos crear la partida. Reintentá en unos segundos.';
+        }
+        return FALLBACK;
+    }
+  }
+
+  // scope === 'MATCH_LOAD'
   switch (status) {
     case 401:
       return '';
-    case 403:
-      return 'No tenés permiso para crear esta partida.';
     case 404:
-      return 'El bot ya no está disponible, actualizá la lista.';
-    case 409:
+      return 'La partida no existe o ya no está disponible.';
     case 422:
-      return 'La configuración elegida no es válida.';
+      return 'No pertenecés a esta partida.';
     case 0:
-      return 'No pudimos crear la partida. Reintentá en unos segundos.';
+    case -1:
+      return 'No pudimos cargar la partida. Reintentá.';
     default:
       if (status >= 500 && status < 600) {
-        return 'No pudimos crear la partida. Reintentá en unos segundos.';
+        return 'No pudimos cargar la partida. Reintentá.';
       }
       return FALLBACK;
   }

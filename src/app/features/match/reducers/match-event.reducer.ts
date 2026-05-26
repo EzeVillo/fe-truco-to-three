@@ -1,0 +1,291 @@
+import type { MatchState } from '../../../core/models/match.models';
+import type { Seat, RoundStatus } from '../../../core/models/enums';
+import type {
+  MatchWsEvent,
+  MatchDerivedEvent,
+  CardPlayedPayload,
+  TurnChangedPayload,
+  TrucoCalledPayload,
+  TrucoRespondedPayload,
+  ScoreChangedPayload,
+  RoundStartedPayload,
+  RoundEndedPayload,
+  GameScoreChangedPayload,
+  MatchFinishedPayload,
+  MatchAbandonedPayload,
+  MatchForfeitedPayload,
+  HandResolvedPayload,
+  HandDealtPayload,
+  AvailableActionsUpdatedPayload,
+  PlayerHandUpdatedPayload,
+} from '../models/match-ws-events';
+
+function usernameFromSeat(seat: Seat, state: MatchState): string {
+  return seat === 'PLAYER_ONE' ? state.playerOneUsername : state.playerTwoUsername;
+}
+
+function updateCurrentHandCard(state: MatchState, seat: Seat, card: { suit: string; number: number } | null): MatchState {
+  if (!state.roundGame) {return state;}
+  const key = seat === 'PLAYER_ONE' ? 'cardPlayerOne' : 'cardPlayerTwo';
+  return {
+    ...state,
+    roundGame: {
+      ...state.roundGame,
+      currentHand: {
+        ...state.roundGame.currentHand,
+        [key]: card,
+      },
+    },
+  };
+}
+
+export function applyMatchEvent(state: MatchState, event: MatchWsEvent): MatchState {
+  switch (event.eventType) {
+    case 'CARD_PLAYED': {
+      const payload = event.payload as CardPlayedPayload;
+      return updateCurrentHandCard(state, payload.seat, payload.card);
+    }
+
+    case 'TURN_CHANGED': {
+      const payload = event.payload as TurnChangedPayload;
+      if (!state.roundGame) {return state;}
+      return {
+        ...state,
+        roundGame: {
+          ...state.roundGame,
+          currentTurn: usernameFromSeat(payload.seat, state),
+        },
+      };
+    }
+
+    case 'TRUCO_CALLED': {
+      const payload = event.payload as TrucoCalledPayload;
+      if (!state.roundGame) {return state;}
+      return {
+        ...state,
+        roundGame: {
+          ...state.roundGame,
+          currentTrucoCall: payload.call,
+          roundStatus: 'TRUCO_IN_PROGRESS' as RoundStatus,
+        },
+      };
+    }
+
+    case 'TRUCO_RESPONDED': {
+      const payload = event.payload as TrucoRespondedPayload;
+      if (!state.roundGame) {return state;}
+      return {
+        ...state,
+        roundGame: {
+          ...state.roundGame,
+          roundStatus: 'PLAYING' as RoundStatus,
+          currentTrucoCall: payload.call,
+        },
+      };
+    }
+
+    case 'ENVIDO_CALLED': {
+      if (!state.roundGame) {return state;}
+      return {
+        ...state,
+        roundGame: {
+          ...state.roundGame,
+          roundStatus: 'ENVIDO_IN_PROGRESS' as RoundStatus,
+        },
+      };
+    }
+
+    case 'ENVIDO_RESOLVED': {
+      if (!state.roundGame) {return state;}
+      return {
+        ...state,
+        roundGame: {
+          ...state.roundGame,
+          roundStatus: 'PLAYING' as RoundStatus,
+        },
+      };
+    }
+
+    case 'SCORE_CHANGED': {
+      const payload = event.payload as ScoreChangedPayload;
+      return {
+        ...state,
+        scorePlayerOne: payload.scorePlayerOne,
+        scorePlayerTwo: payload.scorePlayerTwo,
+      };
+    }
+
+    case 'GAME_SCORE_CHANGED': {
+      const payload = event.payload as GameScoreChangedPayload;
+      return {
+        ...state,
+        gamesWonPlayerOne: payload.gamesWonPlayerOne,
+        gamesWonPlayerTwo: payload.gamesWonPlayerTwo,
+      };
+    }
+
+    case 'ROUND_STARTED': {
+      const payload = event.payload as RoundStartedPayload;
+      return {
+        ...state,
+        roundGame: {
+          status: 'IN_PROGRESS' as const,
+          currentTurn: usernameFromSeat(payload.manoSeat, state),
+          myCards: [],
+          roundStatus: 'PLAYING' as RoundStatus,
+          currentTrucoCall: null,
+          winner: null,
+          availableActions: [],
+          playedHands: [],
+          currentHand: {
+            cardPlayerOne: null,
+            cardPlayerTwo: null,
+            mano: usernameFromSeat(payload.manoSeat, state),
+          },
+        },
+      };
+    }
+
+    case 'ROUND_ENDED': {
+      const payload = event.payload as RoundEndedPayload;
+      if (!state.roundGame) {return state;}
+      return {
+        ...state,
+        roundGame: {
+          ...state.roundGame,
+          winner: usernameFromSeat(payload.winnerSeat, state),
+          status: 'FINISHED' as const,
+        },
+      };
+    }
+
+    case 'GAME_STARTED': {
+      return {
+        ...state,
+        scorePlayerOne: 0,
+        scorePlayerTwo: 0,
+        roundGame: null,
+      };
+    }
+
+    case 'HAND_RESOLVED': {
+      const payload = event.payload as HandResolvedPayload;
+      if (!state.roundGame) {return state;}
+      const winner = usernameFromSeat(payload.winnerSeat, state);
+      return {
+        ...state,
+        roundGame: {
+          ...state.roundGame,
+          playedHands: [
+            ...state.roundGame.playedHands,
+            {
+              cardPlayerOne: payload.cardPlayerOne,
+              cardPlayerTwo: payload.cardPlayerTwo,
+              winner,
+            },
+          ],
+          currentHand: {
+            cardPlayerOne: null,
+            cardPlayerTwo: null,
+            mano: state.roundGame.currentHand.mano,
+          },
+        },
+      };
+    }
+
+    case 'HAND_DEALT': {
+      const payload = event.payload as HandDealtPayload;
+      if (!state.roundGame || payload.seat !== state.viewerSeat) {return state;}
+      return {
+        ...state,
+        roundGame: {
+          ...state.roundGame,
+          myCards: payload.cards,
+        },
+      };
+    }
+
+    case 'MATCH_FINISHED': {
+      const payload = event.payload as MatchFinishedPayload;
+      return {
+        ...state,
+        status: 'FINISHED' as const,
+        matchWinner: usernameFromSeat(payload.winnerSeat, state),
+        gamesWonPlayerOne: payload.gamesWonPlayerOne,
+        gamesWonPlayerTwo: payload.gamesWonPlayerTwo,
+      };
+    }
+
+    case 'MATCH_ABANDONED': {
+      const payload = event.payload as MatchAbandonedPayload;
+      return {
+        ...state,
+        status: 'FINISHED' as const,
+        matchWinner: usernameFromSeat(payload.winnerSeat, state),
+        gamesWonPlayerOne: payload.gamesWonPlayerOne,
+        gamesWonPlayerTwo: payload.gamesWonPlayerTwo,
+      };
+    }
+
+    case 'MATCH_FORFEITED': {
+      const payload = event.payload as MatchForfeitedPayload;
+      return {
+        ...state,
+        status: 'FINISHED' as const,
+        matchWinner: usernameFromSeat(payload.winnerSeat, state),
+        gamesWonPlayerOne: payload.gamesWonPlayerOne,
+        gamesWonPlayerTwo: payload.gamesWonPlayerTwo,
+      };
+    }
+
+    case 'FOLDED':
+    case 'HAND_CHANGED':
+    case 'SPECTATOR_COUNT_CHANGED':
+    case 'PLAYER_JOINED':
+    case 'PLAYER_READY':
+    case 'MATCH_CANCELLED':
+    case 'MATCH_PLAYER_LEFT':
+    case 'REMATCH_AVAILABLE':
+    case 'REMATCH_OPPONENT_WANTS':
+    case 'REMATCH_CONFIRMED':
+    case 'REMATCH_CLOSED_BY_LEAVE':
+    case 'REMATCH_EXPIRED':
+      return state;
+
+    default:
+      return state;
+  }
+}
+
+export function applyMatchDerivedEvent(state: MatchState, event: MatchDerivedEvent): MatchState {
+  if (!state.roundGame) {return state;}
+
+  switch (event.eventType) {
+    case 'AVAILABLE_ACTIONS_UPDATED': {
+      const payload = event.payload as AvailableActionsUpdatedPayload;
+      if (payload.seat !== state.viewerSeat) {return state;}
+      return {
+        ...state,
+        roundGame: {
+          ...state.roundGame,
+          availableActions: payload.availableActions,
+        },
+      };
+    }
+
+    case 'PLAYER_HAND_UPDATED': {
+      const payload = event.payload as PlayerHandUpdatedPayload;
+      if (payload.seat !== state.viewerSeat) {return state;}
+      return {
+        ...state,
+        roundGame: {
+          ...state.roundGame,
+          myCards: payload.cards,
+        },
+      };
+    }
+
+    default:
+      return state;
+  }
+}

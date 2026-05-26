@@ -25,6 +25,9 @@ import { AvailableActionsPanelComponent } from '../available-actions-panel/avail
 export class GameBoardComponent {
   readonly view = input.required<MatchView>();
   readonly matchId = input.required<string>();
+  readonly selfCallText = input<string | null>(null);
+  readonly opponentCallText = input<string | null>(null);
+  readonly centeredCallText = input<string | null>(null);
 
   readonly playCardsEnabled = computed(() =>
     this.view().availableActions.some((a) => a.type === 'PLAY_CARD')

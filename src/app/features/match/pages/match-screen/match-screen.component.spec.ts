@@ -95,6 +95,409 @@ describe('MatchScreenComponent', () => {
     expect(routerSpy).toHaveBeenCalledWith(['/']);
   });
 
+  it('selfCallText y opponentCallText inician en null', () => {
+    setupComponent({ matchId: 'test-match' });
+    expect(fixture.componentInstance.selfCallText()).toBeNull();
+    expect(fixture.componentInstance.opponentCallText()).toBeNull();
+  });
+
+  it('actualiza opponentCallText ante TRUCO_CALLED del rival', () => {
+    setupComponent({ matchId: 'test-match' });
+    matchStateService.state.set(mockMatchViewerPlayerOne);
+    fixture.detectChanges();
+
+    matchStateService.matchEvent$.next({
+      matchId: 'test-match',
+      eventType: 'TRUCO_CALLED',
+      timestamp: Date.now(),
+      payload: { callerSeat: 'PLAYER_TWO', call: 'TRUCO' },
+      stateVersion: 2,
+    });
+
+    expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Truco!');
+  });
+
+  it('actualiza selfCallText ante ENVIDO_CALLED del jugador propio', () => {
+    setupComponent({ matchId: 'test-match' });
+    matchStateService.state.set(mockMatchViewerPlayerOne);
+    fixture.detectChanges();
+
+    matchStateService.matchEvent$.next({
+      matchId: 'test-match',
+      eventType: 'ENVIDO_CALLED',
+      timestamp: Date.now(),
+      payload: { callerSeat: 'PLAYER_ONE', call: 'ENVIDO' },
+      stateVersion: 2,
+    });
+
+    expect(fixture.componentInstance.selfCallText()).toBe('\u00a1Envido!');
+  });
+
+  describe('auto-limpieza de aceptaciones (US2)', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('limpia texto de aceptaci\u00f3n despu\u00e9s de 3 segundos', () => {
+      setupComponent({ matchId: 'test-match' });
+      matchStateService.state.set(mockMatchViewerPlayerOne);
+      fixture.detectChanges();
+
+      matchStateService.matchEvent$.next({
+        matchId: 'test-match',
+        eventType: 'TRUCO_RESPONDED',
+        timestamp: Date.now(),
+        payload: { responderSeat: 'PLAYER_TWO', response: 'QUIERO', call: 'TRUCO' },
+        stateVersion: 2,
+      });
+
+      expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Quiero!');
+
+      vi.advanceTimersByTime(3000);
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.opponentCallText()).toBeNull();
+    });
+
+    it('cancela timer previo al llegar un nuevo evento del mismo jugador', () => {
+      setupComponent({ matchId: 'test-match' });
+      matchStateService.state.set(mockMatchViewerPlayerOne);
+      fixture.detectChanges();
+
+      // Emit QUIERO for opponent — starts timer
+      matchStateService.matchEvent$.next({
+        matchId: 'test-match',
+        eventType: 'TRUCO_RESPONDED',
+        timestamp: Date.now(),
+        payload: { responderSeat: 'PLAYER_TWO', response: 'QUIERO', call: 'TRUCO' },
+        stateVersion: 2,
+      });
+
+      expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Quiero!');
+
+      // Before timer fires, emit a new call from opponent
+      vi.advanceTimersByTime(1500);
+      matchStateService.matchEvent$.next({
+        matchId: 'test-match',
+        eventType: 'TRUCO_CALLED',
+        timestamp: Date.now(),
+        payload: { callerSeat: 'PLAYER_TWO', call: 'RETRUCO' },
+        stateVersion: 3,
+      });
+
+      fixture.detectChanges();
+      expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Retruco!');
+
+      // Original 3s timer should have been cancelled; new text remains
+      vi.advanceTimersByTime(1500);
+      fixture.detectChanges();
+      expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Retruco!');
+    });
+
+    it('no afecta textos de no-aceptaci\u00f3n con timer', () => {
+      setupComponent({ matchId: 'test-match' });
+      matchStateService.state.set(mockMatchViewerPlayerOne);
+      fixture.detectChanges();
+
+      matchStateService.matchEvent$.next({
+        matchId: 'test-match',
+        eventType: 'TRUCO_CALLED',
+        timestamp: Date.now(),
+        payload: { callerSeat: 'PLAYER_TWO', call: 'TRUCO' },
+        stateVersion: 2,
+      });
+
+      expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Truco!');
+
+      vi.advanceTimersByTime(5000);
+      fixture.detectChanges();
+
+      // Non-acceptance text should still be there (no auto-cleanup)
+      expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Truco!');
+    });
+  });
+
+  describe('reset de call texts (US3)', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    function setCallTexts(): void {
+      matchStateService.matchEvent$.next({
+        matchId: 'test-match',
+        eventType: 'TRUCO_CALLED',
+        timestamp: Date.now(),
+        payload: { callerSeat: 'PLAYER_ONE', call: 'TRUCO' },
+        stateVersion: 2,
+      });
+      matchStateService.matchEvent$.next({
+        matchId: 'test-match',
+        eventType: 'TRUCO_RESPONDED',
+        timestamp: Date.now(),
+        payload: { responderSeat: 'PLAYER_TWO', response: 'QUIERO', call: 'TRUCO' },
+        stateVersion: 3,
+      });
+    }
+
+    it('limpia call texts ante ROUND_STARTED', () => {
+      setupComponent({ matchId: 'test-match' });
+      matchStateService.state.set(mockMatchViewerPlayerOne);
+      fixture.detectChanges();
+
+      setCallTexts();
+      expect(fixture.componentInstance.selfCallText()).toBe('\u00a1Truco!');
+      expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Quiero!');
+
+      matchStateService.matchEvent$.next({
+        matchId: 'test-match',
+        eventType: 'ROUND_STARTED',
+        timestamp: Date.now(),
+        payload: { roundNumber: 2, manoSeat: 'PLAYER_ONE' },
+        stateVersion: 4,
+      });
+
+      expect(fixture.componentInstance.selfCallText()).toBeNull();
+      expect(fixture.componentInstance.opponentCallText()).toBeNull();
+    });
+
+    it('limpia call texts ante GAME_STARTED', () => {
+      setupComponent({ matchId: 'test-match' });
+      matchStateService.state.set(mockMatchViewerPlayerOne);
+      fixture.detectChanges();
+
+      setCallTexts();
+      expect(fixture.componentInstance.selfCallText()).toBe('\u00a1Truco!');
+      expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Quiero!');
+
+      matchStateService.matchEvent$.next({
+        matchId: 'test-match',
+        eventType: 'GAME_STARTED',
+        timestamp: Date.now(),
+        payload: { gameNumber: 2 },
+        stateVersion: 4,
+      });
+
+      expect(fixture.componentInstance.selfCallText()).toBeNull();
+      expect(fixture.componentInstance.opponentCallText()).toBeNull();
+    });
+
+    it('limpia call texts ante MATCH_FINISHED', () => {
+      setupComponent({ matchId: 'test-match' });
+      matchStateService.state.set(mockMatchViewerPlayerOne);
+      fixture.detectChanges();
+
+      setCallTexts();
+      expect(fixture.componentInstance.selfCallText()).toBe('\u00a1Truco!');
+      expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Quiero!');
+
+      matchStateService.matchEvent$.next({
+        matchId: 'test-match',
+        eventType: 'MATCH_FINISHED',
+        timestamp: Date.now(),
+        payload: { winnerSeat: 'PLAYER_ONE', gamesWonPlayerOne: 1, gamesWonPlayerTwo: 0 },
+        stateVersion: 4,
+      });
+
+      expect(fixture.componentInstance.selfCallText()).toBeNull();
+      expect(fixture.componentInstance.opponentCallText()).toBeNull();
+    });
+
+    it('limpia call texts ante MATCH_ABANDONED', () => {
+      setupComponent({ matchId: 'test-match' });
+      matchStateService.state.set(mockMatchViewerPlayerOne);
+      fixture.detectChanges();
+
+      setCallTexts();
+      expect(fixture.componentInstance.selfCallText()).toBe('\u00a1Truco!');
+      expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Quiero!');
+
+      matchStateService.matchEvent$.next({
+        matchId: 'test-match',
+        eventType: 'MATCH_ABANDONED',
+        timestamp: Date.now(),
+        payload: { winnerSeat: 'PLAYER_ONE', abandonerSeat: 'PLAYER_TWO', gamesWonPlayerOne: 0, gamesWonPlayerTwo: 0 },
+        stateVersion: 4,
+      });
+
+      expect(fixture.componentInstance.selfCallText()).toBeNull();
+      expect(fixture.componentInstance.opponentCallText()).toBeNull();
+    });
+
+    it('limpia call texts ante MATCH_FORFEITED', () => {
+      setupComponent({ matchId: 'test-match' });
+      matchStateService.state.set(mockMatchViewerPlayerOne);
+      fixture.detectChanges();
+
+      setCallTexts();
+      expect(fixture.componentInstance.selfCallText()).toBe('\u00a1Truco!');
+      expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Quiero!');
+
+      matchStateService.matchEvent$.next({
+        matchId: 'test-match',
+        eventType: 'MATCH_FORFEITED',
+        timestamp: Date.now(),
+        payload: { winnerSeat: 'PLAYER_ONE', loserSeat: 'PLAYER_TWO', gamesWonPlayerOne: 0, gamesWonPlayerTwo: 0 },
+        stateVersion: 4,
+      });
+
+      expect(fixture.componentInstance.selfCallText()).toBeNull();
+      expect(fixture.componentInstance.opponentCallText()).toBeNull();
+    });
+
+    it('cancela timers pendientes al resetear', () => {
+      setupComponent({ matchId: 'test-match' });
+      matchStateService.state.set(mockMatchViewerPlayerOne);
+      fixture.detectChanges();
+
+      matchStateService.matchEvent$.next({
+        matchId: 'test-match',
+        eventType: 'TRUCO_RESPONDED',
+        timestamp: Date.now(),
+        payload: { responderSeat: 'PLAYER_TWO', response: 'QUIERO', call: 'TRUCO' },
+        stateVersion: 2,
+      });
+
+      expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Quiero!');
+
+      matchStateService.matchEvent$.next({
+        matchId: 'test-match',
+        eventType: 'ROUND_STARTED',
+        timestamp: Date.now(),
+        payload: { roundNumber: 2, manoSeat: 'PLAYER_ONE' },
+        stateVersion: 3,
+      });
+
+      expect(fixture.componentInstance.opponentCallText()).toBeNull();
+
+      // Timer should have been cancelled; no re-appearance after 3s
+      vi.advanceTimersByTime(3000);
+      fixture.detectChanges();
+      expect(fixture.componentInstance.opponentCallText()).toBeNull();
+    });
+  });
+
+  describe('gap ENVIDO_RESOLVED (US3/T021)', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('muestra centeredCallText para QUIERO sin atribuci\u00f3n de asiento', () => {
+      setupComponent({ matchId: 'test-match' });
+      matchStateService.state.set(mockMatchViewerPlayerOne);
+      fixture.detectChanges();
+
+      matchStateService.matchEvent$.next({
+        matchId: 'test-match',
+        eventType: 'ENVIDO_RESOLVED',
+        timestamp: Date.now(),
+        payload: { response: 'QUIERO', winnerSeat: 'PLAYER_ONE' },
+        stateVersion: 2,
+      });
+
+      expect(fixture.componentInstance.centeredCallText()).toBe('\u00a1Quiero!');
+      expect(fixture.componentInstance.selfCallText()).toBeNull();
+      expect(fixture.componentInstance.opponentCallText()).toBeNull();
+    });
+
+    it('muestra centeredCallText para NO_QUIERO sin atribuci\u00f3n de asiento', () => {
+      setupComponent({ matchId: 'test-match' });
+      matchStateService.state.set(mockMatchViewerPlayerOne);
+      fixture.detectChanges();
+
+      matchStateService.matchEvent$.next({
+        matchId: 'test-match',
+        eventType: 'ENVIDO_RESOLVED',
+        timestamp: Date.now(),
+        payload: { response: 'NO_QUIERO', winnerSeat: 'PLAYER_TWO' },
+        stateVersion: 2,
+      });
+
+      expect(fixture.componentInstance.centeredCallText()).toBe('\u00a1No quiero!');
+      expect(fixture.componentInstance.selfCallText()).toBeNull();
+      expect(fixture.componentInstance.opponentCallText()).toBeNull();
+    });
+
+    it('auto-limpia centeredCallText de QUIERO a los 3 segundos', () => {
+      setupComponent({ matchId: 'test-match' });
+      matchStateService.state.set(mockMatchViewerPlayerOne);
+      fixture.detectChanges();
+
+      matchStateService.matchEvent$.next({
+        matchId: 'test-match',
+        eventType: 'ENVIDO_RESOLVED',
+        timestamp: Date.now(),
+        payload: { response: 'QUIERO', winnerSeat: 'PLAYER_ONE' },
+        stateVersion: 2,
+      });
+
+      expect(fixture.componentInstance.centeredCallText()).toBe('\u00a1Quiero!');
+
+      vi.advanceTimersByTime(3000);
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.centeredCallText()).toBeNull();
+    });
+
+    it('no auto-limpia centeredCallText de NO_QUIERO', () => {
+      setupComponent({ matchId: 'test-match' });
+      matchStateService.state.set(mockMatchViewerPlayerOne);
+      fixture.detectChanges();
+
+      matchStateService.matchEvent$.next({
+        matchId: 'test-match',
+        eventType: 'ENVIDO_RESOLVED',
+        timestamp: Date.now(),
+        payload: { response: 'NO_QUIERO', winnerSeat: 'PLAYER_ONE' },
+        stateVersion: 2,
+      });
+
+      expect(fixture.componentInstance.centeredCallText()).toBe('\u00a1No quiero!');
+
+      vi.advanceTimersByTime(5000);
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.centeredCallText()).toBe('\u00a1No quiero!');
+    });
+
+    it('limpia centeredCallText ante ROUND_STARTED', () => {
+      setupComponent({ matchId: 'test-match' });
+      matchStateService.state.set(mockMatchViewerPlayerOne);
+      fixture.detectChanges();
+
+      matchStateService.matchEvent$.next({
+        matchId: 'test-match',
+        eventType: 'ENVIDO_RESOLVED',
+        timestamp: Date.now(),
+        payload: { response: 'NO_QUIERO', winnerSeat: 'PLAYER_ONE' },
+        stateVersion: 2,
+      });
+
+      expect(fixture.componentInstance.centeredCallText()).toBe('\u00a1No quiero!');
+
+      matchStateService.matchEvent$.next({
+        matchId: 'test-match',
+        eventType: 'ROUND_STARTED',
+        timestamp: Date.now(),
+        payload: { roundNumber: 2, manoSeat: 'PLAYER_ONE' },
+        stateVersion: 3,
+      });
+
+      expect(fixture.componentInstance.centeredCallText()).toBeNull();
+    });
+  });
+
   it('opens RoundWonDialog on roundEnded$ when local player wins', () => {
     setupComponent({ matchId: 'test-match' });
     matchStateService.loading.set(false);

@@ -1,15 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal, type OnInit, type OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal, type OnInit, type OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { deriveMatchView, type MatchView } from '../../utils/derive-match-view';
+import { callDisplayMapper } from '../../utils/call-display-mapper';
 import { GameBoardComponent } from '../../components/game-board/game-board.component';
 import { RoundWonDialogComponent, type RoundWonDialogData } from '../../components/round-won-dialog/round-won-dialog.component';
 import { EnvidoResultDialogComponent, type EnvidoResultDialogData } from '../../components/envido-result-dialog/envido-result-dialog.component';
 import { MatchStateService } from '../../services/match-state.service';
 import { getErrorCopy } from '../../../../shared/error-copy/error-copy';
-import type { MatchEndedEvent, RoundEndedPayload, EnvidoResolvedPayload } from '../../models/match-ws-events';
+import type { MatchEndedEvent, MatchWsEvent, RoundEndedPayload, EnvidoResolvedPayload } from '../../models/match-ws-events';
 import type { Subscription } from 'rxjs';
 
 @Component({
@@ -32,11 +33,16 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     if (!this.matchStateService.error()) {return '';}
     return getErrorCopy('MATCH_LOAD', null);
   });
+  readonly selfCallText = signal<string | null>(null);
+  readonly opponentCallText = signal<string | null>(null);
+  readonly centeredCallText = signal<string | null>(null);
 
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   readonly matchStateService = inject(MatchStateService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly callDisplayTimers = new Map<string, number>();
 
   ngOnInit(): void {
     const matchId = this.route.snapshot.paramMap.get('matchId') ?? '';
@@ -55,17 +61,109 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
       this.openEnvidoResultDialog(event);
     });
 
+    const eventSub = this.matchStateService.matchEvent$.subscribe((event) => {
+      this.handleMatchEvent(event);
+    });
+
     // Store subscriptions for cleanup
     this._endedSub = endedSub;
     this._roundSub = roundSub;
     this._envidoSub = envidoSub;
+    this._eventSub = eventSub;
+
+    this.destroyRef.onDestroy(() => {
+      this.clearAllCallDisplayTimers();
+    });
   }
 
   ngOnDestroy(): void {
     this._endedSub?.unsubscribe();
     this._roundSub?.unsubscribe();
     this._envidoSub?.unsubscribe();
+    this._eventSub?.unsubscribe();
+    this.clearAllCallDisplayTimers();
     this.matchStateService.destroy();
+  }
+
+  private handleMatchEvent(event: MatchWsEvent): void {
+    // Reset call texts on round/game/match end events
+    if (
+      event.eventType === 'ROUND_STARTED' ||
+      event.eventType === 'GAME_STARTED' ||
+      event.eventType === 'MATCH_FINISHED' ||
+      event.eventType === 'MATCH_ABANDONED' ||
+      event.eventType === 'MATCH_FORFEITED'
+    ) {
+      this.selfCallText.set(null);
+      this.opponentCallText.set(null);
+      this.centeredCallText.set(null);
+      this.clearAllCallDisplayTimers();
+      return;
+    }
+
+    // Handle ENVIDO_RESOLVED gap: show centered text without seat attribution
+    if (event.eventType === 'ENVIDO_RESOLVED') {
+      const payload = event.payload as { response: string };
+      const textMap: Record<string, string> = {
+        QUIERO: '\u00a1Quiero!',
+        NO_QUIERO: '\u00a1No quiero!',
+      };
+      const text = textMap[payload.response];
+      if (text) {
+        this.centeredCallText.set(text);
+
+        const existingTimer = this.callDisplayTimers.get('centered');
+        if (existingTimer !== undefined) {
+          clearTimeout(existingTimer);
+          this.callDisplayTimers.delete('centered');
+        }
+
+        if (payload.response === 'QUIERO') {
+          const timeoutId = window.setTimeout(() => {
+            this.centeredCallText.set(null);
+            this.callDisplayTimers.delete('centered');
+          }, 3000);
+          this.callDisplayTimers.set('centered', timeoutId);
+        }
+      }
+      return;
+    }
+
+    const displayEvent = callDisplayMapper(event);
+    if (!displayEvent) {return;}
+
+    const state = this.matchStateService.state();
+    if (!state) {return;}
+
+    const viewerSeat = state.viewerSeat;
+    const isSelf = displayEvent.seat === viewerSeat;
+    const signalRef = isSelf ? this.selfCallText : this.opponentCallText;
+
+    signalRef.set(displayEvent.text);
+
+    // Cancel any existing timer for this seat
+    const timerKey = isSelf ? 'self' : 'opponent';
+    const existingTimer = this.callDisplayTimers.get(timerKey);
+    if (existingTimer !== undefined) {
+      clearTimeout(existingTimer);
+      this.callDisplayTimers.delete(timerKey);
+    }
+
+    // Auto-clear acceptance texts after 3 seconds
+    if (displayEvent.isAcceptance) {
+      const timeoutId = window.setTimeout(() => {
+        signalRef.set(null);
+        this.callDisplayTimers.delete(timerKey);
+      }, 3000);
+      this.callDisplayTimers.set(timerKey, timeoutId);
+    }
+  }
+
+  private clearAllCallDisplayTimers(): void {
+    for (const timeoutId of this.callDisplayTimers.values()) {
+      clearTimeout(timeoutId);
+    }
+    this.callDisplayTimers.clear();
   }
 
   retry(): void {
@@ -190,4 +288,5 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   private _endedSub?: Subscription;
   private _roundSub?: Subscription;
   private _envidoSub?: Subscription;
+  private _eventSub?: Subscription;
 }

@@ -7,7 +7,7 @@ import { MatchScreenComponent } from './match-screen.component';
 describe('MatchScreenComponent', () => {
   let fixture: ComponentFixture<MatchScreenComponent>;
 
-  function setupComponent(queryParams: Record<string, string>): void {
+  function setupComponent(queryParams: Record<string, string>, params: Record<string, string> = {}): void {
     TestBed.configureTestingModule({
       imports: [MatchScreenComponent],
       providers: [
@@ -15,6 +15,9 @@ describe('MatchScreenComponent', () => {
           provide: ActivatedRoute,
           useValue: {
             snapshot: {
+              paramMap: {
+                get: (key: string) => params[key] ?? null,
+              },
               queryParamMap: {
                 get: (key: string) => queryParams[key] ?? null,
               },

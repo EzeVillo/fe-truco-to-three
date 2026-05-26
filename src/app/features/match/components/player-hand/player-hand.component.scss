@@ -5,6 +5,27 @@
   padding: var(--t3-gap-xs);
 }
 
+.player-hand__card-btn {
+  display: block;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+
+  &--blocked {
+    opacity: 0.6;
+  }
+
+  &:focus {
+    outline: none;
+  }
+}
+
 .player-hand app-card-view {
   width: 64px;
 }

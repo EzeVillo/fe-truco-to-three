@@ -1,7 +1,15 @@
 <div class="player-hand">
   @if (cards(); as hand) {
     @for (card of hand; track card.suit + card.number) {
-      <app-card-view [card]="card" />
+      <button
+        class="player-hand__card-btn"
+        type="button"
+        [disabled]="!playCardsEnabled() || isPlayingCard()"
+        [class.player-hand__card-btn--blocked]="!playCardsEnabled()"
+        (click)="onCardClick(card)"
+      >
+        <app-card-view [card]="card" />
+      </button>
     }
   } @else {
     <div class="player-hand__empty">Sin cartas</div>

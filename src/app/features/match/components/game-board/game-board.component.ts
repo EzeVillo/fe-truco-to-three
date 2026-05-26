@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import type { MatchView } from '../../utils/derive-match-view';
 import { OpponentAreaComponent } from '../opponent-area/opponent-area.component';
@@ -24,4 +24,9 @@ import { AvailableActionsPanelComponent } from '../available-actions-panel/avail
 })
 export class GameBoardComponent {
   readonly view = input.required<MatchView>();
+  readonly matchId = input.required<string>();
+
+  readonly playCardsEnabled = computed(() =>
+    this.view().availableActions.some((a) => a.type === 'PLAY_CARD')
+  );
 }

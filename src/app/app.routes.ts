@@ -36,7 +36,7 @@ export const routes: Routes = [
       ),
   },
   {
-    path: 'match',
+    path: 'match/:matchId',
     canMatch: [authGuard],
     loadComponent: () =>
       import('./features/match/pages/match-screen/match-screen.component').then(

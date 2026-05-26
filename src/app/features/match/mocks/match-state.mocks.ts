@@ -23,6 +23,7 @@ export const mockMatchViewerPlayerOne: MatchState = {
     currentTrucoCall: null,
     winner: null,
     availableActions: [
+      { type: 'PLAY_CARD' },
       { type: 'CALL_TRUCO' },
       { type: 'CALL_ENVIDO' },
       { type: 'FOLD' },

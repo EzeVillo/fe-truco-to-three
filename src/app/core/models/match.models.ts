@@ -55,6 +55,32 @@ export interface MatchState {
   roundGame: RoundState | null; // null si status !== 'IN_PROGRESS'
 }
 
+// ---------- Feature 007-match-rest-actions: request DTOs para acciones ----------
+// Fuente: docs/CONTRATOS_API.md §4.6–§4.11 y §8.1
+
+import type { EnvidoCall, TrucoResponse, EnvidoResponse } from './enums';
+
+/** §4.6 POST /api/matches/{matchId}/play-card */
+export interface PlayCardRequest {
+  suit: Suit;
+  number: number; // 1..12
+}
+
+/** §4.9 POST /api/matches/{matchId}/envido */
+export interface CallEnvidoRequest {
+  call: EnvidoCall;
+}
+
+/** §4.8 POST /api/matches/{matchId}/truco/respond */
+export interface RespondTrucoRequest {
+  response: TrucoResponse;
+}
+
+/** §4.10 POST /api/matches/{matchId}/envido/respond */
+export interface RespondEnvidoRequest {
+  response: EnvidoResponse;
+}
+
 // ---------- Feature 003-lobby-bots: formato de serie + creación vs bots ----------
 // Fuente: specs/003-lobby-bots/data-model.md §SeriesFormat / §CreateBotMatch*
 

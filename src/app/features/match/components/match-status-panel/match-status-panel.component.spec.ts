@@ -89,14 +89,4 @@ describe('MatchStatusPanelComponent', () => {
     const callEls = fixture.nativeElement.querySelectorAll('.status-panel__call-text');
     expect(callEls.length).toBe(0);
   });
-
-  it('renderiza centeredCallText con clase centrada', () => {
-    fixture.componentRef.setInput('view', createMockView());
-    fixture.componentRef.setInput('centeredCallText', '\u00a1Quiero!');
-    fixture.detectChanges();
-
-    const centeredEl = fixture.nativeElement.querySelector('.status-panel__call-text--centered');
-    expect(centeredEl).toBeTruthy();
-    expect(centeredEl.textContent.trim()).toBe('\u00a1Quiero!');
-  });
 });

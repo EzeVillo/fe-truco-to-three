@@ -35,7 +35,6 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   });
   readonly selfCallText = signal<string | null>(null);
   readonly opponentCallText = signal<string | null>(null);
-  readonly centeredCallText = signal<string | null>(null);
 
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -96,35 +95,45 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     ) {
       this.selfCallText.set(null);
       this.opponentCallText.set(null);
-      this.centeredCallText.set(null);
       this.clearAllCallDisplayTimers();
       return;
     }
 
-    // Handle ENVIDO_RESOLVED gap: show centered text without seat attribution
+    // Handle ENVIDO_RESOLVED: infer responder seat from winnerSeat
     if (event.eventType === 'ENVIDO_RESOLVED') {
-      const payload = event.payload as { response: string };
+      const payload = event.payload as { response: string; winnerSeat: 'PLAYER_ONE' | 'PLAYER_TWO' };
       const textMap: Record<string, string> = {
         QUIERO: '\u00a1Quiero!',
         NO_QUIERO: '\u00a1No quiero!',
       };
       const text = textMap[payload.response];
-      if (text) {
-        this.centeredCallText.set(text);
+      if (!text) {return;}
 
-        const existingTimer = this.callDisplayTimers.get('centered');
-        if (existingTimer !== undefined) {
-          clearTimeout(existingTimer);
-          this.callDisplayTimers.delete('centered');
-        }
+      const state = this.matchStateService.state();
+      if (!state) {return;}
 
-        if (payload.response === 'QUIERO') {
-          const timeoutId = window.setTimeout(() => {
-            this.centeredCallText.set(null);
-            this.callDisplayTimers.delete('centered');
-          }, 3000);
-          this.callDisplayTimers.set('centered', timeoutId);
-        }
+      // Solo puede haber un call text visible a la vez: limpiar ambos antes
+      this.selfCallText.set(null);
+      this.opponentCallText.set(null);
+      this.clearAllCallDisplayTimers();
+
+      if (payload.response === 'NO_QUIERO') {
+        const noQuieroSeat: 'PLAYER_ONE' | 'PLAYER_TWO' =
+          payload.winnerSeat === 'PLAYER_ONE' ? 'PLAYER_TWO' : 'PLAYER_ONE';
+        const isSelf = noQuieroSeat === state.viewerSeat;
+        const signalRef = isSelf ? this.selfCallText : this.opponentCallText;
+        signalRef.set(text);
+        // No auto-cleanup for NO_QUIERO
+      } else {
+        // QUIERO: the acceptor is the winnerSeat (they accepted and will reveal/envido continues)
+        const isSelf = payload.winnerSeat === state.viewerSeat;
+        const signalRef = isSelf ? this.selfCallText : this.opponentCallText;
+        signalRef.set(text);
+
+        const timeoutId = window.setTimeout(() => {
+          signalRef.set(null);
+        }, 3000);
+        this.callDisplayTimers.set('call', timeoutId);
       }
       return;
     }
@@ -135,27 +144,22 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     const state = this.matchStateService.state();
     if (!state) {return;}
 
-    const viewerSeat = state.viewerSeat;
-    const isSelf = displayEvent.seat === viewerSeat;
+    // Solo puede haber un call text visible a la vez: limpiar ambos antes
+    this.selfCallText.set(null);
+    this.opponentCallText.set(null);
+    this.clearAllCallDisplayTimers();
+
+    const isSelf = displayEvent.seat === state.viewerSeat;
     const signalRef = isSelf ? this.selfCallText : this.opponentCallText;
 
     signalRef.set(displayEvent.text);
-
-    // Cancel any existing timer for this seat
-    const timerKey = isSelf ? 'self' : 'opponent';
-    const existingTimer = this.callDisplayTimers.get(timerKey);
-    if (existingTimer !== undefined) {
-      clearTimeout(existingTimer);
-      this.callDisplayTimers.delete(timerKey);
-    }
 
     // Auto-clear acceptance texts after 3 seconds
     if (displayEvent.isAcceptance) {
       const timeoutId = window.setTimeout(() => {
         signalRef.set(null);
-        this.callDisplayTimers.delete(timerKey);
       }, 3000);
-      this.callDisplayTimers.set(timerKey, timeoutId);
+      this.callDisplayTimers.set('call', timeoutId);
     }
   }
 
@@ -233,6 +237,11 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   }
 
   private openEnvidoResultDialog(payload: EnvidoResolvedPayload): void {
+    // No mostrar modal cuando el envido fue rechazado
+    if (payload.response === 'NO_QUIERO') {
+      return;
+    }
+
     const state = this.matchStateService.state();
     if (!state || !state.roundGame) {return;}
 

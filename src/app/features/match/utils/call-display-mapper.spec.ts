@@ -80,12 +80,12 @@ describe('callDisplayMapper', () => {
   });
 
   describe('ENVIDO_RESOLVED', () => {
-    it('devuelve null debido al gap de responderSeat', () => {
+    it('devuelve null porque el backend no envía responderSeat', () => {
       const result = callDisplayMapper(makeEvent('ENVIDO_RESOLVED', { response: 'QUIERO', winnerSeat: 'PLAYER_ONE' }));
       expect(result).toBeNull();
     });
 
-    it('devuelve null para NO_QUIERO tambi\u00e9n', () => {
+    it('devuelve null para NO_QUIERO también', () => {
       const result = callDisplayMapper(makeEvent('ENVIDO_RESOLVED', { response: 'NO_QUIERO', winnerSeat: 'PLAYER_TWO' }));
       expect(result).toBeNull();
     });

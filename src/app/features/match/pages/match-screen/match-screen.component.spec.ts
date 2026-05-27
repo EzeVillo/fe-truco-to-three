@@ -115,6 +115,7 @@ describe('MatchScreenComponent', () => {
     });
 
     expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Truco!');
+    expect(fixture.componentInstance.selfCallText()).toBeNull();
   });
 
   it('actualiza selfCallText ante ENVIDO_CALLED del jugador propio', () => {
@@ -131,6 +132,7 @@ describe('MatchScreenComponent', () => {
     });
 
     expect(fixture.componentInstance.selfCallText()).toBe('\u00a1Envido!');
+    expect(fixture.componentInstance.opponentCallText()).toBeNull();
   });
 
   describe('auto-limpieza de aceptaciones (US2)', () => {
@@ -142,7 +144,7 @@ describe('MatchScreenComponent', () => {
       vi.useRealTimers();
     });
 
-    it('limpia texto de aceptaci\u00f3n despu\u00e9s de 3 segundos', () => {
+    it('limpia opponentCallText de aceptaci\u00f3n despu\u00e9s de 3 segundos', () => {
       setupComponent({ matchId: 'test-match' });
       matchStateService.state.set(mockMatchViewerPlayerOne);
       fixture.detectChanges();
@@ -163,7 +165,7 @@ describe('MatchScreenComponent', () => {
       expect(fixture.componentInstance.opponentCallText()).toBeNull();
     });
 
-    it('cancela timer previo al llegar un nuevo evento del mismo jugador', () => {
+    it('cancela timer previo al llegar un nuevo evento (solo un call text visible)', () => {
       setupComponent({ matchId: 'test-match' });
       matchStateService.state.set(mockMatchViewerPlayerOne);
       fixture.detectChanges();
@@ -179,23 +181,25 @@ describe('MatchScreenComponent', () => {
 
       expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Quiero!');
 
-      // Before timer fires, emit a new call from opponent
+      // Before timer fires, emit a new call from the local player
       vi.advanceTimersByTime(1500);
       matchStateService.matchEvent$.next({
         matchId: 'test-match',
         eventType: 'TRUCO_CALLED',
         timestamp: Date.now(),
-        payload: { callerSeat: 'PLAYER_TWO', call: 'RETRUCO' },
+        payload: { callerSeat: 'PLAYER_ONE', call: 'RETRUCO' },
         stateVersion: 3,
       });
 
       fixture.detectChanges();
-      expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Retruco!');
+      // Previous text cleared, new text on the other side
+      expect(fixture.componentInstance.opponentCallText()).toBeNull();
+      expect(fixture.componentInstance.selfCallText()).toBe('\u00a1Retruco!');
 
       // Original 3s timer should have been cancelled; new text remains
       vi.advanceTimersByTime(1500);
       fixture.detectChanges();
-      expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Retruco!');
+      expect(fixture.componentInstance.selfCallText()).toBe('\u00a1Retruco!');
     });
 
     it('no afecta textos de no-aceptaci\u00f3n con timer', () => {
@@ -219,6 +223,34 @@ describe('MatchScreenComponent', () => {
       // Non-acceptance text should still be there (no auto-cleanup)
       expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Truco!');
     });
+
+    it('reemplaza texto previo del otro lado al llegar un nuevo evento', () => {
+      setupComponent({ matchId: 'test-match' });
+      matchStateService.state.set(mockMatchViewerPlayerOne);
+      fixture.detectChanges();
+
+      // Local player calls envido
+      matchStateService.matchEvent$.next({
+        matchId: 'test-match',
+        eventType: 'ENVIDO_CALLED',
+        timestamp: Date.now(),
+        payload: { callerSeat: 'PLAYER_ONE', call: 'ENVIDO' },
+        stateVersion: 2,
+      });
+      expect(fixture.componentInstance.selfCallText()).toBe('\u00a1Envido!');
+      expect(fixture.componentInstance.opponentCallText()).toBeNull();
+
+      // Opponent responds "quiero" — previous text on left must clear, new on right
+      matchStateService.matchEvent$.next({
+        matchId: 'test-match',
+        eventType: 'TRUCO_RESPONDED',
+        timestamp: Date.now(),
+        payload: { responderSeat: 'PLAYER_TWO', response: 'QUIERO', call: 'TRUCO' },
+        stateVersion: 3,
+      });
+      expect(fixture.componentInstance.selfCallText()).toBeNull();
+      expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Quiero!');
+    });
   });
 
   describe('reset de call texts (US3)', () => {
@@ -230,20 +262,13 @@ describe('MatchScreenComponent', () => {
       vi.useRealTimers();
     });
 
-    function setCallTexts(): void {
+    function setCallText(): void {
       matchStateService.matchEvent$.next({
         matchId: 'test-match',
         eventType: 'TRUCO_CALLED',
         timestamp: Date.now(),
         payload: { callerSeat: 'PLAYER_ONE', call: 'TRUCO' },
         stateVersion: 2,
-      });
-      matchStateService.matchEvent$.next({
-        matchId: 'test-match',
-        eventType: 'TRUCO_RESPONDED',
-        timestamp: Date.now(),
-        payload: { responderSeat: 'PLAYER_TWO', response: 'QUIERO', call: 'TRUCO' },
-        stateVersion: 3,
       });
     }
 
@@ -252,9 +277,8 @@ describe('MatchScreenComponent', () => {
       matchStateService.state.set(mockMatchViewerPlayerOne);
       fixture.detectChanges();
 
-      setCallTexts();
+      setCallText();
       expect(fixture.componentInstance.selfCallText()).toBe('\u00a1Truco!');
-      expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Quiero!');
 
       matchStateService.matchEvent$.next({
         matchId: 'test-match',
@@ -273,9 +297,8 @@ describe('MatchScreenComponent', () => {
       matchStateService.state.set(mockMatchViewerPlayerOne);
       fixture.detectChanges();
 
-      setCallTexts();
+      setCallText();
       expect(fixture.componentInstance.selfCallText()).toBe('\u00a1Truco!');
-      expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Quiero!');
 
       matchStateService.matchEvent$.next({
         matchId: 'test-match',
@@ -294,9 +317,8 @@ describe('MatchScreenComponent', () => {
       matchStateService.state.set(mockMatchViewerPlayerOne);
       fixture.detectChanges();
 
-      setCallTexts();
+      setCallText();
       expect(fixture.componentInstance.selfCallText()).toBe('\u00a1Truco!');
-      expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Quiero!');
 
       matchStateService.matchEvent$.next({
         matchId: 'test-match',
@@ -315,9 +337,8 @@ describe('MatchScreenComponent', () => {
       matchStateService.state.set(mockMatchViewerPlayerOne);
       fixture.detectChanges();
 
-      setCallTexts();
+      setCallText();
       expect(fixture.componentInstance.selfCallText()).toBe('\u00a1Truco!');
-      expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Quiero!');
 
       matchStateService.matchEvent$.next({
         matchId: 'test-match',
@@ -336,9 +357,8 @@ describe('MatchScreenComponent', () => {
       matchStateService.state.set(mockMatchViewerPlayerOne);
       fixture.detectChanges();
 
-      setCallTexts();
+      setCallText();
       expect(fixture.componentInstance.selfCallText()).toBe('\u00a1Truco!');
-      expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Quiero!');
 
       matchStateService.matchEvent$.next({
         matchId: 'test-match',
@@ -384,7 +404,7 @@ describe('MatchScreenComponent', () => {
     });
   });
 
-  describe('gap ENVIDO_RESOLVED (US3/T021)', () => {
+  describe('ENVIDO_RESOLVED (US3/T021)', () => {
     beforeEach(() => {
       vi.useFakeTimers();
     });
@@ -393,7 +413,7 @@ describe('MatchScreenComponent', () => {
       vi.useRealTimers();
     });
 
-    it('muestra centeredCallText para QUIERO sin atribuci\u00f3n de asiento', () => {
+    it('muestra selfCallText para QUIERO cuando el jugador local acept\u00f3', () => {
       setupComponent({ matchId: 'test-match' });
       matchStateService.state.set(mockMatchViewerPlayerOne);
       fixture.detectChanges();
@@ -406,12 +426,28 @@ describe('MatchScreenComponent', () => {
         stateVersion: 2,
       });
 
-      expect(fixture.componentInstance.centeredCallText()).toBe('\u00a1Quiero!');
-      expect(fixture.componentInstance.selfCallText()).toBeNull();
+      expect(fixture.componentInstance.selfCallText()).toBe('\u00a1Quiero!');
       expect(fixture.componentInstance.opponentCallText()).toBeNull();
     });
 
-    it('muestra centeredCallText para NO_QUIERO sin atribuci\u00f3n de asiento', () => {
+    it('muestra opponentCallText para QUIERO cuando el rival acept\u00f3', () => {
+      setupComponent({ matchId: 'test-match' });
+      matchStateService.state.set(mockMatchViewerPlayerOne);
+      fixture.detectChanges();
+
+      matchStateService.matchEvent$.next({
+        matchId: 'test-match',
+        eventType: 'ENVIDO_RESOLVED',
+        timestamp: Date.now(),
+        payload: { response: 'QUIERO', winnerSeat: 'PLAYER_TWO' },
+        stateVersion: 2,
+      });
+
+      expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Quiero!');
+      expect(fixture.componentInstance.selfCallText()).toBeNull();
+    });
+
+    it('muestra selfCallText para NO_QUIERO cuando el jugador local rechaz\u00f3', () => {
       setupComponent({ matchId: 'test-match' });
       matchStateService.state.set(mockMatchViewerPlayerOne);
       fixture.detectChanges();
@@ -424,12 +460,28 @@ describe('MatchScreenComponent', () => {
         stateVersion: 2,
       });
 
-      expect(fixture.componentInstance.centeredCallText()).toBe('\u00a1No quiero!');
-      expect(fixture.componentInstance.selfCallText()).toBeNull();
+      expect(fixture.componentInstance.selfCallText()).toBe('\u00a1No quiero!');
       expect(fixture.componentInstance.opponentCallText()).toBeNull();
     });
 
-    it('auto-limpia centeredCallText de QUIERO a los 3 segundos', () => {
+    it('muestra opponentCallText para NO_QUIERO cuando el rival rechaz\u00f3', () => {
+      setupComponent({ matchId: 'test-match' });
+      matchStateService.state.set(mockMatchViewerPlayerOne);
+      fixture.detectChanges();
+
+      matchStateService.matchEvent$.next({
+        matchId: 'test-match',
+        eventType: 'ENVIDO_RESOLVED',
+        timestamp: Date.now(),
+        payload: { response: 'NO_QUIERO', winnerSeat: 'PLAYER_ONE' },
+        stateVersion: 2,
+      });
+
+      expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1No quiero!');
+      expect(fixture.componentInstance.selfCallText()).toBeNull();
+    });
+
+    it('auto-limpia selfCallText de QUIERO a los 3 segundos', () => {
       setupComponent({ matchId: 'test-match' });
       matchStateService.state.set(mockMatchViewerPlayerOne);
       fixture.detectChanges();
@@ -442,15 +494,15 @@ describe('MatchScreenComponent', () => {
         stateVersion: 2,
       });
 
-      expect(fixture.componentInstance.centeredCallText()).toBe('\u00a1Quiero!');
+      expect(fixture.componentInstance.selfCallText()).toBe('\u00a1Quiero!');
 
       vi.advanceTimersByTime(3000);
       fixture.detectChanges();
 
-      expect(fixture.componentInstance.centeredCallText()).toBeNull();
+      expect(fixture.componentInstance.selfCallText()).toBeNull();
     });
 
-    it('no auto-limpia centeredCallText de NO_QUIERO', () => {
+    it('no auto-limpia opponentCallText de NO_QUIERO', () => {
       setupComponent({ matchId: 'test-match' });
       matchStateService.state.set(mockMatchViewerPlayerOne);
       fixture.detectChanges();
@@ -463,15 +515,15 @@ describe('MatchScreenComponent', () => {
         stateVersion: 2,
       });
 
-      expect(fixture.componentInstance.centeredCallText()).toBe('\u00a1No quiero!');
+      expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1No quiero!');
 
       vi.advanceTimersByTime(5000);
       fixture.detectChanges();
 
-      expect(fixture.componentInstance.centeredCallText()).toBe('\u00a1No quiero!');
+      expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1No quiero!');
     });
 
-    it('limpia centeredCallText ante ROUND_STARTED', () => {
+    it('limpia opponentCallText de NO_QUIERO ante ROUND_STARTED', () => {
       setupComponent({ matchId: 'test-match' });
       matchStateService.state.set(mockMatchViewerPlayerOne);
       fixture.detectChanges();
@@ -484,7 +536,7 @@ describe('MatchScreenComponent', () => {
         stateVersion: 2,
       });
 
-      expect(fixture.componentInstance.centeredCallText()).toBe('\u00a1No quiero!');
+      expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1No quiero!');
 
       matchStateService.matchEvent$.next({
         matchId: 'test-match',
@@ -494,7 +546,7 @@ describe('MatchScreenComponent', () => {
         stateVersion: 3,
       });
 
-      expect(fixture.componentInstance.centeredCallText()).toBeNull();
+      expect(fixture.componentInstance.opponentCallText()).toBeNull();
     });
   });
 
@@ -563,7 +615,7 @@ describe('MatchScreenComponent', () => {
     });
   });
 
-  it('opens EnvidoResultDialog showing "Son buenas" when scores are missing', () => {
+  it('no abre EnvidoResultDialog cuando el envido fue rechazado (NO_QUIERO)', () => {
     setupComponent({ matchId: 'test-match' });
     matchStateService.loading.set(false);
     matchStateService.state.set(mockMatchViewerPlayerOne);
@@ -576,13 +628,6 @@ describe('MatchScreenComponent', () => {
       winnerSeat: 'PLAYER_ONE',
     });
 
-    expect(dialogSpy).toHaveBeenCalledOnce();
-    const call = dialogSpy.mock.calls[0];
-    expect(call[0]).toBe(EnvidoResultDialogComponent);
-    expect(call[1]?.['data']).toMatchObject({
-      manoScore: null,
-      pieScore: null,
-      won: true,
-    });
+    expect(dialogSpy).not.toHaveBeenCalled();
   });
 });

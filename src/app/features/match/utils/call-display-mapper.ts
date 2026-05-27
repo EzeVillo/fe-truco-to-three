@@ -51,9 +51,8 @@ export function callDisplayMapper(event: MatchWsEvent): CallDisplayEvent | null 
     }
 
     case 'ENVIDO_RESOLVED': {
-      // Gap: el backend no env\u00eda responderSeat en ENVIDO_RESOLVED.
-      // No producimos un CallDisplayEvent con asiento incorrecto;
-      // el componente maneja este evento como texto centrado.
+      // Gap: el backend no envía responderSeat en ENVIDO_RESOLVED.
+      // El componente maneja este evento como caso especial.
       return null;
     }
 

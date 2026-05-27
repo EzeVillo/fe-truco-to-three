@@ -113,6 +113,15 @@ export interface GameScoreChangedPayload {
   gamesWonPlayerTwo: number;
 }
 
+/**
+ * Payload semántico derivado en frontend cuando GAME_SCORE_CHANGED indica
+ * que alguien ganó una partida individual (game) de la serie.
+ * No es un evento del backend; se emite internamente desde MatchStateService.
+ */
+export interface GameWonPayload {
+  winnerSeat: Seat;
+}
+
 export interface MatchFinishedPayload {
   winnerSeat: Seat;
   gamesWonPlayerOne: number;

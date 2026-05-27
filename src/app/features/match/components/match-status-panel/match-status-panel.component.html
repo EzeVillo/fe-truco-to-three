@@ -7,6 +7,9 @@
           <span class="status-panel__label">VOS</span>
         </div>
         <span class="status-panel__player-name">{{ view().self.username }}</span>
+        @if (selfCallText(); as text) {
+          <span class="status-panel__call-text">{{ text }}</span>
+        }
       </div>
 
       <div class="status-panel__score-col">
@@ -21,6 +24,9 @@
           <span class="status-panel__turn-dot" [class.active]="view().currentTurnIsSelf === false"></span>
         </div>
         <span class="status-panel__player-name">{{ view().opponent.username }}</span>
+        @if (opponentCallText(); as text) {
+          <span class="status-panel__call-text">{{ text }}</span>
+        }
       </div>
     </div>
 

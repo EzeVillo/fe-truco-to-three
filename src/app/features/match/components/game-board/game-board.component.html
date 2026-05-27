@@ -1,5 +1,5 @@
 <div class="game-board">
-  <app-match-status-panel [view]="view()" />
+  <app-match-status-panel [view]="view()" [selfCallText]="selfCallText()" [opponentCallText]="opponentCallText()" />
   <app-opponent-area [opponent]="view().opponent" />
   <app-played-cards-area
     [selfPlayedInCurrentHand]="view().self.playedInCurrentHand"

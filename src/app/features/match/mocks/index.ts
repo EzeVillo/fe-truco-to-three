@@ -82,9 +82,9 @@ export {
 } from './envido-result.mocks';
 
 export {
-  mockRoundWonFirstRound,
-  mockRoundWonTieSeries,
-  mockRoundWonDecisive,
-  mockRoundWonSingleRound,
-  mockRoundLostDecisive,
-} from './round-won.mocks';
+  mockGameWonFirstGame,
+  mockGameWonTieSeries,
+  mockGameWonDecisive,
+  mockGameWonSingleGame,
+  mockGameLostDecisive,
+} from './game-won.mocks';

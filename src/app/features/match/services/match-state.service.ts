@@ -5,7 +5,7 @@ import type { Subscription } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { WebSocketService } from '../../../core/services/websocket.service';
 import type { MatchState } from '../../../core/models/match.models';
-import type { MatchWsEvent, MatchDerivedEvent, MatchEndedEvent, RoundEndedPayload, EnvidoResolvedPayload } from '../models/match-ws-events';
+import type { MatchWsEvent, MatchDerivedEvent, MatchEndedEvent, GameWonPayload, EnvidoResolvedPayload, GameScoreChangedPayload } from '../models/match-ws-events';
 import { applyMatchEvent, applyMatchDerivedEvent } from '../reducers/match-event.reducer';
 
 interface MatchSnapshot extends MatchState {
@@ -21,8 +21,9 @@ export class MatchStateService {
   readonly state = signal<MatchState | null>(null);
   readonly loading = signal<boolean>(false);
   readonly error = signal<boolean>(false);
+  readonly matchEvent$ = new Subject<MatchWsEvent>();
   readonly matchEnded$ = new Subject<MatchEndedEvent>();
-  readonly roundEnded$ = new Subject<RoundEndedPayload>();
+  readonly gameWon$ = new Subject<GameWonPayload>();
   readonly envidoResolved$ = new Subject<EnvidoResolvedPayload>();
 
   private lastApplied = 0;
@@ -90,8 +91,9 @@ export class MatchStateService {
 
   destroy(): void {
     this.unsubscribeAll();
+    this.matchEvent$.complete();
     this.matchEnded$.complete();
-    this.roundEnded$.complete();
+    this.gameWon$.complete();
     this.envidoResolved$.complete();
     this.currentMatchId = null;
   }
@@ -166,6 +168,7 @@ export class MatchStateService {
     const next = applyMatchEvent(current, event);
     this.state.set(next);
     this.lastApplied = event.stateVersion;
+    this.matchEvent$.next(event);
 
     if (
       event.eventType === 'MATCH_FINISHED' ||
@@ -175,8 +178,13 @@ export class MatchStateService {
       this.emitMatchEnded(event);
     }
 
-    if (event.eventType === 'ROUND_ENDED') {
-      this.roundEnded$.next(event.payload as RoundEndedPayload);
+    if (event.eventType === 'GAME_SCORE_CHANGED') {
+      const payload = event.payload as GameScoreChangedPayload;
+      if (payload.gamesWonPlayerOne > current.gamesWonPlayerOne) {
+        this.gameWon$.next({ winnerSeat: 'PLAYER_ONE' });
+      } else if (payload.gamesWonPlayerTwo > current.gamesWonPlayerTwo) {
+        this.gameWon$.next({ winnerSeat: 'PLAYER_TWO' });
+      }
     }
 
     if (event.eventType === 'ENVIDO_RESOLVED') {

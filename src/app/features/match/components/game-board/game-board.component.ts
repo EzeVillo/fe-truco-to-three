@@ -27,6 +27,7 @@ export class GameBoardComponent {
   readonly matchId = input.required<string>();
   readonly selfCallText = input<string | null>(null);
   readonly opponentCallText = input<string | null>(null);
+  readonly isProcessingDelay = input<boolean>(false);
 
   readonly playCardsEnabled = computed(() =>
     this.view().availableActions.some((a) => a.type === 'PLAY_CARD')

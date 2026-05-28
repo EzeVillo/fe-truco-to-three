@@ -17,13 +17,14 @@ export class PlayerHandComponent {
   readonly cards = input<Card[] | null>(null);
   readonly matchId = input.required<string>();
   readonly playCardsEnabled = input<boolean>(true);
+  readonly isProcessingDelay = input<boolean>(false);
 
   private readonly matchActionsService = inject(MatchActionsService);
   readonly isPlayingCard = signal<boolean>(false);
 
   onCardClick(card: Card): void {
     const matchId = this.matchId();
-    if (!matchId || !this.playCardsEnabled() || this.isPlayingCard()) {return;}
+    if (!matchId || !this.playCardsEnabled() || this.isPlayingCard() || this.isProcessingDelay()) {return;}
 
     this.isPlayingCard.set(true);
     this.matchActionsService.playCard(matchId, { suit: card.suit, number: card.number }).pipe(

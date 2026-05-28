@@ -7,10 +7,11 @@
     [selfPlayedInPreviousHands]="view().self.playedInPreviousHands"
     [opponentPlayedInPreviousHands]="view().opponent.playedInPreviousHands"
   />
-  <app-player-area [self]="view().self" [matchId]="matchId()" [playCardsEnabled]="playCardsEnabled()" />
+  <app-player-area [self]="view().self" [matchId]="matchId()" [playCardsEnabled]="playCardsEnabled()" [isProcessingDelay]="isProcessingDelay()" />
   <app-available-actions-panel
     [availableActions]="view().availableActions"
     [currentTrucoCall]="view().currentTrucoCall"
     [matchId]="matchId()"
+    [isProcessingDelay]="isProcessingDelay()"
   />
 </div>

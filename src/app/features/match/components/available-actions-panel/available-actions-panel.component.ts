@@ -24,6 +24,7 @@ export class AvailableActionsPanelComponent {
   readonly availableActions = input.required<AvailableAction[]>();
   readonly currentTrucoCall = input<TrucoCall | null>(null);
   readonly matchId = input.required<string>();
+  readonly isProcessingDelay = input<boolean>(false);
 
   private readonly matchActionsService = inject(MatchActionsService);
 
@@ -51,6 +52,8 @@ export class AvailableActionsPanelComponent {
   readonly isEnvidoResponseMode = computed(() =>
     this.availableActions().some((a) => a.type === 'RESPOND_ENVIDO')
   );
+
+  readonly shouldCollapseToActionBar = computed(() => this.isProcessingDelay());
 
   readonly envidoResponseOptions = computed(() =>
     deriveEnvidoResponseOptions(this.availableActions())

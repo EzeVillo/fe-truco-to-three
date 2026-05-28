@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import type { MatchWsEvent, MatchDerivedEvent, TurnChangedPayload } from '../models/match-ws-events';
 import { resolveDelay } from '../config/match-event-delays.config';
 import { isBlockingEvent } from '../config/match-blocking-events.config';
@@ -22,6 +22,9 @@ export class MatchEventQueueService {
   private deps: MatchEventQueueDeps | null = null;
   private lastAppliedEventType: string | null = null;
   private lastAppliedSeat: string | null = null;
+
+  private readonly _isProcessingDelay = signal<boolean>(false);
+  readonly isProcessingDelay = this._isProcessingDelay.asReadonly();
 
   init(deps: MatchEventQueueDeps): void {
     this.deps = deps;
@@ -91,6 +94,7 @@ export class MatchEventQueueService {
     this.queue = [];
     this.processing = false;
     this.pausedForAck = false;
+    this._isProcessingDelay.set(false);
   }
 
   resumeAck(): void {
@@ -120,9 +124,12 @@ export class MatchEventQueueService {
       this.queue.shift();
       this.applyItem(item);
       this.processing = false;
+      this.updateProcessingDelayState();
       this.schedule();
       return;
     }
+
+    this._isProcessingDelay.set(true);
 
     this.pendingTimerId = setTimeout(() => {
       this.pendingTimerId = null;
@@ -131,6 +138,7 @@ export class MatchEventQueueService {
         this.applyItem(current);
       }
       this.processing = false;
+      this.updateProcessingDelayState();
       this.schedule();
     }, item.delayMs);
   }
@@ -140,6 +148,11 @@ export class MatchEventQueueService {
       clearTimeout(this.pendingTimerId);
       this.pendingTimerId = null;
     }
+  }
+
+  private updateProcessingDelayState(): void {
+    const hasPendingDelay = this.queue.some(item => item.delayMs > 0);
+    this._isProcessingDelay.set(hasPendingDelay);
   }
 
   private applyItem(item: QueuedMatchEvent): void {

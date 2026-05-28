@@ -38,11 +38,11 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T001 Agregar signal `isProcessingDelay` en `MatchEventQueueService` en `src/app/features/match/services/match-event-queue.service.ts`
-- [ ] T002 Actualizar método `schedule()` para activar el signal cuando un item con `delayMs > 0` comienza a procesarse
-- [ ] T003 Actualizar callback de `setTimeout` para desactivar el signal cuando termina de procesarse
-- [ ] T004 Actualizar método `clear()` para resetear el signal a `false`
-- [ ] T005 Agregar método privado `updateProcessingDelayState()` que verifique si hay items pendientes con `delayMs > 0`
+- [x] T001 Agregar signal `isProcessingDelay` en `MatchEventQueueService` en `src/app/features/match/services/match-event-queue.service.ts`
+- [x] T002 Actualizar método `schedule()` para activar el signal cuando un item con `delayMs > 0` comienza a procesarse
+- [x] T003 Actualizar callback de `setTimeout` para desactivar el signal cuando termina de procesarse
+- [x] T004 Actualizar método `clear()` para resetear el signal a `false`
+- [x] T005 Agregar método privado `updateProcessingDelayState()` que verifique si hay items pendientes con `delayMs > 0`
 
 **Checkpoint**: Signal `isProcessingDelay` funcional — la cola ahora expone el estado de procesamiento con delay
 
@@ -56,15 +56,15 @@
 
 ### Implementation for User Story 1
 
-- [ ] T006 [P] [US1] Agregar input `isProcessingDelay` en `ActionBarComponent` en `src/app/features/match/components/available-actions-panel/action-bar/action-bar.component.ts`
-- [ ] T007 [US1] Modificar computed `items` en `ActionBarComponent` para forzar `enabled: false` en todos los botones cuando `isProcessingDelay` es `true`
-- [ ] T008 [P] [US1] Agregar input `isProcessingDelay` en `AvailableActionsPanelComponent` en `src/app/features/match/components/available-actions-panel/available-actions-panel.component.ts`
-- [ ] T009 [US1] Agregar computed `shouldCollapseToActionBar` en `AvailableActionsPanelComponent` que retorne `true` cuando `isProcessingDelay` es `true`
-- [ ] T010 [US1] Modificar template `available-actions-panel.component.html` para colapsar a `ActionBarComponent` cuando `shouldCollapseToActionBar()` es `true`
-- [ ] T011 [US1] Agregar input `isProcessingDelay` en `GameBoardComponent` en `src/app/features/match/components/game-board/game-board.component.ts`
-- [ ] T012 [US1] Pasar `isProcessingDelay` desde `GameBoardComponent` a `AvailableActionsPanelComponent` en el template
-- [ ] T013 [US1] Inyectar `MatchEventQueueService` en `MatchScreenComponent` y exponer `eventQueue.isProcessingDelay`
-- [ ] T014 [US1] Pasar `eventQueue.isProcessingDelay()` al `GameBoardComponent` en el template de `MatchScreenComponent`
+- [x] T006 [P] [US1] Agregar input `isProcessingDelay` en `ActionBarComponent` en `src/app/features/match/components/available-actions-panel/action-bar/action-bar.component.ts`
+- [x] T007 [US1] Modificar computed `items` en `ActionBarComponent` para forzar `enabled: false` en todos los botones cuando `isProcessingDelay` es `true`
+- [x] T008 [P] [US1] Agregar input `isProcessingDelay` en `AvailableActionsPanelComponent` en `src/app/features/match/components/available-actions-panel/available-actions-panel.component.ts`
+- [x] T009 [US1] Agregar computed `shouldCollapseToActionBar` en `AvailableActionsPanelComponent` que retorne `true` cuando `isProcessingDelay` es `true`
+- [x] T010 [US1] Modificar template `available-actions-panel.component.html` para colapsar a `ActionBarComponent` cuando `shouldCollapseToActionBar()` es `true`
+- [x] T011 [US1] Agregar input `isProcessingDelay` en `GameBoardComponent` en `src/app/features/match/components/game-board/game-board.component.ts`
+- [x] T012 [US1] Pasar `isProcessingDelay` desde `GameBoardComponent` a `AvailableActionsPanelComponent` en el template
+- [x] T013 [US1] Inyectar `MatchEventQueueService` en `MatchScreenComponent` y exponer `eventQueue.isProcessingDelay`
+- [x] T014 [US1] Pasar `eventQueue.isProcessingDelay()` al `GameBoardComponent` en el template de `MatchScreenComponent`
 
 **Checkpoint**: User Story 1 funcional — durante delay, el action bar se muestra deshabilitado y colapsado al panel principal
 
@@ -78,11 +78,11 @@
 
 ### Implementation for User Story 2
 
-- [ ] T015 [P] [US2] Agregar input `isProcessingDelay` en `PlayerHandComponent` en `src/app/features/match/components/player-hand/player-hand.component.ts`
-- [ ] T016 [US2] Modificar computed de disabled en `PlayerHandComponent` para incluir `isProcessingDelay()` como condición de bloqueo
-- [ ] T017 [US2] Agregar input `isProcessingDelay` en `PlayerAreaComponent` en `src/app/features/match/components/player-area/player-area.component.ts`
-- [ ] T018 [US2] Pasar `isProcessingDelay` desde `GameBoardComponent` a `PlayerAreaComponent` en el template
-- [ ] T019 [US2] Pasar `isProcessingDelay` desde `PlayerAreaComponent` a `PlayerHandComponent` en el template
+- [x] T015 [P] [US2] Agregar input `isProcessingDelay` en `PlayerHandComponent` en `src/app/features/match/components/player-hand/player-hand.component.ts`
+- [x] T016 [US2] Modificar computed de disabled en `PlayerHandComponent` para incluir `isProcessingDelay()` como condición de bloqueo
+- [x] T017 [US2] Agregar input `isProcessingDelay` en `PlayerAreaComponent` en `src/app/features/match/components/player-area/player-area.component.ts`
+- [x] T018 [US2] Pasar `isProcessingDelay` desde `GameBoardComponent` a `PlayerAreaComponent` en el template
+- [x] T019 [US2] Pasar `isProcessingDelay` desde `PlayerAreaComponent` a `PlayerHandComponent` en el template
 
 **Checkpoint**: User Story 2 funcional — cartas deshabilitadas durante delay
 
@@ -96,9 +96,9 @@
 
 ### Implementation for User Story 3
 
-- [ ] T020 [US3] Verificar que `resolveDelay()` retorna `0` para eventos locales en `src/app/features/match/config/match-event-delays.config.ts`
-- [ ] T021 [US3] Verificar que `enqueueTransactional()` calcula `local = true` correctamente en `src/app/features/match/services/match-event-queue.service.ts`
-- [ ] T022 [US3] Verificar que `schedule()` no activa `isProcessingDelay` cuando `delayMs === 0` en `src/app/features/match/services/match-event-queue.service.ts`
+- [x] T020 [US3] Verificar que `resolveDelay()` retorna `0` para eventos locales en `src/app/features/match/config/match-event-delays.config.ts`
+- [x] T021 [US3] Verificar que `enqueueTransactional()` calcula `local = true` correctamente en `src/app/features/match/services/match-event-queue.service.ts`
+- [x] T022 [US3] Verificar que `schedule()` no activa `isProcessingDelay` cuando `delayMs === 0` en `src/app/features/match/services/match-event-queue.service.ts`
 
 **Checkpoint**: User Story 3 verificada — eventos locales no activan bloqueo
 
@@ -108,10 +108,10 @@
 
 **Purpose**: Verificación final y integración
 
-- [ ] T023 Ejecutar `pnpm lint:styles` para verificar que no se introdujeron colores hardcodeados
-- [ ] T024 Ejecutar `pnpm lint` para verificar lint general
-- [ ] T025 Ejecutar `pnpm test` para verificar que no se rompieron tests existentes
-- [ ] T026 Ejecutar `pnpm build` para verificar compilación completa
+- [x] T023 Ejecutar `pnpm lint:styles` para verificar que no se introdujeron colores hardcodeados
+- [x] T024 Ejecutar `pnpm lint` para verificar lint general
+- [x] T025 Ejecutar `pnpm test` para verificar que no se rompieron tests existentes
+- [x] T026 Ejecutar `pnpm build` para verificar compilación completa
 - [ ] T027 Verificar manualmente el flujo: evento remoto → delay → action bar deshabilitado → delay termina → action bar habilitado
 - [ ] T028 Verificar manualmente que eventos locales no activan el bloqueo
 

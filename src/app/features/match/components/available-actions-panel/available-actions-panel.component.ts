@@ -60,10 +60,6 @@ export class AvailableActionsPanelComponent {
     return actions.some((a) => a.type === 'CALL_TRUCO' || a.type === 'FOLD');
   });
 
-  readonly showWaiting = computed(() =>
-    !this.envidoSubmenuOpen() && !this.isTrucoResponseMode() && !this.isEnvidoResponseMode() && this.availableActions().length === 0
-  );
-
   onEnvidoClick(): void {
     if (!hasAnyEnvidoCallOption(this.envidoCallOptions())) {return;}
     this.envidoSubmenuOpen.set(true);

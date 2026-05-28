@@ -1,8 +1,4 @@
-@if (showWaiting()) {
-  <div class="actions-panel actions-panel--waiting">
-    <span class="actions-panel__waiting-text">Esperando al rival...</span>
-  </div>
-} @else if (envidoSubmenuOpen()) {
+@if (envidoSubmenuOpen()) {
   <app-envido-submenu
     [options]="envidoCallOptions()"
     [backEnabled]="envidoSubmenuBackEnabled()"

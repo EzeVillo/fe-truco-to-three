@@ -24,9 +24,11 @@
       </div>
     </div>
 
-    <p class="game-won__context" [class.game-won__context--match-won]="isMatchWon" [class.game-won__context--match-lost]="isMatchLost">
-      {{ contextMessage }}
-    </p>
+    @if (contextMessage) {
+      <p class="game-won__context" [class.game-won__context--match-won]="isMatchWon" [class.game-won__context--match-lost]="isMatchLost">
+        {{ contextMessage }}
+      </p>
+    }
   </div>
 
   <button type="button" class="t3-btn t3-btn--primary game-won__accept" cdkFocusInitial (click)="close()">

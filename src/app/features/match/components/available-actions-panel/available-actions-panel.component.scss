@@ -6,23 +6,3 @@
   width: 100%;
   background-color: var(--t3-table-felt);
 }
-
-.actions-panel--waiting {
-  align-items: center;
-  justify-content: center;
-  padding: var(--t3-gap-md);
-  border-top: 1px solid var(--t3-divider-line);
-  background-color: var(--t3-action-bar-bg);
-}
-
-.actions-panel__waiting-text {
-  color: var(--t3-white);
-  font:
-    var(--mat-sys-body-medium),
-    Inter,
-    system-ui,
-    sans-serif;
-  font-size: 0.875rem;
-  letter-spacing: 0.01em;
-  text-align: center;
-}

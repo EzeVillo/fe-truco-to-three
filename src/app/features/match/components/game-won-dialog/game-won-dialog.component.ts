@@ -72,21 +72,15 @@ export class GameWonDialogComponent {
     return 'Game perdido';
   }
 
-  /** Texto de contexto según el estado de la serie. */
-  get contextMessage(): string {
+  /** Texto de contexto según el estado de la serie, o `null` si no corresponde. */
+  get contextMessage(): string | null {
     if (this.isMatchWon) {
       return '¡Felicitaciones!';
     }
     if (this.isMatchLost) {
       return '¡La próxima será!';
     }
-    if (this.data.playerGamesWon === this.data.opponentGamesWon) {
-      return 'Match empatado';
-    }
-    if (this.data.playerGamesWon > this.data.opponentGamesWon) {
-      return 'Vas arriba en el match';
-    }
-    return 'Seguís en carrera';
+    return null;
   }
 
   close(): void {

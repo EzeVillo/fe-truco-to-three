@@ -274,10 +274,13 @@ describe('MatchEventQueueService', () => {
       service.enqueueTransactional(blockingEvent);
       service.enqueueTransactional(nextEvent);
 
-      // El bloqueante se aplica de inmediato (delayMs=0) y pausa la cola.
+      // ENVIDO_RESOLVED tiene una pausa previa (800 ms) antes de aplicarse.
+      expect(transactionalSpy).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(800);
       expect(transactionalSpy).toHaveBeenCalledTimes(1);
       expect(transactionalSpy).toHaveBeenNthCalledWith(1, blockingEvent);
 
+      // Aplicado el bloqueante, la cola queda pausada esperando el ACK.
       vi.advanceTimersByTime(10_000);
       expect(transactionalSpy).toHaveBeenCalledTimes(1);
 
@@ -364,12 +367,14 @@ describe('MatchEventQueueService', () => {
       service.enqueueTransactional(blocking);
       service.enqueueTransactional(pending1);
 
-      expect(transactionalSpy).toHaveBeenCalledTimes(1);
-      expect(service.pendingCount()).toBe(1);
+      // ENVIDO_RESOLVED espera su pausa previa: nada aplicado aún.
+      expect(transactionalSpy).not.toHaveBeenCalled();
+      expect(service.pendingCount()).toBe(2);
 
       service.flushImmediately();
 
       expect(transactionalSpy).toHaveBeenCalledTimes(2);
+      expect(transactionalSpy).toHaveBeenNthCalledWith(1, blocking);
       expect(transactionalSpy).toHaveBeenNthCalledWith(2, pending1);
       expect(service.pendingCount()).toBe(0);
     });
@@ -393,11 +398,13 @@ describe('MatchEventQueueService', () => {
       service.enqueueTransactional(blocking1);
       service.enqueueTransactional(blocking2);
 
+      // ENVIDO_RESOLVED aplica tras su pausa previa (800 ms).
+      vi.advanceTimersByTime(800);
       expect(transactionalSpy).toHaveBeenCalledTimes(1);
       expect(transactionalSpy).toHaveBeenNthCalledWith(1, blocking1);
 
       service.resumeAck();
-      // El segundo bloqueante se aplica de inmediato (delayMs forzado a 0 por isBlockingEvent)
+      // El segundo bloqueante (GAME_SCORE_CHANGED) se aplica de inmediato (delayMs forzado a 0)
       expect(transactionalSpy).toHaveBeenCalledTimes(2);
       expect(transactionalSpy).toHaveBeenNthCalledWith(2, blocking2);
     });

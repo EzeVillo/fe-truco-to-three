@@ -12,8 +12,10 @@ export interface ActionBarItem {
 
 function trucoLabel(call: TrucoCall | null): string {
   switch (call) {
-    case 'RETRUCO':
+    case 'TRUCO':
       return 'Retruco';
+    case 'RETRUCO':
+      return 'Vale 4';
     case 'VALE_CUATRO':
       return 'Vale 4';
     default:

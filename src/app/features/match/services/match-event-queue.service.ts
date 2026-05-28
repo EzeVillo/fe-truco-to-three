@@ -1,6 +1,11 @@
 import { Injectable, signal } from '@angular/core';
-import type { MatchWsEvent, MatchDerivedEvent, TurnChangedPayload } from '../models/match-ws-events';
-import { resolveDelay } from '../config/match-event-delays.config';
+import type {
+  MatchWsEvent,
+  MatchDerivedEvent,
+  TurnChangedPayload,
+  TrucoRespondedPayload,
+} from '../models/match-ws-events';
+import { MATCH_EVENT_DELAYS_MS, resolveDelay } from '../config/match-event-delays.config';
 import { isBlockingEvent } from '../config/match-blocking-events.config';
 
 export interface MatchEventQueueDeps {
@@ -40,7 +45,32 @@ export class MatchEventQueueService {
     const actingSeat = payload.seat ?? payload.callerSeat ?? payload.responderSeat ?? null;
     const local = actingSeat !== null && actingSeat === this.deps.getViewerSeat();
     // Eventos bloqueantes: el "delay efectivo" es el ACK del usuario, no un timer (FR-010).
-    const delayMs = isBlockingEvent(event.eventType) ? 0 : resolveDelay(event.eventType, local);
+    // Excepción: ENVIDO_RESOLVED lleva una pausa previa para que la respuesta
+    // (¡Quiero!/¡No quiero!) no aparezca pegada al canto. El gate por ACK del modal
+    // se mantiene: el delay sólo retrasa el momento de aplicar el evento.
+    // Why: el delay aplica aun cuando el responder es local — si no, al responder
+    // el viewer con Quiero/No quiero el modal aparecería pegado al click y los
+    // botones nunca se bloquearían vía isProcessingDelay.
+    // Eventos que cierran la mano por decisión del jugador (NO_QUIERO o
+    // QUIERO_Y_ME_VOY_AL_MAZO al truco, FOLDED "Me voy al mazo"): aplicar delay
+    // aun si la acción es local, así el cierre no queda pegado al click y se
+    // percibe el canto. El QUIERO simple no entra acá: la mano continúa.
+    const trucoResponse =
+      event.eventType === 'TRUCO_RESPONDED'
+        ? (event.payload as TrucoRespondedPayload).response
+        : null;
+    const isHandClosingByPlayer =
+      event.eventType === 'FOLDED' ||
+      trucoResponse === 'NO_QUIERO' ||
+      trucoResponse === 'QUIERO_Y_ME_VOY_AL_MAZO';
+
+    const delayMs = isBlockingEvent(event.eventType)
+      ? event.eventType === 'ENVIDO_RESOLVED'
+        ? MATCH_EVENT_DELAYS_MS[event.eventType]
+        : 0
+      : isHandClosingByPlayer
+        ? MATCH_EVENT_DELAYS_MS[event.eventType]
+        : resolveDelay(event.eventType, local);
 
     const item: QueuedMatchEvent = { kind: 'transactional', event, local, delayMs };
 

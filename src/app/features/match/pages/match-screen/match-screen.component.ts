@@ -9,6 +9,7 @@ import { GameBoardComponent } from '../../components/game-board/game-board.compo
 import { GameWonDialogComponent, type GameWonDialogData } from '../../components/game-won-dialog/game-won-dialog.component';
 import { EnvidoResultDialogComponent, type EnvidoResultDialogData } from '../../components/envido-result-dialog/envido-result-dialog.component';
 import { MatchStateService } from '../../services/match-state.service';
+import { MatchEventQueueService } from '../../services/match-event-queue.service';
 import { getErrorCopy } from '../../../../shared/error-copy/error-copy';
 import type { MatchEndedEvent, MatchWsEvent, GameWonPayload, EnvidoResolvedPayload } from '../../models/match-ws-events';
 import type { Subscription } from 'rxjs';
@@ -17,7 +18,7 @@ import type { Subscription } from 'rxjs';
   selector: 'app-match-screen',
   standalone: true,
   imports: [CommonModule, GameBoardComponent, MatProgressSpinnerModule],
-  providers: [MatchStateService],
+  providers: [MatchStateService, MatchEventQueueService],
   templateUrl: './match-screen.component.html',
   styleUrl: './match-screen.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

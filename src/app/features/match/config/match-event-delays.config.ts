@@ -1,0 +1,44 @@
+import type { MatchEventType } from '../models/match-ws-events';
+
+export const DEFAULT_MATCH_EVENT_DELAY_MS = 600;
+
+export const MATCH_EVENT_DELAYS_MS: Record<MatchEventType, number> = {
+  CARD_PLAYED: 600,
+  TRUCO_CALLED: 600,
+  TRUCO_RESPONDED: 600,
+  ENVIDO_CALLED: 600,
+  ENVIDO_RESOLVED: 800,
+  FOLDED: 600,
+  HAND_RESOLVED: 800,
+  GAME_SCORE_CHANGED: 800,
+  MATCH_FINISHED: 800,
+  MATCH_ABANDONED: 800,
+  MATCH_FORFEITED: 800,
+  TURN_CHANGED: 0,
+  ROUND_STARTED: 0,
+  ROUND_ENDED: 0,
+  GAME_STARTED: 0,
+  HAND_DEALT: 0,
+  HAND_CHANGED: 0,
+  SCORE_CHANGED: 0,
+  SPECTATOR_COUNT_CHANGED: 0,
+  PLAYER_JOINED: 0,
+  PLAYER_READY: 0,
+  MATCH_CANCELLED: 0,
+  MATCH_PLAYER_LEFT: 0,
+  REMATCH_AVAILABLE: 0,
+  REMATCH_OPPONENT_WANTS: 0,
+  REMATCH_CONFIRMED: 0,
+  REMATCH_CLOSED_BY_LEAVE: 0,
+  REMATCH_EXPIRED: 0,
+};
+
+export function resolveDelay(
+  eventType: MatchEventType,
+  local: boolean,
+): number {
+  if (local) {
+    return 0;
+  }
+  return MATCH_EVENT_DELAYS_MS[eventType] ?? DEFAULT_MATCH_EVENT_DELAY_MS;
+}

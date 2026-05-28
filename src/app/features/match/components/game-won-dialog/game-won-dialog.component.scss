@@ -23,20 +23,6 @@
     }
   }
 
-  &__status {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 600;
-
-    &--win {
-      color: var(--t3-envido-win-text);
-    }
-
-    &--lose {
-      color: var(--t3-envido-lose-text);
-    }
-  }
-
   &__series {
     display: flex;
     flex-direction: column;

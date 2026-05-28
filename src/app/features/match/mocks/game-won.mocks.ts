@@ -9,7 +9,7 @@ export const mockGameWonFirstGame: GameWonDialogData = {
   gamesToPlay: 3,
   gameNumber: 1,
   matchFinished: false,
-  localWonMatch: false,
+  localWonMatch: true,
 };
 
 // Caso 2: Empatas la serie, mejor de 3. Queda una partida.
@@ -20,6 +20,18 @@ export const mockGameWonTieSeries: GameWonDialogData = {
   opponentGamesWon: 1,
   gamesToPlay: 3,
   gameNumber: 2,
+  matchFinished: false,
+  localWonMatch: true,
+};
+
+// Caso 2b: Perdés una partida intermedia, mejor de 3. Quedás 0–1. Serie sigue.
+export const mockGameLostIntermediate: GameWonDialogData = {
+  playerName: 'Yo',
+  opponentName: 'Hans',
+  playerGamesWon: 0,
+  opponentGamesWon: 1,
+  gamesToPlay: 3,
+  gameNumber: 1,
   matchFinished: false,
   localWonMatch: false,
 };

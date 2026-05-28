@@ -43,31 +43,33 @@ export class GameWonDialogComponent {
     return this.data.matchFinished && !this.data.localWonMatch;
   }
 
-  /** `true` si solo ganó la partida individual pero la serie sigue. */
-  get isGameOnly(): boolean {
-    return !this.data.matchFinished;
+  /** `true` si ganó la partida individual pero la serie sigue. */
+  get isGameOnlyWon(): boolean {
+    return !this.data.matchFinished && this.data.localWonMatch;
+  }
+
+  /** `true` si perdió la partida individual pero la serie sigue. */
+  get isGameOnlyLost(): boolean {
+    return !this.data.matchFinished && !this.data.localWonMatch;
+  }
+
+  /** `true` si el resultado mostrado es una victoria (de partida o de serie). */
+  get isWin(): boolean {
+    return this.data.localWonMatch;
   }
 
   /** Texto principal del modal según el estado. */
   get titleText(): string {
     if (this.isMatchWon) {
-      return '¡Serie ganada!';
+      return '¡Ganaste el match!';
     }
     if (this.isMatchLost) {
-      return 'Serie perdida';
+      return '¡Perdiste el match!';
     }
-    return '¡Partida ganada!';
-  }
-
-  /** Subtítulo de victoria/derrota. */
-  get statusText(): string {
-    if (this.isMatchWon) {
-      return '¡Ganaste la partida!';
+    if (this.isGameOnlyWon) {
+      return '¡Game ganado!';
     }
-    if (this.isMatchLost) {
-      return 'Perdiste la partida...';
-    }
-    return `¡Ganaste la partida ${this.data.gameNumber}!`;
+    return 'Game perdido';
   }
 
   /** Texto de contexto según el estado de la serie. */
@@ -79,10 +81,10 @@ export class GameWonDialogComponent {
       return '¡La próxima será!';
     }
     if (this.data.playerGamesWon === this.data.opponentGamesWon) {
-      return 'Serie empatada';
+      return 'Match empatado';
     }
     if (this.data.playerGamesWon > this.data.opponentGamesWon) {
-      return 'Vas arriba en la serie';
+      return 'Vas arriba en el match';
     }
     return 'Seguís en carrera';
   }

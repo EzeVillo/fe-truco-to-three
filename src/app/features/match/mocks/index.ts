@@ -84,6 +84,7 @@ export {
 export {
   mockGameWonFirstGame,
   mockGameWonTieSeries,
+  mockGameLostIntermediate,
   mockGameWonDecisive,
   mockGameWonSingleGame,
   mockGameLostDecisive,

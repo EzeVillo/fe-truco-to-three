@@ -118,6 +118,7 @@ export class MatchEventQueueService {
       this.applyItem(item);
     }
     this.processing = false;
+    this.updateProcessingDelayState();
   }
 
   clear(): void {
@@ -133,6 +134,7 @@ export class MatchEventQueueService {
       return;
     }
     this.pausedForAck = false;
+    this.updateProcessingDelayState();
     this.schedule();
   }
 
@@ -183,7 +185,12 @@ export class MatchEventQueueService {
 
   private updateProcessingDelayState(): void {
     const hasPendingDelay = this.queue.some(item => item.delayMs > 0);
-    this._isProcessingDelay.set(hasPendingDelay);
+    // Mientras un evento bloqueante esté esperando ACK (modal abierto), la UI
+    // de fondo debe quedar congelada igual que durante un delay — si no, los
+    // botones (p. ej. QUIERO/NO QUIERO del envido) quedan habilitados detrás
+    // del modal porque el AVAILABLE_ACTIONS_UPDATED que los vacía está detrás
+    // del ACK en la cola.
+    this._isProcessingDelay.set(hasPendingDelay || this.pausedForAck);
   }
 
   private applyItem(item: QueuedMatchEvent): void {

@@ -27,10 +27,12 @@
     </div>
 
     <div class="status-panel__series-row">
-      <span class="status-panel__series-text">GAME · {{ view().seriesLabel }} · {{ view().self.gamesWon }}-{{ view().opponent.gamesWon }}</span>
-      <div class="status-panel__squares">
-        @for (_ of [].constructor(view().gamesToPlay); track $index) {
-          <span class="status-panel__square" [class.filled]="$index < totalGamesWon()"></span>
+      <div
+        class="status-panel__squares"
+        [attr.aria-label]="view().seriesLabel + ': ganaste ' + view().self.gamesWon + ', rival ' + view().opponent.gamesWon"
+      >
+        @for (slot of seriesSlots(); track $index) {
+          <span class="status-panel__square" [class.won-self]="slot === 'self'" [class.won-opponent]="slot === 'opponent'"></span>
         }
       </div>
     </div>

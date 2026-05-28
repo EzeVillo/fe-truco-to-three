@@ -2,7 +2,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--t3-gap-xs);
+
+  // padding vertical reducido (2px en vez de 4px) para dar headroom: a 360x600
+  // la pantalla entra al ras y sin este margen el redondeo sub-pixel mete ~1px
+  // de scroll. Ver nota en .status-panel__center.
+  padding: 2px var(--t3-gap-xs);
 }
 
 .status-panel__center {
@@ -11,7 +15,12 @@
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 4px var(--t3-gap-sm);
+
+  // OJO: la pantalla de match entra JUSTA en alto a 600px (es pixel-perfect en
+  // ese ancho de referencia). Mantener este panel compacto: cualquier px extra
+  // de alto (padding, tamaño de cuadritos de serie, line-heights) reintroduce
+  // scroll vertical. Si agregás algo, recortá en otro lado para compensar.
+  padding: 2px var(--t3-gap-sm);
   background-color: var(--t3-card-bg);
   border: 1px solid var(--t3-card-border);
   border-radius: var(--t3-radius-lg);
@@ -139,19 +148,25 @@
 
 .status-panel__squares {
   display: flex;
-  gap: 2px;
+  gap: 4px;
   flex-shrink: 0;
 }
 
 .status-panel__square {
-  width: 6px;
-  height: 6px;
+  width: 9px;
+  height: 9px;
   border: 1px solid var(--t3-card-border);
-  border-radius: 1px;
+  border-radius: 2px;
+  box-sizing: border-box; // sin esto el borde suma 2px de alto y dispara scroll a 600px
 
-  &.filled {
+  &.won-self {
     background-color: var(--t3-gold-500);
     border-color: var(--t3-gold-500);
+  }
+
+  &.won-opponent {
+    background-color: var(--t3-danger);
+    border-color: var(--t3-danger);
   }
 }
 
@@ -189,8 +204,8 @@
   }
 
   .status-panel__square {
-    width: 8px;
-    height: 8px;
-    border-radius: 2px;
+    width: 11px;
+    height: 11px;
+    border-radius: 3px;
   }
 }

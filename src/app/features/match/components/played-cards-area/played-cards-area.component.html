@@ -8,7 +8,7 @@
         <div class="played-cards-area__slot-empty played-cards-area__item"></div>
       }
     }
-    @for (_ of [].constructor(3 - opponentRow().length); track $index) {
+    @for (_ of [].constructor(opponentPadding()); track $index) {
       <div class="played-cards-area__slot-empty played-cards-area__item"></div>
     }
 
@@ -20,7 +20,7 @@
         <div class="played-cards-area__slot-empty played-cards-area__item"></div>
       }
     }
-    @for (_ of [].constructor(3 - selfRow().length); track $index) {
+    @for (_ of [].constructor(selfPadding()); track $index) {
       <div class="played-cards-area__slot-empty played-cards-area__item"></div>
     }
   </div>

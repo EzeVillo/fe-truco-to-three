@@ -17,13 +17,14 @@ export class PlayedCardsAreaComponent {
   readonly selfPlayedInPreviousHands = input<(Card | null)[]>([]);
   readonly opponentPlayedInPreviousHands = input<(Card | null)[]>([]);
 
-  readonly selfRow = computed(() => [
-    ...this.selfPlayedInPreviousHands(),
-    this.selfPlayedInCurrentHand(),
-  ]);
+  readonly selfRow = computed(() =>
+    [...this.selfPlayedInPreviousHands(), this.selfPlayedInCurrentHand()].slice(0, 3)
+  );
 
-  readonly opponentRow = computed(() => [
-    ...this.opponentPlayedInPreviousHands(),
-    this.opponentPlayedInCurrentHand(),
-  ]);
+  readonly opponentRow = computed(() =>
+    [...this.opponentPlayedInPreviousHands(), this.opponentPlayedInCurrentHand()].slice(0, 3)
+  );
+
+  readonly selfPadding = computed(() => Math.max(0, 3 - this.selfRow().length));
+  readonly opponentPadding = computed(() => Math.max(0, 3 - this.opponentRow().length));
 }

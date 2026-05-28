@@ -1,4 +1,13 @@
-@if (envidoSubmenuOpen()) {
+@if (shouldCollapseToActionBar()) {
+  <app-action-bar
+    [availableActions]="availableActions()"
+    [currentTrucoCall]="currentTrucoCall()"
+    [envidoCallOptions]="envidoCallOptions()"
+    [isProcessingDelay]="isProcessingDelay()"
+    (actionClicked)="onAction($event)"
+    (envidoClicked)="onEnvidoClick()"
+  />
+} @else if (envidoSubmenuOpen()) {
   <app-envido-submenu
     [options]="envidoCallOptions()"
     [backEnabled]="envidoSubmenuBackEnabled()"
@@ -17,6 +26,7 @@
       [availableActions]="availableActions()"
       [currentTrucoCall]="currentTrucoCall()"
       [envidoCallOptions]="envidoCallOptions()"
+      [isProcessingDelay]="isProcessingDelay()"
       (actionClicked)="onAction($event)"
       (envidoClicked)="onEnvidoClick()"
     />
@@ -33,6 +43,7 @@
     [availableActions]="availableActions()"
     [currentTrucoCall]="currentTrucoCall()"
     [envidoCallOptions]="envidoCallOptions()"
+    [isProcessingDelay]="isProcessingDelay()"
     (actionClicked)="onAction($event)"
     (envidoClicked)="onEnvidoClick()"
   />

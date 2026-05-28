@@ -37,6 +37,7 @@ export class ActionBarComponent {
   readonly availableActions = input.required<ReadonlyArray<{ type: AvailableActionType }>>();
   readonly currentTrucoCall = input<TrucoCall | null>(null);
   readonly envidoCallOptions = input<EnvidoCallOptions | null>(null);
+  readonly isProcessingDelay = input<boolean>(false);
 
   readonly actionClicked = output<AvailableActionType>();
   readonly envidoClicked = output<void>();
@@ -44,6 +45,16 @@ export class ActionBarComponent {
   readonly items = computed<ActionBarItem[]>(() => {
     const actions = this.availableActions();
     const envidoOpts = this.envidoCallOptions();
+    const isDelay = this.isProcessingDelay();
+
+    if (isDelay) {
+      return [
+        { label: trucoLabel(this.currentTrucoCall()), actionType: 'CALL_TRUCO', enabled: false },
+        { label: 'Envido', actionType: 'CALL_ENVIDO', enabled: false },
+        { label: 'Mazo', actionType: 'FOLD', enabled: false },
+      ];
+    }
+
     const envidoAvailable =
       actionEnabled(actions, 'CALL_ENVIDO') &&
       (envidoOpts === null || hasAnyEnvidoCallOption(envidoOpts));

@@ -15,4 +15,5 @@ export class PlayerAreaComponent {
   readonly self = input.required<SeatView>();
   readonly matchId = input.required<string>();
   readonly playCardsEnabled = input<boolean>(true);
+  readonly isProcessingDelay = input<boolean>(false);
 }

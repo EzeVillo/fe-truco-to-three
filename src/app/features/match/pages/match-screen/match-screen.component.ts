@@ -41,7 +41,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   readonly matchStateService = inject(MatchStateService);
-  private readonly eventQueue = inject(MatchEventQueueService);
+  readonly eventQueue = inject(MatchEventQueueService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly callDisplayTimers = new Map<string, number>();
 

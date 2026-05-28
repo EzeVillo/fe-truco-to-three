@@ -36,8 +36,9 @@ export class MatchEventQueueService {
       return;
     }
 
-    const seat = (event.payload as { seat?: string }).seat;
-    const local = seat !== undefined && seat !== null && seat === this.deps.getViewerSeat();
+    const payload = event.payload as { seat?: string; callerSeat?: string; responderSeat?: string };
+    const actingSeat = payload.seat ?? payload.callerSeat ?? payload.responderSeat ?? null;
+    const local = actingSeat !== null && actingSeat === this.deps.getViewerSeat();
     // Eventos bloqueantes: el "delay efectivo" es el ACK del usuario, no un timer (FR-010).
     const delayMs = isBlockingEvent(event.eventType) ? 0 : resolveDelay(event.eventType, local);
 

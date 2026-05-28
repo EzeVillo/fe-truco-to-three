@@ -70,23 +70,29 @@ describe('MatchStatusPanelComponent', () => {
     expect(opponentCallEl.textContent.trim()).toBe('\u00a1Truco!');
   });
 
-  it('no renderiza call text cuando el input es null', () => {
+  it('renderiza el call text vacío cuando el input es null (reserva el alto)', () => {
     fixture.componentRef.setInput('view', createMockView());
     fixture.componentRef.setInput('selfCallText', null);
     fixture.componentRef.setInput('opponentCallText', null);
     fixture.detectChanges();
 
     const callEls = fixture.nativeElement.querySelectorAll('.status-panel__call-text');
-    expect(callEls.length).toBe(0);
+    expect(callEls.length).toBe(2);
+    for (const el of callEls) {
+      expect(el.textContent.trim()).toBe('');
+    }
   });
 
-  it('no renderiza call text cuando el input es undefined', () => {
+  it('renderiza el call text vacío cuando el input es undefined (reserva el alto)', () => {
     fixture.componentRef.setInput('view', createMockView());
     fixture.componentRef.setInput('selfCallText', undefined);
     fixture.componentRef.setInput('opponentCallText', undefined);
     fixture.detectChanges();
 
     const callEls = fixture.nativeElement.querySelectorAll('.status-panel__call-text');
-    expect(callEls.length).toBe(0);
+    expect(callEls.length).toBe(2);
+    for (const el of callEls) {
+      expect(el.textContent.trim()).toBe('');
+    }
   });
 });

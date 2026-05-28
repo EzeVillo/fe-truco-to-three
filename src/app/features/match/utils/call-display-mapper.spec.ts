@@ -14,19 +14,19 @@ function makeEvent(eventType: string, payload: unknown): MatchWsEvent {
 
 describe('callDisplayMapper', () => {
   describe('TRUCO_CALLED', () => {
-    it('mapea TRUCO', () => {
+    it('mapea TRUCO con autoClear false (persiste hasta la respuesta)', () => {
       const result = callDisplayMapper(makeEvent('TRUCO_CALLED', { callerSeat: 'PLAYER_ONE', call: 'TRUCO' }));
-      expect(result).toEqual({ seat: 'PLAYER_ONE', text: '\u00a1Truco!', isAcceptance: false });
+      expect(result).toEqual({ seat: 'PLAYER_ONE', text: '¡Truco!', autoClear: false });
     });
 
-    it('mapea RETRUCO', () => {
+    it('mapea RETRUCO con autoClear false (persiste hasta la respuesta)', () => {
       const result = callDisplayMapper(makeEvent('TRUCO_CALLED', { callerSeat: 'PLAYER_TWO', call: 'RETRUCO' }));
-      expect(result).toEqual({ seat: 'PLAYER_TWO', text: '\u00a1Retruco!', isAcceptance: false });
+      expect(result).toEqual({ seat: 'PLAYER_TWO', text: '¡Retruco!', autoClear: false });
     });
 
-    it('mapea VALE_CUATRO', () => {
+    it('mapea VALE_CUATRO con autoClear false (persiste hasta la respuesta)', () => {
       const result = callDisplayMapper(makeEvent('TRUCO_CALLED', { callerSeat: 'PLAYER_ONE', call: 'VALE_CUATRO' }));
-      expect(result).toEqual({ seat: 'PLAYER_ONE', text: '\u00a1Vale cuatro!', isAcceptance: false });
+      expect(result).toEqual({ seat: 'PLAYER_ONE', text: '¡Vale cuatro!', autoClear: false });
     });
 
     it('devuelve null para call desconocido', () => {
@@ -36,19 +36,19 @@ describe('callDisplayMapper', () => {
   });
 
   describe('TRUCO_RESPONDED', () => {
-    it('mapea QUIERO con isAcceptance true', () => {
+    it('mapea QUIERO con autoClear true', () => {
       const result = callDisplayMapper(makeEvent('TRUCO_RESPONDED', { responderSeat: 'PLAYER_TWO', response: 'QUIERO', call: 'TRUCO' }));
-      expect(result).toEqual({ seat: 'PLAYER_TWO', text: '\u00a1Quiero!', isAcceptance: true });
+      expect(result).toEqual({ seat: 'PLAYER_TWO', text: '¡Quiero!', autoClear: true });
     });
 
-    it('mapea NO_QUIERO con isAcceptance false', () => {
+    it('mapea NO_QUIERO con autoClear false', () => {
       const result = callDisplayMapper(makeEvent('TRUCO_RESPONDED', { responderSeat: 'PLAYER_ONE', response: 'NO_QUIERO', call: 'TRUCO' }));
-      expect(result).toEqual({ seat: 'PLAYER_ONE', text: '\u00a1No quiero!', isAcceptance: false });
+      expect(result).toEqual({ seat: 'PLAYER_ONE', text: '¡No quiero!', autoClear: false });
     });
 
-    it('mapea QUIERO_Y_ME_VOY_AL_MAZO con isAcceptance false', () => {
+    it('mapea QUIERO_Y_ME_VOY_AL_MAZO con autoClear false', () => {
       const result = callDisplayMapper(makeEvent('TRUCO_RESPONDED', { responderSeat: 'PLAYER_ONE', response: 'QUIERO_Y_ME_VOY_AL_MAZO', call: 'TRUCO' }));
-      expect(result).toEqual({ seat: 'PLAYER_ONE', text: '\u00a1Quiero y me voy al mazo!', isAcceptance: false });
+      expect(result).toEqual({ seat: 'PLAYER_ONE', text: '¡Quiero y me voy al mazo!', autoClear: false });
     });
 
     it('devuelve null para response desconocido', () => {
@@ -58,19 +58,19 @@ describe('callDisplayMapper', () => {
   });
 
   describe('ENVIDO_CALLED', () => {
-    it('mapea ENVIDO', () => {
+    it('mapea ENVIDO con autoClear false (persiste hasta la resolución)', () => {
       const result = callDisplayMapper(makeEvent('ENVIDO_CALLED', { callerSeat: 'PLAYER_ONE', call: 'ENVIDO' }));
-      expect(result).toEqual({ seat: 'PLAYER_ONE', text: '\u00a1Envido!', isAcceptance: false });
+      expect(result).toEqual({ seat: 'PLAYER_ONE', text: '¡Envido!', autoClear: false });
     });
 
-    it('mapea REAL_ENVIDO', () => {
+    it('mapea REAL_ENVIDO con autoClear false (persiste hasta la resolución)', () => {
       const result = callDisplayMapper(makeEvent('ENVIDO_CALLED', { callerSeat: 'PLAYER_TWO', call: 'REAL_ENVIDO' }));
-      expect(result).toEqual({ seat: 'PLAYER_TWO', text: '\u00a1Real envido!', isAcceptance: false });
+      expect(result).toEqual({ seat: 'PLAYER_TWO', text: '¡Real envido!', autoClear: false });
     });
 
-    it('mapea FALTA_ENVIDO', () => {
+    it('mapea FALTA_ENVIDO con autoClear false (persiste hasta la resolución)', () => {
       const result = callDisplayMapper(makeEvent('ENVIDO_CALLED', { callerSeat: 'PLAYER_ONE', call: 'FALTA_ENVIDO' }));
-      expect(result).toEqual({ seat: 'PLAYER_ONE', text: '\u00a1Falta envido!', isAcceptance: false });
+      expect(result).toEqual({ seat: 'PLAYER_ONE', text: '¡Falta envido!', autoClear: false });
     });
 
     it('devuelve null para call desconocido', () => {
@@ -92,9 +92,9 @@ describe('callDisplayMapper', () => {
   });
 
   describe('FOLDED', () => {
-    it('mapea FOLDED', () => {
+    it('mapea FOLDED con autoClear false', () => {
       const result = callDisplayMapper(makeEvent('FOLDED', { seat: 'PLAYER_ONE' }));
-      expect(result).toEqual({ seat: 'PLAYER_ONE', text: 'Me voy al mazo', isAcceptance: false });
+      expect(result).toEqual({ seat: 'PLAYER_ONE', text: 'Me voy al mazo', autoClear: false });
     });
   });
 

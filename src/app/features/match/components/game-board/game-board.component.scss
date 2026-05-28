@@ -1,3 +1,11 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+}
+
 .game-board {
   display: flex;
   flex-direction: column;
@@ -10,10 +18,16 @@
   overflow-y: auto;
 }
 
+.game-board__middle {
+  display: flex;
+  flex-direction: column;
+  gap: var(--t3-gap-xs);
+  margin-block: auto;
+}
+
 .game-board app-available-actions-panel {
   margin-inline: calc(-1 * var(--t3-gap-xs));
   margin-bottom: calc(-1 * var(--t3-gap-xs));
-  margin-top: auto;
   width: auto;
 }
 
@@ -21,6 +35,10 @@
   .game-board {
     gap: var(--t3-gap-sm);
     padding: var(--t3-gap-sm);
+  }
+
+  .game-board__middle {
+    gap: var(--t3-gap-sm);
   }
 
   .game-board app-available-actions-panel {

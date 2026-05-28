@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { MatDialogModule } from '@angular/material/dialog';
@@ -414,11 +414,24 @@ describe('MatchScreenComponent', () => {
       vi.useRealTimers();
     });
 
-    it('muestra selfCallText para QUIERO cuando el jugador local acept\u00f3', () => {
+    // Helper: emite ENVIDO_CALLED para registrar el cantor antes del RESOLVED.
+    const emitEnvidoCalled = (callerSeat: 'PLAYER_ONE' | 'PLAYER_TWO') => {
+      matchStateService.matchEvent$.next({
+        matchId: 'test-match',
+        eventType: 'ENVIDO_CALLED',
+        timestamp: Date.now(),
+        payload: { callerSeat, call: 'ENVIDO' },
+        stateVersion: 1,
+      });
+    };
+
+    it('muestra selfCallText para QUIERO cuando el jugador local respondi\u00f3 (rival cant\u00f3)', () => {
       setupComponent({ matchId: 'test-match' });
       matchStateService.state.set(mockMatchViewerPlayerOne);
       fixture.detectChanges();
 
+      // Rival (PLAYER_TWO) cant\u00f3 envido; el local (PLAYER_ONE) responde.
+      emitEnvidoCalled('PLAYER_TWO');
       matchStateService.matchEvent$.next({
         matchId: 'test-match',
         eventType: 'ENVIDO_RESOLVED',
@@ -431,16 +444,18 @@ describe('MatchScreenComponent', () => {
       expect(fixture.componentInstance.opponentCallText()).toBeNull();
     });
 
-    it('muestra opponentCallText para QUIERO cuando el rival acept\u00f3', () => {
+    it('muestra opponentCallText para QUIERO cuando el rival respondi\u00f3 (local cant\u00f3)', () => {
       setupComponent({ matchId: 'test-match' });
       matchStateService.state.set(mockMatchViewerPlayerOne);
       fixture.detectChanges();
 
+      // Local (PLAYER_ONE) cant\u00f3 envido; el rival (PLAYER_TWO) responde.
+      emitEnvidoCalled('PLAYER_ONE');
       matchStateService.matchEvent$.next({
         matchId: 'test-match',
         eventType: 'ENVIDO_RESOLVED',
         timestamp: Date.now(),
-        payload: { response: 'QUIERO', winnerSeat: 'PLAYER_TWO' },
+        payload: { response: 'QUIERO', winnerSeat: 'PLAYER_ONE' },
         stateVersion: 2,
       });
 
@@ -453,6 +468,7 @@ describe('MatchScreenComponent', () => {
       matchStateService.state.set(mockMatchViewerPlayerOne);
       fixture.detectChanges();
 
+      emitEnvidoCalled('PLAYER_TWO');
       matchStateService.matchEvent$.next({
         matchId: 'test-match',
         eventType: 'ENVIDO_RESOLVED',
@@ -470,6 +486,7 @@ describe('MatchScreenComponent', () => {
       matchStateService.state.set(mockMatchViewerPlayerOne);
       fixture.detectChanges();
 
+      emitEnvidoCalled('PLAYER_ONE');
       matchStateService.matchEvent$.next({
         matchId: 'test-match',
         eventType: 'ENVIDO_RESOLVED',
@@ -487,6 +504,7 @@ describe('MatchScreenComponent', () => {
       matchStateService.state.set(mockMatchViewerPlayerOne);
       fixture.detectChanges();
 
+      emitEnvidoCalled('PLAYER_TWO');
       matchStateService.matchEvent$.next({
         matchId: 'test-match',
         eventType: 'ENVIDO_RESOLVED',
@@ -503,11 +521,12 @@ describe('MatchScreenComponent', () => {
       expect(fixture.componentInstance.selfCallText()).toBeNull();
     });
 
-    it('no auto-limpia opponentCallText de NO_QUIERO', () => {
+    it('auto-limpia opponentCallText de NO_QUIERO a los 3 segundos', () => {
       setupComponent({ matchId: 'test-match' });
       matchStateService.state.set(mockMatchViewerPlayerOne);
       fixture.detectChanges();
 
+      emitEnvidoCalled('PLAYER_ONE');
       matchStateService.matchEvent$.next({
         matchId: 'test-match',
         eventType: 'ENVIDO_RESOLVED',
@@ -518,10 +537,10 @@ describe('MatchScreenComponent', () => {
 
       expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1No quiero!');
 
-      vi.advanceTimersByTime(5000);
+      vi.advanceTimersByTime(3000);
       fixture.detectChanges();
 
-      expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1No quiero!');
+      expect(fixture.componentInstance.opponentCallText()).toBeNull();
     });
 
     it('limpia opponentCallText de NO_QUIERO ante ROUND_STARTED', () => {
@@ -529,6 +548,7 @@ describe('MatchScreenComponent', () => {
       matchStateService.state.set(mockMatchViewerPlayerOne);
       fixture.detectChanges();
 
+      emitEnvidoCalled('PLAYER_ONE');
       matchStateService.matchEvent$.next({
         matchId: 'test-match',
         eventType: 'ENVIDO_RESOLVED',
@@ -590,6 +610,7 @@ describe('MatchScreenComponent', () => {
   });
 
   it('opens EnvidoResultDialog on envidoResolved$', () => {
+    vi.useFakeTimers();
     setupComponent({ matchId: 'test-match' });
     matchStateService.loading.set(false);
     matchStateService.state.set(mockMatchViewerPlayerOne);
@@ -603,6 +624,11 @@ describe('MatchScreenComponent', () => {
       pointsMano: 28,
       pointsPie: 25,
     });
+
+    // El modal se abre con delay para dejar ver el "¡Quiero!".
+    expect(dialogSpy).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1200);
+    vi.useRealTimers();
 
     expect(dialogSpy).toHaveBeenCalledOnce();
     const call = dialogSpy.mock.calls[0];
@@ -640,7 +666,8 @@ describe('MatchScreenComponent', () => {
       };
     }
 
-    it('ENVIDO_RESOLVED QUIERO: abre modal y llama resumeAck recién en afterClosed', () => {
+    it('ENVIDO_RESOLVED QUIERO: abre modal (tras delay) y llama resumeAck recién en afterClosed', () => {
+      vi.useFakeTimers();
       setupComponent({ matchId: 'test-match' });
       matchStateService.loading.set(false);
       matchStateService.state.set(mockMatchViewerPlayerOne);
@@ -659,6 +686,13 @@ describe('MatchScreenComponent', () => {
         pointsMano: 28,
         pointsPie: 25,
       });
+
+      // El modal se difiere para dejar ver el "¡Quiero!"; la cola sigue pausada.
+      expect(dialogSpy).not.toHaveBeenCalled();
+      expect(resumeSpy).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(1200);
+      vi.useRealTimers();
 
       expect(dialogSpy).toHaveBeenCalledOnce();
       expect(dialogSpy.mock.calls[0][0]).toBe(EnvidoResultDialogComponent);

@@ -2,7 +2,9 @@
   display: flex;
   gap: var(--t3-gap-xs);
   justify-content: center;
+  align-items: center;
   padding: var(--t3-gap-xs);
+  min-height: calc(64px * 3 / 2 + var(--t3-gap-xs) * 2);
 }
 
 .player-hand__card-btn {
@@ -31,6 +33,10 @@
 }
 
 @media (min-width: 1024px) {
+  .player-hand {
+    min-height: calc(88px * 3 / 2 + var(--t3-gap-sm) * 2);
+  }
+
   .player-hand app-card-view {
     width: 88px;
   }

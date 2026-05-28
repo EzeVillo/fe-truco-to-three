@@ -8,8 +8,8 @@ export interface CallDisplayEvent {
   /** Texto legible en español para mostrar en el panel */
   text: string;
 
-  /** Indica si es una respuesta de aceptación (activa auto-limpieza a 3 s) */
-  isAcceptance: boolean;
+  /** Indica si el texto debe auto-limpiarse de pantalla a los 3 s */
+  autoClear: boolean;
 }
 
 export function callDisplayMapper(event: MatchWsEvent): CallDisplayEvent | null {
@@ -23,7 +23,8 @@ export function callDisplayMapper(event: MatchWsEvent): CallDisplayEvent | null 
       };
       const text = textMap[payload.call];
       if (!text) {return null;}
-      return { seat: payload.callerSeat, text, isAcceptance: false };
+      // El canto de truco persiste en pantalla hasta que se responda (quiero/no quiero).
+      return { seat: payload.callerSeat, text, autoClear: false };
     }
 
     case 'TRUCO_RESPONDED': {
@@ -35,7 +36,8 @@ export function callDisplayMapper(event: MatchWsEvent): CallDisplayEvent | null 
       };
       const text = textMap[payload.response];
       if (!text) {return null;}
-      return { seat: payload.responderSeat, text, isAcceptance: payload.response === 'QUIERO' };
+      // QUIERO del truco se auto-limpia; NO_QUIERO y QUIERO_Y_ME_VOY_AL_MAZO persisten.
+      return { seat: payload.responderSeat, text, autoClear: payload.response === 'QUIERO' };
     }
 
     case 'ENVIDO_CALLED': {
@@ -47,7 +49,8 @@ export function callDisplayMapper(event: MatchWsEvent): CallDisplayEvent | null 
       };
       const text = textMap[payload.call];
       if (!text) {return null;}
-      return { seat: payload.callerSeat, text, isAcceptance: false };
+      // El canto de envido persiste en pantalla hasta que se resuelva (quiero/no quiero).
+      return { seat: payload.callerSeat, text, autoClear: false };
     }
 
     case 'ENVIDO_RESOLVED': {
@@ -58,7 +61,7 @@ export function callDisplayMapper(event: MatchWsEvent): CallDisplayEvent | null 
 
     case 'FOLDED': {
       const payload = event.payload as { seat: Seat };
-      return { seat: payload.seat, text: 'Me voy al mazo', isAcceptance: false };
+      return { seat: payload.seat, text: 'Me voy al mazo', autoClear: false };
     }
 
     default:

@@ -44,6 +44,11 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   readonly eventQueue = inject(MatchEventQueueService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly callDisplayTimers = new Map<string, number>();
+  private lastEnvidoCallerSeat: 'PLAYER_ONE' | 'PLAYER_TWO' | null = null;
+  private envidoModalTimerId: number | null = null;
+
+  /** Tiempo que el "¡Quiero!" del envido queda visible antes de abrir el modal de resultado. */
+  private static readonly ENVIDO_RESULT_MODAL_DELAY_MS = 1200;
 
   ngOnInit(): void {
     const matchId = this.route.snapshot.paramMap.get('matchId') ?? '';
@@ -99,10 +104,16 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
       this.selfCallText.set(null);
       this.opponentCallText.set(null);
       this.clearAllCallDisplayTimers();
+      this.lastEnvidoCallerSeat = null;
       return;
     }
 
-    // Handle ENVIDO_RESOLVED: infer responder seat from winnerSeat
+    if (event.eventType === 'ENVIDO_CALLED') {
+      const payload = event.payload as { callerSeat: 'PLAYER_ONE' | 'PLAYER_TWO' };
+      this.lastEnvidoCallerSeat = payload.callerSeat;
+    }
+
+    // Handle ENVIDO_RESOLVED: infer responder seat as opposite of last envido caller
     if (event.eventType === 'ENVIDO_RESOLVED') {
       const payload = event.payload as { response: string; winnerSeat: 'PLAYER_ONE' | 'PLAYER_TWO' };
       const textMap: Record<string, string> = {
@@ -120,24 +131,30 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
       this.opponentCallText.set(null);
       this.clearAllCallDisplayTimers();
 
-      if (payload.response === 'NO_QUIERO') {
-        const noQuieroSeat: 'PLAYER_ONE' | 'PLAYER_TWO' =
-          payload.winnerSeat === 'PLAYER_ONE' ? 'PLAYER_TWO' : 'PLAYER_ONE';
-        const isSelf = noQuieroSeat === state.viewerSeat;
-        const signalRef = isSelf ? this.selfCallText : this.opponentCallText;
-        signalRef.set(text);
-        // No auto-cleanup for NO_QUIERO
-      } else {
-        // QUIERO: the acceptor is the winnerSeat (they accepted and will reveal/envido continues)
-        const isSelf = payload.winnerSeat === state.viewerSeat;
-        const signalRef = isSelf ? this.selfCallText : this.opponentCallText;
-        signalRef.set(text);
-
-        const timeoutId = window.setTimeout(() => {
-          signalRef.set(null);
-        }, 3000);
-        this.callDisplayTimers.set('call', timeoutId);
+      // El que responde (QUIERO / NO_QUIERO) es el rival del que cantó envido.
+      // winnerSeat indica quién ganó los tantos, no quién respondió.
+      const callerSeat = this.lastEnvidoCallerSeat;
+      const responderSeat: 'PLAYER_ONE' | 'PLAYER_TWO' | null = callerSeat
+        ? callerSeat === 'PLAYER_ONE'
+          ? 'PLAYER_TWO'
+          : 'PLAYER_ONE'
+        : null;
+      if (!responderSeat) {
+        this.lastEnvidoCallerSeat = null;
+        return;
       }
+
+      const isSelf = responderSeat === state.viewerSeat;
+      const signalRef = isSelf ? this.selfCallText : this.opponentCallText;
+      signalRef.set(text);
+
+      // Tanto QUIERO como NO_QUIERO del envido se auto-limpian a los 3 s.
+      const timeoutId = window.setTimeout(() => {
+        signalRef.set(null);
+      }, 3000);
+      this.callDisplayTimers.set('call', timeoutId);
+
+      this.lastEnvidoCallerSeat = null;
       return;
     }
 
@@ -157,8 +174,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
 
     signalRef.set(displayEvent.text);
 
-    // Auto-clear acceptance texts after 3 seconds
-    if (displayEvent.isAcceptance) {
+    if (displayEvent.autoClear) {
       const timeoutId = window.setTimeout(() => {
         signalRef.set(null);
       }, 3000);
@@ -171,6 +187,10 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
       clearTimeout(timeoutId);
     }
     this.callDisplayTimers.clear();
+    if (this.envidoModalTimerId !== null) {
+      clearTimeout(this.envidoModalTimerId);
+      this.envidoModalTimerId = null;
+    }
   }
 
   retry(): void {
@@ -273,19 +293,25 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
       won: payload.winnerSeat === viewerSeat,
     };
 
-    const dialogRef = this.dialog.open<EnvidoResultDialogComponent, EnvidoResultDialogData, void>(
-      EnvidoResultDialogComponent,
-      {
-        data,
-        panelClass: 't3-envido-result-dialog',
-        backdropClass: 't3-envido-result-backdrop',
-        disableClose: false,
-      }
-    );
+    // La cola está pausada esperando el ACK (cierre del modal), así que diferir la
+    // apertura es seguro: deja ver el "¡Quiero!" antes de mostrar el resultado.
+    this.envidoModalTimerId = window.setTimeout(() => {
+      this.envidoModalTimerId = null;
 
-    dialogRef.afterClosed().subscribe(() => {
-      this.eventQueue.resumeAck();
-    });
+      const dialogRef = this.dialog.open<EnvidoResultDialogComponent, EnvidoResultDialogData, void>(
+        EnvidoResultDialogComponent,
+        {
+          data,
+          panelClass: 't3-envido-result-dialog',
+          backdropClass: 't3-envido-result-backdrop',
+          disableClose: false,
+        }
+      );
+
+      dialogRef.afterClosed().subscribe(() => {
+        this.eventQueue.resumeAck();
+      });
+    }, MatchScreenComponent.ENVIDO_RESULT_MODAL_DELAY_MS);
   }
 
   private mapMatchEndedToDialogData(event: MatchEndedEvent, state: ReturnType<typeof this.matchStateService.state>): GameWonDialogData {

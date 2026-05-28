@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/011-ack-gated-event-queue/plan.md`
+`specs/012-delay-gated-action-bar/plan.md`
 <!-- SPECKIT END -->
 
 ## Reglas del juego (truco-to-three)

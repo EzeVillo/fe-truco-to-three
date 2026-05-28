@@ -3,9 +3,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { MatDialogModule } from '@angular/material/dialog';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { MatchScreenComponent } from './match-screen.component';
 import { MatchStateService } from '../../services/match-state.service';
+import { MatchEventQueueService } from '../../services/match-event-queue.service';
 import { GameWonDialogComponent } from '../../components/game-won-dialog/game-won-dialog.component';
 import { EnvidoResultDialogComponent } from '../../components/envido-result-dialog/envido-result-dialog.component';
 import { mockMatchViewerPlayerOne } from '../../mocks/match-state.mocks';
@@ -629,5 +630,86 @@ describe('MatchScreenComponent', () => {
     });
 
     expect(dialogSpy).not.toHaveBeenCalled();
+  });
+
+  describe('US011 — ACK gating de la cola de eventos', () => {
+    function mockDialogRef(afterClosedSubject: Subject<void>) {
+      return {
+        afterClosed: () => afterClosedSubject.asObservable(),
+        close: () => afterClosedSubject.next(),
+      };
+    }
+
+    it('ENVIDO_RESOLVED QUIERO: abre modal y llama resumeAck recién en afterClosed', () => {
+      setupComponent({ matchId: 'test-match' });
+      matchStateService.loading.set(false);
+      matchStateService.state.set(mockMatchViewerPlayerOne);
+      fixture.detectChanges();
+
+      const eventQueue = fixture.componentInstance['eventQueue'] as MatchEventQueueService;
+      const resumeSpy = vi.spyOn(eventQueue, 'resumeAck');
+      const afterClosed$ = new Subject<void>();
+      const dialogSpy = vi
+        .spyOn(fixture.componentInstance['dialog'], 'open')
+        .mockReturnValue(mockDialogRef(afterClosed$) as unknown as ReturnType<typeof fixture.componentInstance['dialog']['open']>);
+
+      matchStateService.envidoResolved$.next({
+        response: 'QUIERO',
+        winnerSeat: 'PLAYER_ONE',
+        pointsMano: 28,
+        pointsPie: 25,
+      });
+
+      expect(dialogSpy).toHaveBeenCalledOnce();
+      expect(dialogSpy.mock.calls[0][0]).toBe(EnvidoResultDialogComponent);
+      expect(resumeSpy).not.toHaveBeenCalled();
+
+      afterClosed$.next();
+
+      expect(resumeSpy).toHaveBeenCalledOnce();
+    });
+
+    it('ENVIDO_RESOLVED NO_QUIERO: no abre modal y llama resumeAck síncronamente', () => {
+      setupComponent({ matchId: 'test-match' });
+      matchStateService.loading.set(false);
+      matchStateService.state.set(mockMatchViewerPlayerOne);
+      fixture.detectChanges();
+
+      const eventQueue = fixture.componentInstance['eventQueue'] as MatchEventQueueService;
+      const resumeSpy = vi.spyOn(eventQueue, 'resumeAck');
+      const dialogSpy = vi.spyOn(fixture.componentInstance['dialog'], 'open');
+
+      matchStateService.envidoResolved$.next({
+        response: 'NO_QUIERO',
+        winnerSeat: 'PLAYER_ONE',
+      });
+
+      expect(dialogSpy).not.toHaveBeenCalled();
+      expect(resumeSpy).toHaveBeenCalledOnce();
+    });
+
+    it('GameWonDialog: abre modal y llama resumeAck recién en afterClosed', () => {
+      setupComponent({ matchId: 'test-match' });
+      matchStateService.loading.set(false);
+      matchStateService.state.set(mockMatchViewerPlayerOne);
+      fixture.detectChanges();
+
+      const eventQueue = fixture.componentInstance['eventQueue'] as MatchEventQueueService;
+      const resumeSpy = vi.spyOn(eventQueue, 'resumeAck');
+      const afterClosed$ = new Subject<void>();
+      const dialogSpy = vi
+        .spyOn(fixture.componentInstance['dialog'], 'open')
+        .mockReturnValue(mockDialogRef(afterClosed$) as unknown as ReturnType<typeof fixture.componentInstance['dialog']['open']>);
+
+      matchStateService.gameWon$.next({ winnerSeat: 'PLAYER_ONE' });
+
+      expect(dialogSpy).toHaveBeenCalledOnce();
+      expect(dialogSpy.mock.calls[0][0]).toBe(GameWonDialogComponent);
+      expect(resumeSpy).not.toHaveBeenCalled();
+
+      afterClosed$.next();
+
+      expect(resumeSpy).toHaveBeenCalledOnce();
+    });
   });
 });

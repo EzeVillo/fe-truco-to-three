@@ -7,6 +7,7 @@ import { WebSocketService } from '../../../core/services/websocket.service';
 import type { MatchState } from '../../../core/models/match.models';
 import type { MatchWsEvent, MatchDerivedEvent, MatchEndedEvent, GameWonPayload, EnvidoResolvedPayload, GameScoreChangedPayload } from '../models/match-ws-events';
 import { applyMatchEvent, applyMatchDerivedEvent } from '../reducers/match-event.reducer';
+import { MatchEventQueueService } from './match-event-queue.service';
 
 interface MatchSnapshot extends MatchState {
   stateVersion: number;
@@ -17,6 +18,7 @@ export class MatchStateService {
   private readonly http = inject(HttpClient);
   private readonly wsService = inject(WebSocketService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly eventQueue = inject(MatchEventQueueService);
 
   readonly state = signal<MatchState | null>(null);
   readonly loading = signal<boolean>(false);
@@ -27,6 +29,7 @@ export class MatchStateService {
   readonly envidoResolved$ = new Subject<EnvidoResolvedPayload>();
 
   private lastApplied = 0;
+  private lastSeenVersion = 0;
   private buffer: MatchWsEvent[] = [];
   private derivedBuffer: MatchDerivedEvent[] = [];
   private subscriptions: Subscription[] = [];
@@ -39,10 +42,18 @@ export class MatchStateService {
     this.error.set(false);
     this.state.set(null);
     this.lastApplied = 0;
+    this.lastSeenVersion = 0;
     this.buffer = [];
     this.derivedBuffer = [];
 
     this.unsubscribeAll();
+    this.eventQueue.clear();
+
+    this.eventQueue.init({
+      getViewerSeat: () => this.state()?.viewerSeat ?? null,
+      applyTransactional: (e) => this.applyAndIncrement(e),
+      applyDerived: (e) => this.applyDerivedEvent(e),
+    });
 
     // Establece la conexión WebSocket si no está activa
     this.wsService.connect();
@@ -77,19 +88,21 @@ export class MatchStateService {
         // Disconnected - will reconnect automatically
       } else if (this.wasConnected && isConnected && !this.loading() && this.currentMatchId) {
         // Reconnected after being disconnected - re-bootstrap
+        this.eventQueue.flushImmediately();
         this.loading.set(true);
         this.error.set(false);
         this.buffer = [];
         this.derivedBuffer = [];
         this.fetchSnapshot(this.currentMatchId);
       }
-      this.wasConnected = isConnected;
+      this.wasConnected = isConnected || this.wasConnected;
     });
 
     this.subscriptions.push(connSub);
   }
 
   destroy(): void {
+    this.eventQueue.clear();
     this.unsubscribeAll();
     this.matchEvent$.complete();
     this.matchEnded$.complete();
@@ -104,6 +117,7 @@ export class MatchStateService {
       next: (snapshot) => {
         this.state.set(snapshot);
         this.lastApplied = snapshot.stateVersion;
+        this.lastSeenVersion = snapshot.stateVersion;
         this.drainBuffers();
         this.loading.set(false);
 
@@ -129,6 +143,7 @@ export class MatchStateService {
       }
       if (event.stateVersion === this.lastApplied + 1) {
         this.applyAndIncrement(event);
+        this.lastSeenVersion = event.stateVersion;
       } else {
         // Gap detected - re-fetch
         this.triggerRefetch();
@@ -145,12 +160,13 @@ export class MatchStateService {
   }
 
   private processLiveEvent(event: MatchWsEvent): void {
-    if (event.stateVersion <= this.lastApplied) {
+    if (event.stateVersion <= this.lastSeenVersion) {
       // Duplicate or old event - discard
       return;
     }
-    if (event.stateVersion === this.lastApplied + 1) {
-      this.applyAndIncrement(event);
+    if (event.stateVersion === this.lastSeenVersion + 1) {
+      this.lastSeenVersion = event.stateVersion;
+      this.eventQueue.enqueueTransactional(event);
     } else {
       // Gap detected - re-fetch
       this.triggerRefetch();
@@ -158,7 +174,10 @@ export class MatchStateService {
   }
 
   private processLiveDerivedEvent(event: MatchDerivedEvent): void {
-    this.applyDerivedEvent(event);
+    // La cola retrasa el momento del Subject.next pero no afecta a los
+    // consumidores (p. ej. AvailableActionsService): siguen suscritos a los
+    // mismos Observables y reciben los eventos en el orden causal correcto.
+    this.eventQueue.enqueueDerived(event);
   }
 
   private applyAndIncrement(event: MatchWsEvent): void {
@@ -204,6 +223,8 @@ export class MatchStateService {
     this.loading.set(true);
     this.buffer = [];
     this.derivedBuffer = [];
+    this.eventQueue.clear();
+    this.lastSeenVersion = this.lastApplied;
     this.fetchSnapshot(this.currentMatchId);
   }
 

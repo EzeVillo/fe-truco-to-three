@@ -255,6 +255,178 @@ describe('MatchEventQueueService', () => {
       expect(transactionalSpy).toHaveBeenLastCalledWith(event2);
     });
 
+    it('US011 — evento bloqueante pausa la cola; resumeAck la reanuda', () => {
+      const blockingEvent: MatchWsEvent = {
+        matchId: 'm1',
+        eventType: 'ENVIDO_RESOLVED',
+        timestamp: 1,
+        payload: { response: 'QUIERO', winnerSeat: 'PLAYER_TWO', pointsMano: 28, pointsPie: 20 },
+        stateVersion: 2,
+      } as MatchWsEvent;
+      const nextEvent: MatchWsEvent = {
+        matchId: 'm1',
+        eventType: 'CARD_PLAYED',
+        timestamp: 2,
+        payload: { seat: 'PLAYER_TWO', card: { suit: 'ESPADA', number: 1 } },
+        stateVersion: 3,
+      };
+
+      service.enqueueTransactional(blockingEvent);
+      service.enqueueTransactional(nextEvent);
+
+      // El bloqueante se aplica de inmediato (delayMs=0) y pausa la cola.
+      expect(transactionalSpy).toHaveBeenCalledTimes(1);
+      expect(transactionalSpy).toHaveBeenNthCalledWith(1, blockingEvent);
+
+      vi.advanceTimersByTime(10_000);
+      expect(transactionalSpy).toHaveBeenCalledTimes(1);
+
+      service.resumeAck();
+
+      // Tras el ACK, el siguiente evento se aplica con su delay normal.
+      vi.advanceTimersByTime(600);
+      expect(transactionalSpy).toHaveBeenCalledTimes(2);
+      expect(transactionalSpy).toHaveBeenNthCalledWith(2, nextEvent);
+    });
+
+    it('US011 — resumeAck es idempotente: llamarlo dos veces no avanza eventos extra', () => {
+      const blockingEvent: MatchWsEvent = {
+        matchId: 'm1',
+        eventType: 'GAME_SCORE_CHANGED',
+        timestamp: 1,
+        payload: { seat: 'PLAYER_ONE', score: { playerOne: 1, playerTwo: 0 } },
+        stateVersion: 2,
+      } as unknown as MatchWsEvent;
+      const next1: MatchWsEvent = {
+        matchId: 'm1',
+        eventType: 'CARD_PLAYED',
+        timestamp: 2,
+        payload: { seat: 'PLAYER_TWO', card: { suit: 'ORO', number: 4 } },
+        stateVersion: 3,
+      };
+
+      service.enqueueTransactional(blockingEvent);
+      service.enqueueTransactional(next1);
+
+      expect(transactionalSpy).toHaveBeenCalledTimes(1);
+
+      service.resumeAck();
+      service.resumeAck();
+
+      vi.advanceTimersByTime(600);
+      expect(transactionalSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('US011 — clear() durante pausa: cola limpia y pausa revertida', () => {
+      const blockingEvent: MatchWsEvent = {
+        matchId: 'm1',
+        eventType: 'MATCH_FINISHED',
+        timestamp: 1,
+        payload: { winnerSeat: 'PLAYER_ONE', gamesWonPlayerOne: 1, gamesWonPlayerTwo: 0 },
+        stateVersion: 2,
+      } as unknown as MatchWsEvent;
+
+      service.enqueueTransactional(blockingEvent);
+      expect(transactionalSpy).toHaveBeenCalledTimes(1);
+
+      service.clear();
+
+      // Nuevo evento debe procesarse normalmente (la pausa fue revertida).
+      const newEvent: MatchWsEvent = {
+        matchId: 'm1',
+        eventType: 'CARD_PLAYED',
+        timestamp: 3,
+        payload: { seat: 'PLAYER_TWO', card: { suit: 'BASTO', number: 2 } },
+        stateVersion: 4,
+      };
+      service.enqueueTransactional(newEvent);
+      vi.advanceTimersByTime(600);
+      expect(transactionalSpy).toHaveBeenCalledTimes(2);
+      expect(transactionalSpy).toHaveBeenLastCalledWith(newEvent);
+    });
+
+    it('US011 — flushImmediately() durante pausa aplica todo y resetea pausa', () => {
+      const blocking: MatchWsEvent = {
+        matchId: 'm1',
+        eventType: 'ENVIDO_RESOLVED',
+        timestamp: 1,
+        payload: { response: 'QUIERO', winnerSeat: 'PLAYER_ONE' },
+        stateVersion: 2,
+      } as MatchWsEvent;
+      const pending1: MatchWsEvent = {
+        matchId: 'm1',
+        eventType: 'CARD_PLAYED',
+        timestamp: 2,
+        payload: { seat: 'PLAYER_TWO', card: { suit: 'ESPADA', number: 7 } },
+        stateVersion: 3,
+      };
+
+      service.enqueueTransactional(blocking);
+      service.enqueueTransactional(pending1);
+
+      expect(transactionalSpy).toHaveBeenCalledTimes(1);
+      expect(service.pendingCount()).toBe(1);
+
+      service.flushImmediately();
+
+      expect(transactionalSpy).toHaveBeenCalledTimes(2);
+      expect(transactionalSpy).toHaveBeenNthCalledWith(2, pending1);
+      expect(service.pendingCount()).toBe(0);
+    });
+
+    it('US011 — dos bloqueantes consecutivos: ACK al primero aplica el segundo sin delay extra', () => {
+      const blocking1: MatchWsEvent = {
+        matchId: 'm1',
+        eventType: 'ENVIDO_RESOLVED',
+        timestamp: 1,
+        payload: { response: 'QUIERO', winnerSeat: 'PLAYER_ONE' },
+        stateVersion: 2,
+      } as MatchWsEvent;
+      const blocking2: MatchWsEvent = {
+        matchId: 'm1',
+        eventType: 'GAME_SCORE_CHANGED',
+        timestamp: 2,
+        payload: {},
+        stateVersion: 3,
+      } as unknown as MatchWsEvent;
+
+      service.enqueueTransactional(blocking1);
+      service.enqueueTransactional(blocking2);
+
+      expect(transactionalSpy).toHaveBeenCalledTimes(1);
+      expect(transactionalSpy).toHaveBeenNthCalledWith(1, blocking1);
+
+      service.resumeAck();
+      // El segundo bloqueante se aplica de inmediato (delayMs forzado a 0 por isBlockingEvent)
+      expect(transactionalSpy).toHaveBeenCalledTimes(2);
+      expect(transactionalSpy).toHaveBeenNthCalledWith(2, blocking2);
+    });
+
+    it('US011 — FR-010: path no bloqueante sigue con delays temporales sin ACK', () => {
+      const card: MatchWsEvent = {
+        matchId: 'm1',
+        eventType: 'CARD_PLAYED',
+        timestamp: 1,
+        payload: { seat: 'PLAYER_TWO', card: { suit: 'ESPADA', number: 1 } },
+        stateVersion: 2,
+      };
+      const envidoCalled: MatchWsEvent = {
+        matchId: 'm1',
+        eventType: 'ENVIDO_CALLED',
+        timestamp: 2,
+        payload: { callerSeat: 'PLAYER_TWO', call: 'ENVIDO' },
+        stateVersion: 3,
+      };
+
+      service.enqueueTransactional(card);
+      service.enqueueTransactional(envidoCalled);
+
+      vi.advanceTimersByTime(600);
+      expect(transactionalSpy).toHaveBeenCalledTimes(1);
+      vi.advanceTimersByTime(600);
+      expect(transactionalSpy).toHaveBeenCalledTimes(2);
+    });
+
     it('coalescing: dos TURN_CHANGED consecutivos del mismo seat se colapsan', () => {
       const turn1: MatchWsEvent = {
         matchId: 'm1',

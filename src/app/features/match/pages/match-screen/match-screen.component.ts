@@ -41,6 +41,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   readonly matchStateService = inject(MatchStateService);
+  private readonly eventQueue = inject(MatchEventQueueService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly callDisplayTimers = new Map<string, number>();
 
@@ -82,6 +83,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     this._envidoSub?.unsubscribe();
     this._eventSub?.unsubscribe();
     this.clearAllCallDisplayTimers();
+    this.dialog.closeAll();
     this.matchStateService.destroy();
   }
 
@@ -199,13 +201,17 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     );
 
     dialogRef.afterClosed().subscribe(() => {
+      this.eventQueue.resumeAck();
       this.router.navigate(['/']);
     });
   }
 
   private openGameWonDialog(event: GameWonPayload): void {
     const state = this.matchStateService.state();
-    if (!state) {return;}
+    if (!state) {
+      this.eventQueue.resumeAck();
+      return;
+    }
 
     const viewerSeat = state.viewerSeat;
     const isPlayerOne = viewerSeat === 'PLAYER_ONE';
@@ -226,7 +232,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
       localWonMatch: event.winnerSeat === viewerSeat,
     };
 
-    this.dialog.open<GameWonDialogComponent, GameWonDialogData, void>(
+    const dialogRef = this.dialog.open<GameWonDialogComponent, GameWonDialogData, void>(
       GameWonDialogComponent,
       {
         data,
@@ -235,16 +241,24 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
         disableClose: false,
       }
     );
+
+    dialogRef.afterClosed().subscribe(() => {
+      this.eventQueue.resumeAck();
+    });
   }
 
   private openEnvidoResultDialog(payload: EnvidoResolvedPayload): void {
-    // No mostrar modal cuando el envido fue rechazado
+    // No mostrar modal cuando el envido fue rechazado: el ACK se consume síncrono.
     if (payload.response === 'NO_QUIERO') {
+      this.eventQueue.resumeAck();
       return;
     }
 
     const state = this.matchStateService.state();
-    if (!state || !state.roundGame) {return;}
+    if (!state || !state.roundGame) {
+      this.eventQueue.resumeAck();
+      return;
+    }
 
     const manoUsername = state.roundGame.currentHand.mano;
     const isManoPlayerOne = state.playerOneUsername === manoUsername;
@@ -259,7 +273,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
       won: payload.winnerSeat === viewerSeat,
     };
 
-    this.dialog.open<EnvidoResultDialogComponent, EnvidoResultDialogData, void>(
+    const dialogRef = this.dialog.open<EnvidoResultDialogComponent, EnvidoResultDialogData, void>(
       EnvidoResultDialogComponent,
       {
         data,
@@ -268,6 +282,10 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
         disableClose: false,
       }
     );
+
+    dialogRef.afterClosed().subscribe(() => {
+      this.eventQueue.resumeAck();
+    });
   }
 
   private mapMatchEndedToDialogData(event: MatchEndedEvent, state: ReturnType<typeof this.matchStateService.state>): GameWonDialogData {

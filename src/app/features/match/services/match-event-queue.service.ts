@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import type { MatchWsEvent, MatchDerivedEvent, TurnChangedPayload } from '../models/match-ws-events';
 import { resolveDelay } from '../config/match-event-delays.config';
+import { isBlockingEvent } from '../config/match-blocking-events.config';
 
 export interface MatchEventQueueDeps {
   getViewerSeat: () => string | null;
@@ -17,6 +18,7 @@ export class MatchEventQueueService {
   private queue: QueuedMatchEvent[] = [];
   private pendingTimerId: ReturnType<typeof setTimeout> | null = null;
   private processing = false;
+  private pausedForAck = false;
   private deps: MatchEventQueueDeps | null = null;
   private lastAppliedEventType: string | null = null;
   private lastAppliedSeat: string | null = null;
@@ -33,7 +35,8 @@ export class MatchEventQueueService {
 
     const seat = (event.payload as { seat?: string }).seat;
     const local = seat !== undefined && seat !== null && seat === this.deps.getViewerSeat();
-    const delayMs = resolveDelay(event.eventType, local);
+    // Eventos bloqueantes: el "delay efectivo" es el ACK del usuario, no un timer (FR-010).
+    const delayMs = isBlockingEvent(event.eventType) ? 0 : resolveDelay(event.eventType, local);
 
     const item: QueuedMatchEvent = { kind: 'transactional', event, local, delayMs };
 
@@ -74,6 +77,7 @@ export class MatchEventQueueService {
 
   flushImmediately(): void {
     this.cancelTimer();
+    this.pausedForAck = false;
     this.processing = true;
     while (this.queue.length > 0) {
       const item = this.queue.shift()!;
@@ -86,6 +90,15 @@ export class MatchEventQueueService {
     this.cancelTimer();
     this.queue = [];
     this.processing = false;
+    this.pausedForAck = false;
+  }
+
+  resumeAck(): void {
+    if (!this.pausedForAck) {
+      return;
+    }
+    this.pausedForAck = false;
+    this.schedule();
   }
 
   pendingCount(): number {
@@ -94,6 +107,9 @@ export class MatchEventQueueService {
 
   private schedule(): void {
     if (this.processing || this.pendingTimerId !== null || this.queue.length === 0) {
+      return;
+    }
+    if (this.pausedForAck) {
       return;
     }
 
@@ -132,6 +148,11 @@ export class MatchEventQueueService {
       return;
     }
     if (item.kind === 'transactional') {
+      // Pausa antes de notificar al handler: si éste decide ACK síncrono (p. ej. NO_QUIERO),
+      // puede invocar resumeAck() dentro de applyTransactional y revertir el flag.
+      if (isBlockingEvent(item.event.eventType)) {
+        this.pausedForAck = true;
+      }
       this.deps.applyTransactional(item.event);
       this.lastAppliedEventType = item.event.eventType;
       this.lastAppliedSeat = (item.event.payload as { seat?: string }).seat ?? null;

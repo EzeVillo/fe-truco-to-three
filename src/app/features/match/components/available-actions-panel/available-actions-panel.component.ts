@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { finalize } from 'rxjs';
 import type { AvailableAction } from '../../../../core/models/match.models';
@@ -26,6 +26,16 @@ export class AvailableActionsPanelComponent {
   readonly matchId = input.required<string>();
 
   private readonly matchActionsService = inject(MatchActionsService);
+
+  constructor() {
+    effect(() => {
+      const isResponse = this.isEnvidoResponseMode() || this.isTrucoResponseMode();
+      const hasCallOptions = hasAnyEnvidoCallOption(this.envidoCallOptions());
+      if (isResponse || !hasCallOptions) {
+        this.envidoSubmenuOpen.set(false);
+      }
+    });
+  }
 
   readonly envidoSubmenuOpen = signal<boolean>(false);
   readonly isCallingTruco = signal<boolean>(false);

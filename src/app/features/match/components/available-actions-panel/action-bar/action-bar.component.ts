@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 import { CommonModule } from '@angular/common';
 import type { AvailableActionType } from '../../../../../core/models/enums';
 import type { TrucoCall } from '../../../../../core/models/enums';
+import { hasAnyEnvidoCallOption, type EnvidoCallOptions } from '../../../utils/derive-envido-call-options';
 
 export interface ActionBarItem {
   label: string;
@@ -35,12 +36,17 @@ function actionEnabled(actions: ReadonlyArray<{ type: AvailableActionType }>, ty
 export class ActionBarComponent {
   readonly availableActions = input.required<ReadonlyArray<{ type: AvailableActionType }>>();
   readonly currentTrucoCall = input<TrucoCall | null>(null);
+  readonly envidoCallOptions = input<EnvidoCallOptions | null>(null);
 
   readonly actionClicked = output<AvailableActionType>();
   readonly envidoClicked = output<void>();
 
   readonly items = computed<ActionBarItem[]>(() => {
     const actions = this.availableActions();
+    const envidoOpts = this.envidoCallOptions();
+    const envidoAvailable =
+      actionEnabled(actions, 'CALL_ENVIDO') &&
+      (envidoOpts === null || hasAnyEnvidoCallOption(envidoOpts));
     return [
       {
         label: trucoLabel(this.currentTrucoCall()),
@@ -50,7 +56,7 @@ export class ActionBarComponent {
       {
         label: 'Envido',
         actionType: 'CALL_ENVIDO',
-        enabled: actionEnabled(actions, 'CALL_ENVIDO'),
+        enabled: envidoAvailable,
       },
       {
         label: 'Mazo',

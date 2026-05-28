@@ -8,6 +8,8 @@ import { EnvidoSubmenuComponent } from './envido-submenu/envido-submenu.componen
 import { EnvidoResponsePanelComponent } from './envido-response-panel/envido-response-panel.component';
 import { TrucoResponsePanelComponent } from './truco-response-panel/truco-response-panel.component';
 import { deriveEnvidoResponseOptions } from '../../utils/derive-envido-response-options';
+import { deriveEnvidoCallOptions, hasAnyEnvidoCallOption } from '../../utils/derive-envido-call-options';
+import { deriveTrucoResponseOptions } from '../../utils/derive-truco-response-options';
 import { MatchActionsService } from '../../services/match-actions.service';
 
 @Component({
@@ -44,11 +46,26 @@ export class AvailableActionsPanelComponent {
     deriveEnvidoResponseOptions(this.availableActions())
   );
 
+  readonly envidoCallOptions = computed(() =>
+    deriveEnvidoCallOptions(this.availableActions())
+  );
+
+  readonly trucoResponseOptions = computed(() =>
+    deriveTrucoResponseOptions(this.availableActions())
+  );
+
+  /** "Volver" del submenú sólo tiene sentido si hay otra acción principal a la que regresar. */
+  readonly envidoSubmenuBackEnabled = computed(() => {
+    const actions = this.availableActions();
+    return actions.some((a) => a.type === 'CALL_TRUCO' || a.type === 'FOLD');
+  });
+
   readonly showWaiting = computed(() =>
     !this.envidoSubmenuOpen() && !this.isTrucoResponseMode() && !this.isEnvidoResponseMode() && this.availableActions().length === 0
   );
 
   onEnvidoClick(): void {
+    if (!hasAnyEnvidoCallOption(this.envidoCallOptions())) {return;}
     this.envidoSubmenuOpen.set(true);
   }
 

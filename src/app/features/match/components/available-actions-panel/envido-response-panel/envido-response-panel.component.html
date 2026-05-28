@@ -2,24 +2,28 @@
   <!-- Fila superior: Quiero / No Quiero (tabs flotantes, sin borde superior) -->
   <div class="envido-response-panel__top-row">
     <div class="envido-response-panel__tab-group">
-      <button
-        class="envido-response-panel__tab-btn envido-response-panel__tab-btn--quiero"
-        (click)="quieroClicked.emit()"
-        type="button"
-      >
-        Quiero
-      </button>
-      <button
-        class="envido-response-panel__tab-btn envido-response-panel__tab-btn--no-quiero"
-        (click)="noQuieroClicked.emit()"
-        type="button"
-      >
-        No Quiero
-      </button>
+      @if (options().quiero) {
+        <button
+          class="envido-response-panel__tab-btn envido-response-panel__tab-btn--quiero"
+          (click)="quieroClicked.emit()"
+          type="button"
+        >
+          Quiero
+        </button>
+      }
+      @if (options().noQuiero) {
+        <button
+          class="envido-response-panel__tab-btn envido-response-panel__tab-btn--no-quiero"
+          (click)="noQuieroClicked.emit()"
+          type="button"
+        >
+          No Quiero
+        </button>
+      }
     </div>
   </div>
 
-  <!-- Fila inferior: sub-opciones (barra de acciones) -->
+  <!-- Fila inferior: sub-opciones de escalada (CALL_ENVIDO mientras hay envido en curso) -->
   <div class="envido-response-panel__bottom-row">
     <button
       class="envido-response-panel__sub-btn"

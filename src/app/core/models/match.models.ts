@@ -23,6 +23,38 @@ export interface CurrentHand {
 
 export interface AvailableAction {
   type: AvailableActionType;
+  /**
+   * Sub-opción específica de la acción. El BE usa dos formatos según el
+   * transporte:
+   *  - **WS** (`AVAILABLE_ACTIONS_UPDATED`): una acción por cada sub-opción,
+   *    con `parameter` (singular).
+   *  - **REST** (`GET /api/matches/{id}`): una sola acción por `type` con
+   *    `parameters` (plural, array de strings).
+   *
+   * Valores típicos según `type`:
+   *  - `CALL_TRUCO`     → `'TRUCO' | 'RETRUCO' | 'VALE_CUATRO'`
+   *  - `CALL_ENVIDO`    → `'ENVIDO' | 'REAL_ENVIDO' | 'FALTA_ENVIDO'`
+   *  - `RESPOND_TRUCO`  → `'QUIERO' | 'NO_QUIERO' | 'QUIERO_Y_ME_VOY_AL_MAZO'`
+   *  - `RESPOND_ENVIDO` → `'QUIERO' | 'NO_QUIERO'`
+   *  - `PLAY_CARD` / `FOLD` → sin parameter ni parameters.
+   *
+   * Usar `hasActionParameter()` para chequear de forma agnóstica al formato.
+   */
+  parameter?: string;
+  parameters?: readonly string[];
+}
+
+/**
+ * Chequea si una acción ofrece una sub-opción dada, soportando ambos formatos
+ * del BE (WS `parameter` singular y REST `parameters` array).
+ */
+export function hasActionParameter(
+  action: AvailableAction,
+  parameter: string,
+): boolean {
+  if (action.parameter === parameter) {return true;}
+  if (action.parameters?.includes(parameter)) {return true;}
+  return false;
 }
 
 export interface RoundState {

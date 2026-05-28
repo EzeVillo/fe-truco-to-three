@@ -1,59 +1,46 @@
-import type { AvailableAction } from '../../../core/models/match.models';
+import { hasActionParameter, type AvailableAction } from '../../../core/models/match.models';
 
 export interface EnvidoResponseOptions {
+  /** Botones principales (`RESPOND_ENVIDO`) */
+  quiero: boolean;
+  noQuiero: boolean;
+  /** Sub-opciones de escalada (`CALL_ENVIDO`) cuando ya hubo canto del rival */
   envido: boolean;
   realEnvido: boolean;
   faltaEnvido: boolean;
 }
 
-const DEFAULT_OPTIONS: EnvidoResponseOptions = {
+const ALL_DISABLED: EnvidoResponseOptions = {
+  quiero: false,
+  noQuiero: false,
   envido: false,
-  realEnvido: true,
-  faltaEnvido: true,
+  realEnvido: false,
+  faltaEnvido: false,
 };
 
 /**
- * Deriva las sub-opciones de envido habilitadas cuando el jugador debe responder
- * un envido cantado por el rival.
+ * Deriva las opciones del panel de respuesta de envido a partir de las acciones
+ * disponibles que envía el BE. Cada combinación `type + parameter` representa una
+ * opción independiente:
  *
- * El backend (o el mock) puede adjuntar metadata en la acción RESPOND_ENVIDO
- * via `details.envidoResponseOptions`. Si no está presente, se usa un default
- * conservador: Envido deshabilitado (ya fue cantado), Real Envido y Falta
- * Envido habilitados.
+ *  - `RESPOND_ENVIDO` con `parameter` `QUIERO` / `NO_QUIERO` → botones principales.
+ *  - `CALL_ENVIDO`    con `parameter` `ENVIDO` / `REAL_ENVIDO` / `FALTA_ENVIDO`
+ *    → sub-opciones de escalada disponibles en este momento (se renderizan
+ *      junto al panel de respuesta porque escalar es una alternativa al Quiero).
  */
 export function deriveEnvidoResponseOptions(
-  actions: ReadonlyArray<AvailableAction>
+  actions: ReadonlyArray<AvailableAction>,
 ): EnvidoResponseOptions {
-  const respondAction = actions.find((a) => a.type === 'RESPOND_ENVIDO');
-  if (!respondAction) {
-    return DEFAULT_OPTIONS;
-  }
+  if (actions.length === 0) {return ALL_DISABLED;}
 
-  // Leer metadata opcional del mock/backend sin modificar el tipo base del contrato
-  const record = respondAction as unknown as Record<string, unknown>;
-  const details = record['details'];
-  const opts =
-    details &&
-    typeof details === 'object' &&
-    details !== null &&
-    'envidoResponseOptions' in details
-      ? (details as Record<string, unknown>)['envidoResponseOptions']
-      : null;
+  const has = (type: string, parameter: string): boolean =>
+    actions.some((a) => a.type === type && hasActionParameter(a, parameter));
 
-  if (
-    opts &&
-    typeof opts === 'object' &&
-    opts !== null &&
-    'envido' in opts &&
-    'realEnvido' in opts &&
-    'faltaEnvido' in opts
-  ) {
-    return {
-      envido: Boolean((opts as EnvidoResponseOptions).envido),
-      realEnvido: Boolean((opts as EnvidoResponseOptions).realEnvido),
-      faltaEnvido: Boolean((opts as EnvidoResponseOptions).faltaEnvido),
-    };
-  }
-
-  return DEFAULT_OPTIONS;
+  return {
+    quiero: has('RESPOND_ENVIDO', 'QUIERO'),
+    noQuiero: has('RESPOND_ENVIDO', 'NO_QUIERO'),
+    envido: has('CALL_ENVIDO', 'ENVIDO'),
+    realEnvido: has('CALL_ENVIDO', 'REAL_ENVIDO'),
+    faltaEnvido: has('CALL_ENVIDO', 'FALTA_ENVIDO'),
+  };
 }

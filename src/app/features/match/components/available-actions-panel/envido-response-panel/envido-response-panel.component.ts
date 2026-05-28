@@ -1,12 +1,9 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import type { EnvidoCall } from '../../../../../core/models/enums';
+import type { EnvidoResponseOptions } from '../../../utils/derive-envido-response-options';
 
-export interface EnvidoResponseOptions {
-  envido: boolean;
-  realEnvido: boolean;
-  faltaEnvido: boolean;
-}
+export type { EnvidoResponseOptions };
 
 @Component({
   selector: 'app-envido-response-panel',

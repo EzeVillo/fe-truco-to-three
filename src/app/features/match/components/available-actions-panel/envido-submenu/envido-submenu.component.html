@@ -1,16 +1,18 @@
 <div class="envido-submenu">
-  @for (opt of options; track opt.call; let last = $last) {
+  @for (item of items(); track item.call; let last = $last) {
     <button
       class="envido-submenu__btn"
-      (click)="optionClicked.emit(opt.call)"
+      [class.envido-submenu__btn--enabled]="item.enabled"
+      [disabled]="!item.enabled"
+      (click)="onOptionClick(item)"
       type="button"
     >
       <span class="envido-submenu__btn-label--stacked">
-        @for (line of opt.stackedLines; track line) {
+        @for (line of item.stackedLines; track line) {
           <span class="envido-submenu__btn-label-line">{{ line }}</span>
         }
       </span>
-      <span class="envido-submenu__btn-label--full">{{ opt.label }}</span>
+      <span class="envido-submenu__btn-label--full">{{ item.label }}</span>
     </button>
     @if (!last) {
       <div class="envido-submenu__divider"></div>
@@ -19,7 +21,9 @@
   <div class="envido-submenu__divider"></div>
   <button
     class="envido-submenu__btn envido-submenu__btn--back"
-    (click)="backClicked.emit()"
+    [class.envido-submenu__btn--enabled]="backEnabled()"
+    [disabled]="!backEnabled()"
+    (click)="onBackClick()"
     type="button"
   >
     Volver

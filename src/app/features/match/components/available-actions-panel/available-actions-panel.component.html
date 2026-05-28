@@ -2,9 +2,17 @@
   <div class="actions-panel actions-panel--waiting">
     <span class="actions-panel__waiting-text">Esperando al rival...</span>
   </div>
+} @else if (envidoSubmenuOpen()) {
+  <app-envido-submenu
+    [options]="envidoCallOptions()"
+    [backEnabled]="envidoSubmenuBackEnabled()"
+    (optionClicked)="onAction($event)"
+    (backClicked)="onBackClick()"
+  />
 } @else if (isTrucoResponseMode()) {
   <div class="actions-panel">
     <app-truco-response-panel
+      [options]="trucoResponseOptions()"
       (quieroClicked)="onAction('TRUCO_QUIERO')"
       (noQuieroClicked)="onAction('TRUCO_NO_QUIERO')"
       (quieroYMazoClicked)="onAction('TRUCO_QUIERO_Y_ME_VOY_AL_MAZO')"
@@ -12,6 +20,7 @@
     <app-action-bar
       [availableActions]="availableActions()"
       [currentTrucoCall]="currentTrucoCall()"
+      [envidoCallOptions]="envidoCallOptions()"
       (actionClicked)="onAction($event)"
       (envidoClicked)="onEnvidoClick()"
     />
@@ -23,15 +32,11 @@
     (noQuieroClicked)="onAction('ENVIDO_NO_QUIERO')"
     (envidoOptionClicked)="onAction($event)"
   />
-} @else if (envidoSubmenuOpen()) {
-  <app-envido-submenu
-    (optionClicked)="onAction($event)"
-    (backClicked)="onBackClick()"
-  />
 } @else {
   <app-action-bar
     [availableActions]="availableActions()"
     [currentTrucoCall]="currentTrucoCall()"
+    [envidoCallOptions]="envidoCallOptions()"
     (actionClicked)="onAction($event)"
     (envidoClicked)="onEnvidoClick()"
   />

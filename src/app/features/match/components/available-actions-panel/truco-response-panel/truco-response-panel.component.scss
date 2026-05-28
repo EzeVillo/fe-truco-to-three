@@ -42,6 +42,12 @@
     background-color 120ms ease;
 }
 
+// El último botón visible no lleva divider: así el layout queda limpio
+// cuando alguna opción (típicamente "Quiero y me voy al mazo") no se renderiza.
+.truco-response-panel__tab-btn:last-child {
+  border-right: none;
+}
+
 // ── Quiero (izquierda) ──────────────────────────────────────────────────────
 .truco-response-panel__tab-btn--quiero {
   background-color: var(--t3-truco-quiero-bg);

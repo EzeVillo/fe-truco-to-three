@@ -16,38 +16,38 @@ Base URL (local):
 ### 1.1 Tokens
 
 - Access token:
-    - tipo: `Bearer <JWT>`
-    - uso: endpoints protegidos REST y autenticacion WebSocket/STOMP
-    - se obtiene en:
-        - `POST /api/auth/register`
-        - `POST /api/auth/login`
-        - `POST /api/auth/refresh`
-        - `POST /api/auth/guest`
+  - tipo: `Bearer <JWT>`
+  - uso: endpoints protegidos REST y autenticacion WebSocket/STOMP
+  - se obtiene en:
+    - `POST /api/auth/register`
+    - `POST /api/auth/login`
+    - `POST /api/auth/refresh`
+    - `POST /api/auth/guest`
 - Refresh token:
-    - tipo: token opaco
-    - uso: body JSON de `POST /api/auth/refresh` y `DELETE /api/auth/logout`
-    - se obtiene en:
-        - `POST /api/auth/register`
-        - `POST /api/auth/login`
-        - `POST /api/auth/refresh`
-    - no existe para guest
+  - tipo: token opaco
+  - uso: body JSON de `POST /api/auth/refresh` y `DELETE /api/auth/logout`
+  - se obtiene en:
+    - `POST /api/auth/register`
+    - `POST /api/auth/login`
+    - `POST /api/auth/refresh`
+  - no existe para guest
 - Claims relevantes del access token:
-    - `sub`: `playerId` (UUID)
-    - `iss`, `aud`, `iat`, `exp`
-    - `token_use`: `user` o `guest`
+  - `sub`: `playerId` (UUID)
+  - `iss`, `aud`, `iat`, `exp`
+  - `token_use`: `user` o `guest`
 
 ### 1.2 Endpoints protegidos
 
 Segun configuracion de seguridad:
 
 - Publicos:
-    - `POST /api/auth/register`
-    - `POST /api/auth/login`
-    - `POST /api/auth/guest`
-    - `POST /api/auth/refresh`
-    - `DELETE /api/auth/logout`
+  - `POST /api/auth/register`
+  - `POST /api/auth/login`
+  - `POST /api/auth/guest`
+  - `POST /api/auth/refresh`
+  - `DELETE /api/auth/logout`
 - Requieren Bearer token:
-    - Todo `/api/**` no listado arriba (matches, leagues, etc.)
+  - Todo `/api/**` no listado arriba (matches, leagues, etc.)
 
 ### 1.3 Regla de autorizacion en recursos de juego
 
@@ -79,32 +79,32 @@ segun el contrato) en lugar de `playerId`.
 `matches`, `leagues` y `cups` aceptan `visibility: PUBLIC | PRIVATE` en creacion.
 
 - `PRIVATE`:
-    - devuelve `joinCode`
-    - no aparece en lobby
-    - se entra por `POST /api/join/{joinCode}`
+  - devuelve `joinCode`
+  - no aparece en lobby
+  - se entra por `POST /api/join/{joinCode}`
 - `PUBLIC`:
-    - tambien devuelve `joinCode`
-    - aparece en lobby
-    - se entra por el mismo `POST /api/join/{joinCode}`
+  - tambien devuelve `joinCode`
+  - aparece en lobby
+  - se entra por el mismo `POST /api/join/{joinCode}`
 - unicidad global de join code:
-    - `joinCode` es unico entre `MATCH`, `LEAGUE` y `CUP`
-    - `POST /api/join/{joinCode}` siempre resuelve un unico target (`targetType` + `targetId`)
+  - `joinCode` es unico entre `MATCH`, `LEAGUE` y `CUP`
+  - `POST /api/join/{joinCode}` siempre resuelve un unico target (`targetType` + `targetId`)
 - listados de lobby:
-    - `GET /api/matches/public`
-    - `GET /api/leagues/public`
-    - `GET /api/cups/public`
-    - cada item expone `_links.join.href = /api/join/{joinCode}`
+  - `GET /api/matches/public`
+  - `GET /api/leagues/public`
+  - `GET /api/cups/public`
+  - cada item expone `_links.join.href = /api/join/{joinCode}`
 - autostart:
-    - una partida publica pasa a `IN_PROGRESS` al entrar el segundo jugador
-    - una liga/copa publica arranca automaticamente al completarse el cupo y crea/linkea los
-      matches hijos en la misma operacion
+  - una partida publica pasa a `IN_PROGRESS` al entrar el segundo jugador
+  - una liga/copa publica arranca automaticamente al completarse el cupo y crea/linkea los
+    matches hijos en la misma operacion
 - restricciones del lobby:
-    - usuarios ocupados no pueden listar ni usar el lobby publico
-    - si un jugador ya fue eliminado de una liga/copa en progreso, vuelve a ser elegible
-    - REST devuelve una ventana cursor-based del lobby, no el listado completo
-    - `limit` default `20`, maximo `100`
-    - la navegacion es solo hacia adelante con `_links.next`
-    - el stream WS del lobby tambien es compartido; el backend no excluye creador ni participantes
+  - usuarios ocupados no pueden listar ni usar el lobby publico
+  - si un jugador ya fue eliminado de una liga/copa en progreso, vuelve a ser elegible
+  - REST devuelve una ventana cursor-based del lobby, no el listado completo
+  - `limit` default `20`, maximo `100`
+  - la navegacion es solo hacia adelante con `_links.next`
+  - el stream WS del lobby tambien es compartido; el backend no excluye creador ni participantes
 
 ## 2. Contrato de errores
 
@@ -638,7 +638,10 @@ Response `200`:
       "cardPlayerOne": null,
       "cardPlayerTwo": null,
       "mano": "juancho"
-    }
+    },
+    "actionDeadline": 1772768188123,
+    "turnDurationMillis": 30000,
+    "actionDeadlineSeat": "PLAYER_ONE"
   }
 }
 ```
@@ -653,6 +656,8 @@ Response `200`:
 - `roundGame` es `null` si la partida no está `IN_PROGRESS`
 - `myCards` contiene solo las cartas del jugador autenticado
 - `availableActions` refleja las acciones disponibles para el jugador autenticado
+- `actionDeadline`, `turnDurationMillis` y `actionDeadlineSeat` describen el temporizador de
+  inactividad del turno. Ver §4.18.
 
 Errores:
 
@@ -702,7 +707,10 @@ Response `200`:
       "cardPlayerOne": null,
       "cardPlayerTwo": null,
       "mano": "martina"
-    }
+    },
+    "actionDeadline": 1772768188123,
+    "turnDurationMillis": 30000,
+    "actionDeadlineSeat": "PLAYER_ONE"
   },
   "spectatorCount": 3
 }
@@ -711,6 +719,8 @@ Response `200`:
 Reglas:
 
 - devuelve una vista publica del match: no incluye `myCards` ni `availableActions`
+- `actionDeadline`, `turnDurationMillis` y `actionDeadlineSeat` se exponen igual que en §4.14, para
+  que el espectador renderice el temporizador del turno sobre el asiento que debe actuar (§4.18)
 - `scorePlayerOne` y `scorePlayerTwo` representan el puntaje del game actual y viven a nivel
   `match`
 - solo funciona si el jugador ya esta registrado como espectador de ese match
@@ -804,6 +814,34 @@ Errores:
 - `401` sin token
 - `404` si no existe sesion de revancha para ese `matchId`
 - `422` si el jugador no es participante de la sesion
+
+### 4.18 Temporizador de turno (timeout por inactividad)
+
+Mientras la partida está `IN_PROGRESS`, el jugador que debe actuar (jugar carta o responder un
+canto) dispone de un plazo limitado. Si lo agota, el backend declara forfeit administrativo y emite
+`MATCH_FORFEITED` (ver §9.6). El backend es el árbitro: el cliente **no** debe forzar el vencimiento
+por su cuenta, solo representar la cuenta regresiva.
+
+El plazo se expone con tres campos, tanto en el snapshot REST (`roundGame` en §4.14, `currentRound`
+en §4.15) como en los eventos WebSocket `ACTION_DEADLINE_SET` (§9.6):
+
+| Campo                | Tipo                         | Descripción                                                                                                                                                  |
+|----------------------|------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `actionDeadline`     | `epochMillis` (absoluto)     | Instante exacto en que el jugador que debe actuar pierde por timeout. Fuente de verdad del restante. `null` si no corre reloj.                               |
+| `turnDurationMillis` | `long` (relativo)            | Duración total del plazo del turno. Sirve como denominador para el progreso del temporizador (anillo/barra).                                                 |
+| `actionDeadlineSeat` | `PLAYER_ONE` \| `PLAYER_TWO` | Asiento que debe actuar y al que aplica el reloj. Puede no coincidir con `currentTurn` cuando hay un canto pendiente de respuesta. `null` si no corre reloj. |
+
+Notas de consumo:
+
+- El plazo aplica a **ambos** asientos: el reloj se renderiza sobre `actionDeadlineSeat`, y tanto
+  los dos jugadores como los espectadores lo ven en el lado correcto.
+- El plazo se reinicia cada vez que cambia el asiento que debe actuar (cambio de turno, canto de
+  truco/envido, respuesta que devuelve el juego al rival, nueva ronda).
+- `actionDeadline` es un instante absoluto en la zona horaria del servidor (epochMillis), igual que
+  `expiresAt` en los WS de revancha e invitaciones. Para neutralizar el desfase de reloj del
+  cliente, calcular un offset servidor↔cliente una sola vez al conectar (a partir del `timestamp`
+  de cualquier evento WS, que también viaja en epochMillis) y aplicar
+  `restante = actionDeadline - (Date.now() + offset)`.
 
 ## 5. API REST - Leagues
 
@@ -1593,46 +1631,46 @@ bajos cuando aplique. Si el valor no coincide, la API responde `400` con
 ### 8.1 Requests
 
 - `PlayCardRequest.suit`:
-    - `ESPADA`, `BASTO`, `COPA`, `ORO`
+  - `ESPADA`, `BASTO`, `COPA`, `ORO`
 - `CallEnvidoRequest.call`:
-    - `ENVIDO`, `REAL_ENVIDO`, `FALTA_ENVIDO`
+  - `ENVIDO`, `REAL_ENVIDO`, `FALTA_ENVIDO`
 - `RespondEnvidoRequest.response`:
-    - `QUIERO`, `NO_QUIERO`
+  - `QUIERO`, `NO_QUIERO`
 - `RespondTrucoRequest.response`:
-    - `QUIERO`, `NO_QUIERO`, `QUIERO_Y_ME_VOY_AL_MAZO`
+  - `QUIERO`, `NO_QUIERO`, `QUIERO_Y_ME_VOY_AL_MAZO`
 - `CreateResourceInvitationHttpRequest.targetType`:
-    - `MATCH`, `LEAGUE`, `CUP`
+  - `MATCH`, `LEAGUE`, `CUP`
 
 ### 8.2 Estados en respuestas
 
 - `MatchStateResponse.status`:
-    - `WAITING_FOR_PLAYERS`, `IN_PROGRESS`, `FINISHED`
+  - `WAITING_FOR_PLAYERS`, `IN_PROGRESS`, `FINISHED`
 - `RoundStateResponse.roundStatus`:
-    - `PLAYING`, `ENVIDO_IN_PROGRESS`, `TRUCO_IN_PROGRESS`, `FINISHED`
+  - `PLAYING`, `ENVIDO_IN_PROGRESS`, `TRUCO_IN_PROGRESS`, `FINISHED`
 - `RoundStateResponse.currentTrucoCall`:
-    - `TRUCO`, `RETRUCO`, `VALE_CUATRO` (o `null`)
+  - `TRUCO`, `RETRUCO`, `VALE_CUATRO` (o `null`)
 - `AvailableActionResponse.type`:
-    - `PLAY_CARD`, `CALL_TRUCO`, `CALL_ENVIDO`, `RESPOND_TRUCO`, `RESPOND_ENVIDO`, `FOLD`
+  - `PLAY_CARD`, `CALL_TRUCO`, `CALL_ENVIDO`, `RESPOND_TRUCO`, `RESPOND_ENVIDO`, `FOLD`
 - `FriendSummaryResponse`:
-    - expone `{ friendUsername }`
+  - expone `{ friendUsername }`
 - `IncomingFriendshipRequestResponse`:
-    - expone `{ requesterUsername }`
+  - expone `{ requesterUsername }`
 - `OutgoingFriendshipRequestResponse`:
-    - expone `{ addresseeUsername }`
+  - expone `{ addresseeUsername }`
 - `IncomingResourceInvitationResponse`:
-    - expone `{ invitationId, senderUsername, targetType, targetId, status, expiresAt }`
+  - expone `{ invitationId, senderUsername, targetType, targetId, status, expiresAt }`
 - `OutgoingResourceInvitationResponse`:
-    - expone `{ invitationId, recipientUsername, targetType, targetId, status, expiresAt }`
+  - expone `{ invitationId, recipientUsername, targetType, targetId, status, expiresAt }`
 - `IncomingResourceInvitationResponse.status` / `OutgoingResourceInvitationResponse.status`:
-    - `PENDING`, `ACCEPTED`, `DECLINED`, `EXPIRED`, `CANCELLED`
+  - `PENDING`, `ACCEPTED`, `DECLINED`, `EXPIRED`, `CANCELLED`
 - `IncomingResourceInvitationResponse.targetType` / `OutgoingResourceInvitationResponse.targetType`:
-    - `MATCH`, `LEAGUE`, `CUP`
+  - `MATCH`, `LEAGUE`, `CUP`
 - `ChatParentType`:
-    - `MATCH`, `LEAGUE`, `CUP`, `FRIENDSHIP`
+  - `MATCH`, `LEAGUE`, `CUP`, `FRIENDSHIP`
 - `RematchSessionResponse.status`:
-    - `OPEN`, `CONFIRMED`, `CLOSED_BY_LEAVE`, `EXPIRED`
+  - `OPEN`, `CONFIRMED`, `CLOSED_BY_LEAVE`, `EXPIRED`
 - `RematchSessionResponse.playerOneChoice` / `playerTwoChoice`:
-    - `UNDECIDED`, `WANTS_REMATCH`, `LEFT`
+  - `UNDECIDED`, `WANTS_REMATCH`, `LEFT`
 
 ## 9. WebSocket / STOMP
 
@@ -1885,6 +1923,17 @@ Eventos transicionales (consumen `stateVersion`):
 - `AVAILABLE_ACTIONS_UPDATED`
 - `PLAYER_HAND_UPDATED`
 
+#### Eventos derivados del temporizador (viajan por `/user/queue/match`, no avanzan `stateVersion`)
+
+- `ACTION_DEADLINE_SET`
+- `ACTION_DEADLINE_CLEARED`
+
+A diferencia de `AVAILABLE_ACTIONS_UPDATED`/`PLAYER_HAND_UPDATED` (que son privados por asiento y
+viajan por `/user/queue/match-derived`), los eventos del temporizador son **públicos**: viajan por
+`/user/queue/match` hacia ambos jugadores y se reenvían a espectadores (§9.5g). **No** llevan
+`stateVersion` (llega `null`); el cliente no debe usarlos para detectar huecos en la secuencia
+transicional. Payloads en §9.6.
+
 Nota: los eventos `REMATCH_*` viajan por `/user/queue/match` con el `matchId` top-level igual al
 `originMatchId` de la sesion (el match que termino, no el nuevo).
 
@@ -1948,6 +1997,9 @@ Reglas:
 - `SPECTATE_ERROR` - error al intentar registrarse como espectador
 - `SPECTATOR_COUNT_CHANGED` - cambia la cantidad de espectadores del match
 - ademas se reenvian los eventos publicos del match que no estan atados a un asiento concreto
+- `ACTION_DEADLINE_SET` / `ACTION_DEADLINE_CLEARED` tambien se reenvian: son publicos (indican el
+  asiento que debe actuar via `seat`, no son privados por destinatario), asi el espectador puede
+  renderizar el temporizador del turno
 
 No se reenvian al espectador los eventos privados por asiento:
 
@@ -1966,150 +2018,159 @@ No se reenvian al espectador los eventos privados por asiento:
 ### 9.6 Payload por evento (resumen)
 
 - `CARD_PLAYED`:
-    - `{ seat, card: { suit, number } }`
+  - `{ seat, card: { suit, number } }`
 - `HAND_DEALT`:
-    - `{ seat, cards: [ { suit, number }, ... ] }`
-    - payload redactado por destinatario: cada jugador ve solo sus propias cartas
+  - `{ seat, cards: [ { suit, number }, ... ] }`
+  - payload redactado por destinatario: cada jugador ve solo sus propias cartas
 - `HAND_RESOLVED`:
-    - `{ cardPlayerOne, cardPlayerTwo, winnerSeat }`
-    - en el cierre anticipado puntual por `1 de espada`, la carta del rival puede llegar en `null`
+  - `{ cardPlayerOne, cardPlayerTwo, winnerSeat }`
+  - en el cierre anticipado puntual por `1 de espada`, la carta del rival puede llegar en `null`
 - `TURN_CHANGED`:
-    - `{ seat }`
+  - `{ seat }`
 - `TRUCO_CALLED`:
-    - `{ callerSeat, call }`
+  - `{ callerSeat, call }`
 - `TRUCO_RESPONDED`:
-    - `{ responderSeat, response, call }`
+  - `{ responderSeat, response, call }`
 - `ENVIDO_CALLED`:
-    - `{ callerSeat, call }`
+  - `{ callerSeat, call }`
 - `ENVIDO_RESOLVED`:
-    - `{ response, winnerSeat, pointsMano?, pointsPie? }`
+  - `{ response, winnerSeat, pointsMano?, pointsPie? }`
 - `SCORE_CHANGED`:
-    - `{ scorePlayerOne, scorePlayerTwo }`
+  - `{ scorePlayerOne, scorePlayerTwo }`
 - `ROUND_STARTED`:
-    - `{ roundNumber, manoSeat }`
+  - `{ roundNumber, manoSeat }`
 - `ROUND_ENDED`:
-    - `{ winnerSeat }`
+  - `{ winnerSeat }`
 - `GAME_STARTED`:
-    - `{ gameNumber }`
+  - `{ gameNumber }`
 - `GAME_SCORE_CHANGED`:
-    - `{ gamesWonPlayerOne, gamesWonPlayerTwo }`
+  - `{ gamesWonPlayerOne, gamesWonPlayerTwo }`
 - `MATCH_FINISHED`:
-    - `{ winnerSeat, gamesWonPlayerOne, gamesWonPlayerTwo }`
+  - `{ winnerSeat, gamesWonPlayerOne, gamesWonPlayerTwo }`
 - `MATCH_ABANDONED`:
-    - abandono voluntario del jugador; cierra solo el match actual
-    - `{ winnerSeat, abandonerSeat, gamesWonPlayerOne, gamesWonPlayerTwo }`
+  - abandono voluntario del jugador; cierra solo el match actual
+  - `{ winnerSeat, abandonerSeat, gamesWonPlayerOne, gamesWonPlayerTwo }`
 - `MATCH_CANCELLED`:
-    - el creador salió antes de que la partida comenzara (via `/leave`), o la partida fue
-      cancelada por timeout
-    - `{}`
+  - el creador salió antes de que la partida comenzara (via `/leave`), o la partida fue
+    cancelada por timeout
+  - `{}`
 - `MATCH_PLAYER_LEFT`:
-    - el segundo jugador salió antes de que la partida comenzara; vuelve a `WAITING_FOR_PLAYERS`
-    - `{ leaverSeat }` - siempre `PLAYER_TWO`
+  - el segundo jugador salió antes de que la partida comenzara; vuelve a `WAITING_FOR_PLAYERS`
+  - `{ leaverSeat }` - siempre `PLAYER_TWO`
 - `FOLDED`:
-    - `{ seat }`
+  - `{ seat }`
 - `MATCH_FORFEITED`:
-    - forfeit administrativo por AFK/timeout; puede disparar forfeit de competición
-    - `{ winnerSeat, loserSeat, gamesWonPlayerOne, gamesWonPlayerTwo }`
+  - forfeit administrativo por AFK/timeout; puede disparar forfeit de competición
+  - `{ winnerSeat, loserSeat, gamesWonPlayerOne, gamesWonPlayerTwo }`
+- `ACTION_DEADLINE_SET`:
+  - `{ seat, actionDeadline, turnDurationMillis }`
+  - `seat` = asiento que debe actuar (`PLAYER_ONE` | `PLAYER_TWO`); `actionDeadline` en
+    `epochMillis` absoluto; `turnDurationMillis` = plazo total del turno
+  - se emite cada vez que se (re)inicia el reloj porque cambió el asiento que debe actuar
+    (cambio de turno, canto de truco/envido, respuesta, nueva ronda). Ver §4.18
+- `ACTION_DEADLINE_CLEARED`:
+  - `{}` - el reloj deja de correr (mano resuelta, esperando animaciones/resolución del servidor,
+    o estado donde ningún asiento debe actuar)
 - `PLAYER_HAND_UPDATED`:
-    - `{ seat, cards: [{ suit, number }] }`
+  - `{ seat, cards: [{ suit, number }] }`
 - `AVAILABLE_ACTIONS_UPDATED`:
-    - `{ seat, availableActions: [{ type, parameter? }] }`
+  - `{ seat, availableActions: [{ type, parameter? }] }`
 - `SPECTATOR_COUNT_CHANGED`:
-    - `{ spectatorCount }`
+  - `{ spectatorCount }`
 - `PLAYER_READY`:
-    - `{ seat }`
+  - `{ seat }`
 - `PLAYER_JOINED`:
-    - `{}`
+  - `{}`
 - `HAND_CHANGED`:
-    - actualmente no mapeado explicitamente en `MatchWsEvent`, por lo que puede llegar con
-      `payload: {}`.
+  - actualmente no mapeado explicitamente en `MatchWsEvent`, por lo que puede llegar con
+    `payload: {}`.
 - `FRIEND_REQUEST_RECEIVED`:
-    - `{ requesterUsername, addresseeUsername }` - `status` omitido (siempre PENDING por
-      tipo de evento)
+  - `{ requesterUsername, addresseeUsername }` - `status` omitido (siempre PENDING por
+    tipo de evento)
 - `FRIEND_REQUEST_ACCEPTED`:
-    - `{ requesterUsername, addresseeUsername }` - `status` omitido (siempre ACCEPTED por tipo de
-      evento)
+  - `{ requesterUsername, addresseeUsername }` - `status` omitido (siempre ACCEPTED por tipo de
+    evento)
 - `FRIEND_REQUEST_DECLINED`:
-    - `{ requesterUsername, addresseeUsername }` - se envía al **requester** cuando el
-      addressee rechaza la solicitud
+  - `{ requesterUsername, addresseeUsername }` - se envía al **requester** cuando el
+    addressee rechaza la solicitud
 - `FRIEND_REQUEST_CANCELLED`:
-    - `{ requesterUsername, addresseeUsername }` - se envía al **addressee** cuando el
-      requester cancela la solicitud pendiente
+  - `{ requesterUsername, addresseeUsername }` - se envía al **addressee** cuando el
+    requester cancela la solicitud pendiente
 - `FRIENDSHIP_REMOVED`:
-    - `{ requesterUsername, addresseeUsername, removedByUsername }`
+  - `{ requesterUsername, addresseeUsername, removedByUsername }`
 - `RESOURCE_INVITATION_RECEIVED`:
-    - `{ invitationId, senderUsername, targetType, targetId, expiresAt }`
+  - `{ invitationId, senderUsername, targetType, targetId, expiresAt }`
 - `RESOURCE_INVITATION_ACCEPTED`:
-    - `{ invitationId, recipientUsername, targetType, targetId }`
+  - `{ invitationId, recipientUsername, targetType, targetId }`
 - `RESOURCE_INVITATION_CANCELLED`:
-    - `{ invitationId, senderUsername, targetType, targetId }`
+  - `{ invitationId, senderUsername, targetType, targetId }`
 - `RESOURCE_INVITATION_DECLINED`:
-    - `{ invitationId, recipientUsername, targetType, targetId }`
+  - `{ invitationId, recipientUsername, targetType, targetId }`
 - `RESOURCE_INVITATION_EXPIRED`:
-    - `{ invitationId, senderUsername, recipientUsername, targetType, targetId }`
+  - `{ invitationId, senderUsername, recipientUsername, targetType, targetId }`
 - `ACHIEVEMENT_UNLOCKED`:
-    - `{ achievementCode, unlockedAt, matchId, gameNumber }`
+  - `{ achievementCode, unlockedAt, matchId, gameNumber }`
 - `LEAGUE_MATCH_ACTIVATED`:
-    - `{ leagueId, matchId }` - se emite a todos los participantes de la liga cuando un partido
-      es activado. El FE debe navegar o actualizar al nuevo partido usando el `matchId`.
+  - `{ leagueId, matchId }` - se emite a todos los participantes de la liga cuando un partido
+    es activado. El FE debe navegar o actualizar al nuevo partido usando el `matchId`.
 - `CUP_MATCH_ACTIVATED`:
-    - `{ cupId, matchId }` - se emite a todos los participantes de la copa cuando un partido de
-      bracket es activado.
+  - `{ cupId, matchId }` - se emite a todos los participantes de la copa cuando un partido de
+    bracket es activado.
 - `LEAGUE_PLAYER_JOINED` / `CUP_PLAYER_JOINED`:
-    - `{ leagueId/cupId, player }` - `player` contiene `displayName`
+  - `{ leagueId/cupId, player }` - `player` contiene `displayName`
 - `LEAGUE_PLAYER_LEFT` / `CUP_PLAYER_LEFT`:
-    - `{ leagueId/cupId, player }` - `player` contiene `displayName`
+  - `{ leagueId/cupId, player }` - `player` contiene `displayName`
 - `LEAGUE_CANCELLED` / `CUP_CANCELLED`:
-    - `{ leagueId/cupId }`
+  - `{ leagueId/cupId }`
 - `LEAGUE_STARTED` / `CUP_STARTED`:
-    - `{ leagueId/cupId }`
+  - `{ leagueId/cupId }`
 - `LEAGUE_FIXTURE_ACTIVATED`:
-    - `{ leagueId, fixtureId }`
+  - `{ leagueId, fixtureId }`
 - `CUP_BOUT_ACTIVATED`:
-    - `{ cupId, boutId }`
+  - `{ cupId, boutId }`
 - `LEAGUE_ADVANCED`:
-    - `{ leagueId, matchId, winner }` - `winner` contiene `displayName`; `matchId` puede ser `null`
-      cuando el avance es automático
-      (por ejemplo, forfeit del oponente)
+  - `{ leagueId, matchId, winner }` - `winner` contiene `displayName`; `matchId` puede ser `null`
+    cuando el avance es automático
+    (por ejemplo, forfeit del oponente)
 - `CUP_ADVANCED`:
-    - `{ cupId, matchId, winner }` - `winner` contiene `displayName`; `matchId` puede ser `null`
-      cuando el avance es automático
-      (por ejemplo, bye o forfeit del oponente)
+  - `{ cupId, matchId, winner }` - `winner` contiene `displayName`; `matchId` puede ser `null`
+    cuando el avance es automático
+    (por ejemplo, bye o forfeit del oponente)
 - `LEAGUE_PLAYER_FORFEITED`:
-    - `{ leagueId, forfeiter }` - `forfeiter` contiene `displayName`
+  - `{ leagueId, forfeiter }` - `forfeiter` contiene `displayName`
 - `CUP_PLAYER_FORFEITED`:
-    - `{ cupId, forfeiter }` - `forfeiter` contiene `displayName`
+  - `{ cupId, forfeiter }` - `forfeiter` contiene `displayName`
 - `LEAGUE_FINISHED`:
-    - `{ leagueId, leaders: [displayName, ...] }`
+  - `{ leagueId, leaders: [displayName, ...] }`
 - `CUP_FINISHED`:
-    - `{ cupId, champion: displayName }`
+  - `{ cupId, champion: displayName }`
 - `SPECTATE_STATE`:
-    - `{ matchState }` - `matchState` respeta la forma de `GET /api/matches/{matchId}/spectate`
+  - `{ matchState }` - `matchState` respeta la forma de `GET /api/matches/{matchId}/spectate`
 - `SPECTATE_ERROR`:
-    - `{ error }`
+  - `{ error }`
 - `PUBLIC_MATCH_LOBBY_UPSERT` / `PUBLIC_CUP_LOBBY_UPSERT` / `PUBLIC_LEAGUE_LOBBY_UPSERT`:
-    - `{ lobby }` - `lobby` respeta la forma de `GET /api/*/public`
+  - `{ lobby }` - `lobby` respeta la forma de `GET /api/*/public`
 - `PUBLIC_MATCH_LOBBY_REMOVED` / `PUBLIC_CUP_LOBBY_REMOVED` / `PUBLIC_LEAGUE_LOBBY_REMOVED`:
-    - `{ id }`
+  - `{ id }`
 - `REMATCH_AVAILABLE`:
-    - `{ sessionId, originMatchId, expiresAt }` — `expiresAt` en `epochMillis`
-    - Destinatarios: jugador 1, jugador 2 (si no es bot)
+  - `{ sessionId, originMatchId, expiresAt }` — `expiresAt` en `epochMillis`
+  - Destinatarios: jugador 1, jugador 2 (si no es bot)
 - `REMATCH_OPPONENT_WANTS`:
-    - `{ sessionId, originMatchId, actor }` — `actor` es el username/displayName del que aceptó
-    - Destinatario: el otro jugador
+  - `{ sessionId, originMatchId, actor }` — `actor` es el username/displayName del que aceptó
+  - Destinatario: el otro jugador
 - `REMATCH_CONFIRMED`:
-    - `{ sessionId, originMatchId, newMatchId, newPlayerOne, newPlayerTwo }` — `newMatchId` es UUID
-      string; `newPlayerOne`/`newPlayerTwo` son username/displayName
-    - Destinatarios: ambos jugadores (con asientos invertidos respecto al match original)
-    - El nuevo match ya está `IN_PROGRESS` cuando llega este evento; inmediatamente después llegan
-      `GAME_STARTED`, `ROUND_STARTED`, `TURN_CHANGED`, etc. para el `newMatchId`
-    - No hace falta llamar a `POST /start`; la partida arranca automáticamente
+  - `{ sessionId, originMatchId, newMatchId, newPlayerOne, newPlayerTwo }` — `newMatchId` es UUID
+    string; `newPlayerOne`/`newPlayerTwo` son username/displayName
+  - Destinatarios: ambos jugadores (con asientos invertidos respecto al match original)
+  - El nuevo match ya está `IN_PROGRESS` cuando llega este evento; inmediatamente después llegan
+    `GAME_STARTED`, `ROUND_STARTED`, `TURN_CHANGED`, etc. para el `newMatchId`
+  - No hace falta llamar a `POST /start`; la partida arranca automáticamente
 - `REMATCH_CLOSED_BY_LEAVE`:
-    - `{ sessionId, originMatchId, actor }` — `actor` es el username/displayName del que abandonó
-    - Destinatario: el otro jugador
+  - `{ sessionId, originMatchId, actor }` — `actor` es el username/displayName del que abandonó
+  - Destinatario: el otro jugador
 - `REMATCH_EXPIRED`:
-    - `{ sessionId, originMatchId }`
-    - Destinatarios: ambos jugadores
+  - `{ sessionId, originMatchId }`
+  - Destinatarios: ambos jugadores
 
 ## 9. API REST - Bots
 
@@ -2371,10 +2432,10 @@ Flujo recomendado para reconectar tras una desconexión:
 3. **Bufferar** los eventos entrantes sin procesarlos todavía
 4. Hacer `GET` del estado actual:
 
-    - Match: `GET /api/matches/{matchId}`
-    - Liga: `GET /api/leagues/{leagueId}`
-    - Copa: `GET /api/cups/{cupId}`
-    - Chat: `GET /api/chats/by-parent/{parentType}/{parentId}`
+- Match: `GET /api/matches/{matchId}`
+- Liga: `GET /api/leagues/{leagueId}`
+- Copa: `GET /api/cups/{cupId}`
+- Chat: `GET /api/chats/by-parent/{parentType}/{parentId}`
 
 5. Aplicar el estado del GET como base autoritativa
 6. Descartar eventos bufferados con `timestamp` anterior al GET; aplicar los posteriores

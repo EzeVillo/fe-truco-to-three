@@ -1,4 +1,6 @@
-@if (shouldCollapseToActionBar()) {
+@if (viewerActionTimedOut()) {
+  <div class="actions-panel__timed-out" role="status">Tiempo agotado</div>
+} @else if (shouldCollapseToActionBar()) {
   <app-action-bar
     [availableActions]="availableActions()"
     [currentTrucoCall]="currentTrucoCall()"

@@ -6,3 +6,18 @@
   width: 100%;
   background-color: var(--t3-table-felt);
 }
+
+// Estado "tiempo agotado" (feature 013-turn-timer): reemplaza los controles
+// interactivos por un aviso no interactivo mientras el backend resuelve.
+.actions-panel__timed-out {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: var(--t3-gap-sm);
+  color: var(--t3-timer-urgent);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}

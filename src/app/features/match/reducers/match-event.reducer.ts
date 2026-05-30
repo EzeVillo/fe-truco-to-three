@@ -18,6 +18,7 @@ import type {
   HandDealtPayload,
   AvailableActionsUpdatedPayload,
   PlayerHandUpdatedPayload,
+  ActionDeadlineSetPayload,
 } from '../models/match-ws-events';
 
 function usernameFromSeat(seat: Seat, state: MatchState): string {
@@ -142,6 +143,9 @@ export function applyMatchEvent(state: MatchState, event: MatchWsEvent): MatchSt
             cardPlayerTwo: null,
             mano: usernameFromSeat(payload.manoSeat, state),
           },
+          actionDeadline: null,
+          turnDurationMillis: null,
+          actionDeadlineSeat: null,
         },
       };
     }
@@ -281,6 +285,34 @@ export function applyMatchDerivedEvent(state: MatchState, event: MatchDerivedEve
         roundGame: {
           ...state.roundGame,
           myCards: payload.cards,
+        },
+      };
+    }
+
+    case 'ACTION_DEADLINE_SET': {
+      // Reinicia el reloj para el asiento obligado. Los tres campos se setean
+      // juntos (invariante de consistencia). Fuente: docs/CONTRATOS_API.md §9.6.
+      const payload = event.payload as ActionDeadlineSetPayload;
+      return {
+        ...state,
+        roundGame: {
+          ...state.roundGame,
+          actionDeadline: payload.actionDeadline,
+          turnDurationMillis: payload.turnDurationMillis,
+          actionDeadlineSeat: payload.seat,
+        },
+      };
+    }
+
+    case 'ACTION_DEADLINE_CLEARED': {
+      // No corre reloj: se limpian los tres campos juntos.
+      return {
+        ...state,
+        roundGame: {
+          ...state.roundGame,
+          actionDeadline: null,
+          turnDurationMillis: null,
+          actionDeadlineSeat: null,
         },
       };
     }

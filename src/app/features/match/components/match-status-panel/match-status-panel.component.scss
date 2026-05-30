@@ -75,6 +75,40 @@
   }
 }
 
+// Anillo de cuenta regresiva del turno (feature 013-turn-timer). Indicador
+// visual de progreso sin número: --t3-timer-fill (0..1) marca el tiempo
+// restante; el hueco central se logra con un ::after del color del panel.
+.status-panel__turn-ring {
+  --t3-timer-fill: 1;
+
+  position: relative;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  background: conic-gradient(
+    var(--t3-timer-progress) calc(var(--t3-timer-fill) * 360deg),
+    var(--t3-timer-track) 0
+  );
+  transition: background 0.2s linear;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border-radius: 50%;
+    background-color: var(--t3-card-bg);
+  }
+
+  &.is-urgent {
+    background: conic-gradient(
+      var(--t3-timer-urgent) calc(var(--t3-timer-fill) * 360deg),
+      var(--t3-timer-track) 0
+    );
+  }
+}
+
 .status-panel__label {
   font-size: 0.5rem;
   color: var(--t3-text-muted);

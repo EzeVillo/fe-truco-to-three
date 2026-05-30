@@ -40,6 +40,9 @@ export const mockMatchViewerPlayerOne: MatchState = {
       cardPlayerTwo: null,
       mano: 'juancho',
     },
+    actionDeadline: null,
+    turnDurationMillis: null,
+    actionDeadlineSeat: null,
   },
 } as const satisfies MatchState;
 
@@ -82,6 +85,9 @@ export const mockMatchViewerPlayerTwo: MatchState = {
       cardPlayerTwo: null,
       mano: 'juancho',
     },
+    actionDeadline: null,
+    turnDurationMillis: null,
+    actionDeadlineSeat: null,
   },
 } as const satisfies MatchState;
 
@@ -119,6 +125,9 @@ export const mockMatchEmptyTable: MatchState = {
       cardPlayerTwo: null,
       mano: 'juancho',
     },
+    actionDeadline: null,
+    turnDurationMillis: null,
+    actionDeadlineSeat: null,
   },
 } as const satisfies MatchState;
 
@@ -160,5 +169,8 @@ export const mockMatchAsymmetricHand: MatchState = {
       cardPlayerTwo: null,
       mano: 'juancho',
     },
+    actionDeadline: null,
+    turnDurationMillis: null,
+    actionDeadlineSeat: null,
   },
 } as const satisfies MatchState;

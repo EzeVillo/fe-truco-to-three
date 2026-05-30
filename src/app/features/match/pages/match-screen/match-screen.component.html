@@ -16,6 +16,15 @@
   </div>
 } @else if (matchView(); as view) {
   <div class="match-screen">
-    <app-game-board [view]="view" [matchId]="matchId()" [selfCallText]="selfCallText()" [opponentCallText]="opponentCallText()" [isProcessingDelay]="eventQueue.isProcessingDelay()" />
+    <app-game-board
+      [view]="view"
+      [matchId]="matchId()"
+      [selfCallText]="selfCallText()"
+      [opponentCallText]="opponentCallText()"
+      [isProcessingDelay]="eventQueue.isProcessingDelay()"
+      [timerRemainingFraction]="timerRemainingFraction()"
+      [timerIsUrgent]="timerIsUrgent()"
+      [viewerActionTimedOut]="viewerActionTimedOut()"
+    />
   </div>
 }

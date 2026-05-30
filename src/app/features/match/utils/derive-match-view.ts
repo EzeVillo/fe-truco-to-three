@@ -1,5 +1,6 @@
 import type { MatchState, ViewerSeat, Card, PlayedHand, AvailableAction } from '../../../core/models/match.models';
 import type { TrucoCall } from '../../../core/models/enums';
+import { hasActiveDeadline } from './turn-timer';
 
 export interface SeatView {
   seat: ViewerSeat;
@@ -10,6 +11,8 @@ export interface SeatView {
   handCount: number;
   playedInCurrentHand: Card | null;
   playedInPreviousHands: (Card | null)[];
+  /** El reloj de turno corre sobre este asiento (feature 013-turn-timer). */
+  hasActiveDeadline: boolean;
 }
 
 export interface MatchView {
@@ -25,6 +28,10 @@ export interface MatchView {
   playedHandsCount: number;
   availableActions: AvailableAction[];
   currentTrucoCall: TrucoCall | null;
+  // Temporizador de turno (feature 013-turn-timer)
+  actionDeadline: number | null; // epochMillis absoluto
+  turnDurationMillis: number | null; // plazo total
+  deadlineIsSelf: boolean | null; // true=propio, false=rival, null=sin reloj
 }
 
 export function getInitials(username: string): string {
@@ -79,6 +86,7 @@ export function deriveMatchView(state: MatchState): MatchView {
         handCount: 0,
         playedInCurrentHand: null,
         playedInPreviousHands: [],
+        hasActiveDeadline: false,
       },
       opponent: {
         seat: oppSeat,
@@ -89,6 +97,7 @@ export function deriveMatchView(state: MatchState): MatchView {
         handCount: 0,
         playedInCurrentHand: null,
         playedInPreviousHands: [],
+        hasActiveDeadline: false,
       },
       currentTurnIsSelf: null,
       currentTurnUsername: null,
@@ -96,6 +105,9 @@ export function deriveMatchView(state: MatchState): MatchView {
       playedHandsCount: 0,
       availableActions: [],
       currentTrucoCall: null,
+      actionDeadline: null,
+      turnDurationMillis: null,
+      deadlineIsSelf: null,
     };
   }
 
@@ -117,6 +129,17 @@ export function deriveMatchView(state: MatchState): MatchView {
       : null;
   const currentTurnUsername = round.currentTurn ?? null;
 
+  // Temporizador de turno (feature 013-turn-timer): el reloj corre sobre
+  // `actionDeadlineSeat`, que puede no coincidir con `currentTurn` (respuesta a canto).
+  const deadlineActive = hasActiveDeadline(
+    round.actionDeadline,
+    round.turnDurationMillis,
+    round.actionDeadlineSeat,
+  );
+  const selfHasDeadline = deadlineActive && round.actionDeadlineSeat === selfSeat;
+  const opponentHasDeadline = deadlineActive && round.actionDeadlineSeat === oppSeat;
+  const deadlineIsSelf = deadlineActive ? round.actionDeadlineSeat === selfSeat : null;
+
   return {
     matchId: state.matchId,
     status: state.status,
@@ -131,6 +154,7 @@ export function deriveMatchView(state: MatchState): MatchView {
       handCount: selfHandCount,
       playedInCurrentHand: seatCard(round.currentHand, selfSeat),
       playedInPreviousHands: round.playedHands.map((h: PlayedHand) => seatCard(h, selfSeat)),
+      hasActiveDeadline: selfHasDeadline,
     },
     opponent: {
       seat: oppSeat,
@@ -141,6 +165,7 @@ export function deriveMatchView(state: MatchState): MatchView {
       handCount: opponentHandCount,
       playedInCurrentHand: seatCard(round.currentHand, oppSeat),
       playedInPreviousHands: round.playedHands.map((h: PlayedHand) => seatCard(h, oppSeat)),
+      hasActiveDeadline: opponentHasDeadline,
     },
     currentTurnIsSelf,
     currentTurnUsername,
@@ -148,5 +173,8 @@ export function deriveMatchView(state: MatchState): MatchView {
     playedHandsCount: round.playedHands.length,
     availableActions: round.availableActions,
     currentTrucoCall: round.currentTrucoCall,
+    actionDeadline: round.actionDeadline,
+    turnDurationMillis: round.turnDurationMillis,
+    deadlineIsSelf,
   };
 }

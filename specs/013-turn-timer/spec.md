@@ -60,6 +60,9 @@ plazo informado por el backend.
 4. **Given** que el jugador debe responder un canto (truco/envido) y no es su turno de jugar carta,
    **When** queda pendiente su respuesta, **Then** la cuenta regresiva corre sobre su lado igual que
    en un turno normal.
+5. **Given** que el jugador terminó su acción y luego vuelve a ser el asiento obligado (nuevo turno o
+   nueva ronda), **When** se inicia el nuevo plazo, **Then** la cuenta regresiva se reinicia desde el
+   plazo total del nuevo turno.
 
 ---
 
@@ -109,6 +112,9 @@ la cuenta regresiva aparece sobre el lado del rival y decrece en tiempo real.
 - **Falta del evento de limpieza**: si la cuenta regresiva llega a 0 y no llega un evento explícito
   que cierre la mano/partida, el indicador permanece en "tiempo agotado"/oculto sin reiniciarse
   hasta que el backend comunique el cierre.
+- **Asiento obligado inconsistente**: si el asiento al que aplica el plazo no corresponde a un
+  jugador conocido de la partida o es inconsistente con el estado actual, el sistema no muestra
+  reloj (lo trata como sin plazo activo) y espera la corrección del backend, sin declarar derrota.
 
 ## Requirements *(mandatory)*
 
@@ -170,6 +176,19 @@ la cuenta regresiva aparece sobre el lado del rival y decrece en tiempo real.
   a actuar en el 100% de los cambios de turno/canto observados en una partida de prueba.
 - **SC-006**: La cuenta regresiva se muestra correctamente y sin desbordes de layout en mobile
   (360 px) y desktop.
+
+### Trazabilidad FR ↔ SC
+
+| Functional Requirement | Success Criteria asociado |
+|---|---|
+| FR-001, FR-002 (mostrar indicador) | SC-001, SC-006 |
+| FR-003, FR-010 (derivado del backend, robustez de reloj) | SC-002 |
+| FR-004 (reinicio por cambio de asiento) | SC-005 |
+| FR-006 (urgencia ≤ 5 s) | SC-001 (visibilidad) — verificación visual cualitativa |
+| FR-007, FR-008 (no declarar derrota / a 0) | SC-004 |
+| FR-009 (reconexión) | SC-003 |
+| FR-011 (responsive) | SC-006 |
+| FR-005, FR-012, FR-013 (ocultar/limpiar/tolerar plazo inválido) | SC-001 (ausencia de indicador cuando no corresponde) |
 
 ## Assumptions
 

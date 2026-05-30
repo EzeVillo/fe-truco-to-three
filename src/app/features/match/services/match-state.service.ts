@@ -121,6 +121,12 @@ export class MatchStateService {
 
     const derivedSub = this.wsService.subscribe<MatchDerivedEvent>('/user/queue/match-derived').subscribe((event) => {
       this.updateServerClockOffset(event.timestamp);
+      // El backend puede enviar REMATCH_* por match-derived en lugar de match.
+      // Ambos canales los redirigen al canal dedicado (research D1, feature 014).
+      if (isRematchEvent(event as unknown as MatchWsEvent)) {
+        this.rematch$.next(event as unknown as MatchWsEvent);
+        return;
+      }
       if (this.loading()) {
         this.derivedBuffer.push(event);
       } else {

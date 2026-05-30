@@ -1,8 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs';
+import type { Subscription } from 'rxjs';
 import type { ViewerSeat } from '../../../core/models/match.models';
-import type { RematchSession, RematchChoice } from '../models/rematch.models';
+import type { RematchSession, RematchChoice, RematchSessionResponse } from '../models/rematch.models';
 import type {
   RematchAvailablePayload,
   RematchOpponentWantsPayload,
@@ -65,7 +65,7 @@ export class RematchStateService {
    * Inicializa la sesión directamente desde un DTO REST (sin llamar getSession).
    * Usado para resolver la carrera en afterClosed del modal de resultado (D3).
    */
-  initFromDto(dto: import('../models/rematch.models').RematchSessionResponse, viewerSeat: ViewerSeat): void {
+  initFromDto(dto: RematchSessionResponse, viewerSeat: ViewerSeat): void {
     const self: RematchChoice =
       viewerSeat === 'PLAYER_ONE' ? dto.playerOneChoice : dto.playerTwoChoice;
     const opponent: RematchChoice =

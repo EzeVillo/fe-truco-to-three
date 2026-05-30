@@ -4,8 +4,8 @@ import {
   computed,
   effect,
   inject,
-  OnDestroy,
   signal,
+  type OnDestroy,
 } from '@angular/core';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { RematchStateService } from '../../services/rematch-state.service';

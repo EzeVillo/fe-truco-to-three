@@ -9,6 +9,7 @@ export default [
       '.angular/**',
       'node_modules/**',
       'coverage/**',
+      '.claude/**',
       '**/*.spec.ts',
       '**/*.html',
       'public/**',

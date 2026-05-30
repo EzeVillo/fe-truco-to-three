@@ -38,6 +38,9 @@ const BASE_MATCH: MatchState = {
       cardPlayerTwo: null,
       mano: 'juancho',
     },
+    actionDeadline: null,
+    turnDurationMillis: null,
+    actionDeadlineSeat: null,
   },
 };
 

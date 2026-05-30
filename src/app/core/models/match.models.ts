@@ -67,6 +67,12 @@ export interface RoundState {
   availableActions: AvailableAction[];
   playedHands: PlayedHand[];
   currentHand: CurrentHand;
+  // Temporizador de turno — fuente: docs/CONTRATOS_API.md §4.14 y §4.18.
+  // Los tres campos son consistentes entre sí: o los tres con valor (reloj
+  // activo) o los tres null (sin reloj). Ver feature 013-turn-timer.
+  actionDeadline: number | null; // epochMillis absoluto del límite de acción
+  turnDurationMillis: number | null; // plazo total del turno (denominador del progreso)
+  actionDeadlineSeat: ViewerSeat | null; // asiento al que aplica el reloj
 }
 
 export type ViewerSeat = 'PLAYER_ONE' | 'PLAYER_TWO';

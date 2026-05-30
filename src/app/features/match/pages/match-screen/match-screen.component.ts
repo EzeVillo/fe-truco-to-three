@@ -1,9 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal, type OnInit, type OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, signal, type OnInit, type OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { deriveMatchView, type MatchView } from '../../utils/derive-match-view';
+import { computeElapsedFraction, computeRemainingMsFromSnapshot, isUrgent } from '../../utils/turn-timer';
 import { callDisplayMapper } from '../../utils/call-display-mapper';
 import { GameBoardComponent } from '../../components/game-board/game-board.component';
 import { GameWonDialogComponent, type GameWonDialogData } from '../../components/game-won-dialog/game-won-dialog.component';
@@ -37,6 +38,57 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   readonly selfCallText = signal<string | null>(null);
   readonly opponentCallText = signal<string | null>(null);
 
+  // ---- Temporizador de turno (feature 013-turn-timer) ----
+  /** "Ahora" del cliente; se refresca mientras hay un plazo activo. */
+  private readonly nowMs = signal<number>(Date.now());
+  private static readonly TIMER_TICK_MS = 200;
+  private timerIntervalId: number | null = null;
+
+  /** Hay un plazo de turno consumible y la partida está en curso (FR-013). */
+  readonly timerActive = computed(() => {
+    const v = this.matchView();
+    return (
+      !!v &&
+      v.status === 'IN_PROGRESS' &&
+      v.actionDeadline !== null &&
+      v.turnDurationMillis !== null &&
+      v.turnDurationMillis > 0
+    );
+  });
+
+  /** Restante en ms del plazo, corregido por el offset de reloj del servidor (FR-010). */
+  readonly timerRemainingMs = computed(() => {
+    const v = this.matchView();
+    if (!v || v.actionDeadline === null || v.turnDurationMillis === null) {
+      return 0;
+    }
+    return computeRemainingMsFromSnapshot(
+      v.actionDeadline,
+      this.matchStateService.serverClockOffsetMs(),
+      this.nowMs(),
+    );
+  });
+
+  /** Fracción restante [0, 1] para el anillo (1 = lleno, 0 = agotado). */
+  readonly timerRemainingFraction = computed(() => {
+    const total = this.matchView()?.turnDurationMillis ?? 0;
+    return 1 - computeElapsedFraction(this.timerRemainingMs(), total);
+  });
+
+  /** Urgencia: quedan ≤ 5 s (FR-006). */
+  readonly timerIsUrgent = computed(() => this.timerActive() && isUrgent(this.timerRemainingMs()));
+
+  /** El plazo propio se agotó antes de la resolución del backend (FR-008). */
+  readonly viewerActionTimedOut = computed(() => {
+    const v = this.matchView();
+    return (
+      !!v &&
+      v.status === 'IN_PROGRESS' &&
+      v.deadlineIsSelf === true &&
+      this.timerRemainingMs() <= 0
+    );
+  });
+
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
@@ -49,6 +101,36 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
 
   /** Tiempo que el "¡Quiero!" del envido queda visible antes de abrir el modal de resultado. */
   private static readonly ENVIDO_RESULT_MODAL_DELAY_MS = 1200;
+
+  constructor() {
+    // Arranca/detiene el tick del temporizador según haya un plazo activo.
+    // No depende de nowMs, así que no genera bucles de reactividad.
+    effect(() => {
+      if (this.timerActive()) {
+        this.startTimerTick();
+      } else {
+        this.stopTimerTick();
+      }
+    });
+  }
+
+  private startTimerTick(): void {
+    if (this.timerIntervalId !== null) {
+      return;
+    }
+    this.nowMs.set(Date.now());
+    this.timerIntervalId = window.setInterval(
+      () => this.nowMs.set(Date.now()),
+      MatchScreenComponent.TIMER_TICK_MS,
+    );
+  }
+
+  private stopTimerTick(): void {
+    if (this.timerIntervalId !== null) {
+      clearInterval(this.timerIntervalId);
+      this.timerIntervalId = null;
+    }
+  }
 
   ngOnInit(): void {
     const matchId = this.route.snapshot.paramMap.get('matchId') ?? '';
@@ -88,6 +170,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     this._envidoSub?.unsubscribe();
     this._eventSub?.unsubscribe();
     this.clearAllCallDisplayTimers();
+    this.stopTimerTick();
     this.dialog.closeAll();
     this.matchStateService.destroy();
   }

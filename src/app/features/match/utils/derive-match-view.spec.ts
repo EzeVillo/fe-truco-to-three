@@ -100,4 +100,49 @@ describe('deriveMatchView', () => {
     const view = deriveMatchView(stateWithoutRound);
     expect(view.availableActions).toEqual([]);
   });
+
+  describe('temporizador de turno (013-turn-timer)', () => {
+    function withDeadline(seat: 'PLAYER_ONE' | 'PLAYER_TWO' | null) {
+      return {
+        ...mockMatchViewerPlayerOne,
+        roundGame: {
+          ...mockMatchViewerPlayerOne.roundGame!,
+          actionDeadline: seat === null ? null : 1_000_030_000,
+          turnDurationMillis: seat === null ? null : 30_000,
+          actionDeadlineSeat: seat,
+        },
+      };
+    }
+
+    it('deadlineIsSelf=true y self.hasActiveDeadline cuando el plazo es del viewer', () => {
+      const view = deriveMatchView(withDeadline('PLAYER_ONE'));
+      expect(view.deadlineIsSelf).toBe(true);
+      expect(view.self.hasActiveDeadline).toBe(true);
+      expect(view.opponent.hasActiveDeadline).toBe(false);
+      expect(view.actionDeadline).toBe(1_000_030_000);
+      expect(view.turnDurationMillis).toBe(30_000);
+    });
+
+    it('deadlineIsSelf=false y opponent.hasActiveDeadline cuando el plazo es del rival', () => {
+      const view = deriveMatchView(withDeadline('PLAYER_TWO'));
+      expect(view.deadlineIsSelf).toBe(false);
+      expect(view.self.hasActiveDeadline).toBe(false);
+      expect(view.opponent.hasActiveDeadline).toBe(true);
+    });
+
+    it('deadlineIsSelf=null y sin reloj activo cuando no hay plazo', () => {
+      const view = deriveMatchView(withDeadline(null));
+      expect(view.deadlineIsSelf).toBeNull();
+      expect(view.self.hasActiveDeadline).toBe(false);
+      expect(view.opponent.hasActiveDeadline).toBe(false);
+      expect(view.actionDeadline).toBeNull();
+    });
+
+    it('sin reloj cuando roundGame es null', () => {
+      const view = deriveMatchView({ ...mockMatchViewerPlayerOne, roundGame: null });
+      expect(view.deadlineIsSelf).toBeNull();
+      expect(view.self.hasActiveDeadline).toBe(false);
+      expect(view.opponent.hasActiveDeadline).toBe(false);
+    });
+  });
 });

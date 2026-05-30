@@ -28,6 +28,10 @@ export class GameBoardComponent {
   readonly selfCallText = input<string | null>(null);
   readonly opponentCallText = input<string | null>(null);
   readonly isProcessingDelay = input<boolean>(false);
+  // Temporizador de turno (feature 013-turn-timer)
+  readonly timerRemainingFraction = input<number>(1);
+  readonly timerIsUrgent = input<boolean>(false);
+  readonly viewerActionTimedOut = input<boolean>(false);
 
   readonly playCardsEnabled = computed(() =>
     this.view().availableActions.some((a) => a.type === 'PLAY_CARD')

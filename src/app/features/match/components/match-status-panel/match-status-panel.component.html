@@ -3,7 +3,16 @@
     <div class="status-panel__players-row">
       <div class="status-panel__player-col">
         <div class="status-panel__player-header">
-          <span class="status-panel__turn-dot" [class.active]="view().currentTurnIsSelf"></span>
+          @if (selfTimerActive()) {
+            <span
+              class="status-panel__turn-ring"
+              [class.is-urgent]="timerIsUrgent()"
+              [style.--t3-timer-fill]="timerRemainingFraction()"
+              aria-hidden="true"
+            ></span>
+          } @else {
+            <span class="status-panel__turn-dot" [class.active]="view().currentTurnIsSelf"></span>
+          }
           <span class="status-panel__label">VOS</span>
         </div>
         <span class="status-panel__player-name">{{ view().self.username }}</span>
@@ -19,7 +28,16 @@
       <div class="status-panel__player-col status-panel__player-col--right">
         <div class="status-panel__player-header status-panel__player-header--right">
           <span class="status-panel__label">RIVAL</span>
-          <span class="status-panel__turn-dot" [class.active]="view().currentTurnIsSelf === false"></span>
+          @if (opponentTimerActive()) {
+            <span
+              class="status-panel__turn-ring"
+              [class.is-urgent]="timerIsUrgent()"
+              [style.--t3-timer-fill]="timerRemainingFraction()"
+              aria-hidden="true"
+            ></span>
+          } @else {
+            <span class="status-panel__turn-dot" [class.active]="view().currentTurnIsSelf === false"></span>
+          }
         </div>
         <span class="status-panel__player-name">{{ view().opponent.username }}</span>
         <span class="status-panel__call-text">{{ opponentCallText() || ' ' }}</span>

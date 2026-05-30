@@ -12,8 +12,18 @@ export class MatchStatusPanelComponent {
   readonly view = input.required<MatchView>();
   readonly selfCallText = input<string | null>(null);
   readonly opponentCallText = input<string | null>(null);
+  /** Fracción restante del plazo [0, 1] (1 = lleno, 0 = agotado). Feature 013. */
+  readonly timerRemainingFraction = input<number>(1);
+  /** El plazo está en zona de urgencia (≤ 5 s). */
+  readonly timerIsUrgent = input<boolean>(false);
 
   readonly totalGamesWon = computed(() => this.view().self.gamesWon + this.view().opponent.gamesWon);
+
+  /** El reloj de turno corre sobre el asiento propio. */
+  readonly selfTimerActive = computed(() => this.view().self.hasActiveDeadline);
+
+  /** El reloj de turno corre sobre el asiento del rival. */
+  readonly opponentTimerActive = computed(() => this.view().opponent.hasActiveDeadline);
 
   /**
    * Slots de la serie en formato "tug of war": las victorias propias se llenan
@@ -27,8 +37,8 @@ export class MatchStatusPanelComponent {
     const selfWon = v.self.gamesWon;
     const oppWon = v.opponent.gamesWon;
     return Array.from({ length: total }, (_, i) => {
-      if (i < selfWon) return 'self';
-      if (i >= total - oppWon) return 'opponent';
+      if (i < selfWon) {return 'self';}
+      if (i >= total - oppWon) {return 'opponent';}
       return 'empty';
     });
   });

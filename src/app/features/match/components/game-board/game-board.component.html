@@ -1,5 +1,11 @@
 <div class="game-board">
-  <app-match-status-panel [view]="view()" [selfCallText]="selfCallText()" [opponentCallText]="opponentCallText()" />
+  <app-match-status-panel
+    [view]="view()"
+    [selfCallText]="selfCallText()"
+    [opponentCallText]="opponentCallText()"
+    [timerRemainingFraction]="timerRemainingFraction()"
+    [timerIsUrgent]="timerIsUrgent()"
+  />
   <div class="game-board__middle">
     <app-opponent-area [opponent]="view().opponent" />
     <app-played-cards-area
@@ -15,5 +21,6 @@
     [currentTrucoCall]="view().currentTrucoCall"
     [matchId]="matchId()"
     [isProcessingDelay]="isProcessingDelay()"
+    [viewerActionTimedOut]="viewerActionTimedOut()"
   />
 </div>

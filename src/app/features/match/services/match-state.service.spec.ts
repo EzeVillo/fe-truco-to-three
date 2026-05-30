@@ -119,6 +119,9 @@ describe('MatchStateService', () => {
           cardPlayerTwo: null,
           mano: 'juancho',
         },
+        actionDeadline: null,
+        turnDurationMillis: null,
+        actionDeadlineSeat: null,
       },
       stateVersion: 1,
     });
@@ -219,6 +222,102 @@ describe('MatchStateService', () => {
       // Ambos se encolaron, no hubo refetch
       expect(mockEventQueue.enqueueTransactional).toHaveBeenCalledTimes(2);
       httpMock.expectNone(`${environment.apiUrl}/matches/test-match`);
+    });
+  });
+
+  describe('eventos del temporizador (013-turn-timer)', () => {
+    it('rutea ACTION_DEADLINE_SET como derivado y no dispara refetch', () => {
+      const eventSubject = mockWsService.getEventSubject();
+      service.init('test-match');
+      flushSnapshot();
+
+      const timerEvent = {
+        matchId: 'test-match',
+        eventType: 'ACTION_DEADLINE_SET',
+        timestamp: Date.now(),
+        payload: { seat: 'PLAYER_ONE', actionDeadline: Date.now() + 30_000, turnDurationMillis: 30_000 },
+        stateVersion: null,
+      } as unknown as MatchWsEvent;
+
+      eventSubject.next(timerEvent);
+
+      expect(mockEventQueue.enqueueDerived).toHaveBeenCalledTimes(1);
+      expect(mockEventQueue.enqueueTransactional).not.toHaveBeenCalled();
+      httpMock.expectNone(`${environment.apiUrl}/matches/test-match`);
+    });
+
+    it('ACTION_DEADLINE_CLEARED también se rutea como derivado', () => {
+      const eventSubject = mockWsService.getEventSubject();
+      service.init('test-match');
+      flushSnapshot();
+
+      eventSubject.next({
+        matchId: 'test-match',
+        eventType: 'ACTION_DEADLINE_CLEARED',
+        timestamp: Date.now(),
+        payload: {},
+        stateVersion: null,
+      } as unknown as MatchWsEvent);
+
+      expect(mockEventQueue.enqueueDerived).toHaveBeenCalledTimes(1);
+      expect(mockEventQueue.enqueueTransactional).not.toHaveBeenCalled();
+    });
+
+    it('deriva serverClockOffsetMs del timestamp del evento', () => {
+      const eventSubject = mockWsService.getEventSubject();
+      service.init('test-match');
+      flushSnapshot();
+
+      const fixedNow = 1_000_000_000_000;
+      vi.spyOn(Date, 'now').mockReturnValue(fixedNow);
+
+      eventSubject.next({
+        matchId: 'test-match',
+        eventType: 'ACTION_DEADLINE_SET',
+        timestamp: fixedNow + 4000,
+        payload: { seat: 'PLAYER_ONE', actionDeadline: fixedNow + 34_000, turnDurationMillis: 30_000 },
+        stateVersion: null,
+      } as unknown as MatchWsEvent);
+
+      expect(service.serverClockOffsetMs()).toBe(4000);
+    });
+
+    it('inicializa el plazo desde el snapshot (reconexión / carga inicial, FR-009)', () => {
+      service.init('test-match');
+      const req = httpMock.expectOne(`${environment.apiUrl}/matches/test-match`);
+      req.flush({
+        matchId: 'test-match',
+        status: 'IN_PROGRESS',
+        viewerSeat: 'PLAYER_ONE',
+        playerOneUsername: 'juancho',
+        playerTwoUsername: 'martina',
+        gamesToPlay: 3,
+        scorePlayerOne: 0,
+        scorePlayerTwo: 0,
+        gamesWonPlayerOne: 0,
+        gamesWonPlayerTwo: 0,
+        matchWinner: null,
+        roundGame: {
+          status: 'IN_PROGRESS',
+          currentTurn: 'juancho',
+          myCards: [],
+          roundStatus: 'PLAYING',
+          currentTrucoCall: null,
+          winner: null,
+          availableActions: [{ type: 'PLAY_CARD' }],
+          playedHands: [],
+          currentHand: { cardPlayerOne: null, cardPlayerTwo: null, mano: 'juancho' },
+          actionDeadline: 1_000_030_000,
+          turnDurationMillis: 30_000,
+          actionDeadlineSeat: 'PLAYER_ONE',
+        },
+        stateVersion: 1,
+      });
+
+      const round = service.state()?.roundGame;
+      expect(round?.actionDeadline).toBe(1_000_030_000);
+      expect(round?.turnDurationMillis).toBe(30_000);
+      expect(round?.actionDeadlineSeat).toBe('PLAYER_ONE');
     });
   });
 

@@ -34,6 +34,9 @@ function makeState(overrides: Partial<MatchState> = {}): MatchState {
         cardPlayerTwo: null,
         mano: 'juancho',
       },
+      actionDeadline: null,
+      turnDurationMillis: null,
+      actionDeadlineSeat: null,
     },
     ...overrides,
   };
@@ -309,6 +312,66 @@ describe('applyMatchDerivedEvent', () => {
       };
       const next = applyMatchDerivedEvent(state, event);
       expect(next.roundGame?.myCards).toEqual([{ suit: 'ESPADA', number: 1 }]);
+    });
+  });
+
+  describe('ACTION_DEADLINE_SET', () => {
+    it('setea los tres campos del plazo juntos sobre roundGame', () => {
+      const state = makeState();
+      const event: MatchDerivedEvent = {
+        matchId: 'test',
+        eventType: 'ACTION_DEADLINE_SET',
+        timestamp: 1_000,
+        payload: { seat: 'PLAYER_TWO', actionDeadline: 1_000_030_000, turnDurationMillis: 30_000 },
+      };
+      const next = applyMatchDerivedEvent(state, event);
+      expect(next.roundGame?.actionDeadline).toBe(1_000_030_000);
+      expect(next.roundGame?.turnDurationMillis).toBe(30_000);
+      expect(next.roundGame?.actionDeadlineSeat).toBe('PLAYER_TWO');
+    });
+
+    it('reemplaza un plazo previo (reinicio del reloj)', () => {
+      const state = makeState({
+        roundGame: { ...makeState().roundGame!, actionDeadline: 1, turnDurationMillis: 2, actionDeadlineSeat: 'PLAYER_ONE' },
+      });
+      const event: MatchDerivedEvent = {
+        matchId: 'test',
+        eventType: 'ACTION_DEADLINE_SET',
+        timestamp: 5,
+        payload: { seat: 'PLAYER_TWO', actionDeadline: 999, turnDurationMillis: 30_000 },
+      };
+      const next = applyMatchDerivedEvent(state, event);
+      expect(next.roundGame?.actionDeadline).toBe(999);
+      expect(next.roundGame?.actionDeadlineSeat).toBe('PLAYER_TWO');
+    });
+
+    it('no-op si roundGame es null', () => {
+      const state = makeState({ roundGame: null });
+      const event: MatchDerivedEvent = {
+        matchId: 'test',
+        eventType: 'ACTION_DEADLINE_SET',
+        timestamp: 1,
+        payload: { seat: 'PLAYER_ONE', actionDeadline: 1, turnDurationMillis: 2 },
+      };
+      expect(applyMatchDerivedEvent(state, event).roundGame).toBeNull();
+    });
+  });
+
+  describe('ACTION_DEADLINE_CLEARED', () => {
+    it('limpia los tres campos del plazo', () => {
+      const state = makeState({
+        roundGame: { ...makeState().roundGame!, actionDeadline: 1, turnDurationMillis: 2, actionDeadlineSeat: 'PLAYER_ONE' },
+      });
+      const event: MatchDerivedEvent = {
+        matchId: 'test',
+        eventType: 'ACTION_DEADLINE_CLEARED',
+        timestamp: 1,
+        payload: {},
+      };
+      const next = applyMatchDerivedEvent(state, event);
+      expect(next.roundGame?.actionDeadline).toBeNull();
+      expect(next.roundGame?.turnDurationMillis).toBeNull();
+      expect(next.roundGame?.actionDeadlineSeat).toBeNull();
     });
   });
 });

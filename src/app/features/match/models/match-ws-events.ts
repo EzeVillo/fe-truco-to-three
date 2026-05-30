@@ -41,7 +41,12 @@ export interface MatchWsEvent<TPayload = unknown> {
 
 export type MatchDerivedEventType =
   | 'AVAILABLE_ACTIONS_UPDATED'
-  | 'PLAYER_HAND_UPDATED';
+  | 'PLAYER_HAND_UPDATED'
+  // Temporizador de turno. Viajan por /user/queue/match con stateVersion null;
+  // se tratan como derivados (no avanzan stateVersion). Ver
+  // docs/CONTRATOS_API.md §9.5/§9.6 y feature 013-turn-timer (research D1).
+  | 'ACTION_DEADLINE_SET'
+  | 'ACTION_DEADLINE_CLEARED';
 
 export interface MatchDerivedEvent<TPayload = unknown> {
   matchId: string;
@@ -166,3 +171,13 @@ export interface PlayerHandUpdatedPayload {
   seat: Seat;
   cards: Card[];
 }
+
+/** Payload de `ACTION_DEADLINE_SET`. Fuente: docs/CONTRATOS_API.md §9.6. */
+export interface ActionDeadlineSetPayload {
+  seat: Seat; // asiento que debe actuar
+  actionDeadline: number; // epochMillis absoluto
+  turnDurationMillis: number; // plazo total del turno
+}
+
+/** Payload de `ACTION_DEADLINE_CLEARED` — sin campos. */
+export type ActionDeadlineClearedPayload = Record<string, never>;

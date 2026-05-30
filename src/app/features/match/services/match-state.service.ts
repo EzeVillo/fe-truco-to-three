@@ -13,6 +13,15 @@ interface MatchSnapshot extends MatchState {
   stateVersion: number;
 }
 
+/**
+ * Eventos del temporizador de turno: viajan por /user/queue/match pero son
+ * derivados (sin stateVersion). Ver docs/CONTRATOS_API.md §9.5 y feature 013.
+ */
+function isTimerEvent(event: MatchWsEvent): boolean {
+  const type: string = event.eventType;
+  return type === 'ACTION_DEADLINE_SET' || type === 'ACTION_DEADLINE_CLEARED';
+}
+
 @Injectable()
 export class MatchStateService {
   private readonly http = inject(HttpClient);
@@ -23,6 +32,12 @@ export class MatchStateService {
   readonly state = signal<MatchState | null>(null);
   readonly loading = signal<boolean>(false);
   readonly error = signal<boolean>(false);
+
+  // Offset servidor↔cliente (epochMillis) para corregir el desfase de reloj al
+  // calcular el restante del temporizador desde el snapshot REST (feature 013).
+  // Se actualiza con el `timestamp` (epochMillis del servidor) de cada evento WS.
+  private readonly _serverClockOffsetMs = signal<number>(0);
+  readonly serverClockOffsetMs = this._serverClockOffsetMs.asReadonly();
   readonly matchEvent$ = new Subject<MatchWsEvent>();
   readonly matchEnded$ = new Subject<MatchEndedEvent>();
   readonly gameWon$ = new Subject<GameWonPayload>();
@@ -60,6 +75,19 @@ export class MatchStateService {
 
     // Subscribe to WS channels BEFORE the GET to avoid losing events
     const matchSub = this.wsService.subscribe<MatchWsEvent>('/user/queue/match').subscribe((event) => {
+      this.updateServerClockOffset(event.timestamp);
+      // Los eventos del temporizador viajan por /user/queue/match pero con
+      // stateVersion null: se tratan como derivados (no avanzan stateVersion ni
+      // disparan detección de huecos). Ver docs/CONTRATOS_API.md §9.5 (research D1).
+      if (isTimerEvent(event)) {
+        const derived = event as unknown as MatchDerivedEvent;
+        if (this.loading()) {
+          this.derivedBuffer.push(derived);
+        } else {
+          this.processLiveDerivedEvent(derived);
+        }
+        return;
+      }
       if (this.loading()) {
         this.buffer.push(event);
       } else {
@@ -68,6 +96,7 @@ export class MatchStateService {
     });
 
     const derivedSub = this.wsService.subscribe<MatchDerivedEvent>('/user/queue/match-derived').subscribe((event) => {
+      this.updateServerClockOffset(event.timestamp);
       if (this.loading()) {
         this.derivedBuffer.push(event);
       } else {
@@ -170,6 +199,12 @@ export class MatchStateService {
     } else {
       // Gap detected - re-fetch
       this.triggerRefetch();
+    }
+  }
+
+  private updateServerClockOffset(eventTimestamp: number): void {
+    if (typeof eventTimestamp === 'number' && Number.isFinite(eventTimestamp)) {
+      this._serverClockOffsetMs.set(eventTimestamp - Date.now());
     }
   }
 

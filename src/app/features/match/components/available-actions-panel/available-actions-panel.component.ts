@@ -25,6 +25,12 @@ export class AvailableActionsPanelComponent {
   readonly currentTrucoCall = input<TrucoCall | null>(null);
   readonly matchId = input.required<string>();
   readonly isProcessingDelay = input<boolean>(false);
+  /**
+   * El plazo de turno del jugador se agotó (feature 013-turn-timer): se
+   * deshabilitan los controles y se muestra "tiempo agotado", a la espera de la
+   * resolución del backend. No se vacía availableActions del estado (FR-007/008).
+   */
+  readonly viewerActionTimedOut = input<boolean>(false);
 
   private readonly matchActionsService = inject(MatchActionsService);
 

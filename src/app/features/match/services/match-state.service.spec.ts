@@ -417,4 +417,81 @@ describe('MatchStateService', () => {
       });
     });
   });
+
+  describe('ruteo de eventos REMATCH_* (feature 014)', () => {
+    const REMATCH_TYPES = [
+      'REMATCH_AVAILABLE',
+      'REMATCH_OPPONENT_WANTS',
+      'REMATCH_CONFIRMED',
+      'REMATCH_CLOSED_BY_LEAVE',
+      'REMATCH_EXPIRED',
+    ] as const;
+
+    it.each(REMATCH_TYPES)('%s se emite por rematch$ y NO por la cola transaccional', (eventType) => {
+      const eventSubject = mockWsService.getEventSubject();
+      service.init('test-match');
+      flushSnapshot();
+
+      const rematchEvents: unknown[] = [];
+      service.rematch$.subscribe((e) => rematchEvents.push(e));
+
+      const wsEvent: MatchWsEvent = {
+        matchId: 'test-match',
+        eventType,
+        timestamp: Date.now(),
+        payload: { sessionId: 'sid', originMatchId: 'test-match' },
+        stateVersion: 99,
+      };
+
+      eventSubject.next(wsEvent);
+
+      expect(rematchEvents).toHaveLength(1);
+      expect((rematchEvents[0] as MatchWsEvent).eventType).toBe(eventType);
+      // No pasa por la cola ack-gated
+      expect(mockEventQueue.enqueueTransactional).not.toHaveBeenCalled();
+    });
+
+    it('REMATCH_AVAILABLE durante loading se bufferea en rematch$ (no en buffer transaccional)', () => {
+      const eventSubject = mockWsService.getEventSubject();
+      service.init('test-match');
+      // No flush → loading = true
+
+      const rematchEvents: unknown[] = [];
+      service.rematch$.subscribe((e) => rematchEvents.push(e));
+
+      eventSubject.next({
+        matchId: 'test-match',
+        eventType: 'REMATCH_AVAILABLE',
+        timestamp: Date.now(),
+        payload: { sessionId: 'sid', originMatchId: 'test-match', expiresAt: 9999999 },
+        stateVersion: 5,
+      });
+
+      // Llega directo al canal rematch$ sin pasar por el buffer transaccional
+      expect(rematchEvents).toHaveLength(1);
+      expect(mockEventQueue.enqueueTransactional).not.toHaveBeenCalled();
+
+      // Cleanup
+      flushSnapshot();
+    });
+
+    it('un evento transaccional normal (TRUCO_CALLED) no se emite por rematch$', () => {
+      const eventSubject = mockWsService.getEventSubject();
+      service.init('test-match');
+      flushSnapshot();
+
+      const rematchEvents: unknown[] = [];
+      service.rematch$.subscribe((e) => rematchEvents.push(e));
+
+      eventSubject.next({
+        matchId: 'test-match',
+        eventType: 'TRUCO_CALLED',
+        timestamp: Date.now(),
+        payload: { callerSeat: 'PLAYER_TWO', call: 'TRUCO' },
+        stateVersion: 2,
+      });
+
+      expect(rematchEvents).toHaveLength(0);
+    });
+  });
 });

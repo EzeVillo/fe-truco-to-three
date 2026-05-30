@@ -1,0 +1,66 @@
+.rematch-dialog {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--t3-gap-md);
+  padding: var(--t3-gap-lg);
+  min-width: 260px;
+  text-align: center;
+
+  &__title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--t3-gold-400);
+    letter-spacing: 0.02em;
+  }
+
+  &__hint {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--t3-text-muted);
+
+    &--wants {
+      color: var(--t3-envido-win-text);
+      font-weight: 600;
+    }
+
+    &--closed {
+      color: var(--t3-envido-lose-text);
+    }
+  }
+
+  &__countdown {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--t3-text-muted);
+    letter-spacing: 0.04em;
+  }
+
+  &__confirmed {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--t3-gold-400);
+  }
+
+  &__error {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--t3-envido-lose-text);
+  }
+
+  &__actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--t3-gap-sm);
+    width: 100%;
+    margin-top: var(--t3-gap-sm);
+
+    @media (min-width: 1024px) {
+      flex-direction: row;
+      justify-content: center;
+    }
+  }
+}

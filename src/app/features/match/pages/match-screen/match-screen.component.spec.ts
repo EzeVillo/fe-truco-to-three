@@ -3,33 +3,50 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { MatDialogModule } from '@angular/material/dialog';
 import { provideRouter } from '@angular/router';
-import { of, Subject } from 'rxjs';
+import { BehaviorSubject, of, Subject } from 'rxjs';
+import { signal } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MatchScreenComponent } from './match-screen.component';
 import { MatchStateService } from '../../services/match-state.service';
 import { MatchEventQueueService } from '../../services/match-event-queue.service';
+import { RematchStateService } from '../../services/rematch-state.service';
 import { GameWonDialogComponent } from '../../components/game-won-dialog/game-won-dialog.component';
 import { EnvidoResultDialogComponent } from '../../components/envido-result-dialog/envido-result-dialog.component';
+import { RematchDialogComponent } from '../../components/rematch-dialog/rematch-dialog.component';
 import { mockMatchViewerPlayerOne } from '../../mocks/match-state.mocks';
+import type { RematchSession } from '../../models/rematch.models';
+
+function makeParamMap(params: Record<string, string>) {
+  return {
+    get: (key: string) => params[key] ?? null,
+    has: (key: string) => key in params,
+    getAll: (key: string) => (params[key] ? [params[key]] : []),
+    keys: Object.keys(params),
+  };
+}
 
 describe('MatchScreenComponent', () => {
   let fixture: ComponentFixture<MatchScreenComponent>;
   let matchStateService: MatchStateService;
+  let paramMapSubject: BehaviorSubject<ReturnType<typeof makeParamMap>>;
 
   function setupComponent(params: Record<string, string> = {}): void {
+    paramMapSubject = new BehaviorSubject(makeParamMap(params));
+
     TestBed.configureTestingModule({
       imports: [MatchScreenComponent, MatDialogModule, GameWonDialogComponent, EnvidoResultDialogComponent],
       providers: [
         provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
         {
           provide: ActivatedRoute,
           useValue: {
+            paramMap: paramMapSubject.asObservable(),
             snapshot: {
-              paramMap: {
-                get: (key: string) => params[key] ?? null,
-              },
-              queryParamMap: {
-                get: () => null,
-              },
+              paramMap: makeParamMap(params),
+              queryParamMap: { get: () => null },
             },
           },
         },
@@ -744,6 +761,104 @@ describe('MatchScreenComponent', () => {
       afterClosed$.next();
 
       expect(resumeSpy).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('revancha — afterClosed del modal de resultado (feature 014)', () => {
+    function mockDialogRefWith<T>(afterClosedSubject: Subject<T>) {
+      return {
+        afterClosed: () => afterClosedSubject.asObservable(),
+        close: vi.fn(),
+        componentInstance: {},
+      };
+    }
+
+    it('navega al lobby si session() es null al cerrar el resultado', () => {
+      setupComponent({ matchId: 'test-match' });
+      matchStateService.loading.set(false);
+      matchStateService.state.set(mockMatchViewerPlayerOne);
+      fixture.detectChanges();
+
+      const routerSpy = vi.spyOn(fixture.componentInstance['router'], 'navigate');
+      const afterClosed$ = new Subject<void>();
+
+      // Mock dialog.open para capturar el resultado dialog y poder cerrarlo
+      const dialogSpy = vi.spyOn(fixture.componentInstance['dialog'], 'open');
+      dialogSpy.mockReturnValue(mockDialogRefWith(afterClosed$) as never);
+
+      matchStateService.matchEnded$.next({
+        winnerSeat: 'PLAYER_ONE',
+        gamesWonPlayerOne: 2,
+        gamesWonPlayerTwo: 0,
+        reason: 'FINISHED',
+      });
+      fixture.detectChanges();
+
+      // Mock el puntual getSession para devolver 404
+      const rematchApi = fixture.componentInstance['rematchApiService'];
+      vi.spyOn(rematchApi, 'getSession').mockReturnValue(
+        new Subject(), // nunca emite → no pasa por next() → error path no aplica acá
+      );
+
+      // Cerramos el resultado dialog; session() es null
+      afterClosed$.next();
+      fixture.detectChanges();
+
+      // Sin sesión: el componente va al lobby directamente (signal null)
+      expect(routerSpy).toHaveBeenCalledWith(['/']);
+    });
+
+    it('abre RematchDialogComponent si session() ya está seteada al cerrar el resultado', () => {
+      setupComponent({ matchId: 'test-match' });
+      matchStateService.loading.set(false);
+      matchStateService.state.set(mockMatchViewerPlayerOne);
+      fixture.detectChanges();
+
+      const rematchStateService = fixture.componentInstance['rematchStateService'] as RematchStateService;
+      const session: RematchSession = {
+        sessionId: 'sid-1', originMatchId: 'test-match', status: 'OPEN',
+        selfChoice: 'UNDECIDED', opponentChoice: 'UNDECIDED',
+        expiresAt: Date.now() + 30_000, resultMatchId: null,
+      };
+      rematchStateService.session.set(session);
+
+      const afterClosed$ = new Subject<void>();
+      const dialogSpy = vi.spyOn(fixture.componentInstance['dialog'], 'open')
+        .mockReturnValue(mockDialogRefWith(afterClosed$) as never);
+
+      matchStateService.matchEnded$.next({
+        winnerSeat: 'PLAYER_ONE',
+        gamesWonPlayerOne: 2,
+        gamesWonPlayerTwo: 0,
+        reason: 'FINISHED',
+      });
+      fixture.detectChanges();
+
+      afterClosed$.next(); // cierra modal de resultado
+      fixture.detectChanges();
+
+      // El segundo open() debe ser RematchDialogComponent
+      const rematchCall = dialogSpy.mock.calls.find((c) => c[0] === RematchDialogComponent);
+      expect(rematchCall).toBeTruthy();
+    });
+
+    it('re-init por cambio de matchId (navegación a la revancha confirmada)', () => {
+      setupComponent({ matchId: 'test-match' });
+      matchStateService.loading.set(false);
+      matchStateService.state.set(mockMatchViewerPlayerOne);
+      fixture.detectChanges();
+
+      const initSpy = vi.spyOn(matchStateService, 'init');
+      const rematchStateService = fixture.componentInstance['rematchStateService'] as RematchStateService;
+      const resetSpy = vi.spyOn(rematchStateService, 'reset');
+
+      // Simular navegación a un nuevo matchId (paramMap cambia)
+      paramMapSubject.next(makeParamMap({ matchId: 'new-match-42' }));
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.matchId()).toBe('new-match-42');
+      expect(initSpy).toHaveBeenCalled();
+      expect(resetSpy).toHaveBeenCalled();
     });
   });
 });

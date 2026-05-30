@@ -181,3 +181,35 @@ export interface ActionDeadlineSetPayload {
 
 /** Payload de `ACTION_DEADLINE_CLEARED` — sin campos. */
 export type ActionDeadlineClearedPayload = Record<string, never>;
+
+// Rematch payloads — §9.6. expiresAt en epochMillis (distinto del REST que es ISO-8601).
+export interface RematchAvailablePayload {
+  sessionId: string;
+  originMatchId: string;
+  expiresAt: number;
+}
+
+export interface RematchOpponentWantsPayload {
+  sessionId: string;
+  originMatchId: string;
+  actor: string;
+}
+
+export interface RematchConfirmedPayload {
+  sessionId: string;
+  originMatchId: string;
+  newMatchId: string;
+  newPlayerOne: string;
+  newPlayerTwo: string;
+}
+
+export interface RematchClosedByLeavePayload {
+  sessionId: string;
+  originMatchId: string;
+  actor: string;
+}
+
+export interface RematchExpiredPayload {
+  sessionId: string;
+  originMatchId: string;
+}

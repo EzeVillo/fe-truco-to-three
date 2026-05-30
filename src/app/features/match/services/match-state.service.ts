@@ -22,6 +22,22 @@ function isTimerEvent(event: MatchWsEvent): boolean {
   return type === 'ACTION_DEADLINE_SET' || type === 'ACTION_DEADLINE_CLEARED';
 }
 
+/**
+ * Eventos de revancha: viajan por /user/queue/match con matchId de la partida
+ * original, pero se rutean por canal dedicado fuera de la cola ack-gated y de
+ * la reconciliación por stateVersion. Ver research D1 (feature 014).
+ */
+function isRematchEvent(event: MatchWsEvent): boolean {
+  const type: string = event.eventType;
+  return (
+    type === 'REMATCH_AVAILABLE' ||
+    type === 'REMATCH_OPPONENT_WANTS' ||
+    type === 'REMATCH_CONFIRMED' ||
+    type === 'REMATCH_CLOSED_BY_LEAVE' ||
+    type === 'REMATCH_EXPIRED'
+  );
+}
+
 @Injectable()
 export class MatchStateService {
   private readonly http = inject(HttpClient);
@@ -42,6 +58,8 @@ export class MatchStateService {
   readonly matchEnded$ = new Subject<MatchEndedEvent>();
   readonly gameWon$ = new Subject<GameWonPayload>();
   readonly envidoResolved$ = new Subject<EnvidoResolvedPayload>();
+  /** Canal dedicado para eventos REMATCH_*. Fuera de la cola ack-gated y de stateVersion. */
+  readonly rematch$ = new Subject<MatchWsEvent>();
 
   private lastApplied = 0;
   private lastSeenVersion = 0;
@@ -76,6 +94,12 @@ export class MatchStateService {
     // Subscribe to WS channels BEFORE the GET to avoid losing events
     const matchSub = this.wsService.subscribe<MatchWsEvent>('/user/queue/match').subscribe((event) => {
       this.updateServerClockOffset(event.timestamp);
+      // Los eventos de revancha se rutean por canal dedicado: fuera de la cola
+      // ack-gated y de la reconciliación por stateVersion (research D1, feature 014).
+      if (isRematchEvent(event)) {
+        this.rematch$.next(event);
+        return;
+      }
       // Los eventos del temporizador viajan por /user/queue/match pero con
       // stateVersion null: se tratan como derivados (no avanzan stateVersion ni
       // disparan detección de huecos). Ver docs/CONTRATOS_API.md §9.5 (research D1).
@@ -137,6 +161,7 @@ export class MatchStateService {
     this.matchEnded$.complete();
     this.gameWon$.complete();
     this.envidoResolved$.complete();
+    this.rematch$.complete();
     this.currentMatchId = null;
   }
 

@@ -7,7 +7,7 @@
 
 import { HttpErrorResponse } from '@angular/common/http';
 
-export type ErrorCopyScope = 'BOT_CATALOG' | 'CREATE_BOT_MATCH' | 'MATCH_LOAD';
+export type ErrorCopyScope = 'BOT_CATALOG' | 'CREATE_BOT_MATCH' | 'MATCH_LOAD' | 'REMATCH';
 
 const FALLBACK = 'Ocurrió un error inesperado. Reintentá.';
 
@@ -46,6 +46,26 @@ export function getErrorCopy(scope: ErrorCopyScope, error: unknown): string {
       default:
         if (status >= 500 && status < 600) {
           return 'No pudimos crear la partida. Reintentá en unos segundos.';
+        }
+        return FALLBACK;
+    }
+  }
+
+  if (scope === 'REMATCH') {
+    switch (status) {
+      case 401:
+        return '';
+      case 404:
+        return 'La revancha ya no está disponible.';
+      case 422:
+        return 'La revancha ya no está disponible o no sos participante de esta partida.';
+      case 409:
+        return 'Ya tenés una sesión de revancha abierta.';
+      case 0:
+        return 'No pudimos conectarnos. Reintentá en unos segundos.';
+      default:
+        if (status >= 500 && status < 600) {
+          return 'No pudimos procesar la revancha. Reintentá.';
         }
         return FALLBACK;
     }

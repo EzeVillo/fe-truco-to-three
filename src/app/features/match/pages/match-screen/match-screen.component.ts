@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, signal, type OnInit, type OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, signal, ViewContainerRef, type OnInit, type OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
@@ -9,8 +9,11 @@ import { callDisplayMapper } from '../../utils/call-display-mapper';
 import { GameBoardComponent } from '../../components/game-board/game-board.component';
 import { GameWonDialogComponent, type GameWonDialogData } from '../../components/game-won-dialog/game-won-dialog.component';
 import { EnvidoResultDialogComponent, type EnvidoResultDialogData } from '../../components/envido-result-dialog/envido-result-dialog.component';
+import { RematchDialogComponent, type RematchDialogResult } from '../../components/rematch-dialog/rematch-dialog.component';
 import { MatchStateService } from '../../services/match-state.service';
 import { MatchEventQueueService } from '../../services/match-event-queue.service';
+import { RematchStateService } from '../../services/rematch-state.service';
+import { RematchApiService } from '../../services/rematch-api.service';
 import { getErrorCopy } from '../../../../shared/error-copy/error-copy';
 import type { MatchEndedEvent, MatchWsEvent, GameWonPayload, EnvidoResolvedPayload } from '../../models/match-ws-events';
 import type { Subscription } from 'rxjs';
@@ -19,7 +22,7 @@ import type { Subscription } from 'rxjs';
   selector: 'app-match-screen',
   standalone: true,
   imports: [CommonModule, GameBoardComponent, MatProgressSpinnerModule],
-  providers: [MatchStateService, MatchEventQueueService],
+  providers: [MatchStateService, MatchEventQueueService, RematchStateService],
   templateUrl: './match-screen.component.html',
   styleUrl: './match-screen.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -94,7 +97,11 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   readonly matchStateService = inject(MatchStateService);
   readonly eventQueue = inject(MatchEventQueueService);
+  private readonly rematchStateService = inject(RematchStateService);
+  private readonly rematchApiService = inject(RematchApiService);
+  private readonly vcr = inject(ViewContainerRef);
   private readonly destroyRef = inject(DestroyRef);
+  private _rematchInited = false;
   private readonly callDisplayTimers = new Map<string, number>();
   private lastEnvidoCallerSeat: 'PLAYER_ONE' | 'PLAYER_TWO' | null = null;
   private envidoModalTimerId: number | null = null;
@@ -110,6 +117,17 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
         this.startTimerTick();
       } else {
         this.stopTimerTick();
+      }
+    });
+
+    // Inicia RematchStateService la primera vez que el estado de la partida carga.
+    // Se re-activa al navegar a una nueva partida (re-init via paramMap, D4).
+    effect(() => {
+      const state = this.matchStateService.state();
+      const id = this.matchId();
+      if (state && id && !this._rematchInited) {
+        this._rematchInited = true;
+        this.rematchStateService.init(id, state.viewerSeat);
       }
     });
   }
@@ -133,9 +151,15 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    const matchId = this.route.snapshot.paramMap.get('matchId') ?? '';
-    this.matchId.set(matchId);
-    this.matchStateService.init(matchId);
+    // Usar paramMap para detectar cambios de matchId al navegar a la revancha (D4).
+    this._paramSub = this.route.paramMap.subscribe((params) => {
+      const newId = params.get('matchId') ?? '';
+      if (!newId || newId === this.matchId()) {return;}
+      this.matchId.set(newId);
+      this._rematchInited = false;
+      this.rematchStateService.reset();
+      this.matchStateService.init(newId);
+    });
 
     const endedSub = this.matchStateService.matchEnded$.subscribe((event) => {
       this.openResultDialog(event);
@@ -165,6 +189,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this._paramSub?.unsubscribe();
     this._endedSub?.unsubscribe();
     this._gameWonSub?.unsubscribe();
     this._envidoSub?.unsubscribe();
@@ -172,6 +197,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     this.clearAllCallDisplayTimers();
     this.stopTimerTick();
     this.dialog.closeAll();
+    this.rematchStateService.reset();
     this.matchStateService.destroy();
   }
 
@@ -305,7 +331,55 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
 
     dialogRef.afterClosed().subscribe(() => {
       this.eventQueue.resumeAck();
+      this.decideAfterResultDialog();
+    });
+  }
+
+  private decideAfterResultDialog(): void {
+    const session = this.rematchStateService.session();
+    if (session) {
+      this.openRematchDialog();
+      return;
+    }
+
+    // Carrera: REMATCH_AVAILABLE pudo no haber llegado todavía — consulta puntual (D3).
+    const matchId = this.matchId();
+    const viewerSeat = this.matchStateService.state()?.viewerSeat;
+    if (!matchId || !viewerSeat) {
       this.router.navigate(['/']);
+      return;
+    }
+
+    this.rematchApiService.getSession(matchId).subscribe({
+      next: (dto) => {
+        // 200: inicializar sesión directamente desde el DTO y abrir el diálogo.
+        this.rematchStateService.initFromDto(dto, viewerSeat);
+        this.openRematchDialog();
+      },
+      error: () => {
+        // 404 o error: sin sesión de revancha → lobby.
+        this.router.navigate(['/']);
+      },
+    });
+  }
+
+  private openRematchDialog(): void {
+    const dialogRef = this.dialog.open<RematchDialogComponent, void, RematchDialogResult>(
+      RematchDialogComponent,
+      {
+        viewContainerRef: this.vcr,
+        panelClass: 't3-rematch-dialog',
+        backdropClass: 't3-rematch-backdrop',
+        disableClose: true,
+      },
+    );
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result?.confirmedMatchId) {
+        this.router.navigate(['/match', result.confirmedMatchId]);
+      } else {
+        this.router.navigate(['/']);
+      }
     });
   }
 
@@ -422,6 +496,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     };
   }
 
+  private _paramSub?: Subscription;
   private _endedSub?: Subscription;
   private _gameWonSub?: Subscription;
   private _envidoSub?: Subscription;

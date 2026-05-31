@@ -12,43 +12,49 @@
   </div>
 
   <div class="online-match__scroll">
-    <!-- Crear partida privada -->
-    <div class="online-match__panel">
-      <h2 class="online-match__panel-title">Crear partida</h2>
-      <p class="online-match__panel-desc">
-        Creá una partida privada y compartí el código con tu rival.
-      </p>
+    @if (!isInviteLink()) {
+      <div class="online-match__panel">
+        <h2 class="online-match__panel-title">Crear partida</h2>
+        <p class="online-match__panel-desc">
+          Creá una partida privada y compartí el código o el enlace con tu rival.
+        </p>
 
-      <app-series-format-selector
-        [format]="seriesFormat()"
-        (formatChange)="onChangeFormat($event)"
-      />
+        <app-series-format-selector
+          [format]="seriesFormat()"
+          (formatChange)="onChangeFormat($event)"
+        />
 
-      @if (createError()) {
-        <p class="online-match__error" role="alert">{{ createError() }}</p>
-      }
-
-      <button
-        type="button"
-        class="t3-btn t3-btn--primary online-match__cta"
-        [disabled]="creating()"
-        [attr.aria-busy]="creating() ? 'true' : null"
-        (click)="onCreate()"
-      >
-        @if (creating()) {
-          <mat-spinner diameter="18" class="online-match__spinner" />
-          <span>Creando…</span>
-        } @else {
-          <span>Crear partida privada</span>
+        @if (createError()) {
+          <p class="online-match__error" role="alert">{{ createError() }}</p>
         }
-      </button>
-    </div>
 
-    <!-- Unirse por código -->
+        <button
+          type="button"
+          class="t3-btn t3-btn--primary online-match__cta"
+          [disabled]="creating()"
+          [attr.aria-busy]="creating() ? 'true' : null"
+          (click)="onCreate()"
+        >
+          @if (creating()) {
+            <mat-spinner diameter="18" class="online-match__spinner" />
+            <span>Creando…</span>
+          } @else {
+            <span>Crear partida privada</span>
+          }
+        </button>
+      </div>
+    }
+
     <div class="online-match__panel">
-      <h2 class="online-match__panel-title">Unirme con código</h2>
+      <h2 class="online-match__panel-title">
+        {{ isInviteLink() ? 'Unirme con enlace' : 'Unirme con código' }}
+      </h2>
       <p class="online-match__panel-desc">
-        Ingresá el código que te compartieron para entrar a la sala.
+        @if (isInviteLink()) {
+          Abrimos el enlace y cargamos el código de la partida para que te unas enseguida.
+        } @else {
+          Ingresá el código que te compartieron para entrar a la sala.
+        }
       </p>
 
       <input

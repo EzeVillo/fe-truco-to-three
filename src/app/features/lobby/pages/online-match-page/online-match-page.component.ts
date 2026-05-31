@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, type OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { SeriesFormatSelectorComponent } from '../../components/series-format-selector/series-format-selector.component';
 import { MatchesApiService } from '../../services/matches-api.service';
@@ -19,9 +19,10 @@ import { getErrorCopy } from '../../../../shared/error-copy/error-copy';
   styleUrl: './online-match-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OnlineMatchPageComponent {
+export class OnlineMatchPageComponent implements OnInit {
   private readonly api = inject(MatchesApiService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   // ---- Crear partida ----
   readonly seriesFormat = signal<SeriesFormat>(DEFAULT_SERIES_FORMAT);
@@ -32,10 +33,24 @@ export class OnlineMatchPageComponent {
   readonly joinCodeInput = signal<string>('');
   readonly joining = signal<boolean>(false);
   readonly joinError = signal<string | null>(null);
+  readonly inviteJoinCode = signal<string | null>(null);
+
+  readonly isInviteLink = computed(() => this.inviteJoinCode() !== null);
 
   readonly canJoin = computed(
     () => !this.joining() && this.joinCodeInput().trim().length > 0,
   );
+
+  ngOnInit(): void {
+    const joinCode = this.route.snapshot.paramMap.get('joinCode')?.trim() ?? '';
+    if (!joinCode) {
+      return;
+    }
+
+    this.inviteJoinCode.set(joinCode);
+    this.joinCodeInput.set(joinCode);
+    void this.onJoin();
+  }
 
   onChangeFormat(format: SeriesFormat): void {
     this.seriesFormat.set(format);
@@ -43,6 +58,9 @@ export class OnlineMatchPageComponent {
 
   onJoinCodeInput(value: string): void {
     this.joinCodeInput.set(value);
+    if (this.inviteJoinCode()) {
+      this.inviteJoinCode.set(null);
+    }
     if (this.joinError()) {
       this.joinError.set(null);
     }

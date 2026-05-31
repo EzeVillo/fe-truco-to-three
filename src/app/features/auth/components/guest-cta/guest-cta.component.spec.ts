@@ -67,7 +67,7 @@ describe('GuestCtaComponent', () => {
   it('navega a /lobby tras una respuesta exitosa', async () => {
     const fixture = TestBed.createComponent(GuestCtaComponent);
     const router = TestBed.inject(Router);
-    const navigateSpy = vi.spyOn(router, 'navigate');
+    const navigateSpy = vi.spyOn(router, 'navigateByUrl');
     fixture.detectChanges();
 
     const button = fixture.debugElement.query(By.css('button'));
@@ -75,21 +75,21 @@ describe('GuestCtaComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(navigateSpy).toHaveBeenCalledWith(['/lobby']);
+    expect(navigateSpy).toHaveBeenCalledWith('/lobby');
   });
 
   it('navega a returnUrl si está definido', async () => {
     const fixture = TestBed.createComponent(GuestCtaComponent);
     fixture.componentInstance.returnUrl = '/partido/123';
     const router = TestBed.inject(Router);
-    const navigateSpy = vi.spyOn(router, 'navigate');
+    const navigateSpy = vi.spyOn(router, 'navigateByUrl');
     fixture.detectChanges();
 
     const button = fixture.debugElement.query(By.css('button'));
     button.nativeElement.click();
     await fixture.whenStable();
 
-    expect(navigateSpy).toHaveBeenCalledWith(['/partido/123']);
+    expect(navigateSpy).toHaveBeenCalledWith('/partido/123');
   });
 
   it('muestra mensaje de error cuando guest() falla', async () => {

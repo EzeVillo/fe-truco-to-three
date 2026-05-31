@@ -62,7 +62,7 @@ describe('LoginPageComponent — flujo invitado (US1)', () => {
   it('al hacer click en el CTA, navega al lobby', async () => {
     const fixture = TestBed.createComponent(LoginPageComponent);
     const router = TestBed.inject(Router);
-    const navigateSpy = vi.spyOn(router, 'navigate');
+    const navigateSpy = vi.spyOn(router, 'navigateByUrl');
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -70,7 +70,7 @@ describe('LoginPageComponent — flujo invitado (US1)', () => {
     if (ctaButton) {
       ctaButton.nativeElement.click();
       await fixture.whenStable();
-      expect(navigateSpy).toHaveBeenCalledWith(['/lobby']);
+      expect(navigateSpy).toHaveBeenCalledWith('/lobby');
     }
   });
 });

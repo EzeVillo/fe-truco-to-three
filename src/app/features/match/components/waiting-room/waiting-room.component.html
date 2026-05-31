@@ -17,7 +17,19 @@
             {{ copied() ? '¡Copiado!' : 'Copiar' }}
           </button>
         </div>
-        <p class="waiting-room__hint">Compartí este código con tu rival para que se una.</p>
+        <div class="waiting-room__link-row">
+          <button
+            type="button"
+            class="t3-btn t3-btn--neutral waiting-room__share"
+            (click)="onShareLink()"
+            [attr.aria-label]="shareLinkLabel()"
+          >
+            {{ shareLinkLabel() }}
+          </button>
+        </div>
+        <p class="waiting-room__hint">
+          Compartí este código o el enlace directo para que tu rival entre sin escribirlo.
+        </p>
       </div>
     }
 
@@ -26,10 +38,7 @@
         <span class="waiting-room__player-name">{{ hostUsername() }}</span>
         <span class="waiting-room__player-meta">
           <span class="waiting-room__player-tag">Anfitrión</span>
-          <span
-            class="waiting-room__ready"
-            [class.waiting-room__ready--active]="hostReady()"
-          >
+          <span class="waiting-room__ready" [class.waiting-room__ready--active]="hostReady()">
             {{ hostReady() ? 'Listo' : 'Esperando' }}
           </span>
         </span>
@@ -39,15 +48,14 @@
           <span class="waiting-room__player-name">{{ rivalUsername() }}</span>
           <span class="waiting-room__player-meta">
             <span class="waiting-room__player-tag">Rival</span>
-            <span
-              class="waiting-room__ready"
-              [class.waiting-room__ready--active]="rivalReady()"
-            >
+            <span class="waiting-room__ready" [class.waiting-room__ready--active]="rivalReady()">
               {{ rivalReady() ? 'Listo' : 'Esperando' }}
             </span>
           </span>
         } @else {
-          <span class="waiting-room__player-name waiting-room__player-name--empty">Esperando rival…</span>
+          <span class="waiting-room__player-name waiting-room__player-name--empty"
+            >Esperando rival…</span
+          >
         }
       </li>
     </ul>

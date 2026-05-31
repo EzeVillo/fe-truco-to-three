@@ -13,7 +13,13 @@
       >
         Iniciar sesión
       </button>
-      <a routerLink="/register" class="auth-tabs__tab" role="tab" aria-selected="false">
+      <a
+        routerLink="/register"
+        [queryParams]="returnUrl ? { returnUrl } : null"
+        class="auth-tabs__tab"
+        role="tab"
+        aria-selected="false"
+      >
         Crear cuenta
       </a>
     </nav>

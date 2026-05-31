@@ -75,6 +75,15 @@
     min-height: 40px;
   }
 
+  &__link-row {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  &__share {
+    min-height: 40px;
+  }
+
   &__hint {
     margin: 0;
     font-size: 0.8rem;

@@ -44,6 +44,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'join/:joinCode',
+    canMatch: [authGuard],
+    loadComponent: () =>
+      import('./features/lobby/pages/online-match-page/online-match-page.component').then(
+        (m) => m.OnlineMatchPageComponent,
+      ),
+  },
+  {
     path: 'match/:matchId',
     canMatch: [authGuard],
     loadComponent: () =>

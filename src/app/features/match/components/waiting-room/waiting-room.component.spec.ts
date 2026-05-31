@@ -2,14 +2,22 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import { WaitingRoomComponent, WaitingRoomClipboard } from './waiting-room.component';
+import {
+  WaitingRoomComponent,
+  WaitingRoomClipboard,
+  WaitingRoomLinkSharer,
+} from './waiting-room.component';
 
-function setup(clipboardMock?: Partial<WaitingRoomClipboard>) {
+function setup(
+  clipboardMock?: Partial<WaitingRoomClipboard>,
+  linkSharerMock?: Partial<WaitingRoomLinkSharer>,
+) {
   TestBed.configureTestingModule({
     imports: [WaitingRoomComponent],
     providers: [
       provideAnimationsAsync(),
       ...(clipboardMock ? [{ provide: WaitingRoomClipboard, useValue: clipboardMock }] : []),
+      ...(linkSharerMock ? [{ provide: WaitingRoomLinkSharer, useValue: linkSharerMock }] : []),
     ],
   });
 }
@@ -133,5 +141,31 @@ describe('WaitingRoomComponent', () => {
     await fixture.componentInstance.onCopy();
     expect(copySpy).toHaveBeenCalledWith('ABC123');
     expect(fixture.componentInstance.copied()).toBe(true);
+  });
+
+  it('compartir el enlace usa la URL canónica de invitación', async () => {
+    const shareSpy = vi.fn().mockResolvedValue(true);
+    setup(undefined, { share: shareSpy });
+    const fixture = TestBed.createComponent(WaitingRoomComponent);
+    fixture.componentRef.setInput('isHost', true);
+    fixture.componentRef.setInput('joinCode', 'ABC123');
+    fixture.detectChanges();
+
+    await fixture.componentInstance.onShareLink();
+    expect(shareSpy).toHaveBeenCalledWith(expect.stringContaining('/join/ABC123'));
+    expect(fixture.componentInstance.linkShareState()).toBe('shared');
+  });
+
+  it('si no hay Web Share API, copia el enlace', async () => {
+    const copySpy = vi.fn().mockResolvedValue(true);
+    setup({ copy: copySpy }, { share: vi.fn().mockResolvedValue(false) });
+    const fixture = TestBed.createComponent(WaitingRoomComponent);
+    fixture.componentRef.setInput('isHost', true);
+    fixture.componentRef.setInput('joinCode', 'ABC123');
+    fixture.detectChanges();
+
+    await fixture.componentInstance.onShareLink();
+    expect(copySpy).toHaveBeenCalledWith(expect.stringContaining('/join/ABC123'));
+    expect(fixture.componentInstance.linkShareState()).toBe('copied');
   });
 });

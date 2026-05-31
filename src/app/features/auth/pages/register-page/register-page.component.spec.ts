@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { provideRouter, Router } from '@angular/router';
+import { ActivatedRoute, provideRouter, Router, RouterLink } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RegisterPageComponent } from './register-page.component';
@@ -44,6 +44,16 @@ describe('RegisterPageComponent (US3)', () => {
         provideAnimationsAsync(),
         SessionStorageService,
         AuthStore,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              queryParamMap: {
+                get: () => null,
+              },
+            },
+          },
+        },
         { provide: AuthService, useValue: authServiceMock },
       ],
     });
@@ -63,7 +73,7 @@ describe('RegisterPageComponent (US3)', () => {
     await fixture.whenStable();
 
     fixture.componentInstance.registerForm.setValue({
-      username: 'martín', // tilde → no válido
+      username: 'martín',
       password: 'Clave1!',
     });
     fixture.detectChanges();
@@ -123,7 +133,7 @@ describe('RegisterPageComponent (US3)', () => {
   it('navega a /lobby tras registro exitoso', async () => {
     const fixture = TestBed.createComponent(RegisterPageComponent);
     const router = TestBed.inject(Router);
-    const navigateSpy = vi.spyOn(router, 'navigate');
+    const navigateSpy = vi.spyOn(router, 'navigateByUrl');
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -138,7 +148,29 @@ describe('RegisterPageComponent (US3)', () => {
       username: 'juancho',
       password: 'Clave1!',
     });
-    expect(navigateSpy).toHaveBeenCalledWith(['/lobby']);
+    expect(navigateSpy).toHaveBeenCalledWith('/lobby');
+  });
+
+  it('preserva returnUrl en la pestaña para volver al login', async () => {
+    TestBed.overrideProvider(ActivatedRoute, {
+      useValue: {
+        snapshot: {
+          queryParamMap: {
+            get: (key: string) => (key === 'returnUrl' ? '/join/ABC123' : null),
+          },
+        },
+      },
+    });
+
+    const fixture = TestBed.createComponent(RegisterPageComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const loginLink = fixture.debugElement.query(By.directive(RouterLink));
+    expect(loginLink).toBeTruthy();
+    expect(loginLink.injector.get(RouterLink).queryParams).toEqual({
+      returnUrl: '/join/ABC123',
+    });
   });
 
   it('muestra error "Ese usuario ya está en uso" ante 422 username-taken', async () => {

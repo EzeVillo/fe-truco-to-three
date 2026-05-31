@@ -60,7 +60,7 @@ export class LoginPageComponent implements OnInit {
     this.authService.login({ username, password }).subscribe({
       next: () => {
         this.loading.set(false);
-        void this.router.navigate([this.returnUrl ?? '/lobby']);
+        void this.router.navigateByUrl(this.returnUrl ?? '/lobby');
       },
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);

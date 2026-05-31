@@ -1,19 +1,29 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { OnlineMatchPageComponent } from './online-match-page.component';
 import { MatchesApiService } from '../../services/matches-api.service';
 
-function setup(apiMock: Partial<MatchesApiService>) {
+function setup(apiMock: Partial<MatchesApiService>, joinCode: string | null = null) {
   TestBed.configureTestingModule({
     imports: [OnlineMatchPageComponent],
     providers: [
       provideRouter([]),
       provideAnimationsAsync(),
       { provide: MatchesApiService, useValue: apiMock },
+      {
+        provide: ActivatedRoute,
+        useValue: {
+          snapshot: {
+            paramMap: {
+              get: (key: string) => (key === 'joinCode' ? joinCode : null),
+            },
+          },
+        },
+      },
     ],
   });
 }
@@ -78,6 +88,18 @@ describe('OnlineMatchPageComponent', () => {
     expect(navSpy).toHaveBeenCalledWith(['/match', 'm9']);
   });
 
+  it('si entra por /join/:joinCode, precarga el código y dispara el join automático', () => {
+    const joinSpy = vi.fn().mockReturnValue(of({ targetType: 'MATCH', targetId: 'm10' }));
+    setup({ joinByCode: joinSpy }, 'INVITE42');
+    const fixture = TestBed.createComponent(OnlineMatchPageComponent);
+    const navSpy = vi.spyOn(fixture.componentInstance['router'], 'navigate');
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.joinCodeInput()).toBe('INVITE42');
+    expect(joinSpy).toHaveBeenCalledWith('INVITE42');
+    expect(navSpy).toHaveBeenCalledWith(['/match', 'm10']);
+  });
+
   it('no permite unirse con el input vacío', () => {
     const joinSpy = vi.fn();
     setup({ joinByCode: joinSpy });
@@ -115,5 +137,15 @@ describe('OnlineMatchPageComponent', () => {
 
     expect(navSpy).not.toHaveBeenCalled();
     expect(fixture.componentInstance.joinError()).toBe('Ese código no corresponde a una partida.');
+  });
+
+  it('en modo enlace oculta la creación de partida', () => {
+    setup({ joinByCode: () => of({ targetType: 'MATCH', targetId: 'm11' }) }, 'INVITE42');
+    const fixture = TestBed.createComponent(OnlineMatchPageComponent);
+    vi.spyOn(fixture.componentInstance['router'], 'navigate').mockResolvedValue(true);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).not.toContain('Crear partida');
+    expect(fixture.nativeElement.textContent).toContain('Unirme con enlace');
   });
 });

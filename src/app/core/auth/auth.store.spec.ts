@@ -7,6 +7,7 @@ import { AUTH_STORAGE_KEY } from './auth.tokens';
 
 const FULL_AUTH_RESPONSE: FullAuthResponse = {
   playerId: 'player-uuid-123',
+  username: 'juancho',
   accessToken: 'access-jwt-abc',
   refreshToken: 'refresh-opaque-xyz',
   accessTokenExpiresIn: 900,
@@ -48,6 +49,7 @@ describe('AuthStore', () => {
   describe('estado inicial ANON', () => {
     it('empieza con todos los campos nulos y no autenticado', () => {
       expect(store.playerId()).toBeNull();
+      expect(store.username()).toBeNull();
       expect(store.accessToken()).toBeNull();
       expect(store.refreshToken()).toBeNull();
       expect(store.isGuest()).toBe(false);
@@ -60,6 +62,7 @@ describe('AuthStore', () => {
       store.setSession(FULL_AUTH_RESPONSE);
 
       expect(store.playerId()).toBe('player-uuid-123');
+      expect(store.username()).toBe('juancho');
       expect(store.accessToken()).toBe('access-jwt-abc');
       expect(store.refreshToken()).toBe('refresh-opaque-xyz');
       expect(store.isGuest()).toBe(false);
@@ -71,6 +74,7 @@ describe('AuthStore', () => {
       expect(fakeStorage[AUTH_STORAGE_KEY]).toBeDefined();
       const saved = JSON.parse(fakeStorage[AUTH_STORAGE_KEY]) as AuthSession;
       expect(saved.playerId).toBe('player-uuid-123');
+      expect(saved.username).toBe('juancho');
       expect(saved.isGuest).toBe(false);
     });
   });
@@ -80,6 +84,7 @@ describe('AuthStore', () => {
       store.setSession(GUEST_AUTH_RESPONSE);
 
       expect(store.playerId()).toBe('guest-uuid-456');
+      expect(store.username()).toBeNull();
       expect(store.accessToken()).toBe('guest-jwt-abc');
       expect(store.refreshToken()).toBeNull();
       expect(store.isGuest()).toBe(true);
@@ -95,6 +100,7 @@ describe('AuthStore', () => {
       expect(store.accessToken()).toBe('nuevo-token');
       expect(store.refreshToken()).toBe('nuevo-refresh');
       expect(store.playerId()).toBe('player-uuid-123');
+      expect(store.username()).toBe('juancho');
     });
 
     it('funciona sin refreshToken opcional', () => {
@@ -112,6 +118,7 @@ describe('AuthStore', () => {
       store.clearSession();
 
       expect(store.playerId()).toBeNull();
+      expect(store.username()).toBeNull();
       expect(store.accessToken()).toBeNull();
       expect(store.refreshToken()).toBeNull();
       expect(store.isGuest()).toBe(false);
@@ -124,6 +131,7 @@ describe('AuthStore', () => {
     it('hidrata el estado desde una sesión válida en storage', () => {
       const validSession = {
         playerId: 'hydrated-player',
+        username: 'HydratedUser',
         accessToken: 'hydrated-token',
         refreshToken: 'hydrated-refresh',
         isGuest: false,
@@ -141,6 +149,7 @@ describe('AuthStore', () => {
       const freshStore = TestBed.inject(AuthStore);
 
       expect(freshStore.playerId()).toBe('hydrated-player');
+      expect(freshStore.username()).toBe('HydratedUser');
       expect(freshStore.accessToken()).toBe('hydrated-token');
       expect(freshStore.isAuthenticated()).toBe(true);
     });
@@ -163,6 +172,39 @@ describe('AuthStore', () => {
       expect(freshStore.playerId()).toBeNull();
       expect(freshStore.isAuthenticated()).toBe(false);
       expect(fakeStorage[AUTH_STORAGE_KEY]).toBeUndefined();
+    });
+    it('hidrata una sesion legacy sin username para permitir rehidratacion posterior', () => {
+      fakeStorage[AUTH_STORAGE_KEY] = JSON.stringify({
+        playerId: 'legacy-player',
+        accessToken: 'legacy-token',
+        refreshToken: 'legacy-refresh',
+        isGuest: false,
+      });
+
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [SessionStorageService, AuthStore],
+      });
+      vi.spyOn(Storage.prototype, 'getItem').mockImplementation((key: string) => {
+        return fakeStorage[key] ?? null;
+      });
+      const freshStore = TestBed.inject(AuthStore);
+
+      expect(freshStore.playerId()).toBe('legacy-player');
+      expect(freshStore.username()).toBeNull();
+      expect(freshStore.isGuest()).toBe(false);
+      expect(freshStore.isAuthenticated()).toBe(true);
+    });
+
+    it('actualiza identidad registrada y la persiste', () => {
+      store.setSession(GUEST_AUTH_RESPONSE);
+      store.updateIdentity('player-registered', 'martina', 'user');
+
+      expect(store.playerId()).toBe('player-registered');
+      expect(store.username()).toBe('martina');
+      expect(store.isGuest()).toBe(false);
+      const saved = JSON.parse(fakeStorage[AUTH_STORAGE_KEY]) as AuthSession;
+      expect(saved.username).toBe('martina');
     });
   });
 });

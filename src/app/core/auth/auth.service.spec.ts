@@ -15,6 +15,7 @@ import type {
 
 const FULL_RESPONSE: FullAuthResponse = {
   playerId: 'player-123',
+  username: 'juancho',
   accessToken: 'access-jwt',
   refreshToken: 'refresh-opaque',
   accessTokenExpiresIn: 900,
@@ -73,6 +74,7 @@ describe('AuthService', () => {
       service.register(req).subscribe((res) => {
         emitted = true;
         expect(store.accessToken()).toBe('access-jwt');
+        expect(store.username()).toBe('juancho');
         expect(store.isAuthenticated()).toBe(true);
         expect(res.accessToken).toBe('access-jwt');
       });
@@ -93,6 +95,7 @@ describe('AuthService', () => {
       service.login(req).subscribe((res) => {
         emitted = true;
         expect(store.accessToken()).toBe('access-jwt');
+        expect(store.username()).toBe('juancho');
         expect(store.isGuest()).toBe(false);
         expect(res.playerId).toBe('player-123');
       });
@@ -165,6 +168,24 @@ describe('AuthService', () => {
 
       expect(emittedToken).toBe('nuevo-access');
       expect(store.accessToken()).toBe('nuevo-access');
+      expect(store.username()).toBe('juancho');
+    });
+
+    it('rehidrata identidad incompleta con GET /api/auth/me', () => {
+      store.updateAccessToken('legacy-access', 900, 'legacy-refresh');
+      store.updateIdentity('legacy-player', null, 'user');
+
+      let username: string | null = null;
+      service.rehydrateIdentityIfNeeded().subscribe((identity) => {
+        username = identity?.username ?? null;
+      });
+
+      const httpReq = httpMock.expectOne('http://localhost:8080/api/auth/me');
+      expect(httpReq.request.method).toBe('GET');
+      httpReq.flush({ playerId: 'legacy-player', username: 'martina', tokenUse: 'user' });
+
+      expect(username).toBe('martina');
+      expect(store.username()).toBe('martina');
     });
 
     it('es single-flight: dos subscribers comparten la misma request', () => {

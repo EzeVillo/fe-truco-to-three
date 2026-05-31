@@ -16,6 +16,7 @@ import type { AuthResponse, FullAuthResponse } from '../models/auth.models';
 
 interface AuthState {
   playerId: string | null;
+  username: string | null;
   accessToken: string | null;
   refreshToken: string | null;
   isGuest: boolean;
@@ -25,6 +26,7 @@ interface AuthState {
 
 const ANON_STATE: AuthState = {
   playerId: null,
+  username: null,
   accessToken: null,
   refreshToken: null,
   isGuest: false,
@@ -35,6 +37,7 @@ const ANON_STATE: AuthState = {
 
 interface PersistedSession {
   playerId: string;
+  username?: string | null;
   accessToken: string;
   refreshToken: string | null;
   isGuest: boolean;
@@ -47,6 +50,9 @@ function isPersistedSession(v: unknown): v is PersistedSession {
   const obj = v as Record<string, unknown>;
   return (
     typeof obj['playerId'] === 'string' &&
+    (obj['username'] === undefined ||
+      obj['username'] === null ||
+      typeof obj['username'] === 'string') &&
     typeof obj['accessToken'] === 'string' &&
     (obj['refreshToken'] === null || typeof obj['refreshToken'] === 'string') &&
     typeof obj['isGuest'] === 'boolean'
@@ -61,6 +67,7 @@ function deriveSession(response: AuthResponse): AuthState {
 
   return {
     playerId: response.playerId,
+    username: isGuest ? null : fullResponse.username,
     accessToken: response.accessToken,
     refreshToken: isGuest ? null : fullResponse.refreshToken,
     isGuest,
@@ -90,6 +97,7 @@ export const AuthStore = signalStore(
       // Persistir (sin accessTokenExpiresAt — solo se guarda en memoria)
       const toSave: PersistedSession = {
         playerId: newState.playerId!,
+        username: newState.username,
         accessToken: newState.accessToken!,
         refreshToken: newState.refreshToken,
         isGuest: newState.isGuest,
@@ -114,6 +122,42 @@ export const AuthStore = signalStore(
       patchState(store, update);
     },
 
+    replaceSession(response: FullAuthResponse): void {
+      const newState = deriveSession(response);
+      const toSave: PersistedSession = {
+        playerId: newState.playerId!,
+        username: newState.username,
+        accessToken: newState.accessToken!,
+        refreshToken: newState.refreshToken,
+        isGuest: false,
+      };
+      sessionStorage.write(AUTH_STORAGE_KEY, toSave);
+      patchState(store, newState);
+    },
+
+    updateIdentity(playerId: string, username: string | null, tokenUse: 'user' | 'guest'): void {
+      const isGuest = tokenUse === 'guest';
+      const currentToken = store.accessToken();
+
+      if (currentToken) {
+        const toSave: PersistedSession = {
+          playerId,
+          username,
+          accessToken: currentToken,
+          refreshToken: isGuest ? null : store.refreshToken(),
+          isGuest,
+        };
+        sessionStorage.write(AUTH_STORAGE_KEY, toSave);
+      }
+
+      patchState(store, {
+        playerId,
+        username,
+        isGuest,
+        refreshToken: isGuest ? null : store.refreshToken(),
+      });
+    },
+
     /**
      * Borra la sesión del storage y vuelve a estado ANON.
      * Operación atómica: storage primero.
@@ -131,6 +175,7 @@ export const AuthStore = signalStore(
       if (saved) {
         patchState(store, {
           playerId: saved.playerId,
+          username: saved.username ?? null,
           accessToken: saved.accessToken,
           refreshToken: saved.refreshToken,
           isGuest: saved.isGuest,

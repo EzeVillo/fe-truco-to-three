@@ -14,6 +14,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 
 const FULL_RESPONSE: FullAuthResponse = {
   playerId: 'player-123',
+  username: 'juancho',
   accessToken: 'access-jwt',
   refreshToken: 'refresh-opaque',
   accessTokenExpiresIn: 900,

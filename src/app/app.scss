@@ -6,3 +6,50 @@
   display: flex;
   flex-direction: column;
 }
+
+.achievement-toast {
+  position: fixed;
+  right: var(--t3-gap-md);
+  bottom: var(--t3-gap-md);
+  left: var(--t3-gap-md);
+  z-index: 20;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--t3-gap-md);
+  padding: var(--t3-gap-md);
+  border: 1px solid var(--t3-card-border);
+  border-radius: var(--t3-radius-md);
+  background-color: var(--t3-card-bg);
+  box-shadow: var(--t3-shadow-card);
+  color: var(--t3-text);
+
+  strong,
+  p {
+    margin: 0;
+  }
+
+  strong {
+    color: var(--t3-gold-500);
+  }
+
+  p {
+    margin-top: var(--t3-gap-xs);
+    color: var(--t3-text-muted);
+  }
+
+  button {
+    align-self: flex-start;
+    padding: var(--t3-gap-xs) var(--t3-gap-sm);
+    border: 1px solid var(--t3-card-border);
+    border-radius: var(--t3-radius-sm);
+    background: transparent;
+    color: var(--t3-gold-500);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  @media (min-width: 1024px) {
+    left: auto;
+    max-width: 360px;
+  }
+}

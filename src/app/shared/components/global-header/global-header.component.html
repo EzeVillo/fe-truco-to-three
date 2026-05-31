@@ -9,7 +9,11 @@
   <span class="global-header__spacer"></span>
 
   @if (authStore.isAuthenticated()) {
-    <span class="global-header__user">{{ userLabel() }}</span>
+    @if (profileLink(); as link) {
+      <a class="global-header__user global-header__user-link" [routerLink]="link">{{ userLabel() }}</a>
+    } @else {
+      <span class="global-header__user">{{ userLabel() }}</span>
+    }
     <button type="button" class="global-header__logout" (click)="onLogoutClick()">Salir</button>
   }
 </header>

@@ -12,6 +12,7 @@ export type ErrorCopyScope =
   | 'CREATE_BOT_MATCH'
   | 'MATCH_LOAD'
   | 'REMATCH'
+  | 'PROFILE'
   | 'CREATE_MATCH'
   | 'JOIN_MATCH';
 
@@ -72,6 +73,23 @@ export function getErrorCopy(scope: ErrorCopyScope, error: unknown): string {
       default:
         if (status >= 500 && status < 600) {
           return 'No pudimos procesar la revancha. Reintentá.';
+        }
+        return FALLBACK;
+    }
+  }
+
+  if (scope === 'PROFILE') {
+    switch (status) {
+      case 401:
+        return '';
+      case 404:
+        return 'No encontramos ese perfil.';
+      case 0:
+      case -1:
+        return 'No pudimos cargar el perfil. ReintentÃ¡.';
+      default:
+        if (status >= 500 && status < 600) {
+          return 'No pudimos cargar el perfil. ReintentÃ¡.';
         }
         return FALLBACK;
     }

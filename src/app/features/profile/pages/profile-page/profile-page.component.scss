@@ -1,0 +1,145 @@
+:host {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.profile-page {
+  flex: 1;
+  padding: var(--t3-gap-md);
+
+  &__inner {
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--t3-gap-lg);
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: var(--t3-gap-md);
+  }
+
+  &__back {
+    flex: 0 0 auto;
+  }
+
+  &__eyebrow {
+    margin: 0 0 var(--t3-gap-xs);
+    color: var(--t3-text-muted);
+    font-size: 0.85rem;
+  }
+
+  &__title {
+    margin: 0;
+    color: var(--t3-text);
+    font-size: 1.6rem;
+  }
+
+  &__stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--t3-gap-sm);
+    margin: 0;
+  }
+
+  &__stat,
+  &__achievement,
+  &__state {
+    border: 1px solid var(--t3-card-border);
+    border-radius: var(--t3-radius-md);
+    background-color: var(--t3-card-bg);
+    box-shadow: var(--t3-shadow-card);
+  }
+
+  &__stat {
+    padding: var(--t3-gap-md);
+
+    dt {
+      color: var(--t3-text-muted);
+      font-size: 0.85rem;
+    }
+
+    dd {
+      margin: var(--t3-gap-xs) 0 0;
+      color: var(--t3-gold-500);
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+  }
+
+  &__achievements {
+    display: flex;
+    flex-direction: column;
+    gap: var(--t3-gap-md);
+
+    h2 {
+      margin: 0;
+      color: var(--t3-text);
+      font-size: 1.2rem;
+    }
+  }
+
+  &__achievement-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--t3-gap-sm);
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  &__achievement {
+    display: grid;
+    gap: var(--t3-gap-sm);
+    padding: var(--t3-gap-md);
+
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h3 {
+      color: var(--t3-gold-500);
+      font-size: 1rem;
+    }
+
+    p,
+    span,
+    time {
+      color: var(--t3-text-muted);
+      font-size: 0.9rem;
+    }
+  }
+
+  &__empty,
+  &__state {
+    margin: 0;
+    color: var(--t3-text-muted);
+  }
+
+  &__state {
+    padding: var(--t3-gap-md);
+  }
+
+  &__state--error {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--t3-gap-md);
+    color: var(--t3-danger);
+  }
+
+  @media (min-width: 1024px) {
+    padding: var(--t3-gap-lg);
+
+    &__stats {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+}

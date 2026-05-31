@@ -4,3 +4,15 @@
 <main class="app-main">
   <router-outlet />
 </main>
+
+@if (profileNotifications.current(); as notification) {
+  <aside class="achievement-toast" role="status" aria-live="polite">
+    <div>
+      <strong>{{ notification.name }}</strong>
+      <p>{{ notification.description }}</p>
+    </div>
+    <button type="button" aria-label="Cerrar logro" (click)="profileNotifications.dismiss()">
+      Cerrar
+    </button>
+  </aside>
+}

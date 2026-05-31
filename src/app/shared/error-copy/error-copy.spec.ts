@@ -53,6 +53,27 @@ describe('getErrorCopy — BOT_CATALOG', () => {
   });
 });
 
+describe('getErrorCopy - PROFILE', () => {
+  it('401 devuelve string vacio', () => {
+    expect(getErrorCopy('PROFILE', httpErr(401))).toBe('');
+  });
+
+  it('404 devuelve perfil no encontrado', () => {
+    expect(getErrorCopy('PROFILE', httpErr(404))).toBe('No encontramos ese perfil.');
+  });
+
+  it('red y servidor devuelven copy de reintento', () => {
+    expect(getErrorCopy('PROFILE', httpErr(0))).toBe('No pudimos cargar el perfil. ReintentÃ¡.');
+    expect(getErrorCopy('PROFILE', httpErr(500))).toBe(
+      'No pudimos cargar el perfil. ReintentÃ¡.',
+    );
+  });
+
+  it('no filtra el mensaje del backend', () => {
+    expect(getErrorCopy('PROFILE', httpErr(418))).not.toContain('BE-secret-leak');
+  });
+});
+
 describe('getErrorCopy — CREATE_BOT_MATCH', () => {
   it('401 → string vacío', () => {
     expect(getErrorCopy('CREATE_BOT_MATCH', httpErr(401))).toBe('');

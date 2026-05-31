@@ -2,7 +2,7 @@
 // Sirven de cimiento para features de lobby y partida
 // Fuente: docs/CONTRATOS_API.md §4.14 y §8
 
-import type { Suit, MatchStatus, RoundStatus, TrucoCall, AvailableActionType } from './enums';
+import type { Suit, MatchStatus, RoundStatus, TrucoCall, AvailableActionType, Visibility } from './enums';
 
 export interface Card {
   suit: Suit; // 'ESPADA' | 'BASTO' | 'COPA' | 'ORO'
@@ -83,7 +83,9 @@ export interface MatchState {
   // Nuevos campos del contrato §4.14 (feature 006-match-screen-ui)
   viewerSeat: ViewerSeat;
   playerOneUsername: string;
-  playerTwoUsername: string;
+  // Nullable mientras la partida está en WAITING_FOR_PLAYERS (sin rival aún).
+  // Fuente: docs/CONTRATOS_API.md §4.14. Ver feature 015 (research D2).
+  playerTwoUsername: string | null;
   gamesToPlay: 1 | 3 | 5;
   scorePlayerOne: number;
   scorePlayerTwo: number;
@@ -153,4 +155,33 @@ export interface CreateBotMatchRequest {
 export interface CreateBotMatchResponse {
   /** UUID del match recién creado. Usado para navegar a /match/:matchId. */
   matchId: string;
+}
+
+// ---------- Feature 015-private-match-code: matchmaking privado por código ----------
+// Fuente: docs/CONTRATOS_API.md §4.1 (crear), §4.2 (unirse)
+
+/** §4.1 POST /api/matches — crear partida (MVP: solo privada). */
+export interface CreateMatchRequest {
+  /** Partidas totales de la serie (mejor de N). Valores válidos: 1, 3, 5. */
+  gamesToPlay: 1 | 3 | 5;
+  /** Visibilidad de la partida. El MVP solo crea PRIVATE. */
+  visibility: Visibility;
+}
+
+/** §4.1 respuesta de creación. */
+export interface CreateMatchResponse {
+  /** UUID del match creado. Usado para navegar a /match/:matchId. */
+  matchId: string;
+  /** Código compartible para que un segundo jugador se una (§4.2). */
+  joinCode: string;
+  /** Eco de la visibilidad solicitada. */
+  visibility: Visibility;
+}
+
+/** §4.2 POST /api/join/{joinCode} — el join code resuelve un único target. */
+export interface JoinResponse {
+  /** Tipo de recurso resuelto. En el MVP solo se actúa si es 'MATCH'. */
+  targetType: 'MATCH' | 'LEAGUE' | 'CUP';
+  /** UUID del recurso destino (matchId si targetType === 'MATCH'). */
+  targetId: string;
 }

@@ -22,7 +22,10 @@ import type {
 } from '../models/match-ws-events';
 
 function usernameFromSeat(seat: Seat, state: MatchState): string {
-  return seat === 'PLAYER_ONE' ? state.playerOneUsername : state.playerTwoUsername;
+  // playerTwoUsername puede ser null en pre-juego (§4.14), pero usernameFromSeat
+  // solo se invoca con ronda activa (rival presente). Se coacciona a '' por
+  // seguridad de tipos. Feature 015 (D2).
+  return seat === 'PLAYER_ONE' ? state.playerOneUsername : (state.playerTwoUsername ?? '');
 }
 
 function updateCurrentHandCard(state: MatchState, seat: Seat, card: { suit: string; number: number } | null): MatchState {
@@ -164,8 +167,13 @@ export function applyMatchEvent(state: MatchState, event: MatchWsEvent): MatchSt
     }
 
     case 'GAME_STARTED': {
+      // El primer GAME_STARTED marca el arranque de la partida: en partidas
+      // privadas la transición WAITING_FOR_PLAYERS/READY → IN_PROGRESS ocurre
+      // aquí (no hay evento MATCH_STARTED). Idempotente para games 2+ donde el
+      // status ya era IN_PROGRESS. Ver feature 015 (research D6).
       return {
         ...state,
+        status: 'IN_PROGRESS' as const,
         scorePlayerOne: 0,
         scorePlayerTwo: 0,
         roundGame: null,
@@ -242,13 +250,33 @@ export function applyMatchEvent(state: MatchState, event: MatchWsEvent): MatchSt
       };
     }
 
+    case 'MATCH_PLAYER_LEFT': {
+      // El segundo jugador salió antes de comenzar: la sala vuelve a esperar
+      // rival y el anfitrión conserva el mismo código. Feature 015 (research D7).
+      return {
+        ...state,
+        status: 'WAITING_FOR_PLAYERS' as const,
+        playerTwoUsername: null,
+      };
+    }
+
+    case 'PLAYER_JOINED':
+    case 'PLAYER_READY': {
+      // En una privada 1v1 el único que puede unirse/quedar listo es el rival:
+      // la sala pasa a READY (habilita "Iniciar" para el anfitrión) sin depender
+      // de un refresh del snapshot. El username del rival lo completa el refresh
+      // (best-effort). No se toca si la partida ya arrancó o terminó.
+      // Feature 015 (research D7). El payload de PLAYER_JOINED es {} (§9.6).
+      if (state.status === 'WAITING_FOR_PLAYERS') {
+        return { ...state, status: 'READY' as const };
+      }
+      return state;
+    }
+
     case 'FOLDED':
     case 'HAND_CHANGED':
     case 'SPECTATOR_COUNT_CHANGED':
-    case 'PLAYER_JOINED':
-    case 'PLAYER_READY':
     case 'MATCH_CANCELLED':
-    case 'MATCH_PLAYER_LEFT':
     case 'REMATCH_AVAILABLE':
     case 'REMATCH_OPPONENT_WANTS':
     case 'REMATCH_CONFIRMED':

@@ -366,7 +366,7 @@ Reglas:
 
 - aplica tanto a matches `PUBLIC` como `PRIVATE`
 - en `PUBLIC`, el segundo jugador entra, queda ready implícito y el match pasa a `IN_PROGRESS`
-- en `PRIVATE`, el segundo jugador entra y el match queda en `READY`
+- en `PRIVATE`, el segundo jugador entra y el match queda en `READY`, esperando que ambos jugadores confirmen con `POST /api/matches/{matchId}/start`
 
 ### 4.3 Listar partidas publicas
 
@@ -430,6 +430,14 @@ El FE debe usar el `href` provisto en `_links.join` y ejecutar `POST /api/join/{
 Auth: Bearer requerido.
 
 Response `204` sin body.
+
+Comportamiento según visibilidad:
+
+- **`PUBLIC`**: no necesario llamar a este endpoint. El match pasa a `IN_PROGRESS` automáticamente cuando entra el segundo jugador.
+- **`PRIVATE`**: ambos jugadores deben llamar a este endpoint para que el match pase a `IN_PROGRESS`.
+  - Cuando el segundo jugador se une mediante `POST /api/join/{joinCode}`, el match pasa a estado `READY`
+  - Cada jugador que llama a `/start` se marca como "listo" (`PLAYER_READY` event)
+  - Solo cuando ambos jugadores han llamado a `/start`, el match inicia en `IN_PROGRESS`
 
 ### 4.6 Jugar carta
 

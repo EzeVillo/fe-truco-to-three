@@ -14,4 +14,8 @@ export class LobbyPageComponent {
   goToBots(): void {
     void this.router.navigateByUrl('/lobby/vs-bots');
   }
+
+  goToOnline(): void {
+    void this.router.navigateByUrl('/lobby/online');
+  }
 }

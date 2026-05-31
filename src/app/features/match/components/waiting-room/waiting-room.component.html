@@ -1,0 +1,79 @@
+<section class="waiting-room">
+  <div class="waiting-room__card">
+    <h1 class="waiting-room__title">Partida privada</h1>
+    <p class="waiting-room__series">{{ seriesLabel() }}</p>
+
+    @if (isHost() && joinCode()) {
+      <div class="waiting-room__code-block">
+        <span class="waiting-room__code-label">Código para compartir</span>
+        <div class="waiting-room__code-row">
+          <span class="waiting-room__code" aria-label="Código de la partida">{{ joinCode() }}</span>
+          <button
+            type="button"
+            class="t3-btn t3-btn--neutral waiting-room__copy"
+            (click)="onCopy()"
+            [attr.aria-label]="copied() ? 'Código copiado' : 'Copiar código'"
+          >
+            {{ copied() ? '¡Copiado!' : 'Copiar' }}
+          </button>
+        </div>
+        <p class="waiting-room__hint">Compartí este código con tu rival para que se una.</p>
+      </div>
+    }
+
+    <ul class="waiting-room__roster" aria-label="Jugadores">
+      <li class="waiting-room__player">
+        <span class="waiting-room__player-name">{{ hostUsername() }}</span>
+        <span class="waiting-room__player-meta">
+          <span class="waiting-room__player-tag">Anfitrión</span>
+          <span
+            class="waiting-room__ready"
+            [class.waiting-room__ready--active]="hostReady()"
+          >
+            {{ hostReady() ? 'Listo' : 'Esperando' }}
+          </span>
+        </span>
+      </li>
+      <li class="waiting-room__player">
+        @if (rivalPresent()) {
+          <span class="waiting-room__player-name">{{ rivalUsername() }}</span>
+          <span class="waiting-room__player-meta">
+            <span class="waiting-room__player-tag">Rival</span>
+            <span
+              class="waiting-room__ready"
+              [class.waiting-room__ready--active]="rivalReady()"
+            >
+              {{ rivalReady() ? 'Listo' : 'Esperando' }}
+            </span>
+          </span>
+        } @else {
+          <span class="waiting-room__player-name waiting-room__player-name--empty">Esperando rival…</span>
+        }
+      </li>
+    </ul>
+
+    <p class="waiting-room__status" role="status" aria-live="polite">
+      {{ statusMessage() }}
+    </p>
+
+    <div class="waiting-room__actions">
+      <button
+        type="button"
+        class="t3-btn t3-btn--primary waiting-room__start"
+        [disabled]="!canStart() || starting() || selfReady()"
+        [attr.aria-busy]="starting() ? 'true' : null"
+        (click)="onStart()"
+      >
+        {{ startButtonLabel() }}
+      </button>
+      <button
+        type="button"
+        class="t3-btn t3-btn--destructive waiting-room__leave"
+        [disabled]="leaving()"
+        (click)="onLeave()"
+      >
+        {{ leaving() ? 'Saliendo…' : 'Salir' }}
+      </button>
+    </div>
+  </div>
+</section>

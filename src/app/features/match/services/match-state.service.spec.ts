@@ -127,6 +127,25 @@ describe('MatchStateService', () => {
     });
   }
 
+  function makeWaitingSnapshot(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+    return {
+      matchId: 'test-match',
+      status: 'WAITING_FOR_PLAYERS',
+      viewerSeat: 'PLAYER_ONE',
+      playerOneUsername: 'juancho',
+      playerTwoUsername: null,
+      gamesToPlay: 3,
+      scorePlayerOne: 0,
+      scorePlayerTwo: 0,
+      gamesWonPlayerOne: 0,
+      gamesWonPlayerTwo: 0,
+      matchWinner: null,
+      roundGame: null,
+      stateVersion: 1,
+      ...overrides,
+    };
+  }
+
   describe('init()', () => {
     it('inicializa el eventQueue con los callbacks correctos', () => {
       service.init('test-match');
@@ -160,6 +179,33 @@ describe('MatchStateService', () => {
 
       expect(mockEventQueue.enqueueTransactional).toHaveBeenCalledTimes(1);
       expect(mockEventQueue.enqueueTransactional).toHaveBeenLastCalledWith(wsEvent);
+    });
+
+    it('PLAYER_JOINED refresca el roster inmediatamente para mostrar el nombre del rival', () => {
+      const eventSubject = mockWsService.getEventSubject();
+
+      service.init('test-match');
+      const initialReq = httpMock.expectOne(`${environment.apiUrl}/matches/test-match`);
+      initialReq.flush(makeWaitingSnapshot());
+
+      eventSubject.next({
+        matchId: 'test-match',
+        eventType: 'PLAYER_JOINED',
+        timestamp: Date.now(),
+        payload: {},
+        stateVersion: 2,
+      });
+
+      const refreshReq = httpMock.expectOne(`${environment.apiUrl}/matches/test-match`);
+      refreshReq.flush(makeWaitingSnapshot({
+        status: 'READY',
+        playerTwoUsername: 'martina',
+        stateVersion: 2,
+      }));
+
+      expect(service.state()?.status).toBe('READY');
+      expect(service.state()?.playerTwoUsername).toBe('martina');
+      expect(mockEventQueue.enqueueTransactional).toHaveBeenCalledOnce();
     });
 
     // La integración de eventos derivados (enqueueDerived) se verifica
@@ -349,6 +395,32 @@ describe('MatchStateService', () => {
       // Pero como el mock de eventQueue no aplica el evento, verificamos que enqueueTransactional
       // NO fue llamado para el evento del buffer
       expect(mockEventQueue.enqueueTransactional).not.toHaveBeenCalled();
+    });
+
+    it('refresca el roster si PLAYER_JOINED se aplica desde buffer durante la carga inicial', () => {
+      const eventSubject = mockWsService.getEventSubject();
+      service.init('test-match');
+
+      eventSubject.next({
+        matchId: 'test-match',
+        eventType: 'PLAYER_JOINED',
+        timestamp: Date.now(),
+        payload: {},
+        stateVersion: 2,
+      });
+
+      const initialReq = httpMock.expectOne(`${environment.apiUrl}/matches/test-match`);
+      initialReq.flush(makeWaitingSnapshot());
+
+      const refreshReq = httpMock.expectOne(`${environment.apiUrl}/matches/test-match`);
+      refreshReq.flush(makeWaitingSnapshot({
+        status: 'READY',
+        playerTwoUsername: 'martina',
+        stateVersion: 2,
+      }));
+
+      expect(service.state()?.status).toBe('READY');
+      expect(service.state()?.playerTwoUsername).toBe('martina');
     });
   });
 

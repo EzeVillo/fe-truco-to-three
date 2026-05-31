@@ -1,4 +1,13 @@
-@if (matchStateService.loading()) {
+@if (cancelledNotice(); as notice) {
+  <div class="match-screen">
+    <div class="match-screen__error">
+      <p class="match-screen__error-text">{{ notice }}</p>
+      <div class="match-screen__error-actions">
+        <button class="t3-btn t3-btn--primary" (click)="goToLobby()">Volver al lobby</button>
+      </div>
+    </div>
+  </div>
+} @else if (matchStateService.loading()) {
   <div class="match-screen">
     <div class="match-screen__spinner">
       <mat-progress-spinner mode="indeterminate" diameter="48" />
@@ -16,15 +25,37 @@
   </div>
 } @else if (matchView(); as view) {
   <div class="match-screen">
-    <app-game-board
-      [view]="view"
-      [matchId]="matchId()"
-      [selfCallText]="selfCallText()"
-      [opponentCallText]="opponentCallText()"
-      [isProcessingDelay]="eventQueue.isProcessingDelay()"
-      [timerRemainingFraction]="timerRemainingFraction()"
-      [timerIsUrgent]="timerIsUrgent()"
-      [viewerActionTimedOut]="viewerActionTimedOut()"
-    />
+    @if (isPreGame()) {
+      @if (waitingView(); as wv) {
+        <app-waiting-room
+          [isHost]="wv.isHost"
+          [joinCode]="wv.joinCode"
+          [hostUsername]="wv.hostUsername"
+          [rivalUsername]="wv.rivalUsername"
+          [rivalPresent]="wv.rivalPresent"
+          [canStart]="wv.canStart"
+          [selfReady]="wv.selfReady"
+          [opponentReady]="wv.opponentReady"
+          [hostReady]="wv.hostReady"
+          [rivalReady]="wv.rivalReady"
+          [seriesLabel]="wv.seriesLabel"
+          [starting]="starting()"
+          [leaving]="leaving()"
+          (start)="onStartMatch()"
+          (leave)="onLeaveMatch()"
+        />
+      }
+    } @else {
+      <app-game-board
+        [view]="view"
+        [matchId]="matchId()"
+        [selfCallText]="selfCallText()"
+        [opponentCallText]="opponentCallText()"
+        [isProcessingDelay]="eventQueue.isProcessingDelay()"
+        [timerRemainingFraction]="timerRemainingFraction()"
+        [timerIsUrgent]="timerIsUrgent()"
+        [viewerActionTimedOut]="viewerActionTimedOut()"
+      />
+    }
   </div>
 }

@@ -60,6 +60,12 @@ export class MatchStateService {
   readonly envidoResolved$ = new Subject<EnvidoResolvedPayload>();
   /** Canal dedicado para eventos REMATCH_*. Fuera de la cola ack-gated y de stateVersion. */
   readonly rematch$ = new Subject<MatchWsEvent>();
+  /**
+   * Notifica que una partida pre-juego se cerró sin llegar a jugarse (cancelación
+   * del anfitrión / timeout → `MATCH_CANCELLED`). La pantalla muestra un aviso y
+   * navega al lobby. Feature 015 (research D7).
+   */
+  readonly preGameClosed$ = new Subject<{ reason: 'CANCELLED' }>();
 
   private lastApplied = 0;
   private lastSeenVersion = 0;
@@ -68,6 +74,7 @@ export class MatchStateService {
   private subscriptions: Subscription[] = [];
   private currentMatchId: string | null = null;
   private wasConnected = false;
+  private refreshing = false;
 
   init(matchId: string): void {
     this.currentMatchId = matchId;
@@ -99,6 +106,9 @@ export class MatchStateService {
       if (isRematchEvent(event)) {
         this.rematch$.next(event);
         return;
+      }
+      if (event.eventType === 'PLAYER_JOINED') {
+        this.refresh();
       }
       // Los eventos del temporizador viajan por /user/queue/match pero con
       // stateVersion null: se tratan como derivados (no avanzan stateVersion ni
@@ -168,7 +178,54 @@ export class MatchStateService {
     this.gameWon$.complete();
     this.envidoResolved$.complete();
     this.rematch$.complete();
+    this.preGameClosed$.complete();
     this.currentMatchId = null;
+  }
+
+  /**
+   * Refresca SOLO el roster/estado pre-juego (rival y status) sin reiniciar la
+   * reconciliación por stateVersion ni pisar un estado más avanzado. Se usa ante
+   * `PLAYER_JOINED`/`PLAYER_READY`, cuyo payload no trae el username del rival.
+   *
+   * A diferencia de `fetchSnapshot` (init/reconexión), NO toca `lastApplied`/
+   * `lastSeenVersion` ni reemplaza el estado completo: así una respuesta que
+   * llega tarde no puede revertir un `MATCH_FORFEITED`/`GAME_STARTED` ya aplicado
+   * (carrera detectada en feature 015). Best-effort: si falla, no rompe nada.
+   */
+  refresh(): void {
+    if (!this.currentMatchId || this.loading() || this.refreshing) {
+      return;
+    }
+    const current = this.state();
+    // Solo aplica en estados previos al juego; si ya arrancó/terminó, no hay roster que refrescar.
+    if (!current || (current.status !== 'WAITING_FOR_PLAYERS' && current.status !== 'READY')) {
+      return;
+    }
+    this.refreshing = true;
+    const url = `${environment.apiUrl}/matches/${this.currentMatchId}`;
+    const sub = this.http.get<MatchSnapshot>(url).subscribe({
+      next: (snap) => {
+        this.refreshing = false;
+        const cur = this.state();
+        // El estado pudo avanzar mientras la request estaba en vuelo: no pisarlo.
+        if (!cur || (cur.status !== 'WAITING_FOR_PLAYERS' && cur.status !== 'READY')) {
+          return;
+        }
+        if (snap.stateVersion < this.lastApplied) {
+          return; // snapshot viejo respecto a lo ya aplicado por eventos
+        }
+        this.state.set({
+          ...cur,
+          status: snap.status,
+          playerOneUsername: snap.playerOneUsername,
+          playerTwoUsername: snap.playerTwoUsername,
+        });
+      },
+      error: () => {
+        this.refreshing = false;
+      },
+    });
+    this.subscriptions.push(sub);
   }
 
   private fetchSnapshot(matchId: string): void {
@@ -180,6 +237,7 @@ export class MatchStateService {
         this.lastSeenVersion = snapshot.stateVersion;
         this.drainBuffers();
         this.loading.set(false);
+        this.refreshPreGameRosterIfNeeded();
 
         // If match already finished, emit match ended
         if (snapshot.status === 'FINISHED') {
@@ -275,6 +333,19 @@ export class MatchStateService {
     if (event.eventType === 'ENVIDO_RESOLVED') {
       this.envidoResolved$.next(event.payload as EnvidoResolvedPayload);
     }
+
+    // Eventos de sala de espera (pre-juego). Feature 015 (research D7).
+    if (
+      (event.eventType === 'PLAYER_JOINED' || event.eventType === 'PLAYER_READY') &&
+      next.status !== 'IN_PROGRESS'
+    ) {
+      // El payload no trae el username del rival ni el status: re-sync del snapshot.
+      this.refresh();
+    }
+
+    if (event.eventType === 'MATCH_CANCELLED') {
+      this.preGameClosed$.next({ reason: 'CANCELLED' });
+    }
   }
 
   private applyDerivedEvent(event: MatchDerivedEvent): void {
@@ -292,6 +363,13 @@ export class MatchStateService {
     this.eventQueue.clear();
     this.lastSeenVersion = this.lastApplied;
     this.fetchSnapshot(this.currentMatchId);
+  }
+
+  private refreshPreGameRosterIfNeeded(): void {
+    const current = this.state();
+    if (current?.status === 'READY' && current.playerTwoUsername === null) {
+      this.refresh();
+    }
   }
 
   private emitMatchEnded(event: MatchWsEvent): void {

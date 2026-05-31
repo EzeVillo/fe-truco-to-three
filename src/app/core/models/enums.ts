@@ -30,6 +30,11 @@ export type EnvidoResponse = (typeof ENVIDO_RESPONSE)[keyof typeof ENVIDO_RESPON
 
 export const MATCH_STATUS = {
   WAITING_FOR_PLAYERS: 'WAITING_FOR_PLAYERS',
+  // READY: privada con ambos jugadores presentes, a la espera de que el anfitrión
+  // inicie (§4.2/§4.13). El enum de §8.2 históricamente solo listaba
+  // WAITING_FOR_PLAYERS/IN_PROGRESS/FINISHED; se agrega READY para reflejar el
+  // estado previo al arranque manual. Ver feature 015 (research D1).
+  READY: 'READY',
   IN_PROGRESS: 'IN_PROGRESS',
   FINISHED: 'FINISHED',
 } as const;

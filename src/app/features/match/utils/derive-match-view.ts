@@ -57,8 +57,11 @@ export function deriveMatchView(state: MatchState): MatchView {
   const selfSeat = state.viewerSeat;
   const oppSeat = oppositeSeat(selfSeat);
 
-  const selfUsername = selfSeat === 'PLAYER_ONE' ? state.playerOneUsername : state.playerTwoUsername;
-  const opponentUsername = oppSeat === 'PLAYER_ONE' ? state.playerOneUsername : state.playerTwoUsername;
+  // playerTwoUsername puede ser null en WAITING_FOR_PLAYERS (§4.14). El tablero no
+  // se renderiza en estado de espera (la sala usa su propia vista), así que aquí
+  // se coacciona a '' para mantener SeatView.username estable. Feature 015 (D2).
+  const selfUsername = (selfSeat === 'PLAYER_ONE' ? state.playerOneUsername : state.playerTwoUsername) ?? '';
+  const opponentUsername = (oppSeat === 'PLAYER_ONE' ? state.playerOneUsername : state.playerTwoUsername) ?? '';
   const selfScore = selfSeat === 'PLAYER_ONE' ? state.scorePlayerOne : state.scorePlayerTwo;
   const opponentScore = oppSeat === 'PLAYER_ONE' ? state.scorePlayerOne : state.scorePlayerTwo;
   const selfGamesWon = selfSeat === 'PLAYER_ONE' ? state.gamesWonPlayerOne : state.gamesWonPlayerTwo;

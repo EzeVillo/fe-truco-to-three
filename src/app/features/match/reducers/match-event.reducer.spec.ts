@@ -191,6 +191,43 @@ describe('applyMatchEvent', () => {
       expect(next.scorePlayerTwo).toBe(0);
       expect(next.roundGame).toBeNull();
     });
+
+    it('transitions status to IN_PROGRESS (feature 015 D6: sala de espera → tablero)', () => {
+      const state = makeState({ status: 'READY' });
+      const event = makeEvent('GAME_STARTED', { gameNumber: 1 });
+      const next = applyMatchEvent(state, event);
+      expect(next.status).toBe('IN_PROGRESS');
+    });
+  });
+
+  describe('PLAYER_JOINED / PLAYER_READY', () => {
+    it('PLAYER_JOINED en WAITING_FOR_PLAYERS pasa la sala a READY (feature 015)', () => {
+      const state = makeState({ status: 'WAITING_FOR_PLAYERS', playerTwoUsername: null });
+      const next = applyMatchEvent(state, makeEvent('PLAYER_JOINED', {}));
+      expect(next.status).toBe('READY');
+    });
+
+    it('PLAYER_READY en WAITING_FOR_PLAYERS pasa la sala a READY', () => {
+      const state = makeState({ status: 'WAITING_FOR_PLAYERS' });
+      const next = applyMatchEvent(state, makeEvent('PLAYER_READY', { seat: 'PLAYER_TWO' }));
+      expect(next.status).toBe('READY');
+    });
+
+    it('PLAYER_JOINED no degrada un estado ya IN_PROGRESS', () => {
+      const state = makeState({ status: 'IN_PROGRESS' });
+      const next = applyMatchEvent(state, makeEvent('PLAYER_JOINED', {}));
+      expect(next.status).toBe('IN_PROGRESS');
+    });
+  });
+
+  describe('MATCH_PLAYER_LEFT', () => {
+    it('vuelve a WAITING_FOR_PLAYERS y limpia el rival (feature 015 D7)', () => {
+      const state = makeState({ status: 'READY', playerTwoUsername: 'martina' });
+      const event = makeEvent('MATCH_PLAYER_LEFT', { leaverSeat: 'PLAYER_TWO' });
+      const next = applyMatchEvent(state, event);
+      expect(next.status).toBe('WAITING_FOR_PLAYERS');
+      expect(next.playerTwoUsername).toBeNull();
+    });
   });
 
   describe('HAND_RESOLVED', () => {

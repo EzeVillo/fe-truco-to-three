@@ -7,6 +7,9 @@ import { deriveMatchView, type MatchView } from '../../utils/derive-match-view';
 import { computeElapsedFraction, computeRemainingMsFromSnapshot, isUrgent } from '../../utils/turn-timer';
 import { callDisplayMapper } from '../../utils/call-display-mapper';
 import { GameBoardComponent } from '../../components/game-board/game-board.component';
+import { WaitingRoomComponent } from '../../components/waiting-room/waiting-room.component';
+import { MatchesApiService } from '../../../lobby/services/matches-api.service';
+import { readJoinCode, clearJoinCode } from '../../utils/join-code-store';
 import { GameWonDialogComponent, type GameWonDialogData } from '../../components/game-won-dialog/game-won-dialog.component';
 import { EnvidoResultDialogComponent, type EnvidoResultDialogData } from '../../components/envido-result-dialog/envido-result-dialog.component';
 import { RematchDialogComponent, type RematchDialogResult } from '../../components/rematch-dialog/rematch-dialog.component';
@@ -15,13 +18,13 @@ import { MatchEventQueueService } from '../../services/match-event-queue.service
 import { RematchStateService } from '../../services/rematch-state.service';
 import { RematchApiService } from '../../services/rematch-api.service';
 import { getErrorCopy } from '../../../../shared/error-copy/error-copy';
-import type { MatchEndedEvent, MatchWsEvent, GameWonPayload, EnvidoResolvedPayload } from '../../models/match-ws-events';
+import type { MatchEndedEvent, MatchWsEvent, GameWonPayload, EnvidoResolvedPayload, PlayerReadyPayload } from '../../models/match-ws-events';
 import type { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-match-screen',
   standalone: true,
-  imports: [CommonModule, GameBoardComponent, MatProgressSpinnerModule],
+  imports: [CommonModule, GameBoardComponent, WaitingRoomComponent, MatProgressSpinnerModule],
   providers: [MatchStateService, MatchEventQueueService, RematchStateService],
   templateUrl: './match-screen.component.html',
   styleUrl: './match-screen.component.scss',
@@ -40,6 +43,56 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   });
   readonly selfCallText = signal<string | null>(null);
   readonly opponentCallText = signal<string | null>(null);
+
+  // ---- Sala de espera (feature 015-private-match-code) ----
+  /** Código compartible de la partida privada (solo relevante para el anfitrión). */
+  readonly joinCode = signal<string | null>(null);
+  /** Acción de inicio en curso. */
+  readonly starting = signal<boolean>(false);
+  /** El visor ya confirmo que esta listo para comenzar. */
+  readonly selfReady = signal<boolean>(false);
+  /** El rival ya confirmo que esta listo para comenzar. */
+  readonly opponentReady = signal<boolean>(false);
+  /** Acción de salida en curso. */
+  readonly leaving = signal<boolean>(false);
+  /** Aviso de que la partida fue cancelada antes de empezar (rival notificado). */
+  readonly cancelledNotice = signal<string | null>(null);
+
+  /** La partida aún no comenzó: se muestra la sala de espera, no el tablero. */
+  readonly isPreGame = computed(() => {
+    const status = this.matchView()?.status;
+    return status === 'WAITING_FOR_PLAYERS' || status === 'READY';
+  });
+
+  /** Vista derivada para la sala de espera. */
+  readonly waitingView = computed(() => {
+    const state = this.matchStateService.state();
+    if (!state) {
+      return null;
+    }
+    const isHost = state.viewerSeat === 'PLAYER_ONE';
+    const rivalPresent = state.playerTwoUsername !== null;
+    const hostReady = isHost ? this.selfReady() : this.opponentReady();
+    const rivalReady = isHost ? this.opponentReady() : this.selfReady();
+    const seriesLabels: Record<1 | 3 | 5, string> = {
+      1: 'Mejor de 1',
+      3: 'Mejor de 3',
+      5: 'Mejor de 5',
+    };
+    return {
+      isHost,
+      joinCode: this.joinCode(),
+      hostUsername: state.playerOneUsername,
+      rivalUsername: state.playerTwoUsername,
+      rivalPresent,
+      canStart: rivalPresent,
+      selfReady: this.selfReady(),
+      opponentReady: this.opponentReady(),
+      hostReady,
+      rivalReady,
+      seriesLabel: seriesLabels[state.gamesToPlay],
+    };
+  });
 
   // ---- Temporizador de turno (feature 013-turn-timer) ----
   /** "Ahora" del cliente; se refresca mientras hay un plazo activo. */
@@ -99,6 +152,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   readonly eventQueue = inject(MatchEventQueueService);
   private readonly rematchStateService = inject(RematchStateService);
   private readonly rematchApiService = inject(RematchApiService);
+  private readonly matchesApiService = inject(MatchesApiService);
   private readonly vcr = inject(ViewContainerRef);
   private readonly destroyRef = inject(DestroyRef);
   private _rematchInited = false;
@@ -157,8 +211,22 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
       if (!newId || newId === this.matchId()) {return;}
       this.matchId.set(newId);
       this._rematchInited = false;
+      this.cancelledNotice.set(null);
+      this.starting.set(false);
+      this.selfReady.set(false);
+      this.opponentReady.set(false);
+      // Recuperar el joinCode: primero del navigation state (recién creada),
+      // luego de sessionStorage (sobrevive a recarga). Feature 015 (D5).
+      const navState = (history.state ?? {}) as { joinCode?: string };
+      this.joinCode.set(navState.joinCode ?? readJoinCode(newId));
       this.rematchStateService.reset();
       this.matchStateService.init(newId);
+    });
+
+    // Cancelación de la sala antes de empezar (rival notificado). Feature 015.
+    this._preGameClosedSub = this.matchStateService.preGameClosed$.subscribe(() => {
+      clearJoinCode(this.matchId());
+      this.cancelledNotice.set('La partida fue cancelada.');
     });
 
     const endedSub = this.matchStateService.matchEnded$.subscribe((event) => {
@@ -190,6 +258,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this._paramSub?.unsubscribe();
+    this._preGameClosedSub?.unsubscribe();
     this._endedSub?.unsubscribe();
     this._gameWonSub?.unsubscribe();
     this._envidoSub?.unsubscribe();
@@ -202,6 +271,20 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   }
 
   private handleMatchEvent(event: MatchWsEvent): void {
+    if (event.eventType === 'PLAYER_READY') {
+      this.markPlayerReady(event.payload as PlayerReadyPayload);
+    }
+
+    if (event.eventType === 'MATCH_PLAYER_LEFT') {
+      this.opponentReady.set(false);
+    }
+
+    if (event.eventType === 'GAME_STARTED') {
+      this.selfReady.set(true);
+      this.opponentReady.set(true);
+      this.starting.set(false);
+    }
+
     // Reset call texts on round/game/match end events
     if (
       event.eventType === 'ROUND_STARTED' ||
@@ -313,6 +396,55 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     this.router.navigate(['/']);
   }
 
+  /** Marca al jugador listo (§4.5). La transicion al tablero llega por GAME_STARTED. */
+  onStartMatch(): void {
+    if (this.starting() || this.selfReady()) {return;}
+    const id = this.matchId();
+    if (!id) {return;}
+    this.starting.set(true);
+    this.matchesApiService.startMatch(id).subscribe({
+      next: () => {
+        this.selfReady.set(true);
+        this.starting.set(false);
+        clearJoinCode(id);
+        // El status pasa a IN_PROGRESS al llegar GAME_STARTED (reducer).
+      },
+      error: () => {
+        this.starting.set(false);
+      },
+    });
+  }
+
+  private markPlayerReady(payload: PlayerReadyPayload): void {
+    const viewerSeat = this.matchStateService.state()?.viewerSeat;
+    if (!viewerSeat) {
+      return;
+    }
+    if (payload.seat === viewerSeat) {
+      this.selfReady.set(true);
+      this.starting.set(false);
+    } else {
+      this.opponentReady.set(true);
+    }
+  }
+
+  /** Cualquier jugador sale de la sala antes de comenzar (§4.13). */
+  onLeaveMatch(): void {
+    if (this.leaving()) {return;}
+    const id = this.matchId();
+    if (!id) {return;}
+    this.leaving.set(true);
+    this.matchesApiService.leaveMatch(id).subscribe({
+      next: () => {
+        clearJoinCode(id);
+        this.router.navigate(['/']);
+      },
+      error: () => {
+        this.leaving.set(false);
+      },
+    });
+  }
+
   private openResultDialog(event: MatchEndedEvent): void {
     const state = this.matchStateService.state();
     if (!state) {return;}
@@ -393,8 +525,8 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     const viewerSeat = state.viewerSeat;
     const isPlayerOne = viewerSeat === 'PLAYER_ONE';
 
-    const playerName = isPlayerOne ? state.playerOneUsername : state.playerTwoUsername;
-    const opponentName = isPlayerOne ? state.playerTwoUsername : state.playerOneUsername;
+    const playerName = isPlayerOne ? state.playerOneUsername : (state.playerTwoUsername ?? '');
+    const opponentName = isPlayerOne ? (state.playerTwoUsername ?? '') : state.playerOneUsername;
     const playerGamesWon = isPlayerOne ? state.gamesWonPlayerOne : state.gamesWonPlayerTwo;
     const opponentGamesWon = isPlayerOne ? state.gamesWonPlayerTwo : state.gamesWonPlayerOne;
 
@@ -439,7 +571,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
 
     const manoUsername = state.roundGame.currentHand.mano;
     const isManoPlayerOne = state.playerOneUsername === manoUsername;
-    const pieUsername = isManoPlayerOne ? state.playerTwoUsername : state.playerOneUsername;
+    const pieUsername = isManoPlayerOne ? (state.playerTwoUsername ?? '') : state.playerOneUsername;
     const viewerSeat = state.viewerSeat;
 
     const data: EnvidoResultDialogData = {
@@ -479,8 +611,8 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     const viewerSeat = state.viewerSeat;
     const isPlayerOne = viewerSeat === 'PLAYER_ONE';
 
-    const playerName = isPlayerOne ? state.playerOneUsername : state.playerTwoUsername;
-    const opponentName = isPlayerOne ? state.playerTwoUsername : state.playerOneUsername;
+    const playerName = isPlayerOne ? state.playerOneUsername : (state.playerTwoUsername ?? '');
+    const opponentName = isPlayerOne ? (state.playerTwoUsername ?? '') : state.playerOneUsername;
     const playerGamesWon = isPlayerOne ? event.gamesWonPlayerOne : event.gamesWonPlayerTwo;
     const opponentGamesWon = isPlayerOne ? event.gamesWonPlayerTwo : event.gamesWonPlayerOne;
 
@@ -497,6 +629,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   }
 
   private _paramSub?: Subscription;
+  private _preGameClosedSub?: Subscription;
   private _endedSub?: Subscription;
   private _gameWonSub?: Subscription;
   private _envidoSub?: Subscription;

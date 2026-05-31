@@ -1,0 +1,85 @@
+<section class="online-match">
+  <div class="online-match__topbar">
+    <button
+      type="button"
+      class="t3-btn t3-btn--neutral online-match__back"
+      (click)="goBack()"
+      aria-label="Volver al lobby"
+    >
+      ← Volver
+    </button>
+    <h1 class="online-match__title">Jugar online</h1>
+  </div>
+
+  <div class="online-match__scroll">
+    <!-- Crear partida privada -->
+    <div class="online-match__panel">
+      <h2 class="online-match__panel-title">Crear partida</h2>
+      <p class="online-match__panel-desc">
+        Creá una partida privada y compartí el código con tu rival.
+      </p>
+
+      <app-series-format-selector
+        [format]="seriesFormat()"
+        (formatChange)="onChangeFormat($event)"
+      />
+
+      @if (createError()) {
+        <p class="online-match__error" role="alert">{{ createError() }}</p>
+      }
+
+      <button
+        type="button"
+        class="t3-btn t3-btn--primary online-match__cta"
+        [disabled]="creating()"
+        [attr.aria-busy]="creating() ? 'true' : null"
+        (click)="onCreate()"
+      >
+        @if (creating()) {
+          <mat-spinner diameter="18" class="online-match__spinner" />
+          <span>Creando…</span>
+        } @else {
+          <span>Crear partida privada</span>
+        }
+      </button>
+    </div>
+
+    <!-- Unirse por código -->
+    <div class="online-match__panel">
+      <h2 class="online-match__panel-title">Unirme con código</h2>
+      <p class="online-match__panel-desc">
+        Ingresá el código que te compartieron para entrar a la sala.
+      </p>
+
+      <input
+        type="text"
+        class="online-match__input"
+        placeholder="Código de partida"
+        autocomplete="off"
+        autocapitalize="characters"
+        aria-label="Código de partida"
+        [value]="joinCodeInput()"
+        (input)="onJoinCodeInput($any($event.target).value)"
+      />
+
+      @if (joinError()) {
+        <p class="online-match__error" role="alert">{{ joinError() }}</p>
+      }
+
+      <button
+        type="button"
+        class="t3-btn t3-btn--primary online-match__cta"
+        [disabled]="!canJoin()"
+        [attr.aria-busy]="joining() ? 'true' : null"
+        (click)="onJoin()"
+      >
+        @if (joining()) {
+          <mat-spinner diameter="18" class="online-match__spinner" />
+          <span>Uniéndome…</span>
+        } @else {
+          <span>Unirme</span>
+        }
+      </button>
+    </div>
+  </div>
+</section>

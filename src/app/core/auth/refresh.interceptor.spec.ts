@@ -17,6 +17,7 @@ import { of, throwError } from 'rxjs';
 
 const FULL_AUTH: FullAuthResponse = {
   playerId: 'player-abc',
+  username: 'juancho',
   accessToken: 'access-token',
   refreshToken: 'refresh-token',
   accessTokenExpiresIn: 900,

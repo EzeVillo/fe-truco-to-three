@@ -8,7 +8,7 @@
   align-items: center;
   gap: var(--t3-gap-sm);
   height: var(--t3-header-height);
-  padding: env(safe-area-inset-top) 12px 0;
+  padding: env(safe-area-inset-top) var(--t3-gap-md) 0;
   background: linear-gradient(180deg, var(--t3-green-900) 0%, var(--t3-green-800) 100%);
   border-bottom: 1px solid var(--t3-card-border);
   color: var(--t3-text);
@@ -16,11 +16,11 @@
   &__brand {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--t3-gap-sm);
     text-decoration: none;
     color: inherit;
     font-weight: 700;
-    letter-spacing: 0.02em;
+    letter-spacing: 0;
   }
 
   &__brand-logo {
@@ -50,12 +50,26 @@
     color: var(--t3-text-muted);
   }
 
+  &__user-link {
+    text-decoration: none;
+
+    &:hover {
+      color: var(--t3-gold-500);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--t3-gold-400);
+      outline-offset: 2px;
+      border-radius: var(--t3-radius-sm);
+    }
+  }
+
   &__logout {
     background: transparent;
     border: 1px solid var(--t3-card-border);
     color: var(--t3-gold-500);
     font-weight: 600;
-    padding: 6px 14px;
+    padding: var(--t3-gap-xs) var(--t3-gap-md);
     border-radius: var(--t3-radius-md);
     cursor: pointer;
     font-family: inherit;
@@ -78,7 +92,7 @@
 
   @media (min-width: 1024px) {
     gap: var(--t3-gap-md);
-    padding: env(safe-area-inset-top) 16px 0;
+    padding: env(safe-area-inset-top) var(--t3-gap-lg) 0;
 
     &__brand-logo {
       width: 32px;

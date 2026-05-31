@@ -28,6 +28,7 @@ export interface LogoutRequest {
 /** Respuesta de register, login y refresh. */
 export interface FullAuthResponse {
   playerId: string; // UUID
+  username: string;
   accessToken: string; // JWT
   refreshToken: string; // token opaco
   accessTokenExpiresIn: number; // segundos
@@ -43,10 +44,17 @@ export interface GuestAuthResponse {
 
 export type AuthResponse = FullAuthResponse | GuestAuthResponse;
 
+export interface CurrentIdentityResponse {
+  playerId: string;
+  username: string | null;
+  tokenUse: 'user' | 'guest';
+}
+
 // ---------- Estado de sesión persistido ----------
 
 export interface AuthSession {
   playerId: string;
+  username: string | null;
   accessToken: string;
   refreshToken: string | null; // null si es guest
   isGuest: boolean;

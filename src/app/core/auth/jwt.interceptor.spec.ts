@@ -9,6 +9,7 @@ import type { FullAuthResponse } from '../models/auth.models';
 
 const FULL_AUTH: FullAuthResponse = {
   playerId: 'player-abc',
+  username: 'juancho',
   accessToken: 'my-access-token',
   refreshToken: 'my-refresh-token',
   accessTokenExpiresIn: 900,

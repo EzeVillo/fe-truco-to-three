@@ -8,6 +8,7 @@ import { provideEffects } from '@ngrx/effects';
 import { App } from './app';
 import { AuthStore } from './core/auth/auth.store';
 import { SessionStorageService } from './core/auth/session-storage.service';
+import { ProfileNotificationService } from './features/profile/services/profile-notification.service';
 
 describe('App', () => {
   beforeEach(async () => {
@@ -47,5 +48,14 @@ describe('App', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     // Sin sesión: no debe haber toolbar
     expect(compiled.querySelector('mat-toolbar')).toBeNull();
+  });
+
+  it('inicializa las notificaciones de perfil', () => {
+    const service = TestBed.inject(ProfileNotificationService);
+    const startSpy = vi.spyOn(service, 'start');
+
+    TestBed.createComponent(App);
+
+    expect(startSpy).toHaveBeenCalledTimes(1);
   });
 });

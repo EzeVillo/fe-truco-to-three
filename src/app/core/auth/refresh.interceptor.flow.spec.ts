@@ -13,6 +13,7 @@ import type { FullAuthResponse } from '../models/auth.models';
 
 const FULL_AUTH: FullAuthResponse = {
   playerId: 'player-abc',
+  username: 'juancho',
   accessToken: 'old-access-token',
   refreshToken: 'refresh-token',
   accessTokenExpiresIn: 900,
@@ -116,5 +117,20 @@ describe('refreshInterceptor — flujo end-to-end', () => {
 
     const retries = httpMock.match(() => true);
     retries.forEach((r) => r.flush({}));
+  });
+
+  it('el refresh conserva username autoritativo en el store', () => {
+    store.replaceSession({
+      playerId: 'player-new',
+      username: 'martina',
+      accessToken: 'new-access-token',
+      refreshToken: 'new-refresh-token',
+      accessTokenExpiresIn: 900,
+      refreshTokenExpiresIn: 2592000,
+    });
+
+    expect(store.playerId()).toBe('player-new');
+    expect(store.username()).toBe('martina');
+    expect(store.refreshToken()).toBe('new-refresh-token');
   });
 });

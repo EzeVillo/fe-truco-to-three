@@ -1,0 +1,60 @@
+<section class="profile-page" aria-labelledby="profile-title">
+  <div class="profile-page__inner">
+    <header class="profile-page__header">
+      <button type="button" class="t3-btn t3-btn--neutral profile-page__back" (click)="goBack()">
+        Volver
+      </button>
+      <div>
+        <p class="profile-page__eyebrow">Perfil</p>
+        <h1 id="profile-title" class="profile-page__title">{{ username() }}</h1>
+      </div>
+    </header>
+
+    @if (loading()) {
+      <p class="profile-page__state">Cargando perfil...</p>
+    } @else if (error()) {
+      <div class="profile-page__state profile-page__state--error">
+        <p>{{ error() }}</p>
+        <button type="button" class="t3-btn t3-btn--primary" (click)="loadProfile()">Reintentar</button>
+      </div>
+    } @else if (profile(); as currentProfile) {
+      <dl class="profile-page__stats" aria-label="Estadisticas del jugador">
+        <div class="profile-page__stat">
+          <dt>Jugadas</dt>
+          <dd>{{ currentProfile.stats.matchesPlayed }}</dd>
+        </div>
+        <div class="profile-page__stat">
+          <dt>Ganadas</dt>
+          <dd>{{ currentProfile.stats.matchesWon }}</dd>
+        </div>
+        <div class="profile-page__stat">
+          <dt>Perdidas</dt>
+          <dd>{{ currentProfile.stats.matchesLost }}</dd>
+        </div>
+        <div class="profile-page__stat">
+          <dt>Victorias</dt>
+          <dd>{{ currentProfile.stats.winRate }}%</dd>
+        </div>
+      </dl>
+
+      <section class="profile-page__achievements" aria-labelledby="achievements-title">
+        <h2 id="achievements-title">Logros</h2>
+        @if (currentProfile.achievements.length === 0) {
+          <p class="profile-page__empty">Todavia no hay logros desbloqueados.</p>
+        } @else {
+          <ul class="profile-page__achievement-list">
+            @for (achievement of currentProfile.achievements; track achievement.achievementCode) {
+              <li class="profile-page__achievement">
+                <div>
+                  <h3>{{ achievementName(achievement) }}</h3>
+                  <p>{{ achievementDescription(achievement) }}</p>
+                </div>
+                <time [attr.datetime]="achievement.unlockedAt">{{ unlockedAt(achievement) }}</time>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
+  </div>
+</section>

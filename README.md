@@ -30,6 +30,14 @@ Once the server is running, open your browser and navigate to `http://localhost:
 - El enlace canónico de invitación es `http://localhost:4200/join/{joinCode}` y abre el flujo de unión con el código cargado.
 - Si quien abre el enlace no está logueado, el front lo manda a autenticación y después vuelve al mismo `join` para completar la entrada a la sala.
 
+## Perfil y logros
+
+- Los usuarios registrados tienen perfil publico en `/profile/{username}` con estadisticas agregadas y logros desbloqueados.
+- El header muestra el `username` registrado y permite abrir el perfil propio.
+- Los invitados no tienen perfil de logros propio.
+- Las partidas contra bots no generan tracking ni avisos de logros.
+- Cuando el backend informa un logro desbloqueado en tiempo real, el front muestra un aviso global y actualiza el perfil propio si esta abierto.
+
 ## Code scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:

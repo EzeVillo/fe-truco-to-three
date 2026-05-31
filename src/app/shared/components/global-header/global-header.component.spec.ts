@@ -15,6 +15,7 @@ import type { FullAuthResponse } from '../../../core/models/auth.models';
 
 const FULL_AUTH: FullAuthResponse = {
   playerId: 'p-1',
+  username: 'juancho',
   accessToken: 'tok',
   refreshToken: 'rt',
   accessTokenExpiresIn: 900,
@@ -69,8 +70,27 @@ describe('GlobalHeaderComponent', () => {
     fixture.detectChanges();
 
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.querySelector('.global-header__user')).toBeTruthy();
+    const userLink = el.querySelector('.global-header__user') as HTMLAnchorElement;
+    expect(userLink).toBeTruthy();
+    expect(userLink.textContent ?? '').toContain('juancho');
+    expect(userLink.getAttribute('href')).toBe('/profile/juancho');
     expect(el.querySelector('.global-header__logout')?.textContent ?? '').toContain('Salir');
+  });
+
+  it('con sesion invitada muestra Invitado sin link de perfil', () => {
+    setupTestBed({ open: vi.fn() });
+    const fixture = TestBed.createComponent(GlobalHeaderComponent);
+    const store = TestBed.inject(AuthStore);
+    store.setSession({
+      playerId: 'guest-1',
+      accessToken: 'guest-token',
+      accessTokenExpiresIn: 604800,
+    });
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.global-header__user-link')).toBeNull();
+    expect(el.querySelector('.global-header__user')?.textContent ?? '').toContain('Invitado');
   });
 
   it('click en "Salir" abre ConfirmLogoutDialog', () => {

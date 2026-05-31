@@ -9,6 +9,7 @@ import type {
   LoginRequest,
   FullAuthResponse,
   GuestAuthResponse,
+  CurrentIdentityResponse,
 } from '../models/auth.models';
 
 @Injectable({ providedIn: 'root' })
@@ -60,12 +61,8 @@ export class AuthService {
       .post<FullAuthResponse>(`${this.baseUrl}/refresh`, { refreshToken: currentRefreshToken })
       .pipe(
         tap((response) => {
-          // Rotar tokens en el store antes de reanudar las requests encoladas
-          this.authStore.updateAccessToken(
-            response.accessToken,
-            response.accessTokenExpiresIn,
-            response.refreshToken,
-          );
+          // Rotar la sesiÃ³n completa antes de reanudar las requests encoladas.
+          this.authStore.replaceSession(response);
         }),
         map((response) => response.accessToken),
         shareReplay({ bufferSize: 1, refCount: true }),
@@ -75,6 +72,29 @@ export class AuthService {
       );
 
     return this.refreshInFlight$;
+  }
+
+  me(): Observable<CurrentIdentityResponse> {
+    return this.http.get<CurrentIdentityResponse>(`${this.baseUrl}/me`).pipe(
+      tap((response) => {
+        this.authStore.updateIdentity(response.playerId, response.username, response.tokenUse);
+      }),
+    );
+  }
+
+  rehydrateIdentityIfNeeded(): Observable<CurrentIdentityResponse | null> {
+    if (
+      !this.authStore.isAuthenticated() ||
+      this.authStore.isGuest() ||
+      this.authStore.username() !== null
+    ) {
+      return new Observable<null>((observer) => {
+        observer.next(null);
+        observer.complete();
+      });
+    }
+
+    return this.me();
   }
 
   /**

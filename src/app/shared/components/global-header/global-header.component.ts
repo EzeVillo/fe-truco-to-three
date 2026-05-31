@@ -19,7 +19,12 @@ export class GlobalHeaderComponent {
   private readonly router = inject(Router);
 
   userLabel(): string {
-    return this.authStore.isGuest() ? 'Invitado' : 'Jugador';
+    return this.authStore.isGuest() ? 'Invitado' : (this.authStore.username() ?? 'Jugador');
+  }
+
+  profileLink(): string | null {
+    const username = this.authStore.username();
+    return this.authStore.isGuest() || !username ? null : `/profile/${username}`;
   }
 
   onLogoutClick(): void {

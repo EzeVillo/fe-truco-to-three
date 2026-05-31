@@ -59,6 +59,14 @@ export const routes: Routes = [
         (m) => m.MatchScreenComponent,
       ),
   },
+  {
+    path: 'profile/:username',
+    canMatch: [authGuard],
+    loadComponent: () =>
+      import('./features/profile/pages/profile-page/profile-page.component').then(
+        (m) => m.ProfilePageComponent,
+      ),
+  },
   { path: '', pathMatch: 'full', redirectTo: 'login' },
   { path: '**', redirectTo: 'login' },
 ];

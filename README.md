@@ -23,6 +23,13 @@ ng serve
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
+## Partidas privadas
+
+- El anfitrión crea la partida desde `http://localhost:4200/lobby/online`.
+- Desde la sala de espera puede copiar el código o compartir el enlace directo.
+- El enlace canónico de invitación es `http://localhost:4200/join/{joinCode}` y abre el flujo de unión con el código cargado.
+- Si quien abre el enlace no está logueado, el front lo manda a autenticación y después vuelve al mismo `join` para completar la entrada a la sala.
+
 ## Code scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:

@@ -95,7 +95,7 @@ describe('LoginPageComponent — formulario de login (US2)', () => {
   it('navega a returnUrl (o /lobby) tras login exitoso', async () => {
     const fixture = TestBed.createComponent(LoginPageComponent);
     const router = TestBed.inject(Router);
-    const navigateSpy = vi.spyOn(router, 'navigate');
+    const navigateSpy = vi.spyOn(router, 'navigateByUrl');
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -110,7 +110,7 @@ describe('LoginPageComponent — formulario de login (US2)', () => {
       username: 'juancho',
       password: 'Clave1!',
     });
-    expect(navigateSpy).toHaveBeenCalledWith(['/lobby']);
+    expect(navigateSpy).toHaveBeenCalledWith('/lobby');
   });
 
   it('muestra error "Usuario o contraseña incorrectos" ante 401', async () => {

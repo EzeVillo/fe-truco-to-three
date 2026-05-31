@@ -7,7 +7,13 @@
 
 import { HttpErrorResponse } from '@angular/common/http';
 
-export type ErrorCopyScope = 'BOT_CATALOG' | 'CREATE_BOT_MATCH' | 'MATCH_LOAD' | 'REMATCH';
+export type ErrorCopyScope =
+  | 'BOT_CATALOG'
+  | 'CREATE_BOT_MATCH'
+  | 'MATCH_LOAD'
+  | 'REMATCH'
+  | 'CREATE_MATCH'
+  | 'JOIN_MATCH';
 
 const FALLBACK = 'Ocurrió un error inesperado. Reintentá.';
 
@@ -66,6 +72,45 @@ export function getErrorCopy(scope: ErrorCopyScope, error: unknown): string {
       default:
         if (status >= 500 && status < 600) {
           return 'No pudimos procesar la revancha. Reintentá.';
+        }
+        return FALLBACK;
+    }
+  }
+
+  if (scope === 'CREATE_MATCH') {
+    switch (status) {
+      case 401:
+        return '';
+      case 403:
+        return 'No tenés permiso para crear esta partida.';
+      case 409:
+      case 422:
+        return 'Ya estás en una partida o tenés una revancha pendiente.';
+      case 0:
+        return 'No pudimos crear la partida. Reintentá en unos segundos.';
+      default:
+        if (status >= 500 && status < 600) {
+          return 'No pudimos crear la partida. Reintentá en unos segundos.';
+        }
+        return FALLBACK;
+    }
+  }
+
+  if (scope === 'JOIN_MATCH') {
+    switch (status) {
+      case 401:
+        return '';
+      case 404:
+        return 'Ese código no corresponde a ninguna partida.';
+      case 409:
+        return 'La partida se llenó justo antes de que entraras.';
+      case 422:
+        return 'No podés unirte: la partida ya empezó o estás ocupado en otra.';
+      case 0:
+        return 'No pudimos unirte a la partida. Reintentá.';
+      default:
+        if (status >= 500 && status < 600) {
+          return 'No pudimos unirte a la partida. Reintentá.';
         }
         return FALLBACK;
     }

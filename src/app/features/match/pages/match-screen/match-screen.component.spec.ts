@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { MatDialogModule } from '@angular/material/dialog';
 import { provideRouter } from '@angular/router';
-import { BehaviorSubject, of, Subject } from 'rxjs';
+import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
 import { signal } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -796,15 +796,13 @@ describe('MatchScreenComponent', () => {
 
       // Mock el puntual getSession para devolver 404
       const rematchApi = fixture.componentInstance['rematchApiService'];
-      vi.spyOn(rematchApi, 'getSession').mockReturnValue(
-        new Subject(), // nunca emite → no pasa por next() → error path no aplica acá
-      );
+      vi.spyOn(rematchApi, 'getSession').mockReturnValue(throwError(() => new Error('not found')));
 
       // Cerramos el resultado dialog; session() es null
       afterClosed$.next();
       fixture.detectChanges();
 
-      // Sin sesión: el componente va al lobby directamente (signal null)
+      // Sin sesion disponible por REST: el componente vuelve al lobby.
       expect(routerSpy).toHaveBeenCalledWith(['/']);
     });
 

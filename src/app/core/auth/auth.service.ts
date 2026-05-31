@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, EMPTY, tap, map, shareReplay, finalize } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthStore } from './auth.store';
+import { WebSocketService } from '../services/websocket.service';
 import type {
   RegisterRequest,
   LoginRequest,
@@ -14,6 +15,7 @@ import type {
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly authStore = inject(AuthStore);
+  private readonly webSocketService = inject(WebSocketService);
   private readonly baseUrl = `${environment.apiUrl}/auth`;
 
   /** Observable de refresh en vuelo (single-flight). null = no hay refresh activo. */
@@ -79,11 +81,13 @@ export class AuthService {
    * Cierra sesión:
    * 1. Si hay refreshToken → llama DELETE best-effort (sin esperar respuesta).
    * 2. Llama clearSession() siempre.
-   * 3. Emite void siempre (nunca falla desde el punto de vista del caller).
+   * 3. Cierra la conexión WebSocket autenticada (evita reconexiones con el token viejo).
+   * 4. Emite void siempre (nunca falla desde el punto de vista del caller).
    */
   logout(): Observable<void> {
     const refreshToken = this.authStore.refreshToken();
     this.authStore.clearSession();
+    this.webSocketService.disconnect();
 
     if (refreshToken) {
       // Best-effort: no esperamos, no propagamos errores

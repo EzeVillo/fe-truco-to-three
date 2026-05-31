@@ -5,7 +5,13 @@
 
     <!-- Tabs -->
     <nav class="auth-tabs" role="tablist">
-      <a routerLink="/login" class="auth-tabs__tab" role="tab" aria-selected="false">
+      <a
+        routerLink="/login"
+        [queryParams]="returnUrl ? { returnUrl } : null"
+        class="auth-tabs__tab"
+        role="tab"
+        aria-selected="false"
+      >
         Iniciar sesión
       </a>
       <button

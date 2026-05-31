@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { AuthStore } from '../../../core/auth/auth.store';
+import { AuthService } from '../../../core/auth/auth.service';
 import { ConfirmLogoutDialogComponent } from '../confirm-logout-dialog/confirm-logout-dialog.component';
 
 @Component({
@@ -13,6 +14,7 @@ import { ConfirmLogoutDialogComponent } from '../confirm-logout-dialog/confirm-l
 })
 export class GlobalHeaderComponent {
   readonly authStore = inject(AuthStore);
+  private readonly authService = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
 
@@ -27,7 +29,7 @@ export class GlobalHeaderComponent {
     );
     ref.afterClosed().subscribe((confirmed) => {
       if (confirmed === true) {
-        this.authStore.clearSession();
+        this.authService.logout().subscribe();
         void this.router.navigateByUrl('/login');
       }
     });

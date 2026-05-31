@@ -4,6 +4,8 @@ import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { GlobalHeaderComponent } from './global-header.component';
 import { AuthStore } from '../../../core/auth/auth.store';
@@ -34,6 +36,8 @@ function setupTestBed(dialogMock: Partial<MatDialog>) {
     providers: [
       provideRouter([]),
       provideAnimationsAsync(),
+      provideHttpClient(),
+      provideHttpClientTesting(),
       SessionStorageService,
       AuthStore,
       { provide: MatDialog, useValue: dialogMock },

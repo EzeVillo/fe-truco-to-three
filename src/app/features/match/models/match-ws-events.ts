@@ -151,6 +151,19 @@ export interface FoldedPayload {
   seat: Seat;
 }
 
+/** §9.6 `PLAYER_READY` — el asiento indicado quedó listo. */
+export interface PlayerReadyPayload {
+  seat: Seat;
+}
+
+/**
+ * §9.6 `MATCH_PLAYER_LEFT` — el segundo jugador salió antes de comenzar; la
+ * partida vuelve a `WAITING_FOR_PLAYERS`. `leaverSeat` es siempre `PLAYER_TWO`.
+ */
+export interface MatchPlayerLeftPayload {
+  leaverSeat: Seat;
+}
+
 export interface HandResolvedPayload {
   cardPlayerOne: Card | null;
   cardPlayerTwo: Card | null;

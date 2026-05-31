@@ -69,7 +69,7 @@ describe('RematchDialogComponent', () => {
     fixture.detectChanges();
 
     const btns = fixture.nativeElement.querySelectorAll('button');
-    const labels = Array.from(btns).map((b: Element) => (b as HTMLElement).textContent?.trim());
+    const labels = Array.from<Element>(btns).map((b) => (b as HTMLElement).textContent?.trim());
     expect(labels).toContain('Revancha');
     expect(labels).toContain('Salir');
   });
@@ -79,7 +79,7 @@ describe('RematchDialogComponent', () => {
     fixture.detectChanges();
 
     const btns = fixture.nativeElement.querySelectorAll('button');
-    const labels = Array.from(btns).map((b: Element) => (b as HTMLElement).textContent?.trim());
+    const labels = Array.from<Element>(btns).map((b) => (b as HTMLElement).textContent?.trim());
     expect(labels).not.toContain('Revancha');
     expect(labels).toContain('Salir');
   });

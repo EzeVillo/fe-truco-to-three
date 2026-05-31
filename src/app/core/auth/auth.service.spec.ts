@@ -5,6 +5,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { AuthService } from './auth.service';
 import { AuthStore } from './auth.store';
 import { SessionStorageService } from './session-storage.service';
+import { WebSocketService } from '../services/websocket.service';
 import type {
   FullAuthResponse,
   GuestAuthResponse,
@@ -30,6 +31,7 @@ describe('AuthService', () => {
   let service: AuthService;
   let httpMock: HttpTestingController;
   let store: InstanceType<typeof AuthStore>;
+  let wsDisconnect: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     const fakeStorage: Record<string, string> = {};
@@ -41,6 +43,8 @@ describe('AuthService', () => {
       delete fakeStorage[key];
     });
 
+    wsDisconnect = vi.fn();
+
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -48,6 +52,7 @@ describe('AuthService', () => {
         SessionStorageService,
         AuthStore,
         AuthService,
+        { provide: WebSocketService, useValue: { disconnect: wsDisconnect } },
       ],
     });
 
@@ -199,6 +204,18 @@ describe('AuthService', () => {
 
       httpMock.expectNone('http://localhost:8080/api/auth/logout');
       expect(store.isAuthenticated()).toBe(false);
+    });
+
+    it('cierra la conexión WebSocket al cerrar sesión', () => {
+      store.setSession(FULL_RESPONSE);
+
+      service.logout().subscribe();
+      httpMock.expectOne('http://localhost:8080/api/auth/logout').flush(null, {
+        status: 204,
+        statusText: 'No Content',
+      });
+
+      expect(wsDisconnect).toHaveBeenCalledTimes(1);
     });
   });
 });

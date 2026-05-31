@@ -36,7 +36,7 @@ export class GuestCtaComponent {
       next: () => {
         this.loading.set(false);
         const target = this.returnUrl ?? '/lobby';
-        void this.router.navigate([target]);
+        void this.router.navigateByUrl(target);
       },
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);

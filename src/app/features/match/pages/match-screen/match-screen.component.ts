@@ -17,6 +17,7 @@ import { MatchStateService } from '../../services/match-state.service';
 import { MatchEventQueueService } from '../../services/match-event-queue.service';
 import { RematchStateService } from '../../services/rematch-state.service';
 import { RematchApiService } from '../../services/rematch-api.service';
+import { MatchCallAudioService } from '../../services/match-call-audio.service';
 import { getErrorCopy } from '../../../../shared/error-copy/error-copy';
 import type { MatchEndedEvent, MatchWsEvent, GameWonPayload, EnvidoResolvedPayload, PlayerReadyPayload } from '../../models/match-ws-events';
 import type { Subscription } from 'rxjs';
@@ -152,6 +153,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   readonly eventQueue = inject(MatchEventQueueService);
   private readonly rematchStateService = inject(RematchStateService);
   private readonly rematchApiService = inject(RematchApiService);
+  private readonly matchCallAudioService = inject(MatchCallAudioService);
   private readonly matchesApiService = inject(MatchesApiService);
   private readonly vcr = inject(ViewContainerRef);
   private readonly destroyRef = inject(DestroyRef);
@@ -339,6 +341,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
       const isSelf = responderSeat === state.viewerSeat;
       const signalRef = isSelf ? this.selfCallText : this.opponentCallText;
       signalRef.set(text);
+      this.playCallAudio(event);
 
       // Tanto QUIERO como NO_QUIERO del envido se auto-limpian a los 3 s.
       const timeoutId = window.setTimeout(() => {
@@ -365,12 +368,21 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     const signalRef = isSelf ? this.selfCallText : this.opponentCallText;
 
     signalRef.set(displayEvent.text);
+    this.playCallAudio(event);
 
     if (displayEvent.autoClear) {
       const timeoutId = window.setTimeout(() => {
         signalRef.set(null);
       }, 3000);
       this.callDisplayTimers.set('call', timeoutId);
+    }
+  }
+
+  private playCallAudio(event: MatchWsEvent): void {
+    try {
+      this.matchCallAudioService.playForEvent(event);
+    } catch {
+      // El audio no debe bloquear ni romper el flujo visual de la partida.
     }
   }
 

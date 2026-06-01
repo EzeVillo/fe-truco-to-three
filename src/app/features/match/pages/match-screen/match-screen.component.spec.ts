@@ -11,6 +11,7 @@ import { MatchScreenComponent } from './match-screen.component';
 import { MatchStateService } from '../../services/match-state.service';
 import { MatchEventQueueService } from '../../services/match-event-queue.service';
 import { RematchStateService } from '../../services/rematch-state.service';
+import { MatchCallAudioService } from '../../services/match-call-audio.service';
 import { GameWonDialogComponent } from '../../components/game-won-dialog/game-won-dialog.component';
 import { EnvidoResultDialogComponent } from '../../components/envido-result-dialog/envido-result-dialog.component';
 import { RematchDialogComponent } from '../../components/rematch-dialog/rematch-dialog.component';
@@ -29,10 +30,14 @@ function makeParamMap(params: Record<string, string>) {
 describe('MatchScreenComponent', () => {
   let fixture: ComponentFixture<MatchScreenComponent>;
   let matchStateService: MatchStateService;
+  let matchCallAudioService: { playForEvent: ReturnType<typeof vi.fn> };
   let paramMapSubject: BehaviorSubject<ReturnType<typeof makeParamMap>>;
 
   function setupComponent(params: Record<string, string> = {}): void {
     paramMapSubject = new BehaviorSubject(makeParamMap(params));
+    matchCallAudioService = {
+      playForEvent: vi.fn(),
+    };
 
     TestBed.configureTestingModule({
       imports: [MatchScreenComponent, MatDialogModule, GameWonDialogComponent, EnvidoResultDialogComponent],
@@ -40,6 +45,7 @@ describe('MatchScreenComponent', () => {
         provideRouter([]),
         provideHttpClient(),
         provideHttpClientTesting(),
+        { provide: MatchCallAudioService, useValue: matchCallAudioService },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -124,6 +130,85 @@ describe('MatchScreenComponent', () => {
     matchStateService.state.set(mockMatchViewerPlayerOne);
     fixture.detectChanges();
 
+    const event = {
+      matchId: 'test-match',
+      eventType: 'TRUCO_CALLED',
+      timestamp: Date.now(),
+      payload: { callerSeat: 'PLAYER_TWO', call: 'TRUCO' },
+      stateVersion: 2,
+    } as const;
+    matchStateService.matchEvent$.next(event);
+
+    expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Truco!');
+    expect(fixture.componentInstance.selfCallText()).toBeNull();
+    expect(matchCallAudioService.playForEvent).toHaveBeenCalledWith(event);
+  });
+
+  it('actualiza selfCallText ante ENVIDO_CALLED del jugador propio', () => {
+    setupComponent({ matchId: 'test-match' });
+    matchStateService.state.set(mockMatchViewerPlayerOne);
+    fixture.detectChanges();
+
+    const event = {
+      matchId: 'test-match',
+      eventType: 'ENVIDO_CALLED',
+      timestamp: Date.now(),
+      payload: { callerSeat: 'PLAYER_ONE', call: 'ENVIDO' },
+      stateVersion: 2,
+    } as const;
+    matchStateService.matchEvent$.next(event);
+
+    expect(fixture.componentInstance.selfCallText()).toBe('\u00a1Envido!');
+    expect(fixture.componentInstance.opponentCallText()).toBeNull();
+    expect(matchCallAudioService.playForEvent).toHaveBeenCalledWith(event);
+  });
+
+  it('actualiza opponentCallText y reproduce audio ante TRUCO_RESPONDED del rival', () => {
+    setupComponent({ matchId: 'test-match' });
+    matchStateService.state.set(mockMatchViewerPlayerOne);
+    fixture.detectChanges();
+
+    const event = {
+      matchId: 'test-match',
+      eventType: 'TRUCO_RESPONDED',
+      timestamp: Date.now(),
+      payload: { responderSeat: 'PLAYER_TWO', response: 'QUIERO', call: 'TRUCO' },
+      stateVersion: 2,
+    } as const;
+    matchStateService.matchEvent$.next(event);
+
+    expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Quiero!');
+    expect(fixture.componentInstance.selfCallText()).toBeNull();
+    expect(matchCallAudioService.playForEvent).toHaveBeenCalledWith(event);
+  });
+
+  it('actualiza selfCallText y reproduce audio ante FOLDED propio', () => {
+    setupComponent({ matchId: 'test-match' });
+    matchStateService.state.set(mockMatchViewerPlayerOne);
+    fixture.detectChanges();
+
+    const event = {
+      matchId: 'test-match',
+      eventType: 'FOLDED',
+      timestamp: Date.now(),
+      payload: { seat: 'PLAYER_ONE' },
+      stateVersion: 2,
+    } as const;
+    matchStateService.matchEvent$.next(event);
+
+    expect(fixture.componentInstance.selfCallText()).toBe('Me voy al mazo');
+    expect(fixture.componentInstance.opponentCallText()).toBeNull();
+    expect(matchCallAudioService.playForEvent).toHaveBeenCalledWith(event);
+  });
+
+  it('mantiene el call text visible si el servicio de audio falla', () => {
+    setupComponent({ matchId: 'test-match' });
+    matchStateService.state.set(mockMatchViewerPlayerOne);
+    matchCallAudioService.playForEvent.mockImplementation(() => {
+      throw new Error('audio failed');
+    });
+    fixture.detectChanges();
+
     matchStateService.matchEvent$.next({
       matchId: 'test-match',
       eventType: 'TRUCO_CALLED',
@@ -134,23 +219,6 @@ describe('MatchScreenComponent', () => {
 
     expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Truco!');
     expect(fixture.componentInstance.selfCallText()).toBeNull();
-  });
-
-  it('actualiza selfCallText ante ENVIDO_CALLED del jugador propio', () => {
-    setupComponent({ matchId: 'test-match' });
-    matchStateService.state.set(mockMatchViewerPlayerOne);
-    fixture.detectChanges();
-
-    matchStateService.matchEvent$.next({
-      matchId: 'test-match',
-      eventType: 'ENVIDO_CALLED',
-      timestamp: Date.now(),
-      payload: { callerSeat: 'PLAYER_ONE', call: 'ENVIDO' },
-      stateVersion: 2,
-    });
-
-    expect(fixture.componentInstance.selfCallText()).toBe('\u00a1Envido!');
-    expect(fixture.componentInstance.opponentCallText()).toBeNull();
   });
 
   describe('auto-limpieza de aceptaciones (US2)', () => {
@@ -449,16 +517,19 @@ describe('MatchScreenComponent', () => {
 
       // Rival (PLAYER_TWO) cant\u00f3 envido; el local (PLAYER_ONE) responde.
       emitEnvidoCalled('PLAYER_TWO');
-      matchStateService.matchEvent$.next({
+      matchCallAudioService.playForEvent.mockClear();
+      const event = {
         matchId: 'test-match',
         eventType: 'ENVIDO_RESOLVED',
         timestamp: Date.now(),
         payload: { response: 'QUIERO', winnerSeat: 'PLAYER_ONE' },
         stateVersion: 2,
-      });
+      } as const;
+      matchStateService.matchEvent$.next(event);
 
       expect(fixture.componentInstance.selfCallText()).toBe('\u00a1Quiero!');
       expect(fixture.componentInstance.opponentCallText()).toBeNull();
+      expect(matchCallAudioService.playForEvent).toHaveBeenCalledWith(event);
     });
 
     it('muestra opponentCallText para QUIERO cuando el rival respondi\u00f3 (local cant\u00f3)', () => {
@@ -468,16 +539,19 @@ describe('MatchScreenComponent', () => {
 
       // Local (PLAYER_ONE) cant\u00f3 envido; el rival (PLAYER_TWO) responde.
       emitEnvidoCalled('PLAYER_ONE');
-      matchStateService.matchEvent$.next({
+      matchCallAudioService.playForEvent.mockClear();
+      const event = {
         matchId: 'test-match',
         eventType: 'ENVIDO_RESOLVED',
         timestamp: Date.now(),
         payload: { response: 'QUIERO', winnerSeat: 'PLAYER_ONE' },
         stateVersion: 2,
-      });
+      } as const;
+      matchStateService.matchEvent$.next(event);
 
       expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1Quiero!');
       expect(fixture.componentInstance.selfCallText()).toBeNull();
+      expect(matchCallAudioService.playForEvent).toHaveBeenCalledWith(event);
     });
 
     it('muestra selfCallText para NO_QUIERO cuando el jugador local rechaz\u00f3', () => {
@@ -486,16 +560,19 @@ describe('MatchScreenComponent', () => {
       fixture.detectChanges();
 
       emitEnvidoCalled('PLAYER_TWO');
-      matchStateService.matchEvent$.next({
+      matchCallAudioService.playForEvent.mockClear();
+      const event = {
         matchId: 'test-match',
         eventType: 'ENVIDO_RESOLVED',
         timestamp: Date.now(),
         payload: { response: 'NO_QUIERO', winnerSeat: 'PLAYER_TWO' },
         stateVersion: 2,
-      });
+      } as const;
+      matchStateService.matchEvent$.next(event);
 
       expect(fixture.componentInstance.selfCallText()).toBe('\u00a1No quiero!');
       expect(fixture.componentInstance.opponentCallText()).toBeNull();
+      expect(matchCallAudioService.playForEvent).toHaveBeenCalledWith(event);
     });
 
     it('muestra opponentCallText para NO_QUIERO cuando el rival rechaz\u00f3', () => {
@@ -504,16 +581,19 @@ describe('MatchScreenComponent', () => {
       fixture.detectChanges();
 
       emitEnvidoCalled('PLAYER_ONE');
-      matchStateService.matchEvent$.next({
+      matchCallAudioService.playForEvent.mockClear();
+      const event = {
         matchId: 'test-match',
         eventType: 'ENVIDO_RESOLVED',
         timestamp: Date.now(),
         payload: { response: 'NO_QUIERO', winnerSeat: 'PLAYER_ONE' },
         stateVersion: 2,
-      });
+      } as const;
+      matchStateService.matchEvent$.next(event);
 
       expect(fixture.componentInstance.opponentCallText()).toBe('\u00a1No quiero!');
       expect(fixture.componentInstance.selfCallText()).toBeNull();
+      expect(matchCallAudioService.playForEvent).toHaveBeenCalledWith(event);
     });
 
     it('auto-limpia selfCallText de QUIERO a los 3 segundos', () => {

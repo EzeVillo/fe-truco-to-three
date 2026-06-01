@@ -36,6 +36,25 @@ Once the server is running, open your browser and navigate to `http://localhost:
 - El contenido visible se basa en `docs/REGLAS_VARIANTE.md` y vive en el frontend, sin pedir reglas al backend.
 - El lobby ofrece un CTA de reglas que navega a `/lobby/reglas`.
 
+## Audios de cantos
+
+Los cantos de partida usan grabaciones locales ubicadas en `public/audio/calls/`. Para reemplazar una voz, mantener el mismo nombre de archivo:
+
+```text
+envido.mp3
+falta-envido.mp3
+me-voy-al-mazo.mp3
+no-quiero.mp3
+quiero.mp3
+quiero-y-me-voy-al-mazo.mp3
+real-envido.mp3
+retruco.mp3
+truco.mp3
+vale-cuatro.mp3
+```
+
+Recomendaciones de grabacion: usar archivos cortos, recortar silencios iniciales y finales, y normalizar el volumen para que todos los cantos suenen parejos. Estos audios son assets del frontend; no cambian el contrato documentado en `docs/CONTRATOS_API.md`.
+
 ## Perfil y logros
 
 - Los usuarios registrados tienen perfil publico en `/profile/{username}` con estadisticas agregadas y logros desbloqueados.

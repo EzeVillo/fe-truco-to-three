@@ -5,7 +5,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/017-rules-section-fe/plan.md`
+`specs/018-call-audio-sync/plan.md`
 <!-- SPECKIT END -->
 
 ## Reglas del juego (truco-to-three)

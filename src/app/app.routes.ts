@@ -44,6 +44,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'lobby/reglas',
+    canMatch: [authGuard],
+    loadComponent: () =>
+      import('./features/lobby/pages/rules-page/rules-page.component').then(
+        (m) => m.RulesPageComponent,
+      ),
+  },
+  {
     path: 'join/:joinCode',
     canMatch: [authGuard],
     loadComponent: () =>

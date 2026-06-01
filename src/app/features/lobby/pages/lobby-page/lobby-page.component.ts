@@ -18,4 +18,8 @@ export class LobbyPageComponent {
   goToOnline(): void {
     void this.router.navigateByUrl('/lobby/online');
   }
+
+  goToRules(): void {
+    void this.router.navigateByUrl('/lobby/reglas');
+  }
 }

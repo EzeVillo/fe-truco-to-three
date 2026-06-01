@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router, provideRouter } from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import { routes } from '../../../../app.routes';
 import { LobbyPageComponent } from './lobby-page.component';
 
 describe('LobbyPageComponent', () => {
@@ -68,5 +69,36 @@ describe('LobbyPageComponent', () => {
     const subtitleIdx = children.findIndex((el) => el.classList.contains('lobby__cta-subtitle'));
     expect(titleIdx).toBeGreaterThanOrEqual(0);
     expect(subtitleIdx).toBeGreaterThan(titleIdx);
+  });
+
+  it('renderiza un CTA para abrir las reglas de variante', () => {
+    const fixture = TestBed.createComponent(LobbyPageComponent);
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+    expect(text).toContain('Reglas de la variante');
+    expect(text).toContain('Consultá qué cambia en Truco a 3 puntos');
+    expect(text).not.toContain('Punto exacto');
+  });
+
+  it('al click del CTA de reglas navega a /lobby/reglas', () => {
+    const fixture = TestBed.createComponent(LobbyPageComponent);
+    const router = TestBed.inject(Router);
+    const navSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+
+    fixture.detectChanges();
+    const buttons = fixture.debugElement.queryAll(By.css('.lobby__cta'));
+    buttons[2].nativeElement.click();
+
+    expect(navSpy).toHaveBeenCalledWith('/lobby/reglas');
+  });
+
+  it('define la ruta de reglas solo bajo lobby', () => {
+    const rulesRoutes = routes.filter(
+      (route) => route.path?.includes('reglas') || route.path?.includes('rules'),
+    );
+
+    expect(rulesRoutes.map((route) => route.path)).toEqual(['lobby/reglas']);
   });
 });

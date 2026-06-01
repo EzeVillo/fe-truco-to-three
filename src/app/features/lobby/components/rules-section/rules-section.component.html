@@ -1,0 +1,30 @@
+<section class="rules" aria-labelledby="variant-rules-title">
+  <div class="rules__header">
+    <p class="rules__eyebrow">Reglas de la variante</p>
+    <h2 id="variant-rules-title" class="rules__title">Truco a 3 puntos</h2>
+    <p class="rules__intro">
+      Estas son las condiciones especiales de esta modalidad. El truco base se mantiene, pero el
+      puntaje exacto cambia cada decisión.
+    </p>
+  </div>
+
+  <div class="rules__list-sections">
+    @for (section of sections; track section.id) {
+      <article class="rules__section" [attr.data-rule-id]="section.id">
+        <h3 class="rules__section-title">{{ section.title }}</h3>
+
+        @if (section.summary) {
+          <p class="rules__summary">{{ section.summary }}</p>
+        }
+
+        @if (section.items.length) {
+          <ul class="rules__list">
+            @for (item of section.items; track item.text) {
+              <li class="rules__item">{{ item.text }}</li>
+            }
+          </ul>
+        }
+      </article>
+    }
+  </div>
+</section>

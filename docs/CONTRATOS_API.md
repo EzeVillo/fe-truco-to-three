@@ -7,6 +7,10 @@ Este documento resume todos los contratos que expone el backend para el equipo d
 - WebSocket/STOMP (eventos en tiempo real)
 - Estados, enums y formato de errores
 
+Las reglas del juego y la variante a 3 puntos se documentan en `docs/REGLAS_JUEGO.md` y
+`docs/REGLAS_VARIANTE.md`. La pantalla de reglas accesible desde el lobby del frontend usa
+contenido local y no agrega un contrato de backend.
+
 Base URL (local):
 
 - `http://localhost:8080`

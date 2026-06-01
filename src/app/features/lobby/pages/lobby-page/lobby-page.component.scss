@@ -13,7 +13,7 @@
 
   &__inner {
     width: 100%;
-    max-width: 480px;
+    max-width: 560px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
@@ -80,7 +80,7 @@
     padding: var(--t3-gap-lg);
 
     &__inner {
-      max-width: 640px;
+      max-width: 900px;
     }
   }
 }

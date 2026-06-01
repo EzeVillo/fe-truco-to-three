@@ -19,7 +19,7 @@ export class WebSocketService implements OnDestroy {
     }
 
     this.client = new Client({
-      brokerURL: environment.wsUrl.replace(/^http/, 'ws'),
+      brokerURL: this.buildBrokerUrl(),
       connectHeaders: {
         Authorization: `Bearer ${this.authStore.accessToken() ?? ''}`,
       },
@@ -44,6 +44,13 @@ export class WebSocketService implements OnDestroy {
     });
 
     this.client.activate();
+  }
+
+  private buildBrokerUrl(): string {
+    const baseUrl = new URL(environment.wsUrl, window.location.origin);
+    baseUrl.protocol = baseUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+
+    return baseUrl.toString();
   }
 
   disconnect(): void {

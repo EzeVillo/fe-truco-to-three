@@ -64,6 +64,9 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "allowedHosts": [".trycloudflare.com"]
+          },
           "configurations": {
             "production": {
               "buildTarget": "fe-truco-to-three:build:production"

@@ -79,7 +79,7 @@ describe('AuthService', () => {
         expect(res.accessToken).toBe('access-jwt');
       });
 
-      const httpReq = httpMock.expectOne('http://localhost:8080/api/auth/register');
+      const httpReq = httpMock.expectOne('/api/auth/register');
       expect(httpReq.request.method).toBe('POST');
       expect(httpReq.request.body).toEqual(req);
       httpReq.flush(FULL_RESPONSE);
@@ -100,7 +100,7 @@ describe('AuthService', () => {
         expect(res.playerId).toBe('player-123');
       });
 
-      const httpReq = httpMock.expectOne('http://localhost:8080/api/auth/login');
+      const httpReq = httpMock.expectOne('/api/auth/login');
       expect(httpReq.request.method).toBe('POST');
       httpReq.flush(FULL_RESPONSE);
       expect(emitted).toBe(true);
@@ -118,7 +118,7 @@ describe('AuthService', () => {
         expect(res.playerId).toBe('guest-456');
       });
 
-      const httpReq = httpMock.expectOne('http://localhost:8080/api/auth/guest');
+      const httpReq = httpMock.expectOne('/api/auth/guest');
       expect(httpReq.request.method).toBe('POST');
       expect(httpReq.request.body).toBeNull();
       httpReq.flush(GUEST_RESPONSE);
@@ -141,7 +141,7 @@ describe('AuthService', () => {
         },
       });
 
-      httpMock.expectNone('http://localhost:8080/api/auth/refresh');
+      httpMock.expectNone('/api/auth/refresh');
       expect(emitted).toBe(false);
       expect(completed).toBe(true);
     });
@@ -161,7 +161,7 @@ describe('AuthService', () => {
         emittedToken = token;
       });
 
-      const httpReq = httpMock.expectOne('http://localhost:8080/api/auth/refresh');
+      const httpReq = httpMock.expectOne('/api/auth/refresh');
       expect(httpReq.request.method).toBe('POST');
       expect(httpReq.request.body).toEqual({ refreshToken: 'refresh-opaque' });
       httpReq.flush(rotatedResponse);
@@ -180,7 +180,7 @@ describe('AuthService', () => {
         username = identity?.username ?? null;
       });
 
-      const httpReq = httpMock.expectOne('http://localhost:8080/api/auth/me');
+      const httpReq = httpMock.expectOne('/api/auth/me');
       expect(httpReq.request.method).toBe('GET');
       httpReq.flush({ playerId: 'legacy-player', username: 'martina', tokenUse: 'user' });
 
@@ -196,7 +196,7 @@ describe('AuthService', () => {
       service.refresh().subscribe(() => count++);
 
       // Solo debe haber UNA request HTTP, no dos
-      const requests = httpMock.match('http://localhost:8080/api/auth/refresh');
+      const requests = httpMock.match('/api/auth/refresh');
       expect(requests.length).toBe(1);
       requests[0].flush({ ...FULL_RESPONSE, accessToken: 'shared-token' });
 
@@ -210,7 +210,7 @@ describe('AuthService', () => {
 
       service.logout().subscribe();
 
-      const httpReq = httpMock.expectOne('http://localhost:8080/api/auth/logout');
+      const httpReq = httpMock.expectOne('/api/auth/logout');
       expect(httpReq.request.method).toBe('DELETE');
       expect(httpReq.request.body).toEqual({ refreshToken: 'refresh-opaque' });
       httpReq.flush(null, { status: 204, statusText: 'No Content' });
@@ -223,7 +223,7 @@ describe('AuthService', () => {
 
       service.logout().subscribe();
 
-      httpMock.expectNone('http://localhost:8080/api/auth/logout');
+      httpMock.expectNone('/api/auth/logout');
       expect(store.isAuthenticated()).toBe(false);
     });
 
@@ -231,7 +231,7 @@ describe('AuthService', () => {
       store.setSession(FULL_RESPONSE);
 
       service.logout().subscribe();
-      httpMock.expectOne('http://localhost:8080/api/auth/logout').flush(null, {
+      httpMock.expectOne('/api/auth/logout').flush(null, {
         status: 204,
         statusText: 'No Content',
       });

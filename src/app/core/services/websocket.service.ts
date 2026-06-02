@@ -20,11 +20,12 @@ export class WebSocketService implements OnDestroy {
 
     this.client = new Client({
       brokerURL: this.buildBrokerUrl(),
-      connectHeaders: {
-        Authorization: `Bearer ${this.authStore.accessToken() ?? ''}`,
+      connectHeaders: this.buildConnectHeaders(),
+      beforeConnect: () => {
+        this.client.connectHeaders = this.buildConnectHeaders();
       },
       reconnectDelay: 5000,
-      debug: (str) => console.log('[STOMP]', str),
+      debug: () => undefined,
       onConnect: () => {
         this.connected$.next(true);
       },
@@ -44,6 +45,12 @@ export class WebSocketService implements OnDestroy {
     });
 
     this.client.activate();
+  }
+
+  private buildConnectHeaders(): Record<string, string> {
+    return {
+      Authorization: `Bearer ${this.authStore.accessToken() ?? ''}`,
+    };
   }
 
   private buildBrokerUrl(): string {

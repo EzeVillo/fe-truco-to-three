@@ -41,7 +41,7 @@ export const VARIANT_RULE_SECTIONS: readonly VariantRuleSection[] = [
   {
     id: 'sword-ace-close',
     title: 'Cierre por ancho de espada',
-    summary: 'El 1 de espada cierra la round inmediatamente en situaciones puntuales.',
+    summary: 'El 1 de espada cierra el round inmediatamente en situaciones puntuales.',
     items: [
       { text: 'La primera mano fue parda y el ancho se juega en la segunda mano.' },
       { text: 'El portador del ancho ganó la primera mano y juega el ancho en la segunda mano.' },

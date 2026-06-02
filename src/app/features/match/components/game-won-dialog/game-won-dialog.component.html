@@ -8,7 +8,7 @@
 
     <div class="game-won__scoreboard">
       <div class="game-won__player">
-        <span class="game-won__player-name">{{ data.playerName }}</span>
+        <span class="game-won__player-name" [title]="data.playerName">{{ data.playerName }}</span>
         <span class="game-won__player-games" [class.game-won__player-games--win]="data.playerGamesWon >= data.opponentGamesWon" [class.game-won__player-games--lose]="data.playerGamesWon < data.opponentGamesWon">
           {{ data.playerGamesWon }}
         </span>
@@ -17,7 +17,7 @@
       <span class="game-won__divider">—</span>
 
       <div class="game-won__player">
-        <span class="game-won__player-name">{{ data.opponentName }}</span>
+        <span class="game-won__player-name" [title]="data.opponentName">{{ data.opponentName }}</span>
         <span class="game-won__player-games" [class.game-won__player-games--win]="data.opponentGamesWon > data.playerGamesWon" [class.game-won__player-games--lose]="data.opponentGamesWon <= data.playerGamesWon">
           {{ data.opponentGamesWon }}
         </span>

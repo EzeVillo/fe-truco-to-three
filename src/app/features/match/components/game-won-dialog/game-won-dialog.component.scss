@@ -40,10 +40,13 @@
   }
 
   &__scoreboard {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     justify-content: center;
     gap: var(--t3-gap-md);
+    width: 100%;
+    max-width: 280px;
   }
 
   &__player {
@@ -51,12 +54,17 @@
     flex-direction: column;
     align-items: center;
     gap: var(--t3-gap-xs);
-    min-width: 80px;
+    min-width: 0;
+    width: 100%;
   }
 
   &__player-name {
+    max-width: 100%;
+    overflow: hidden;
     font-size: 0.95rem;
     color: var(--t3-text);
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   &__player-games {

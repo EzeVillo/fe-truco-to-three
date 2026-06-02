@@ -64,3 +64,83 @@
     }
   }
 }
+
+// ---------------------------------------------------------------------------
+// Variantes de boton tematizadas (sin Material crudos)
+// ---------------------------------------------------------------------------
+
+.t3-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--t3-gap-xs);
+  min-height: 44px;
+  min-width: 160px;
+  padding: 0 var(--t3-gap-md);
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+
+  &:disabled,
+  &[disabled] {
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}
+
+.t3-btn--primary {
+  background: var(--t3-cta-bg);
+  border-color: transparent;
+  color: var(--t3-cta-text-on);
+
+  @media (hover: hover) {
+    &:hover {
+      background: var(--t3-cta-bg-hover);
+    }
+  }
+
+  &:active {
+    background: var(--t3-cta-bg-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--t3-gold-400);
+    outline-offset: 2px;
+  }
+
+  &:disabled,
+  &[disabled] {
+    background: var(--t3-cta-disabled-bg);
+    color: var(--t3-cta-disabled-text);
+    cursor: not-allowed;
+  }
+}
+
+.t3-btn--neutral {
+  background: transparent;
+  border-color: var(--t3-gold-400);
+  color: var(--t3-gold-400);
+
+  @media (hover: hover) {
+    &:hover {
+      background: var(--t3-gold-400);
+      color: var(--t3-cta-text-on);
+    }
+  }
+
+  &:active {
+    background: var(--t3-gold-400);
+    color: var(--t3-cta-text-on);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--t3-gold-400);
+    outline-offset: 2px;
+  }
+}

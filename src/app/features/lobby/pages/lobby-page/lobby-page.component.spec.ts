@@ -33,6 +33,23 @@ describe('LobbyPageComponent', () => {
     expect(navSpy).toHaveBeenCalledWith('/lobby/vs-bots');
   });
 
+  it('renderiza el CTA "Partida rápida" y navega a /lobby/quick-match', () => {
+    const fixture = TestBed.createComponent(LobbyPageComponent);
+    const router = TestBed.inject(Router);
+    const navSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Partida rápida');
+    expect(text).toContain('Buscá rival automáticamente y jugá online');
+
+    const buttons = fixture.debugElement.queryAll(By.css('.lobby__cta'));
+    buttons[1].nativeElement.click();
+
+    expect(navSpy).toHaveBeenCalledWith('/lobby/quick-match');
+  });
+
   // T005 — US1: tests de layout y tokens
   it('US1: el CTA no usa mat-flat-button', () => {
     const fixture = TestBed.createComponent(LobbyPageComponent);
@@ -89,7 +106,7 @@ describe('LobbyPageComponent', () => {
 
     fixture.detectChanges();
     const buttons = fixture.debugElement.queryAll(By.css('.lobby__cta'));
-    buttons[2].nativeElement.click();
+    buttons[3].nativeElement.click();
 
     expect(navSpy).toHaveBeenCalledWith('/lobby/reglas');
   });

@@ -6,6 +6,8 @@ import type {
   CreateMatchRequest,
   CreateMatchResponse,
   JoinResponse,
+  QuickMatchRequest,
+  QuickMatchResponse,
 } from '../../../core/models/match.models';
 
 /**
@@ -36,5 +38,15 @@ export class MatchesApiService {
   /** §4.13 POST /api/matches/{matchId}/leave — sale antes de comenzar. 204 sin body. */
   leaveMatch(matchId: string): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/matches/${matchId}/leave`, {});
+  }
+
+  /** §9.3 POST /api/matches/quick - entra o recupera la cola de quick match. */
+  enterQuickMatch(req: QuickMatchRequest): Observable<QuickMatchResponse> {
+    return this.http.post<QuickMatchResponse>(`${this.baseUrl}/matches/quick`, req);
+  }
+
+  /** §9.3 DELETE /api/matches/quick - cancela la busqueda. 204 sin body. */
+  cancelQuickMatch(): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/matches/quick`);
   }
 }

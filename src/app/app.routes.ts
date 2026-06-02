@@ -44,6 +44,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'lobby/quick-match',
+    canMatch: [authGuard],
+    loadComponent: () =>
+      import('./features/lobby/pages/quick-match-page/quick-match-page.component').then(
+        (m) => m.QuickMatchPageComponent,
+      ),
+  },
+  {
     path: 'lobby/reglas',
     canMatch: [authGuard],
     loadComponent: () =>

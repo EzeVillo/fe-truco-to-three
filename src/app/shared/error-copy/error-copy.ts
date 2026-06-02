@@ -14,7 +14,8 @@ export type ErrorCopyScope =
   | 'REMATCH'
   | 'PROFILE'
   | 'CREATE_MATCH'
-  | 'JOIN_MATCH';
+  | 'JOIN_MATCH'
+  | 'QUICK_MATCH';
 
 const FALLBACK = 'Ocurrió un error inesperado. Reintentá.';
 
@@ -129,6 +130,23 @@ export function getErrorCopy(scope: ErrorCopyScope, error: unknown): string {
       default:
         if (status >= 500 && status < 600) {
           return 'No pudimos unirte a la partida. Reintentá.';
+        }
+        return FALLBACK;
+    }
+  }
+
+  if (scope === 'QUICK_MATCH') {
+    switch (status) {
+      case 401:
+        return '';
+      case 409:
+      case 422:
+        return 'Ya estás en una partida, una revancha pendiente o una búsqueda activa.';
+      case 0:
+        return 'No pudimos buscar rival. Reintentá en unos segundos.';
+      default:
+        if (status >= 500 && status < 600) {
+          return 'No pudimos buscar rival. Reintentá en unos segundos.';
         }
         return FALLBACK;
     }

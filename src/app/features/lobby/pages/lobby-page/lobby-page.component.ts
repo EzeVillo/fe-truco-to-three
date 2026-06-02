@@ -15,6 +15,10 @@ export class LobbyPageComponent {
     void this.router.navigateByUrl('/lobby/vs-bots');
   }
 
+  goToQuickMatch(): void {
+    void this.router.navigateByUrl('/lobby/quick-match');
+  }
+
   goToOnline(): void {
     void this.router.navigateByUrl('/lobby/online');
   }

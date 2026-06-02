@@ -5,7 +5,7 @@ This file provides guidance to AI coding agents (Claude Code, Codex, etc.) when 
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/019-all-achievements-profile/plan.md`
+`specs/020-quick-match/plan.md`
 <!-- SPECKIT END -->
 
 ## Reglas del juego (truco-to-three)

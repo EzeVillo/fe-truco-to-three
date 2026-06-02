@@ -26,9 +26,11 @@
     cursor: pointer;
     transition: background-color 120ms ease, border-color 120ms ease;
 
-    &:hover {
-      background: var(--t3-btn-neutral-bg-hover);
-      border-color: var(--t3-gold-border-hover);
+    @media (hover: hover) {
+      &:hover {
+        background: var(--t3-btn-neutral-bg-hover);
+        border-color: var(--t3-gold-border-hover);
+      }
     }
 
     &:focus-visible {

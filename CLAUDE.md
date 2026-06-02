@@ -180,3 +180,14 @@ Para CTAs que tienen título y descripción apilados verticalmente:
 - Usar `display: flex; flex-direction: column` en el elemento CTA.
 - El título va en un `<span class="*-title">` y la descripción en un `<span class="*-subtitle">`.
 - Altura máxima sugerida en mobile: ≤ 96 px.
+
+### 4. `:hover` gateado tras `@media (hover: hover)`
+
+**Todo** selector con la pseudo-clase `:hover` en SCSS bajo `src/app/features/**` y `src/app/shared/components/**` que cambie la apariencia (background, color, border) **debe** ir anidado dentro de un bloque `@media (hover: hover) { ... }`.
+
+**Motivo**: en pantallas táctiles el estado `:hover` queda "pegado" tras un tap hasta que el usuario toca otro lado, dejando el control visualmente "seleccionado" sin haberlo tocado. Gatearlo lo restringe a punteros reales (mouse); desktop tiene `hover: hover`, así que se preserva intacto ahí.
+
+- Patrón: `@media (hover: hover) { &:hover { … } }`.
+- **No** gatear `:active` (feedback táctil válido, se limpia al soltar) ni `:focus-visible` (accesibilidad).
+
+**Verificación**: `pnpm lint:hover` (script `scripts/check-hover-gating.mjs`) falla si detecta un `:hover` sin gatear. Corre automáticamente en el pre-commit via lint-staged.

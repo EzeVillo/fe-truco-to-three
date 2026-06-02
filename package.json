@@ -13,6 +13,7 @@
     "format": "prettier --write \"src/**/*.{ts,html,scss,json}\"",
     "lint:styles": "stylelint \"src/app/{features,shared/components}/**/*.scss\"",
     "lint:themes": "node scripts/check-themed-templates.mjs",
+    "lint:hover": "node scripts/check-hover-gating.mjs",
     "prepare": "husky"
   },
   "private": true,
@@ -26,7 +27,8 @@
       "prettier --write"
     ],
     "src/app/{features,shared/components}/**/*.scss": [
-      "stylelint --fix"
+      "stylelint --fix",
+      "node scripts/check-hover-gating.mjs"
     ],
     "src/app/{features,shared/components}/**/*.html": [
       "node scripts/check-themed-templates.mjs"

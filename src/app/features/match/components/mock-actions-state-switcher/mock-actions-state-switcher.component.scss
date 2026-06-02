@@ -49,10 +49,12 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.mock-switcher__btn:hover {
-  background-color: var(--t3-gold-bg-subtle);
-  border-color: var(--t3-gold-border-hover);
-  color: var(--t3-gold-300);
+@media (hover: hover) {
+  .mock-switcher__btn:hover {
+    background-color: var(--t3-gold-bg-subtle);
+    border-color: var(--t3-gold-border-hover);
+    color: var(--t3-gold-300);
+  }
 }
 
 .mock-switcher__btn:active {

@@ -1,11 +1,11 @@
 # AGENTS.md
 
-This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
+This file provides guidance to AI coding agents (Claude Code, Codex, etc.) when working with code in this repository.
 
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/018-call-audio-sync/plan.md`
+`specs/019-all-achievements-profile/plan.md`
 <!-- SPECKIT END -->
 
 ## Reglas del juego (truco-to-three)
@@ -180,3 +180,45 @@ Para CTAs que tienen título y descripción apilados verticalmente:
 - Usar `display: flex; flex-direction: column` en el elemento CTA.
 - El título va en un `<span class="*-title">` y la descripción en un `<span class="*-subtitle">`.
 - Altura máxima sugerida en mobile: ≤ 96 px.
+
+### 4. `:hover` gateado tras `@media (hover: hover)`
+
+**Todo** selector con la pseudo-clase `:hover` en SCSS bajo `src/app/features/**` y `src/app/shared/components/**` que cambie la apariencia (background, color, border) **debe** ir anidado dentro de un bloque `@media (hover: hover) { ... }`.
+
+**Motivo**: en pantallas táctiles el estado `:hover` queda "pegado" tras un tap hasta que el usuario toca otro lado, dejando el control visualmente "seleccionado" sin haberlo tocado. Gatearlo lo restringe a punteros reales (mouse); desktop tiene `hover: hover`, así que se preserva intacto ahí.
+
+- Patrón: `@media (hover: hover) { &:hover { … } }`.
+- **No** gatear `:active` (feedback táctil válido, se limpia al soltar) ni `:focus-visible` (accesibilidad).
+
+**Verificación**: `pnpm lint:hover` (script `scripts/check-hover-gating.mjs`) falla si detecta un `:hover` sin gatear. Corre automáticamente en el pre-commit via lint-staged.
+
+### 5. Nunca mostrar mensajes de error crudos del backend
+
+Nunca mostrar al usuario el campo `message` (ni equivalente) que venga del backend en respuestas de error. Toda copia visible debe salir de un **catálogo controlado en el front**, mapeado por código HTTP y/o `errorCode` del contrato `ApiError`.
+
+**Motivo**: los mensajes del BE pueden filtrar detalles técnicos, no están localizados, no respetan el tono del producto y cambian sin coordinación con el front. El usuario lo pidió explícitamente al clarificar la feature `003-lobby-bots`.
+
+- En interceptores, services y componentes que manejen errores HTTP/WebSocket, ignorar `ApiError.message` para UI.
+- Mantener un mapa de códigos → copy en el front (por feature o compartido) y un fallback genérico cuando el código no esté catalogado.
+- El mensaje crudo del BE puede ir a `console.error`/logs/telemetría, **nunca** a snackbars, toasts, banners o diálogos.
+- Aplica también a errores de red (timeouts, offline): copy controlado del front.
+
+## Memoria del agente — aprendizajes acumulados
+
+> **Esta sección es la fuente única de memoria del proyecto.** Cuando el usuario pida "recordá X", se escribe acá (no en el sistema de memoria separado del harness). Mantener cada ítem conciso y verificar contra el código actual antes de afirmarlo como hecho.
+
+### Design system (detalles operativos)
+
+- Ancho mínimo: token `--t3-min-width` (360 px) aplicado a `body { min-width: var(--t3-min-width) }` en `src/styles.scss`. Tablet (600 px) **desestimado**, no es caso de uso.
+- Logos: `public/icon2.png` (emblema circular grande, ej. card de auth), `public/icon.png` (versión chica T3 para el header).
+- Inputs nativos en mobile: `font-size` ≥ **16 px** para evitar el zoom automático de iOS Safari.
+- Header `app-header` (en `src/app/app.html`) es **sticky** y se muestra siempre; el bloque de logout sólo aparece autenticado.
+- La paleta y todos los tokens `--t3-…` viven en `src/styles.scss` (fuente autoritativa de valores; no copiar hex sueltos a otros archivos).
+
+### Reglas de juego (matiz de implementación)
+
+- La modalidad **lobby vs bots** (feature `003`) es **1 vs 1** (usuario + 1 bot). Los selectores de "a cuántas" exponen series (1/3/5 partidas), nunca puntos de marcador estilo truco tradicional (15/30/falta).
+
+### Contrato `gamesToPlay` (matiz)
+
+- La descripción en `docs/CONTRATOS_API.md §9.2` ("Partidas a ganar para terminar el match") está **mal redactada**: el valor real es "partidas totales de la serie". El BE valida `{1, 3, 5}` y devuelve `422 InvalidGamesToPlayException` con cualquier otro valor (p. ej. `2` para `BEST_OF_3` → falla en runtime). Mapear siempre `BEST_OF_1 → 1`, `BEST_OF_3 → 3`, `BEST_OF_5 → 5`.

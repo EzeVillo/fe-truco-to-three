@@ -208,6 +208,40 @@ describe('MatchStateService', () => {
       expect(mockEventQueue.enqueueTransactional).toHaveBeenCalledOnce();
     });
 
+    it('GAME_STARTED completa el roster del host en una pública (autostart, sin pasar por READY)', () => {
+      service.init('test-match');
+      // El host arranca esperando: rival aún null.
+      const initialReq = httpMock.expectOne(`${environment.apiUrl}/matches/test-match`);
+      initialReq.flush(makeWaitingSnapshot());
+
+      // La cola real aplica el GAME_STARTED vía applyTransactional: lo invocamos
+      // directo porque el eventQueue está mockeado.
+      const applyTransactional = mockEventQueue.init.mock.calls[0][0].applyTransactional as (
+        e: MatchWsEvent,
+      ) => void;
+      applyTransactional({
+        matchId: 'test-match',
+        eventType: 'GAME_STARTED',
+        timestamp: Date.now(),
+        payload: {},
+        stateVersion: 2,
+      });
+
+      expect(service.state()?.status).toBe('IN_PROGRESS');
+
+      // ensureRosterNames dispara un GET para completar identidades faltantes.
+      const rosterReq = httpMock.expectOne(`${environment.apiUrl}/matches/test-match`);
+      rosterReq.flush(makeWaitingSnapshot({
+        status: 'IN_PROGRESS',
+        playerTwoUsername: 'martina',
+        stateVersion: 2,
+      }));
+
+      // El nombre del rival aparece y el status NO se revierte a WAITING.
+      expect(service.state()?.playerTwoUsername).toBe('martina');
+      expect(service.state()?.status).toBe('IN_PROGRESS');
+    });
+
     // La integración de eventos derivados (enqueueDerived) se verifica
     // indirectamente a través del spec de MatchEventQueueService y del
     // test de init() que confirma que applyDerived se pasa correctamente.

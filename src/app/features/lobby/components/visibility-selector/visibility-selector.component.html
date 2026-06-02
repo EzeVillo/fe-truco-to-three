@@ -1,0 +1,15 @@
+<div class="visibility" role="radiogroup" aria-label="Visibilidad de la partida">
+  @for (opt of options; track opt.value) {
+    <button
+      type="button"
+      role="radio"
+      class="visibility__option"
+      [class.visibility__option--active]="visibility() === opt.value"
+      [attr.aria-checked]="visibility() === opt.value"
+      [attr.aria-label]="opt.ariaLabel"
+      (click)="select(opt.value)"
+    >
+      {{ opt.label }}
+    </button>
+  }
+</div>

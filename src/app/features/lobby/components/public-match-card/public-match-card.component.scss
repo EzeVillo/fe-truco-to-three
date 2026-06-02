@@ -1,0 +1,103 @@
+.public-match-card {
+  display: flex;
+  align-items: center;
+  gap: var(--t3-gap-sm);
+  padding: var(--t3-gap-sm) var(--t3-gap-md);
+  border-radius: var(--t3-radius-md);
+  background: var(--t3-bg-deep);
+  border: 1px solid var(--t3-card-border);
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  &__host {
+    display: flex;
+    align-items: center;
+    gap: var(--t3-gap-xs);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--t3-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__badge {
+    flex: none;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 1px 6px;
+    border-radius: var(--t3-radius-sm);
+    background: var(--t3-gold-bg-subtle);
+    color: var(--t3-gold-500);
+  }
+
+  &__meta {
+    font-size: 0.8rem;
+    color: var(--t3-text-muted);
+  }
+
+  &__action {
+    flex: none;
+    min-height: 40px;
+    white-space: nowrap;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// CTA tematizado (patrón del proyecto — estilos scopeados por componente).
+// ---------------------------------------------------------------------------
+
+.t3-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--t3-gap-xs);
+  min-height: 44px;
+  padding: 0 var(--t3-gap-md);
+  border-radius: var(--t3-radius-md);
+  border: 1px solid transparent;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+
+  &:disabled,
+  &[disabled] {
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}
+
+.t3-btn--primary {
+  background: var(--t3-cta-bg);
+  border-color: transparent;
+  color: var(--t3-cta-text-on);
+  box-shadow: var(--t3-shadow-gold);
+
+  @media (hover: hover) {
+    &:hover:not(:disabled, [disabled]) {
+      background: var(--t3-cta-bg-hover);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--t3-gold-400);
+    outline-offset: 2px;
+  }
+
+  &:disabled,
+  &[disabled] {
+    background: var(--t3-cta-disabled-bg);
+    color: var(--t3-cta-disabled-text);
+    box-shadow: none;
+  }
+}

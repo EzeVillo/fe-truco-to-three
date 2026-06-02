@@ -280,3 +280,12 @@ router-outlet {
 .cdk-overlay-backdrop.t3-game-won-backdrop {
   background-color: var(--t3-surface-overlay);
 }
+
+// =============================================================================
+// Theming del toast del lobby público (MatSnackBar, feature 021)
+// =============================================================================
+.public-lobby-snackbar {
+  --mdc-snackbar-container-color: var(--t3-green-700);
+  --mdc-snackbar-supporting-text-color: var(--t3-text);
+  --mat-snack-bar-button-color: var(--t3-gold-400);
+}

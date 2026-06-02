@@ -75,6 +75,7 @@ export class MatchStateService {
   private currentMatchId: string | null = null;
   private wasConnected = false;
   private refreshing = false;
+  private ensuringRoster = false;
 
   init(matchId: string): void {
     this.currentMatchId = matchId;
@@ -334,6 +335,13 @@ export class MatchStateService {
       this.envidoResolved$.next(event.payload as EnvidoResolvedPayload);
     }
 
+    // En partidas PÚBLICAS el rival entra por autostart y el host nunca pasa por
+    // READY: el `GAME_STARTED` no trae el roster, así que `playerTwoUsername`
+    // quedaría null. Completamos las identidades faltantes (seguro: son inmutables).
+    if (event.eventType === 'GAME_STARTED') {
+      this.ensureRosterNames();
+    }
+
     // Eventos de sala de espera (pre-juego). Feature 015 (research D7).
     if (
       (event.eventType === 'PLAYER_JOINED' || event.eventType === 'PLAYER_READY') &&
@@ -369,7 +377,53 @@ export class MatchStateService {
     const current = this.state();
     if (current?.status === 'READY' && current.playerTwoUsername === null) {
       this.refresh();
+    } else if (current?.status === 'IN_PROGRESS' && current.playerTwoUsername === null) {
+      // El host carga directo en una pública ya IN_PROGRESS por autostart: el
+      // snapshot inicial puede no traer el roster aún. Completar identidades.
+      this.ensureRosterNames();
     }
+  }
+
+  /**
+   * Garantiza que ambos jugadores tengan nombre, sin importar el `status`. Los
+   * usernames son identidades inmutables durante la partida, por lo que parchearlos
+   * es seguro ante carreras (a diferencia de `refresh()`, que toca `status` y por
+   * eso se limita al pre-juego). Necesario en partidas PÚBLICAS: el rival entra por
+   * autostart, el host no pasa por READY y el `GAME_STARTED` no trae el roster, con
+   * lo que `playerTwoUsername` queda null y se propaga al marcador y a los modales.
+   */
+  private ensureRosterNames(): void {
+    if (!this.currentMatchId || this.ensuringRoster) {
+      return;
+    }
+    const current = this.state();
+    if (!current || current.status === 'FINISHED') {
+      return;
+    }
+    if (current.playerOneUsername && current.playerTwoUsername) {
+      return; // roster completo
+    }
+    this.ensuringRoster = true;
+    const url = `${environment.apiUrl}/matches/${this.currentMatchId}`;
+    const sub = this.http.get<MatchSnapshot>(url).subscribe({
+      next: (snap) => {
+        this.ensuringRoster = false;
+        const cur = this.state();
+        if (!cur) {
+          return;
+        }
+        // Solo completar identidades faltantes; nunca tocar status/score/ronda.
+        this.state.set({
+          ...cur,
+          playerOneUsername: cur.playerOneUsername || snap.playerOneUsername,
+          playerTwoUsername: cur.playerTwoUsername ?? snap.playerTwoUsername,
+        });
+      },
+      error: () => {
+        this.ensuringRoster = false;
+      },
+    });
+    this.subscriptions.push(sub);
   }
 
   private emitMatchEnded(event: MatchWsEvent): void {

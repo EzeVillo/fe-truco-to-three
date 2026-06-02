@@ -96,6 +96,8 @@
 
   &__achievement {
     display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
     gap: var(--t3-gap-sm);
     padding: var(--t3-gap-md);
 
@@ -115,6 +117,18 @@
       color: var(--t3-text-muted);
       font-size: 0.9rem;
     }
+  }
+
+  &__achievement--locked {
+    opacity: 0.55;
+
+    h3 {
+      color: var(--t3-text-muted);
+    }
+  }
+
+  &__lock {
+    color: var(--t3-text-dim);
   }
 
   &__empty,

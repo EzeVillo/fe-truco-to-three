@@ -185,3 +185,22 @@ export interface JoinResponse {
   /** UUID del recurso destino (matchId si targetType === 'MATCH'). */
   targetId: string;
 }
+
+// ---------- Feature 020-quick-match: emparejamiento automatico ----------
+// Fuente: docs/CONTRATOS_API.md §9.3
+
+export type QuickMatchStatus = 'SEARCHING' | 'MATCHED';
+
+export interface QuickMatchRequest {
+  /** Partidas totales de la serie (mejor de N). Valores validos: 1, 3, 5. */
+  gamesToPlay: 1 | 3 | 5;
+}
+
+export interface QuickMatchResponse {
+  /** SEARCHING: en cola. MATCHED: match creado. */
+  status: QuickMatchStatus;
+  /** UUID del match creado; null si aun esta buscando. */
+  matchId: string | null;
+  /** Momento ISO-8601 en que el jugador entro a la cola. */
+  enqueuedAt: string;
+}

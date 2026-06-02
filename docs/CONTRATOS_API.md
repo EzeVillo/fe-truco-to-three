@@ -2457,7 +2457,7 @@ Request:
 
 | Campo         | Tipo      | Descripcion                                        |
 |---------------|-----------|----------------------------------------------------|
-| `gamesToPlay` | `integer` | Partidas a ganar para terminar el match (minimo 1) |
+| `gamesToPlay` | `integer` | Partidas totales de la serie. Valores validos: `1`, `3`, `5` |
 
 Response `200`:
 

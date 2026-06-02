@@ -1,0 +1,78 @@
+<section class="quick-match">
+  <div class="quick-match__topbar">
+    <app-back-button label="Volver al lobby" (back)="goBack()" />
+    <h1 class="quick-match__title">Partida rápida</h1>
+  </div>
+
+  <div class="quick-match__scroll">
+    <div class="quick-match__panel">
+      @if (state() === 'searching' || state() === 'cancelling' || state() === 'matched') {
+        <div class="quick-match__state">
+          <mat-spinner diameter="28" class="quick-match__spinner" />
+          <h2 class="quick-match__panel-title">
+            @if (state() === 'matched') {
+              Rival encontrado
+            } @else {
+              Buscando rival
+            }
+          </h2>
+          <p class="quick-match__panel-desc">
+            Serie {{ selectedFormatLabel() }}. Te llevamos a la partida apenas aparezca rival.
+          </p>
+
+          @if (enqueuedAt()) {
+            <p class="quick-match__meta">Búsqueda activa desde {{ enqueuedAt() }}</p>
+          }
+
+          @if (error()) {
+            <p class="quick-match__error" role="alert">{{ error() }}</p>
+          }
+
+          <button
+            type="button"
+            class="t3-btn t3-btn--neutral quick-match__cta"
+            [disabled]="state() !== 'searching'"
+            [attr.aria-busy]="state() === 'cancelling' ? 'true' : null"
+            (click)="cancelSearch()"
+          >
+            @if (state() === 'cancelling') {
+              <mat-spinner diameter="18" class="quick-match__spinner" />
+              <span>Cancelando...</span>
+            } @else {
+              <span>Cancelar búsqueda</span>
+            }
+          </button>
+        </div>
+      } @else {
+        <h2 class="quick-match__panel-title">Buscar rival</h2>
+        <p class="quick-match__panel-desc">
+          Entrá a una cola automática contra otro jugador y empezá cuando haya match.
+        </p>
+
+        <app-series-format-selector
+          [format]="seriesFormat()"
+          (formatChange)="onChangeFormat($event)"
+        />
+
+        @if (error()) {
+          <p class="quick-match__error" role="alert">{{ error() }}</p>
+        }
+
+        <button
+          type="button"
+          class="t3-btn t3-btn--primary quick-match__cta"
+          [disabled]="!canSearch()"
+          [attr.aria-busy]="isBusy() ? 'true' : null"
+          (click)="onSearch()"
+        >
+          @if (state() === 'submitting') {
+            <mat-spinner diameter="18" class="quick-match__spinner" />
+            <span>Buscando...</span>
+          } @else {
+            <span>Buscar rival</span>
+          }
+        </button>
+      }
+    </div>
+  </div>
+</section>

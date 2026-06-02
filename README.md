@@ -30,6 +30,12 @@ Once the server is running, open your browser and navigate to `http://localhost:
 - El enlace canónico de invitación es `http://localhost:4200/join/{joinCode}` y abre el flujo de unión con el código cargado.
 - Si quien abre el enlace no está logueado, el front lo manda a autenticación y después vuelve al mismo `join` para completar la entrada a la sala.
 
+## Partida rápida
+
+- El lobby ofrece **Partida rápida** en `http://localhost:4200/lobby/quick-match`.
+- El jugador elige una serie **Mejor de 1**, **Mejor de 3** o **Mejor de 5**; el default es **Mejor de 3**.
+- Si hay rival disponible, la app navega directo a la partida. Si no, muestra el estado de búsqueda y permite cancelar.
+
 ## Reglas de la variante
 
 - El lobby muestra una sección con las reglas especiales del Truco a 3 puntos.

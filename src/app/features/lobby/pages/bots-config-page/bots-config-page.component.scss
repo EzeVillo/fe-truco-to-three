@@ -152,9 +152,11 @@
   border-color: var(--t3-btn-neutral-border);
   color: var(--t3-btn-neutral-text);
 
-  &:hover {
-    background: var(--t3-btn-neutral-bg-hover);
-    border-color: var(--t3-gold-400);
+  @media (hover: hover) {
+    &:hover {
+      background: var(--t3-btn-neutral-bg-hover);
+      border-color: var(--t3-gold-400);
+    }
   }
 
   &:active {
@@ -180,8 +182,10 @@
   color: var(--t3-cta-text-on);
   box-shadow: var(--t3-shadow-gold);
 
-  &:hover:not(:disabled, [disabled]) {
-    background: var(--t3-cta-bg-hover);
+  @media (hover: hover) {
+    &:hover:not(:disabled, [disabled]) {
+      background: var(--t3-cta-bg-hover);
+    }
   }
 
   &:active:not(:disabled, [disabled]) {

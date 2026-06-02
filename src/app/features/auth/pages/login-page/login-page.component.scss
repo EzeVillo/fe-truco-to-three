@@ -79,8 +79,10 @@
     transition: all 0.18s ease;
     font-family: inherit;
 
-    &:hover:not(&--active) {
-      color: var(--t3-text);
+    @media (hover: hover) {
+      &:hover:not(&--active) {
+        color: var(--t3-text);
+      }
     }
 
     &--active {
@@ -139,9 +141,11 @@
       filter 0.18s ease;
     box-shadow: var(--t3-shadow-gold);
 
-    &:hover:not(:disabled) {
-      filter: brightness(1.05);
-      box-shadow: 0 6px 18px rgba(232, 183, 58, 0.35);
+    @media (hover: hover) {
+      &:hover:not(:disabled) {
+        filter: brightness(1.05);
+        box-shadow: 0 6px 18px rgba(232, 183, 58, 0.35);
+      }
     }
 
     &:active:not(:disabled) {

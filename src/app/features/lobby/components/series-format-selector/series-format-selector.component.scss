@@ -31,8 +31,10 @@
       font-weight: 600;
     }
 
-    &:not(&--active):hover {
-      color: var(--t3-btn-neutral-text);
+    @media (hover: hover) {
+      &:not(&--active):hover {
+        color: var(--t3-btn-neutral-text);
+      }
     }
   }
 }

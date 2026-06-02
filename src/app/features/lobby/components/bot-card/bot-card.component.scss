@@ -18,8 +18,10 @@
     border-color 0.18s ease,
     box-shadow 0.18s ease;
 
-  &:hover {
-    border-color: var(--t3-gold-border-hover);
+  @media (hover: hover) {
+    &:hover {
+      border-color: var(--t3-gold-border-hover);
+    }
   }
 
   &:focus-visible {

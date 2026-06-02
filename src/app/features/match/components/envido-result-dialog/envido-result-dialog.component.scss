@@ -104,8 +104,10 @@
   border-color: transparent;
   color: var(--t3-cta-text-on);
 
-  &:hover {
-    background: var(--t3-cta-bg-hover);
+  @media (hover: hover) {
+    &:hover {
+      background: var(--t3-cta-bg-hover);
+    }
   }
 
   &:active {

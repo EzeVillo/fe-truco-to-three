@@ -59,9 +59,11 @@
   border-color: var(--t3-btn-neutral-border);
   color: var(--t3-btn-neutral-text);
 
-  &:hover {
-    background: var(--t3-btn-neutral-bg-hover);
-    border-color: var(--t3-gold-400);
+  @media (hover: hover) {
+    &:hover {
+      background: var(--t3-btn-neutral-bg-hover);
+      border-color: var(--t3-gold-400);
+    }
   }
 
   &:active {
@@ -86,9 +88,11 @@
   border-color: var(--t3-danger-border);
   color: var(--t3-danger);
 
-  &:hover {
-    background: var(--t3-danger-bg);
-    border-color: var(--t3-danger);
+  @media (hover: hover) {
+    &:hover {
+      background: var(--t3-danger-bg);
+      border-color: var(--t3-danger);
+    }
   }
 
   &:active {
@@ -113,8 +117,10 @@
   border-color: transparent;
   color: var(--t3-cta-text-on);
 
-  &:hover {
-    background: var(--t3-cta-bg-hover);
+  @media (hover: hover) {
+    &:hover {
+      background: var(--t3-cta-bg-hover);
+    }
   }
 
   &:active {

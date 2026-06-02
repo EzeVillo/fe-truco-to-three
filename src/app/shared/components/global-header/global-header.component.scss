@@ -58,8 +58,10 @@
   &__user-link {
     text-decoration: none;
 
-    &:hover {
-      color: var(--t3-gold-500);
+    @media (hover: hover) {
+      &:hover {
+        color: var(--t3-gold-500);
+      }
     }
 
     &:focus-visible {
@@ -84,9 +86,11 @@
       background-color 0.18s ease,
       border-color 0.18s ease;
 
-    &:hover {
-      background: var(--t3-gold-bg-subtle);
-      border-color: var(--t3-gold-500);
+    @media (hover: hover) {
+      &:hover {
+        background: var(--t3-gold-bg-subtle);
+        border-color: var(--t3-gold-500);
+      }
     }
 
     &:focus-visible {

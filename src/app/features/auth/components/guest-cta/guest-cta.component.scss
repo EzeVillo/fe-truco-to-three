@@ -26,9 +26,11 @@
       background-color 0.18s ease,
       border-color 0.18s ease;
 
-    &:hover:not(:disabled) {
-      background: var(--t3-gold-bg-subtle);
-      border-color: var(--t3-gold-500);
+    @media (hover: hover) {
+      &:hover:not(:disabled) {
+        background: var(--t3-gold-bg-subtle);
+        border-color: var(--t3-gold-500);
+      }
     }
 
     &:disabled {

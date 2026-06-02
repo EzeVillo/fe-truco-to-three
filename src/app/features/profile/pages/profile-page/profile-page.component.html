@@ -1,9 +1,7 @@
 <section class="profile-page" aria-labelledby="profile-title">
   <div class="profile-page__inner">
     <header class="profile-page__header">
-      <button type="button" class="t3-btn t3-btn--neutral profile-page__back" (click)="goBack()">
-        Volver
-      </button>
+      <app-back-button (back)="goBack()" />
       <div>
         <p class="profile-page__eyebrow">Perfil</p>
         <h1 id="profile-title" class="profile-page__title">{{ username() }}</h1>

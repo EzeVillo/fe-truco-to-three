@@ -1,13 +1,6 @@
 <section class="online-match">
   <div class="online-match__topbar">
-    <button
-      type="button"
-      class="t3-btn t3-btn--neutral online-match__back"
-      (click)="goBack()"
-      aria-label="Volver al lobby"
-    >
-      ← Volver
-    </button>
+    <app-back-button label="Volver al lobby" (back)="goBack()" />
     <h1 class="online-match__title">Jugar online</h1>
   </div>
 

@@ -143,7 +143,7 @@ describe('ProfilePageComponent', () => {
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelectorAll('time')).toHaveLength(1);
     expect(el.querySelectorAll('.profile-page__achievement--locked')).toHaveLength(2);
-    expect(el.querySelectorAll('mat-icon')).toHaveLength(2);
+    expect(el.querySelectorAll('.profile-page__lock')).toHaveLength(2);
   });
 
   it('degrada a solo-desbloqueados cuando el catálogo falla', () => {

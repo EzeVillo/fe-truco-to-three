@@ -3,6 +3,7 @@ import { By } from '@angular/platform-browser';
 import { Router, provideRouter } from '@angular/router';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { RulesSectionComponent } from '../../components/rules-section/rules-section.component';
+import { BackButtonComponent } from '../../../../shared/components/back-button';
 import { RulesPageComponent } from './rules-page.component';
 
 describe('RulesPageComponent', () => {
@@ -32,8 +33,8 @@ describe('RulesPageComponent', () => {
     const router = TestBed.inject(Router);
     const navSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
 
-    const button = fixture.debugElement.query(By.css('.rules-page__back'));
-    button.nativeElement.click();
+    const backButton = fixture.debugElement.query(By.directive(BackButtonComponent));
+    backButton.componentInstance.back.emit();
 
     expect(navSpy).toHaveBeenCalledWith('/lobby');
   });
@@ -42,8 +43,11 @@ describe('RulesPageComponent', () => {
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
 
     expect(fixture.debugElement.query(By.css('.rules-page__topbar'))).toBeTruthy();
-    expect(fixture.debugElement.query(By.css('.t3-btn.t3-btn--neutral'))).toBeTruthy();
-    expect(text).toContain('← Volver');
+    const backButton = fixture.debugElement.query(By.directive(BackButtonComponent));
+    expect(backButton).toBeTruthy();
+    expect(backButton.nativeElement.querySelector('button').getAttribute('aria-label')).toBe(
+      'Volver al lobby',
+    );
     expect(text).toContain('Reglas de la variante');
   });
 });

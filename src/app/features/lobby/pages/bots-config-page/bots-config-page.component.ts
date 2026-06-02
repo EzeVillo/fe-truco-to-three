@@ -3,6 +3,7 @@ import type { OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { BotCardComponent } from '../../components/bot-card/bot-card.component';
+import { BackButtonComponent } from '../../../../shared/components/back-button';
 import { SeriesFormatSelectorComponent } from '../../components/series-format-selector/series-format-selector.component';
 import { BotsApiService } from '../../services/bots-api.service';
 import type { Bot } from '../../../../core/models/bot.models';
@@ -21,6 +22,7 @@ import { HttpErrorResponse } from '@angular/common/http';
     BotCardComponent,
     SeriesFormatSelectorComponent,
     MatProgressSpinnerModule,
+    BackButtonComponent,
   ],
   templateUrl: './bots-config-page.component.html',
   styleUrl: './bots-config-page.component.scss',

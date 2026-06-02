@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal, type OnIn
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { SeriesFormatSelectorComponent } from '../../components/series-format-selector/series-format-selector.component';
+import { BackButtonComponent } from '../../../../shared/components/back-button';
 import { MatchesApiService } from '../../services/matches-api.service';
 import {
   DEFAULT_SERIES_FORMAT,
@@ -14,7 +15,7 @@ import { getErrorCopy } from '../../../../shared/error-copy/error-copy';
 @Component({
   selector: 'app-online-match-page',
   standalone: true,
-  imports: [SeriesFormatSelectorComponent, MatProgressSpinnerModule],
+  imports: [SeriesFormatSelectorComponent, MatProgressSpinnerModule, BackButtonComponent],
   templateUrl: './online-match-page.component.html',
   styleUrl: './online-match-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

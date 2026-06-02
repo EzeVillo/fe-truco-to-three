@@ -15,11 +15,12 @@ import { ProfileApiService } from '../../services/profile-api.service';
 import { ProfileNotificationService } from '../../services/profile-notification.service';
 import { formatUnlockedAt } from '../../utils/achievement-display';
 import { mergeAchievements } from '../../utils/achievement-merge';
+import { BackButtonComponent } from '../../../../shared/components/back-button';
 
 @Component({
   selector: 'app-profile-page',
   standalone: true,
-  imports: [MatIconModule],
+  imports: [MatIconModule, BackButtonComponent],
   templateUrl: './profile-page.component.html',
   styleUrl: './profile-page.component.scss',
 })

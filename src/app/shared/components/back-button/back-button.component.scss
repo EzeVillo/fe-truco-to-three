@@ -1,0 +1,33 @@
+.back-button {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--t3-btn-neutral-border);
+  background: transparent;
+  color: var(--t3-btn-neutral-text);
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+
+  mat-icon {
+    display: block;
+    width: 22px;
+    height: 22px;
+    font-size: 22px;
+    line-height: 22px;
+  }
+
+  &:hover {
+    background: var(--t3-btn-neutral-bg-hover);
+    border-color: var(--t3-gold-400);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--t3-gold-400);
+    outline-offset: 2px;
+  }
+}

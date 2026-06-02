@@ -46,8 +46,6 @@ export class WaitingRoomComponent implements OnDestroy {
   readonly hostReady = input<boolean>(false);
   /** El rival ya confirmo que esta listo para jugar. */
   readonly rivalReady = input<boolean>(false);
-  /** Etiqueta del formato de serie (ej. "Mejor de 3"). */
-  readonly seriesLabel = input<string>('');
   /** Confirmacion de listo en curso. */
   readonly starting = input<boolean>(false);
   /** Acción de salida en curso. */

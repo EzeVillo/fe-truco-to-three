@@ -32,12 +32,6 @@
     color: var(--t3-text);
   }
 
-  &__series {
-    margin: 0;
-    font-size: 0.9rem;
-    color: var(--t3-text-muted);
-  }
-
   &__code-block {
     display: flex;
     flex-direction: column;
@@ -59,35 +53,31 @@
   &__code-row {
     display: flex;
     align-items: center;
-    gap: var(--t3-gap-sm);
   }
 
   &__code {
-    flex: 1;
+    min-width: 0;
     font-size: 1.5rem;
     font-weight: 700;
     letter-spacing: 0.12em;
     color: var(--t3-text);
     font-family: var(--t3-font-mono, monospace);
+    overflow-wrap: anywhere;
   }
 
-  &__copy {
-    min-height: 40px;
+  &__code-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--t3-gap-xs);
+    margin-top: var(--t3-gap-xs);
   }
 
-  &__link-row {
-    display: flex;
-    justify-content: flex-end;
-  }
-
+  &__copy,
   &__share {
+    width: 100%;
     min-height: 40px;
-  }
-
-  &__hint {
-    margin: 0;
-    font-size: 0.8rem;
-    color: var(--t3-text-muted);
+    padding: 0 var(--t3-gap-sm);
+    font-size: 0.85rem;
   }
 
   &__roster {
@@ -153,8 +143,8 @@
   }
 
   &__actions {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--t3-gap-sm);
   }
 
@@ -164,20 +154,28 @@
     min-height: 48px;
   }
 
+  &__start {
+    order: 2;
+  }
+
+  &__leave {
+    order: 1;
+  }
+
   @media (min-width: 1024px) {
     &__card {
       max-width: 480px;
       padding: var(--t3-gap-lg);
     }
 
-    &__actions {
-      flex-direction: row-reverse;
-      justify-content: space-between;
+    &__copy,
+    &__share {
+      padding: 0 var(--t3-gap-md);
+      font-size: 0.9rem;
     }
 
     &__start,
     &__leave {
-      width: auto;
       min-width: 160px;
     }
   }

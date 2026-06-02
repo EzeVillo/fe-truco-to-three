@@ -1,13 +1,14 @@
 <section class="waiting-room">
   <div class="waiting-room__card">
     <h1 class="waiting-room__title">Partida privada</h1>
-    <p class="waiting-room__series">{{ seriesLabel() }}</p>
 
     @if (isHost() && joinCode()) {
       <div class="waiting-room__code-block">
         <span class="waiting-room__code-label">Código para compartir</span>
         <div class="waiting-room__code-row">
           <span class="waiting-room__code" aria-label="Código de la partida">{{ joinCode() }}</span>
+        </div>
+        <div class="waiting-room__code-actions">
           <button
             type="button"
             class="t3-btn t3-btn--neutral waiting-room__copy"
@@ -16,8 +17,6 @@
           >
             {{ copied() ? '¡Copiado!' : 'Copiar' }}
           </button>
-        </div>
-        <div class="waiting-room__link-row">
           <button
             type="button"
             class="t3-btn t3-btn--neutral waiting-room__share"
@@ -27,9 +26,6 @@
             {{ shareLinkLabel() }}
           </button>
         </div>
-        <p class="waiting-room__hint">
-          Compartí este código o el enlace directo para que tu rival entre sin escribirlo.
-        </p>
       </div>
     }
 

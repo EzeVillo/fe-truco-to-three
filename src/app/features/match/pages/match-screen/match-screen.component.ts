@@ -75,11 +75,6 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     const rivalPresent = state.playerTwoUsername !== null;
     const hostReady = isHost ? this.selfReady() : this.opponentReady();
     const rivalReady = isHost ? this.opponentReady() : this.selfReady();
-    const seriesLabels: Record<1 | 3 | 5, string> = {
-      1: 'Mejor de 1',
-      3: 'Mejor de 3',
-      5: 'Mejor de 5',
-    };
     return {
       isHost,
       joinCode: this.joinCode(),
@@ -91,7 +86,6 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
       opponentReady: this.opponentReady(),
       hostReady,
       rivalReady,
-      seriesLabel: seriesLabels[state.gamesToPlay],
     };
   });
 

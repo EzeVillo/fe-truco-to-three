@@ -42,9 +42,11 @@
   opacity: 1;
 }
 
-.action-bar__btn--enabled:hover {
-  background-color: var(--t3-gold-bg-subtle);
-  color: var(--t3-white);
+@media (hover: hover) {
+  .action-bar__btn--enabled:hover {
+    background-color: var(--t3-gold-bg-subtle);
+    color: var(--t3-white);
+  }
 }
 
 .action-bar__btn--enabled:active {

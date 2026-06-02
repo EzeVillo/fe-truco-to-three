@@ -62,8 +62,10 @@
   border-right: 1px solid var(--t3-envido-tab-divider);
 }
 
-.envido-response-panel__tab-btn--quiero:hover {
-  background-color: var(--t3-envido-quiero-bg-hover);
+@media (hover: hover) {
+  .envido-response-panel__tab-btn--quiero:hover {
+    background-color: var(--t3-envido-quiero-bg-hover);
+  }
 }
 
 .envido-response-panel__tab-btn--quiero:active {
@@ -75,8 +77,10 @@
   color: var(--t3-white);
 }
 
-.envido-response-panel__tab-btn--no-quiero:hover {
-  background-color: var(--t3-envido-no-quiero-bg-hover);
+@media (hover: hover) {
+  .envido-response-panel__tab-btn--no-quiero:hover {
+    background-color: var(--t3-envido-no-quiero-bg-hover);
+  }
 }
 
 .envido-response-panel__tab-btn--no-quiero:active {
@@ -128,9 +132,11 @@
   opacity: 1;
 }
 
-.envido-response-panel__sub-btn--enabled:hover {
-  background-color: var(--t3-gold-bg-subtle);
-  color: var(--t3-white);
+@media (hover: hover) {
+  .envido-response-panel__sub-btn--enabled:hover {
+    background-color: var(--t3-gold-bg-subtle);
+    color: var(--t3-white);
+  }
 }
 
 .envido-response-panel__sub-btn--enabled:active {

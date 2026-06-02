@@ -34,9 +34,11 @@
     background-color 120ms ease;
 }
 
-.envido-submenu__btn:hover {
-  background-color: var(--t3-gold-bg-subtle);
-  color: var(--t3-white);
+@media (hover: hover) {
+  .envido-submenu__btn:hover {
+    background-color: var(--t3-gold-bg-subtle);
+    color: var(--t3-white);
+  }
 }
 
 .envido-submenu__btn:active {

@@ -113,6 +113,11 @@
       color: var(--t3-text-muted);
       font-size: 0.9rem;
     }
+
+    time {
+      grid-column: 1 / -1;
+      justify-self: start;
+    }
   }
 
   &__achievement--locked {

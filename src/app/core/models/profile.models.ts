@@ -23,6 +23,24 @@ export interface AchievementDefinition {
   description: string;
 }
 
+export interface AchievementCatalogEntry {
+  achievementCode: string;
+}
+
+export interface AchievementsCatalogResponse {
+  achievements: AchievementCatalogEntry[];
+}
+
+export interface AchievementView {
+  code: string;
+  name: string;
+  description: string;
+  unlocked: boolean;
+  unlockedAt?: number;
+  matchId?: string;
+  gameNumber?: number;
+}
+
 interface WsEventBase<TType extends string, TPayload> {
   eventType: TType;
   timestamp: number;

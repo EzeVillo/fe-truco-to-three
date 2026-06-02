@@ -39,17 +39,24 @@
 
       <section class="profile-page__achievements" aria-labelledby="achievements-title">
         <h2 id="achievements-title">Logros</h2>
-        @if (currentProfile.achievements.length === 0) {
+        @if (achievements().length === 0) {
           <p class="profile-page__empty">Todavia no hay logros desbloqueados.</p>
         } @else {
           <ul class="profile-page__achievement-list">
-            @for (achievement of currentProfile.achievements; track achievement.achievementCode) {
-              <li class="profile-page__achievement">
+            @for (achievement of achievements(); track achievement.code) {
+              <li
+                class="profile-page__achievement"
+                [class.profile-page__achievement--locked]="!achievement.unlocked"
+              >
                 <div>
-                  <h3>{{ achievementName(achievement) }}</h3>
-                  <p>{{ achievementDescription(achievement) }}</p>
+                  <h3>{{ achievement.name }}</h3>
+                  <p>{{ achievement.description }}</p>
                 </div>
-                <time [attr.datetime]="achievement.unlockedAt">{{ unlockedAt(achievement) }}</time>
+                @if (achievement.unlocked) {
+                  <time [attr.datetime]="achievement.unlockedAt">{{ unlockedAt(achievement) }}</time>
+                } @else {
+                  <mat-icon class="profile-page__lock" aria-label="Logro bloqueado">lock</mat-icon>
+                }
               </li>
             }
           </ul>

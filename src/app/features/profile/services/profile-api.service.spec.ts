@@ -4,7 +4,10 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { environment } from '../../../../environments/environment';
 import { ProfileApiService } from './profile-api.service';
-import type { PlayerProfile } from '../../../core/models/profile.models';
+import type {
+  AchievementsCatalogResponse,
+  PlayerProfile,
+} from '../../../core/models/profile.models';
 
 describe('ProfileApiService', () => {
   let service: ProfileApiService;
@@ -36,5 +39,25 @@ describe('ProfileApiService', () => {
     req.flush(profile);
 
     expect(result).toEqual(profile);
+  });
+
+  it('getAchievementsCatalog(): GET /achievements', () => {
+    const catalog: AchievementsCatalogResponse = {
+      achievements: [
+        { achievementCode: 'WIN_GAME_THREE_ZERO_VIA_ACCEPTED_RETRUCO' },
+        { achievementCode: 'FOLD_BEFORE_ANY_CARD_IS_PLAYED' },
+      ],
+    };
+    let result: AchievementsCatalogResponse | null = null;
+
+    service.getAchievementsCatalog().subscribe((res) => {
+      result = res;
+    });
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/achievements`);
+    expect(req.request.method).toBe('GET');
+    req.flush(catalog);
+
+    expect(result).toEqual(catalog);
   });
 });

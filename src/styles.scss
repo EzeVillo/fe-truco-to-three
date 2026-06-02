@@ -207,11 +207,22 @@ router-outlet {
 // No afecta ningún otro MatDialog de la aplicación.
 // =============================================================================
 .t3-confirm-dialog {
-  --mdc-dialog-container-color: var(--t3-card-bg);
+  --mdc-dialog-container-color: transparent;
   --mdc-dialog-subhead-color: var(--t3-text);
   --mdc-dialog-supporting-text-color: var(--t3-text-muted);
   --mdc-dialog-container-shape: var(--t3-radius-lg);
+  overflow: hidden;
+  border-radius: var(--t3-radius-lg);
   box-shadow: var(--t3-shadow-card);
+
+  .mat-mdc-dialog-container {
+    background-color: transparent !important;
+  }
+
+  .mdc-dialog__surface {
+    background-color: var(--t3-card-bg) !important;
+    border-radius: var(--t3-radius-lg);
+  }
 }
 
 .cdk-overlay-backdrop.t3-confirm-backdrop {

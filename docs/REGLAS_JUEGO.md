@@ -57,7 +57,7 @@ Dos cartas con el mismo rank empardan.
 
 ### 2.1 Cierre automático por ancho de espada
 
-El **1 de espada** (ancho de espada) cierra la round inmediatamente al ser jugado en los
+El **1 de espada** (ancho de espada) cierra el round inmediatamente al ser jugado en los
 siguientes casos:
 
 - La primera mano fue **parda** y el ancho se juega en la segunda mano.

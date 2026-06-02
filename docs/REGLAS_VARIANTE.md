@@ -48,7 +48,7 @@ mazo**:
 
 ## 5. Cierre automático por ancho de espada
 
-El **1 de espada** cierra la round inmediatamente al ser jugado en cualquiera de estos casos:
+El **1 de espada** cierra el round inmediatamente al ser jugado en cualquiera de estos casos:
 
 - La primera mano fue parda y el ancho se juega en la segunda mano.
 - El portador del ancho ganó la primera mano y juega el ancho en la segunda mano.

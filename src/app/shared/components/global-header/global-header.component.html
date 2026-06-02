@@ -1,16 +1,31 @@
 <header class="global-header">
-  <a class="global-header__brand" [routerLink]="authStore.isAuthenticated() ? '/lobby' : '/login'">
-    <img src="icon.png" alt="" class="global-header__brand-logo" />
-    <span class="global-header__brand-text"
-      >Truco<span class="global-header__brand-accent">a 3</span></span
-    >
-  </a>
+  @if (inMatch()) {
+    <span class="global-header__brand global-header__brand--disabled" aria-disabled="true">
+      <img src="icon.png" alt="" class="global-header__brand-logo" />
+      <span class="global-header__brand-text"
+        >Truco<span class="global-header__brand-accent">a 3</span></span
+      >
+    </span>
+  } @else {
+    <a class="global-header__brand" [routerLink]="authStore.isAuthenticated() ? '/lobby' : '/login'">
+      <img src="icon.png" alt="" class="global-header__brand-logo" />
+      <span class="global-header__brand-text"
+        >Truco<span class="global-header__brand-accent">a 3</span></span
+      >
+    </a>
+  }
 
   <span class="global-header__spacer"></span>
 
   @if (authStore.isAuthenticated()) {
     @if (profileLink(); as link) {
-      <a class="global-header__user global-header__user-link" [routerLink]="link">{{ userLabel() }}</a>
+      @if (inMatch()) {
+        <span class="global-header__user">{{ userLabel() }}</span>
+      } @else {
+        <a class="global-header__user global-header__user-link" [routerLink]="link">{{
+          userLabel()
+        }}</a>
+      }
     } @else {
       <span class="global-header__user">{{ userLabel() }}</span>
     }

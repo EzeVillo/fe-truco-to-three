@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { provideHttpClient } from '@angular/common/http';
@@ -91,6 +92,53 @@ describe('GlobalHeaderComponent', () => {
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('.global-header__user-link')).toBeNull();
     expect(el.querySelector('.global-header__user')?.textContent ?? '').toContain('Invitado');
+  });
+
+  it('dentro de una partida deshabilita la marca y el link de perfil, pero mantiene Salir', async () => {
+    @Component({ standalone: true, template: '' })
+    class StubComponent {}
+
+    const fakeStorage: Record<string, string> = {};
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation((k) => fakeStorage[k] ?? null);
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation((k, v) => {
+      fakeStorage[k] = v;
+    });
+    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation((k) => {
+      delete fakeStorage[k];
+    });
+
+    TestBed.configureTestingModule({
+      imports: [GlobalHeaderComponent],
+      providers: [
+        provideRouter([{ path: 'match/:matchId', component: StubComponent }]),
+        provideAnimationsAsync(),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        SessionStorageService,
+        AuthStore,
+        { provide: MatDialog, useValue: { open: vi.fn() } },
+      ],
+    });
+
+    const router = TestBed.inject(Router);
+    const store = TestBed.inject(AuthStore);
+    store.setSession(FULL_AUTH);
+    await router.navigateByUrl('/match/abc-123');
+
+    const fixture = TestBed.createComponent(GlobalHeaderComponent);
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    // Marca presente pero no navegable (span sin href)
+    const brand = el.querySelector('.global-header__brand');
+    expect(brand).toBeTruthy();
+    expect((brand as HTMLElement).tagName).toBe('SPAN');
+    expect(brand?.getAttribute('href')).toBeNull();
+    // Usuario visible pero sin link de perfil
+    expect(el.querySelector('.global-header__user-link')).toBeNull();
+    expect(el.querySelector('.global-header__user')?.textContent ?? '').toContain('juancho');
+    // Salir sigue disponible
+    expect(el.querySelector('.global-header__logout')?.textContent ?? '').toContain('Salir');
   });
 
   it('click en "Salir" abre ConfirmLogoutDialog', () => {

@@ -1,0 +1,43 @@
+<div class="public-match-list">
+  @if (isInitialLoading()) {
+    <div class="public-match-list__state" role="status">
+      <mat-spinner diameter="28" />
+      <p class="public-match-list__state-text">Cargando partidas…</p>
+    </div>
+  } @else if (isInitialError()) {
+    <div class="public-match-list__state" role="alert">
+      <p class="public-match-list__state-text">{{ errorText() }}</p>
+      <button type="button" class="t3-btn t3-btn--neutral" (click)="retry.emit()">
+        Reintentar
+      </button>
+    </div>
+  } @else if (isEmpty()) {
+    <div class="public-match-list__state">
+      <p class="public-match-list__state-text">
+        No hay partidas públicas abiertas. ¡Creá una y esperá rival!
+      </p>
+    </div>
+  } @else {
+    <div class="public-match-list__items">
+      @for (item of items(); track item.matchId) {
+        <app-public-match-card
+          [item]="item"
+          [own]="isOwn(item)"
+          [busy]="joiningId() === item.matchId"
+          (act)="act.emit($event)"
+        />
+      }
+    </div>
+
+    @if (hasMore()) {
+      <button
+        type="button"
+        class="t3-btn t3-btn--neutral public-match-list__more"
+        [disabled]="isLoadingMore()"
+        (click)="loadMore.emit()"
+      >
+        {{ isLoadingMore() ? 'Cargando…' : 'Cargar más' }}
+      </button>
+    }
+  }
+</div>

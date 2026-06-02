@@ -2,18 +2,30 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import { of, throwError } from 'rxjs';
+import { EMPTY, of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { OnlineMatchPageComponent } from './online-match-page.component';
 import { MatchesApiService } from '../../services/matches-api.service';
+import { WebSocketService } from '../../../../core/services/websocket.service';
 
 function setup(apiMock: Partial<MatchesApiService>, joinCode: string | null = null) {
+  // El store del lobby (provisto en el componente) llama listPublicMatches al
+  // arrancar y se suscribe al topic; damos defaults para que no rompa el TestBed.
+  const api: Partial<MatchesApiService> = {
+    listPublicMatches: () => of({ items: [], nextCursor: null }),
+    ...apiMock,
+  };
+
   TestBed.configureTestingModule({
     imports: [OnlineMatchPageComponent],
     providers: [
       provideRouter([]),
       provideAnimationsAsync(),
-      { provide: MatchesApiService, useValue: apiMock },
+      { provide: MatchesApiService, useValue: api },
+      {
+        provide: WebSocketService,
+        useValue: { connect: vi.fn(), connected: EMPTY, subscribe: () => EMPTY },
+      },
       {
         provide: ActivatedRoute,
         useValue: {
@@ -37,7 +49,7 @@ describe('OnlineMatchPageComponent', () => {
 
   it('crea una partida privada con el formato elegido y navega a /match/:id', () => {
     const createSpy = vi.fn().mockReturnValue(of({ matchId: 'm1', joinCode: 'ABC123', visibility: 'PRIVATE' }));
-    setup({ createPrivateMatch: createSpy });
+    setup({ createMatch: createSpy });
     const fixture = TestBed.createComponent(OnlineMatchPageComponent);
     const navSpy = vi.spyOn(fixture.componentInstance['router'], 'navigate');
     fixture.detectChanges();
@@ -49,8 +61,28 @@ describe('OnlineMatchPageComponent', () => {
     expect(navSpy).toHaveBeenCalledWith(['/match', 'm1'], { state: { joinCode: 'ABC123' } });
   });
 
+  it('crea una partida pública cuando se elige visibilidad PUBLIC', () => {
+    const createSpy = vi.fn().mockReturnValue(of({ matchId: 'mp', joinCode: 'PUB123', visibility: 'PUBLIC' }));
+    setup({ createMatch: createSpy });
+    const fixture = TestBed.createComponent(OnlineMatchPageComponent);
+    vi.spyOn(fixture.componentInstance['router'], 'navigate').mockResolvedValue(true);
+    fixture.detectChanges();
+
+    fixture.componentInstance.onChangeVisibility('PUBLIC');
+    fixture.componentInstance.onCreate();
+
+    expect(createSpy).toHaveBeenCalledWith({ gamesToPlay: 3, visibility: 'PUBLIC' });
+  });
+
+  it('por defecto la visibilidad es PRIVATE', () => {
+    setup({ createMatch: () => of({ matchId: 'm', joinCode: 'C', visibility: 'PRIVATE' }) });
+    const fixture = TestBed.createComponent(OnlineMatchPageComponent);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.visibility()).toBe('PRIVATE');
+  });
+
   it('persiste el joinCode en sessionStorage al crear (recuperable tras recarga)', () => {
-    setup({ createPrivateMatch: () => of({ matchId: 'm2', joinCode: 'XYZ789', visibility: 'PRIVATE' }) });
+    setup({ createMatch: () => of({ matchId: 'm2', joinCode: 'XYZ789', visibility: 'PRIVATE' }) });
     const fixture = TestBed.createComponent(OnlineMatchPageComponent);
     vi.spyOn(fixture.componentInstance['router'], 'navigate').mockResolvedValue(true);
     fixture.detectChanges();
@@ -62,7 +94,7 @@ describe('OnlineMatchPageComponent', () => {
 
   it('muestra copy de error de creación sin exponer el mensaje del backend (422)', () => {
     const err = new HttpErrorResponse({ status: 422, error: { message: 'PlayerAlreadyInMatch' } });
-    setup({ createPrivateMatch: () => throwError(() => err) });
+    setup({ createMatch: () => throwError(() => err) });
     const fixture = TestBed.createComponent(OnlineMatchPageComponent);
     fixture.detectChanges();
 

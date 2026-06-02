@@ -15,7 +15,8 @@ export type ErrorCopyScope =
   | 'PROFILE'
   | 'CREATE_MATCH'
   | 'JOIN_MATCH'
-  | 'QUICK_MATCH';
+  | 'QUICK_MATCH'
+  | 'PUBLIC_LOBBY';
 
 const FALLBACK = 'Ocurrió un error inesperado. Reintentá.';
 
@@ -147,6 +148,20 @@ export function getErrorCopy(scope: ErrorCopyScope, error: unknown): string {
       default:
         if (status >= 500 && status < 600) {
           return 'No pudimos buscar rival. Reintentá en unos segundos.';
+        }
+        return FALLBACK;
+    }
+  }
+
+  if (scope === 'PUBLIC_LOBBY') {
+    switch (status) {
+      case 401:
+        return '';
+      case 0:
+        return 'No pudimos cargar las partidas. Reintentá.';
+      default:
+        if (status >= 500 && status < 600) {
+          return 'No pudimos cargar las partidas. Reintentá.';
         }
         return FALLBACK;
     }

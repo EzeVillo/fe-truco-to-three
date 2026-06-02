@@ -1,0 +1,23 @@
+<div class="public-match-card">
+  <div class="public-match-card__info">
+    <span class="public-match-card__host">
+      {{ item().host }}
+      @if (own()) {
+        <span class="public-match-card__badge">Tuya</span>
+      }
+    </span>
+    <span class="public-match-card__meta">
+      {{ formatLabel() }} · {{ slots() }} jugadores
+    </span>
+  </div>
+
+  <button
+    type="button"
+    class="t3-btn t3-btn--primary public-match-card__action"
+    [disabled]="busy() || !canAct()"
+    [attr.aria-busy]="busy() ? 'true' : null"
+    (click)="onAct()"
+  >
+    {{ busy() ? 'Uniéndome…' : actionLabel() }}
+  </button>
+</div>

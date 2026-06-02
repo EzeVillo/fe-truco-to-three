@@ -7,10 +7,37 @@
   <div class="online-match__scroll">
     @if (!isInviteLink()) {
       <div class="online-match__panel">
+        <h2 class="online-match__panel-title">Partidas públicas</h2>
+        <p class="online-match__panel-desc">
+          Unite a una partida abierta o creá la tuya más abajo.
+        </p>
+
+        <app-public-match-list
+          [items]="lobby.items()"
+          [status]="lobby.status()"
+          [hasMore]="lobby.hasMore()"
+          [joiningId]="joiningId()"
+          [currentUsername]="currentUsername()"
+          (act)="onJoinPublic($event)"
+          (loadMore)="onLoadMorePublic()"
+          (retry)="onRetryPublic()"
+        />
+      </div>
+
+      <div class="online-match__panel">
         <h2 class="online-match__panel-title">Crear partida</h2>
         <p class="online-match__panel-desc">
-          Creá una partida privada y compartí el código o el enlace con tu rival.
+          @if (isPublicCreate()) {
+            Tu partida aparecerá en el lobby para que cualquiera se una.
+          } @else {
+            Creá una partida privada y compartí el código o el enlace con tu rival.
+          }
         </p>
+
+        <app-visibility-selector
+          [visibility]="visibility()"
+          (visibilityChange)="onChangeVisibility($event)"
+        />
 
         <app-series-format-selector
           [format]="seriesFormat()"
@@ -32,7 +59,7 @@
             <mat-spinner diameter="18" class="online-match__spinner" />
             <span>Creando…</span>
           } @else {
-            <span>Crear partida privada</span>
+            <span>{{ createCtaLabel() }}</span>
           }
         </button>
       </div>

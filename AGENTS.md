@@ -5,7 +5,7 @@ This file provides guidance to AI coding agents (Claude Code, Codex, etc.) when 
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/020-quick-match/plan.md`
+`specs/021-public-match-lobby/plan.md`
 <!-- SPECKIT END -->
 
 ## Reglas del juego (truco-to-three)
@@ -218,6 +218,21 @@ Nunca mostrar al usuario el campo `message` (ni equivalente) que venga del backe
 ### Reglas de juego (matiz de implementación)
 
 - La modalidad **lobby vs bots** (feature `003`) es **1 vs 1** (usuario + 1 bot). Los selectores de "a cuántas" exponen series (1/3/5 partidas), nunca puntos de marcador estilo truco tradicional (15/30/falta).
+
+### Lobby público (feature 021)
+
+- El motor de reconciliación de lobbies públicos es **genérico y reusable**:
+  `PublicLobbyStore<T>` en `src/app/shared/public-lobby/`. Encapsula "bootstrap REST paginado +
+  deltas WS" (Map por id, dedup, idempotencia, tombstones para no resucitar bajas durante una carga
+  en vuelo). El lobby de **matches** lo instancia en `features/lobby/services/public-match-lobby.store.ts`.
+  Para **copas/ligas** públicas a futuro: instanciar el mismo motor con su `loadPage`
+  (`GET /api/{cups,leagues}/public`) y su topic (`/topic/public-{cup,league}-lobby`), y escribir su
+  propia card; **no** reescribir el reconcile ni generalizar la UI.
+- Vive dentro de **"Jugar online"** (`lobby/online`), no es un modo nuevo. El toggle de visibilidad
+  por defecto es **PRIVATE** (preserva el flujo previo). Unirse reusa `joinByCode`; las públicas
+  arrancan solas al entrar el 2º jugador (sin `/start`).
+- Race condition al unirse → **toast no bloqueante** (`MatSnackBar`, `panelClass: public-lobby-snackbar`),
+  sin refresco forzado: la baja llega por el delta `PUBLIC_MATCH_LOBBY_REMOVED`.
 
 ### Contrato `gamesToPlay` (matiz)
 

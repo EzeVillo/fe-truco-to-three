@@ -63,6 +63,9 @@ export interface RoundState {
   myCards: Card[]; // solo se popula en GET /matches/{id} (no en spectate)
   roundStatus: RoundStatus;
   currentTrucoCall: TrucoCall | null;
+  // Canto de envido pendiente de respuesta; null si no hay envido en curso o ya
+  // se resolvió. Fuente: docs/CONTRATOS_API.md §8.2 (RoundStateResponse).
+  currentEnvidoCall: EnvidoCall | null;
   winner: string | null;
   availableActions: AvailableAction[];
   playedHands: PlayedHand[];

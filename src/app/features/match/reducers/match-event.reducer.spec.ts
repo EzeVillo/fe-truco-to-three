@@ -26,6 +26,7 @@ function makeState(overrides: Partial<MatchState> = {}): MatchState {
       ],
       roundStatus: 'PLAYING',
       currentTrucoCall: null,
+      currentEnvidoCall: null,
       winner: null,
       availableActions: [{ type: 'PLAY_CARD' }],
       playedHands: [],

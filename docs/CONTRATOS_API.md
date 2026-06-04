@@ -667,6 +667,7 @@ Response `200`:
     ],
     "roundStatus": "PLAYING",
     "currentTrucoCall": null,
+    "currentEnvidoCall": null,
     "winner": null,
     "availableActions": [
       {
@@ -744,6 +745,7 @@ Response `200`:
     "currentTurn": "juancho",
     "roundStatus": "PLAYING",
     "currentTrucoCall": "TRUCO",
+    "currentEnvidoCall": null,
     "winner": null,
     "playedHands": [
       {
@@ -1033,7 +1035,187 @@ Response `204` sin body.
 
 `GET /api/leagues/{leagueId}`
 
-Response `200`: estado completo, tabla y fixtures del liga.
+Auth: Bearer requerido. Solo los participantes de la liga pueden consultarla.
+
+Devuelve el estado completo de la liga: estado general, tabla de posiciones,
+ganador(es) y el calendario completo por jornadas (fixtures). Es la fuente única
+para renderizar la pantalla de liga (sala de espera, tabla de posiciones y
+fixtures).
+
+Response `200`:
+
+```json
+{
+  "leagueId": "league-123",
+  "status": "IN_PROGRESS",
+  "host": "juancho",
+  "totalSlots": 3,
+  "occupiedSlots": 3,
+  "canStart": false,
+  "participants": [
+    {
+      "player": "juancho",
+      "creator": true
+    },
+    {
+      "player": "martina",
+      "creator": false
+    },
+    {
+      "player": "pedro",
+      "creator": false
+    }
+  ],
+  "standings": [
+    {
+      "player": "juancho",
+      "wins": 3
+    },
+    {
+      "player": "martina",
+      "wins": 2
+    },
+    {
+      "player": "pedro",
+      "wins": 0
+    }
+  ],
+  "winners": [],
+  "matchdays": [
+    {
+      "matchdayNumber": 1,
+      "fixtures": [
+        {
+          "fixtureId": "fixture-1",
+          "matchdayNumber": 1,
+          "playerOne": "juancho",
+          "playerTwo": "martina",
+          "matchId": "match-abc",
+          "winner": "juancho",
+          "status": "FINISHED"
+        },
+        {
+          "fixtureId": "fixture-2",
+          "matchdayNumber": 1,
+          "playerOne": "pedro",
+          "playerTwo": null,
+          "matchId": null,
+          "winner": null,
+          "status": "LIBRE"
+        }
+      ]
+    },
+    {
+      "matchdayNumber": 2,
+      "fixtures": [
+        {
+          "fixtureId": "fixture-3",
+          "matchdayNumber": 2,
+          "playerOne": "juancho",
+          "playerTwo": "pedro",
+          "matchId": "match-def",
+          "winner": null,
+          "status": "PENDING"
+        },
+        {
+          "fixtureId": "fixture-4",
+          "matchdayNumber": 2,
+          "playerOne": "martina",
+          "playerTwo": null,
+          "matchId": null,
+          "winner": null,
+          "status": "LIBRE"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Campos de nivel raíz:
+
+| Campo           | Tipo            | Descripción                                                            |
+|-----------------|-----------------|------------------------------------------------------------------------|
+| `leagueId`      | `string`        | ID de la liga.                                                         |
+| `status`        | `string` (enum) | Estado de la liga. Ver tabla de estados abajo.                         |
+| `host`          | `string`        | Nombre visible del creador de la sala.                                 |
+| `totalSlots`    | `int`           | Cupo total de jugadores configurado para la liga.                      |
+| `occupiedSlots` | `int`           | Cantidad actual de participantes en la sala.                           |
+| `canStart`      | `boolean`       | `true` si el usuario autenticado puede iniciar la liga en este estado. |
+| `participants`  | `array`         | Participantes actuales de la sala, en orden de ingreso.                |
+| `standings`     | `array`         | Tabla de posiciones, ordenada por `wins` descendente.                  |
+| `winners`       | `array<string>` | Nombre(s) visible(s) del/los líder(es). Ver nota abajo.                |
+| `matchdays`     | `array`         | Calendario completo, una entrada por jornada.                          |
+
+Nota para sala de espera: `participants`, `totalSlots`, `occupiedSlots`, `host`
+y `canStart` son la fuente para renderizar la sala antes de iniciar. No inferir
+participantes desde `standings`: antes de arrancar la liga, `standings` puede
+venir vacio porque todavia no hay victorias inicializadas.
+
+Estados de liga (`status`):
+
+| Valor                 | Significado                                                   |
+|-----------------------|---------------------------------------------------------------|
+| `WAITING_FOR_PLAYERS` | Aún faltan jugadores para completar el cupo (sala de espera). |
+| `WAITING_FOR_START`   | Cupo completo; el creador todavía no inició la liga.          |
+| `IN_PROGRESS`         | Liga en curso; se están jugando las jornadas.                 |
+| `FINISHED`            | Liga terminada; `winners` contiene al/los campeón(es).        |
+| `CANCELLED`           | Liga cancelada.                                               |
+
+Nota sobre `winners`: refleja al/los líder(es) actual(es) según la tabla. Mientras
+la liga está `IN_PROGRESS` puede venir vacío (sin partidos resueltos) o contener
+empates. Una vez `FINISHED`, contiene al/los campeón(es) (puede haber más de uno
+en caso de empate).
+
+Cada item de `standings` (`LeagueStandingResponse`):
+
+| Campo    | Tipo     | Descripción                 |
+|----------|----------|-----------------------------|
+| `player` | `string` | Nombre visible del jugador. |
+| `wins`   | `int`    | Cantidad de victorias.      |
+
+Cada item de `participants` (`LeagueParticipantResponse`):
+
+| Campo     | Tipo      | Descripcion                               |
+|-----------|-----------|-------------------------------------------|
+| `player`  | `string`  | Nombre visible del jugador.               |
+| `creator` | `boolean` | `true` si este participante creo la sala. |
+
+Cada item de `matchdays` (`LeagueMatchdayResponse`):
+
+| Campo            | Tipo    | Descripción                  |
+|------------------|---------|------------------------------|
+| `matchdayNumber` | `int`   | Número de jornada (1-based). |
+| `fixtures`       | `array` | Partidos de esa jornada.     |
+
+Cada item de `fixtures` (`LeagueFixtureResponse`):
+
+| Campo            | Tipo            | Nullable | Descripción                                                          |
+|------------------|-----------------|----------|----------------------------------------------------------------------|
+| `fixtureId`      | `string`        | No       | ID del fixture.                                                      |
+| `matchdayNumber` | `int`           | No       | Número de jornada al que pertenece.                                  |
+| `playerOne`      | `string`        | No       | Nombre visible del jugador local.                                    |
+| `playerTwo`      | `string`        | Sí       | Nombre visible del rival. `null` cuando el fixture es `LIBRE` (bye). |
+| `matchId`        | `string`        | Sí       | ID de la partida asociada. `null` hasta que la jornada se activa.    |
+| `winner`         | `string`        | Sí       | Nombre visible del ganador. `null` hasta que el fixture termina.     |
+| `status`         | `string` (enum) | No       | Estado del fixture. Ver tabla de estados abajo.                      |
+
+Estados de fixture (`status`):
+
+| Valor       | Significado                                                                            |
+|-------------|----------------------------------------------------------------------------------------|
+| `SCHEDULED` | Fixture programado; la jornada todavía no se activó (`matchId` aún `null`).            |
+| `PENDING`   | Jornada activa; la partida está en juego (`matchId` ya presente, `winner` aún `null`). |
+| `FINISHED`  | Fixture resuelto; `winner` contiene al ganador.                                        |
+| `LIBRE`     | Bye: el jugador descansa esta jornada. `playerTwo`, `matchId` y `winner` son `null`.   |
+
+Errores:
+
+| Código | Causa                              |
+|--------|------------------------------------|
+| `401`  | Token ausente o inválido.          |
+| `404`  | Liga no encontrada.                |
+| `422`  | El jugador no pertenece a la liga. |
 
 ## 6. API REST - Copas
 
@@ -1705,7 +1887,7 @@ desbloqueados (eso lo da el perfil en 7.5.1) ni incluye título/descripción (lo
 frontend a partir del código). No existen logros ocultos: el catálogo siempre los expone todos.
 
 Pensado para que el frontend conozca qué logros existen sin hardcodear la lista, y arme la grilla
-"todos los logros con marca de desbloqueado" cruzando este catálogo con `GET /api/profile/{username}`
+"todos los logros con marca de desbloqueado" cruzando este catálogo con`GET /api/profile/{username}`
 por `achievementCode`.
 
 **Request:** sin body ni parámetros.
@@ -1785,6 +1967,10 @@ bajos cuando aplique. Si el valor no coincide, la API responde `400` con
   - `PLAYING`, `ENVIDO_IN_PROGRESS`, `TRUCO_IN_PROGRESS`, `FINISHED`
 - `RoundStateResponse.currentTrucoCall`:
   - `TRUCO`, `RETRUCO`, `VALE_CUATRO` (o `null`)
+- `RoundStateResponse.currentEnvidoCall`:
+  - `ENVIDO`, `REAL_ENVIDO`, `FALTA_ENVIDO` (o `null`). Refleja el canto de envido **pendiente de
+    respuesta**; es `null` si no hay envido en curso o si ya se resolvió (aceptado/rechazado). El
+    mismo campo existe en `SpectatorRoundStateResponse.currentEnvidoCall`.
 - `AvailableActionResponse.type`:
   - `PLAY_CARD`, `CALL_TRUCO`, `CALL_ENVIDO`, `RESPOND_TRUCO`, `RESPOND_ENVIDO`, `FOLD`
 - `FriendSummaryResponse`:
@@ -2455,8 +2641,8 @@ Request:
 }
 ```
 
-| Campo         | Tipo      | Descripcion                                        |
-|---------------|-----------|----------------------------------------------------|
+| Campo         | Tipo      | Descripcion                                                  |
+|---------------|-----------|--------------------------------------------------------------|
 | `gamesToPlay` | `integer` | Partidas totales de la serie. Valores validos: `1`, `3`, `5` |
 
 Response `200`:

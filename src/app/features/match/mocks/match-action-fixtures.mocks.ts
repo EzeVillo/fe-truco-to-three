@@ -30,6 +30,7 @@ const BASE_MATCH: MatchState = {
     ],
     roundStatus: 'PLAYING',
     currentTrucoCall: null,
+    currentEnvidoCall: null,
     winner: null,
     availableActions: [],
     playedHands: [],

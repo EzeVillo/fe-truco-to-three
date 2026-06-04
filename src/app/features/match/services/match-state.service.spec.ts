@@ -108,6 +108,7 @@ describe('MatchStateService', () => {
         ],
         roundStatus: 'PLAYING',
         currentTrucoCall: null,
+        currentEnvidoCall: null,
         winner: null,
         availableActions: [
           { type: 'PLAY_CARD' },
@@ -383,6 +384,7 @@ describe('MatchStateService', () => {
           myCards: [],
           roundStatus: 'PLAYING',
           currentTrucoCall: null,
+          currentEnvidoCall: null,
           winner: null,
           availableActions: [{ type: 'PLAY_CARD' }],
           playedHands: [],
@@ -507,6 +509,7 @@ describe('MatchStateService', () => {
           ],
           roundStatus: 'PLAYING',
           currentTrucoCall: null,
+          currentEnvidoCall: null,
           winner: null,
           availableActions: [
             { type: 'PLAY_CARD' },

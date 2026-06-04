@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { deriveMatchView, type MatchView } from '../../utils/derive-match-view';
+import { derivePendingCall } from '../../utils/derive-pending-call';
 import { computeElapsedFraction, computeRemainingMsFromSnapshot, isUrgent } from '../../utils/turn-timer';
 import { callDisplayMapper } from '../../utils/call-display-mapper';
 import { GameBoardComponent } from '../../components/game-board/game-board.component';
@@ -152,6 +153,8 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   private readonly vcr = inject(ViewContainerRef);
   private readonly destroyRef = inject(DestroyRef);
   private _rematchInited = false;
+  /** matchId para el que ya se hidrató el bubble de canto desde el snapshot. */
+  private _callHydratedMatchId: string | null = null;
   private readonly callDisplayTimers = new Map<string, number>();
   private lastEnvidoCallerSeat: 'PLAYER_ONE' | 'PLAYER_TWO' | null = null;
   private envidoModalTimerId: number | null = null;
@@ -180,6 +183,31 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
         this.rematchStateService.init(id, state.viewerSeat);
       }
     });
+
+    // Hidrata el bubble de canto desde el snapshot inicial. Si el rival cantó
+    // ANTES de que entráramos a la partida (típico en la revancha: el bot canta
+    // apenas arranca la nueva ronda), ese evento WS ya pasó y no se reemite, así
+    // que el bubble nunca aparecería. El snapshot sí refleja el canto sin resolver.
+    effect(() => {
+      const state = this.matchStateService.state();
+      const id = this.matchId();
+      if (!state || !id || !state.roundGame || this._callHydratedMatchId === id) {
+        return;
+      }
+      // Una vez que llegó el primer snapshot con ronda en curso, no re-hidratar:
+      // a partir de ahí mandan los eventos WS en vivo.
+      this._callHydratedMatchId = id;
+      // No pisar un bubble ya mostrado por un evento en vivo que se nos adelantó.
+      if (this.selfCallText() !== null || this.opponentCallText() !== null) {
+        return;
+      }
+      const pending = derivePendingCall(state);
+      if (!pending) {
+        return;
+      }
+      const isSelf = pending.seat === state.viewerSeat;
+      (isSelf ? this.selfCallText : this.opponentCallText).set(pending.text);
+    });
   }
 
   private startTimerTick(): void {
@@ -207,6 +235,10 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
       if (!newId || newId === this.matchId()) {return;}
       this.matchId.set(newId);
       this._rematchInited = false;
+      this._callHydratedMatchId = null;
+      this.selfCallText.set(null);
+      this.opponentCallText.set(null);
+      this.clearAllCallDisplayTimers();
       this.cancelledNotice.set(null);
       this.starting.set(false);
       this.selfReady.set(false);

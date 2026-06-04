@@ -7,6 +7,7 @@ import type {
   TurnChangedPayload,
   TrucoCalledPayload,
   TrucoRespondedPayload,
+  EnvidoCalledPayload,
   ScoreChangedPayload,
   RoundStartedPayload,
   RoundEndedPayload,
@@ -89,12 +90,14 @@ export function applyMatchEvent(state: MatchState, event: MatchWsEvent): MatchSt
     }
 
     case 'ENVIDO_CALLED': {
+      const payload = event.payload as EnvidoCalledPayload;
       if (!state.roundGame) {return state;}
       return {
         ...state,
         roundGame: {
           ...state.roundGame,
           roundStatus: 'ENVIDO_IN_PROGRESS' as RoundStatus,
+          currentEnvidoCall: payload.call,
         },
       };
     }
@@ -106,6 +109,7 @@ export function applyMatchEvent(state: MatchState, event: MatchWsEvent): MatchSt
         roundGame: {
           ...state.roundGame,
           roundStatus: 'PLAYING' as RoundStatus,
+          currentEnvidoCall: null,
         },
       };
     }
@@ -138,6 +142,7 @@ export function applyMatchEvent(state: MatchState, event: MatchWsEvent): MatchSt
           myCards: [],
           roundStatus: 'PLAYING' as RoundStatus,
           currentTrucoCall: null,
+          currentEnvidoCall: null,
           winner: null,
           availableActions: [],
           playedHands: [],

@@ -13,3 +13,9 @@ export const AUTH_PUBLIC_PATHS = [
   '/api/auth/guest',
   '/api/auth/refresh',
 ] as const;
+
+/**
+ * Margen (ms) antes de la expiración del accessToken a partir del cual el
+ * jwtInterceptor refresca de forma proactiva, evitando el 401 + reintento.
+ */
+export const ACCESS_TOKEN_REFRESH_SKEW_MS = 10_000;

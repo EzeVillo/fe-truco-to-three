@@ -197,4 +197,15 @@ describe('PresenceCoordinatorService', () => {
 
     expect(routerMock.navigateByUrl).not.toHaveBeenCalled();
   });
+
+  it('expone la ultima presence procesada en el signal presence()', () => {
+    const { service, store } = setup(rematchPresence('origin-9'));
+    login(store);
+
+    expect(service.presence()).toBeNull();
+
+    service.start();
+
+    expect(service.presence()?.rematch?.originMatchId).toBe('origin-9');
+  });
 });

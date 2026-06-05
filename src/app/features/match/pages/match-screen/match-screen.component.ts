@@ -19,6 +19,7 @@ import { MatchEventQueueService } from '../../services/match-event-queue.service
 import { RematchStateService } from '../../services/rematch-state.service';
 import { RematchApiService } from '../../services/rematch-api.service';
 import { MatchCallAudioService } from '../../services/match-call-audio.service';
+import { PresenceCoordinatorService } from '../../../../core/services/presence-coordinator.service';
 import { getErrorCopy } from '../../../../shared/error-copy/error-copy';
 import type { MatchEndedEvent, MatchWsEvent, GameWonPayload, EnvidoResolvedPayload, PlayerReadyPayload } from '../../models/match-ws-events';
 import type { Subscription } from 'rxjs';
@@ -149,6 +150,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   private readonly rematchStateService = inject(RematchStateService);
   private readonly rematchApiService = inject(RematchApiService);
   private readonly matchCallAudioService = inject(MatchCallAudioService);
+  private readonly presenceCoordinator = inject(PresenceCoordinatorService);
   private readonly matchesApiService = inject(MatchesApiService);
   private readonly vcr = inject(ViewContainerRef);
   private readonly destroyRef = inject(DestroyRef);
@@ -175,12 +177,19 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
 
     // Inicia RematchStateService la primera vez que el estado de la partida carga.
     // Se re-activa al navegar a una nueva partida (re-init via paramMap, D4).
+    //
+    // El snapshot REST de la revancha SOLO se pide cuando el presence ya indica que hay
+    // una revancha activa para este match (caso reconexión). En el flujo en vivo no se
+    // pega al GET: la sesión llega por el evento WS REMATCH_AVAILABLE o por el GET de
+    // carrera al cerrar el modal de resultado.
     effect(() => {
       const state = this.matchStateService.state();
       const id = this.matchId();
       if (state && id && !this._rematchInited) {
         this._rematchInited = true;
-        this.rematchStateService.init(id, state.viewerSeat);
+        const hasActiveRematch =
+          this.presenceCoordinator.presence()?.rematch?.originMatchId === id;
+        this.rematchStateService.init(id, state.viewerSeat, hasActiveRematch);
       }
     });
 

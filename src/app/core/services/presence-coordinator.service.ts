@@ -28,6 +28,10 @@ export class PresenceCoordinatorService {
   private presenceSub: Subscription | null = null;
   private lastDestinationKey: string | null = null;
 
+  /** Última presencia conocida (bootstrap REST o PRESENCE_UPDATED). null hasta el primer fetch. */
+  private readonly _presence = signal<UserPresenceResponse | null>(null);
+  readonly presence = this._presence.asReadonly();
+
   constructor() {
     effect(() => {
       if (!this.started()) {
@@ -72,6 +76,7 @@ export class PresenceCoordinatorService {
     this.presenceSub = null;
     this.active = false;
     this.lastDestinationKey = null;
+    this._presence.set(null);
   }
 
   private bootstrapPresence(): void {
@@ -99,6 +104,7 @@ export class PresenceCoordinatorService {
   }
 
   private handlePresence(presence: UserPresenceResponse): void {
+    this._presence.set(presence);
     this.navigateToDestination(derivePresenceDestination(presence));
   }
 

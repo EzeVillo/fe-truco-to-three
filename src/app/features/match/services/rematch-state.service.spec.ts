@@ -69,7 +69,7 @@ describe('RematchStateService', () => {
 
   describe('init() — snapshot REST', () => {
     it('setea session cuando getSession devuelve 200 (viewerSeat PLAYER_ONE)', () => {
-      service.init('mid-1', 'PLAYER_ONE');
+      service.init('mid-1', 'PLAYER_ONE', true);
       httpMock.expectOne(`${BASE}/mid-1/rematch`).flush(
         makeDto({ playerOneChoice: 'WANTS_REMATCH', playerTwoChoice: 'UNDECIDED' }),
       );
@@ -83,7 +83,7 @@ describe('RematchStateService', () => {
     });
 
     it('mapea playerTwo como self cuando viewerSeat es PLAYER_TWO', () => {
-      service.init('mid-1', 'PLAYER_TWO');
+      service.init('mid-1', 'PLAYER_TWO', true);
       httpMock.expectOne(`${BASE}/mid-1/rematch`).flush(
         makeDto({ playerOneChoice: 'UNDECIDED', playerTwoChoice: 'WANTS_REMATCH' }),
       );
@@ -93,7 +93,7 @@ describe('RematchStateService', () => {
     });
 
     it('session queda null cuando getSession devuelve 404', () => {
-      service.init('mid-1', 'PLAYER_ONE');
+      service.init('mid-1', 'PLAYER_ONE', true);
       httpMock
         .expectOne(`${BASE}/mid-1/rematch`)
         .flush(null, { status: 404, statusText: 'Not Found' });
@@ -101,9 +101,29 @@ describe('RematchStateService', () => {
       expect(service.session()).toBeNull();
     });
 
+    it('NO pega al GET cuando fetchSession es false (default); session queda null', () => {
+      service.init('mid-1', 'PLAYER_ONE');
+      httpMock.expectNone(`${BASE}/mid-1/rematch`);
+
+      expect(service.session()).toBeNull();
+    });
+
+    it('aún sin fetchSession, REMATCH_AVAILABLE por WS setea la sesión sin GET', () => {
+      service.init('mid-1', 'PLAYER_ONE');
+      httpMock.expectNone(`${BASE}/mid-1/rematch`);
+
+      mockMatchState.rematch$.next({
+        matchId: 'mid-1', eventType: 'REMATCH_AVAILABLE', timestamp: Date.now(),
+        payload: { sessionId: 'sid-9', originMatchId: 'mid-1', expiresAt: 9_999_999_999 },
+        stateVersion: 0,
+      });
+
+      expect(service.session()!.status).toBe('OPEN');
+    });
+
     it('normaliza expiresAt ISO-8601 a epochMillis (number)', () => {
       const isoDate = '2026-06-01T12:00:00Z';
-      service.init('mid-1', 'PLAYER_ONE');
+      service.init('mid-1', 'PLAYER_ONE', true);
       httpMock.expectOne(`${BASE}/mid-1/rematch`).flush(makeDto({ expiresAt: isoDate }));
 
       expect(typeof service.session()!.expiresAt).toBe('number');
@@ -115,7 +135,7 @@ describe('RematchStateService', () => {
 
   describe('reducción de eventos REMATCH_*', () => {
     beforeEach(() => {
-      service.init('mid-1', 'PLAYER_ONE');
+      service.init('mid-1', 'PLAYER_ONE', true);
       httpMock.expectOne(`${BASE}/mid-1/rematch`).flush(makeDto());
     });
 
@@ -180,7 +200,7 @@ describe('RematchStateService', () => {
 
   describe('accept() — acción optimista', () => {
     beforeEach(() => {
-      service.init('mid-1', 'PLAYER_ONE');
+      service.init('mid-1', 'PLAYER_ONE', true);
       httpMock.expectOne(`${BASE}/mid-1/rematch`).flush(makeDto());
     });
 
@@ -205,7 +225,7 @@ describe('RematchStateService', () => {
 
   describe('leave() — acción optimista', () => {
     beforeEach(() => {
-      service.init('mid-1', 'PLAYER_ONE');
+      service.init('mid-1', 'PLAYER_ONE', true);
       httpMock.expectOne(`${BASE}/mid-1/rematch`).flush(makeDto());
     });
 
@@ -233,7 +253,7 @@ describe('RematchStateService', () => {
 
   describe('reset()', () => {
     it('limpia session y errorMessage', () => {
-      service.init('mid-1', 'PLAYER_ONE');
+      service.init('mid-1', 'PLAYER_ONE', true);
       httpMock.expectOne(`${BASE}/mid-1/rematch`).flush(makeDto());
 
       service.reset();
@@ -243,7 +263,7 @@ describe('RematchStateService', () => {
     });
 
     it('desuscribe de rematch$ tras reset (no procesa eventos del match anterior)', () => {
-      service.init('mid-1', 'PLAYER_ONE');
+      service.init('mid-1', 'PLAYER_ONE', true);
       httpMock.expectOne(`${BASE}/mid-1/rematch`).flush(makeDto());
       service.reset();
 
@@ -274,7 +294,7 @@ describe('RematchStateService', () => {
 
   describe('getErrorCopy', () => {
     it('accept() en error 422 devuelve copy de producto, no el mensaje crudo del BE', () => {
-      service.init('mid-1', 'PLAYER_ONE');
+      service.init('mid-1', 'PLAYER_ONE', true);
       httpMock.expectOne(`${BASE}/mid-1/rematch`).flush(makeDto());
 
       service.accept();

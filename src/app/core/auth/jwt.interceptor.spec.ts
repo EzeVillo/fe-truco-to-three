@@ -83,4 +83,53 @@ describe('jwtInterceptor', () => {
     expect(req.request.headers.has('Authorization')).toBe(false);
     req.flush([]);
   });
+
+  describe('refresh proactivo', () => {
+    const EXPIRED_AUTH: FullAuthResponse = { ...FULL_AUTH, accessTokenExpiresIn: -1 };
+    const REFRESHED_AUTH: FullAuthResponse = {
+      ...FULL_AUTH,
+      accessToken: 'fresh-token',
+      accessTokenExpiresIn: 900,
+    };
+
+    it('refresca ANTES de mandar la request cuando el token venció y manda el token fresco', () => {
+      store.setSession(EXPIRED_AUTH);
+
+      http.get('http://localhost:8080/api/matches').subscribe();
+
+      // Primero sale el refresh, no la request protegida
+      const refreshReq = httpMock.expectOne('/api/auth/refresh');
+      expect(refreshReq.request.headers.has('Authorization')).toBe(false);
+      refreshReq.flush(REFRESHED_AUTH);
+
+      // Recién ahora sale la request original, con el token fresco
+      const req = httpMock.expectOne('http://localhost:8080/api/matches');
+      expect(req.request.headers.get('Authorization')).toBe('Bearer fresh-token');
+      req.flush([]);
+    });
+
+    it('NO refresca proactivamente cuando no hay refreshToken (guest)', () => {
+      store.setSession({ playerId: 'guest-1', accessToken: 'guest-token', accessTokenExpiresIn: -1 });
+
+      http.get('http://localhost:8080/api/matches').subscribe();
+
+      httpMock.expectNone('/api/auth/refresh');
+      const req = httpMock.expectOne('http://localhost:8080/api/matches');
+      expect(req.request.headers.get('Authorization')).toBe('Bearer guest-token');
+      req.flush([]);
+    });
+
+    it('si el refresh proactivo falla, manda con el token actual (red de seguridad reactiva)', () => {
+      store.setSession(EXPIRED_AUTH);
+
+      http.get('http://localhost:8080/api/matches').subscribe();
+
+      const refreshReq = httpMock.expectOne('/api/auth/refresh');
+      refreshReq.flush(null, { status: 500, statusText: 'Server Error' });
+
+      const req = httpMock.expectOne('http://localhost:8080/api/matches');
+      expect(req.request.headers.get('Authorization')).toBe('Bearer my-access-token');
+      req.flush([]);
+    });
+  });
 });

@@ -25,8 +25,16 @@ export class RematchStateService {
   private viewerSeat: ViewerSeat | null = null;
   private rematchSub: Subscription | null = null;
 
-  /** Inicializa con snapshot REST y suscribe al canal rematch$. */
-  init(matchId: string, viewerSeat: ViewerSeat): void {
+  /**
+   * Suscribe al canal rematch$ y, opcionalmente, hidrata la sesión con un snapshot REST.
+   *
+   * El GET getSession SOLO debe pedirse cuando ya sabemos que hay una revancha activa
+   * (reconexión vía presence → `fetchSession = true`). En el flujo en vivo no hace falta:
+   * el evento WS `REMATCH_AVAILABLE` ya trae el payload completo y setea la sesión, y el
+   * cierre del modal de resultado resuelve la carrera con su propio GET puntual. Pegarle
+   * a este endpoint en cada carga de partida genera GETs inútiles (404) en partidas frescas.
+   */
+  init(matchId: string, viewerSeat: ViewerSeat, fetchSession = false): void {
     this.matchId = matchId;
     this.viewerSeat = viewerSeat;
     this.session.set(null);
@@ -36,6 +44,8 @@ export class RematchStateService {
     this.rematchSub = this.matchState.rematch$.subscribe((event) => {
       this.handleRematchEvent(event.eventType, event.payload);
     });
+
+    if (!fetchSession) {return;}
 
     this.api.getSession(matchId).subscribe({
       next: (dto) => {

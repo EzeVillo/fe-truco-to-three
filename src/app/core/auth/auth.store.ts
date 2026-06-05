@@ -10,6 +10,7 @@ import {
 import { inject } from '@angular/core';
 import { SessionStorageService } from './session-storage.service';
 import { AUTH_STORAGE_KEY } from './auth.tokens';
+import { readJwtExpiry } from './jwt.utils';
 import type { AuthResponse, FullAuthResponse } from '../models/auth.models';
 
 // ---------- Estado interno ----------
@@ -179,7 +180,10 @@ export const AuthStore = signalStore(
           accessToken: saved.accessToken,
           refreshToken: saved.refreshToken,
           isGuest: saved.isGuest,
-          accessTokenExpiresAt: null, // no se persiste; el refresh reactivo cubre expiraciones
+          // Recuperado del claim `exp` del JWT (no se persiste aparte). Permite
+          // el refresh proactivo del jwtInterceptor; null si el token no es un
+          // JWT decodificable, en cuyo caso aplica el refresh reactivo.
+          accessTokenExpiresAt: readJwtExpiry(saved.accessToken),
         });
       }
     },

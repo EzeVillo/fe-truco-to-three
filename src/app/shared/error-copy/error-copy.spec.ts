@@ -122,3 +122,33 @@ describe('getErrorCopy — CREATE_BOT_MATCH', () => {
     expect(getErrorCopy('CREATE_BOT_MATCH', null)).toBe('Ocurrió un error inesperado. Reintentá.');
   });
 });
+
+describe('getErrorCopy — SOCIAL', () => {
+  it('401 → string vacío (manejado por interceptor)', () => {
+    expect(getErrorCopy('SOCIAL', httpErr(401))).toBe('');
+  });
+
+  it('404 → usuario/solicitud no disponible', () => {
+    expect(getErrorCopy('SOCIAL', httpErr(404))).toBe(
+      'Ese usuario no existe o la solicitud ya no está disponible.',
+    );
+  });
+
+  it('409 y 422 → revisar estado de la solicitud', () => {
+    const expected = 'No se pudo completar la acción: revisá el estado de la solicitud.';
+    expect(getErrorCopy('SOCIAL', httpErr(409))).toBe(expected);
+    expect(getErrorCopy('SOCIAL', httpErr(422))).toBe(expected);
+  });
+
+  it('0 (red/offline) y 5xx → copy de red', () => {
+    const expected = 'No pudimos conectarnos. Reintentá en unos segundos.';
+    expect(getErrorCopy('SOCIAL', httpErr(0))).toBe(expected);
+    expect(getErrorCopy('SOCIAL', httpErr(503))).toBe(expected);
+  });
+
+  it('nunca expone el message crudo del backend', () => {
+    for (const status of [404, 409, 422, 500]) {
+      expect(getErrorCopy('SOCIAL', httpErr(status))).not.toContain('BE-secret-leak');
+    }
+  });
+});

@@ -16,7 +16,8 @@ export type ErrorCopyScope =
   | 'CREATE_MATCH'
   | 'JOIN_MATCH'
   | 'QUICK_MATCH'
-  | 'PUBLIC_LOBBY';
+  | 'PUBLIC_LOBBY'
+  | 'SOCIAL';
 
 const FALLBACK = 'Ocurrió un error inesperado. Reintentá.';
 
@@ -162,6 +163,27 @@ export function getErrorCopy(scope: ErrorCopyScope, error: unknown): string {
       default:
         if (status >= 500 && status < 600) {
           return 'No pudimos cargar las partidas. Reintentá.';
+        }
+        return FALLBACK;
+    }
+  }
+
+  if (scope === 'SOCIAL') {
+    switch (status) {
+      case 401:
+        return '';
+      case 403:
+        return 'No tenés permiso para esta acción.';
+      case 404:
+        return 'Ese usuario no existe o la solicitud ya no está disponible.';
+      case 409:
+      case 422:
+        return 'No se pudo completar la acción: revisá el estado de la solicitud.';
+      case 0:
+        return 'No pudimos conectarnos. Reintentá en unos segundos.';
+      default:
+        if (status >= 500 && status < 600) {
+          return 'No pudimos conectarnos. Reintentá en unos segundos.';
         }
         return FALLBACK;
     }

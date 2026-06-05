@@ -83,6 +83,14 @@ export const routes: Routes = [
         (m) => m.ProfilePageComponent,
       ),
   },
+  {
+    path: 'friends',
+    canMatch: [authGuard],
+    loadComponent: () =>
+      import('./features/social/pages/friends-page/friends-page.component').then(
+        (m) => m.FriendsPageComponent,
+      ),
+  },
   { path: '', pathMatch: 'full', redirectTo: 'login' },
   { path: '**', redirectTo: 'login' },
 ];

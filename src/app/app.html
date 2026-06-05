@@ -16,3 +16,36 @@
     </button>
   </aside>
 }
+
+@if (social.incomingToast(); as requester) {
+  <aside class="friend-request-toast" role="status" aria-live="polite">
+    <button
+      type="button"
+      class="friend-request-toast__close"
+      aria-label="Cerrar"
+      (click)="social.dismissToast()"
+    >
+      &times;
+    </button>
+    <div class="friend-request-toast__info">
+      <strong>{{ requester }}</strong>
+      <p>Te envió una solicitud de amistad</p>
+    </div>
+    <div class="friend-request-toast__actions">
+      <button
+        type="button"
+        class="friend-request-toast__btn friend-request-toast__btn--primary"
+        (click)="social.acceptRequest(requester)"
+      >
+        Aceptar
+      </button>
+      <button
+        type="button"
+        class="friend-request-toast__btn friend-request-toast__btn--danger"
+        (click)="social.declineRequest(requester)"
+      >
+        Rechazar
+      </button>
+    </div>
+  </aside>
+}

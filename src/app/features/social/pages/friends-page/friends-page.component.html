@@ -1,0 +1,114 @@
+<section class="friends-page" aria-labelledby="friends-title">
+  <div class="friends-page__inner">
+    <header class="friends-page__header">
+      <app-back-button (back)="goBack()" />
+      <div>
+        <p class="friends-page__eyebrow">Social</p>
+        <h1 id="friends-title" class="friends-page__title">Amigos</h1>
+      </div>
+    </header>
+
+    <app-add-friend-form
+      [errorMessage]="store.actionError()"
+      (submitRequest)="onSend($event)"
+    />
+
+    <nav class="friends-page__tabs" role="tablist" aria-label="Secciones de amigos">
+      <button
+        type="button"
+        role="tab"
+        class="friends-page__tab"
+        [class.friends-page__tab--active]="activeTab() === 'friends'"
+        [attr.aria-selected]="activeTab() === 'friends'"
+        (click)="selectTab('friends')"
+      >
+        Amigos ({{ store.friendsCount() }})
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="friends-page__tab"
+        [class.friends-page__tab--active]="activeTab() === 'incoming'"
+        [attr.aria-selected]="activeTab() === 'incoming'"
+        (click)="selectTab('incoming')"
+      >
+        Recibidas ({{ store.incomingCount() }})
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="friends-page__tab"
+        [class.friends-page__tab--active]="activeTab() === 'outgoing'"
+        [attr.aria-selected]="activeTab() === 'outgoing'"
+        (click)="selectTab('outgoing')"
+      >
+        Enviadas ({{ store.outgoing().length }})
+      </button>
+    </nav>
+
+    @if (store.loading()) {
+      <p class="friends-page__state">Cargando...</p>
+    } @else if (store.error()) {
+      <div class="friends-page__state friends-page__state--error">
+        <p>{{ store.error() }}</p>
+        <button type="button" class="t3-btn t3-btn--primary" (click)="store.retry()">
+          Reintentar
+        </button>
+      </div>
+    } @else {
+      <div class="friends-page__panel">
+        @switch (activeTab()) {
+          @case ('friends') {
+            @if (store.friends().length === 0) {
+              <p class="friends-page__empty">Todavía no tenés amigos. Agregá a alguien por su usuario.</p>
+            } @else {
+              <ul class="friends-page__list">
+                @for (friend of store.friends(); track friend.friendUsername) {
+                  <li>
+                    <app-friend-row
+                      [friendUsername]="friend.friendUsername"
+                      (remove)="onRemove($event)"
+                    />
+                  </li>
+                }
+              </ul>
+            }
+          }
+          @case ('incoming') {
+            @if (store.incoming().length === 0) {
+              <p class="friends-page__empty">No tenés solicitudes pendientes.</p>
+            } @else {
+              <ul class="friends-page__list">
+                @for (request of store.incoming(); track request.requesterUsername) {
+                  <li>
+                    <app-incoming-request-row
+                      [requesterUsername]="request.requesterUsername"
+                      (accept)="onAccept($event)"
+                      (decline)="onDecline($event)"
+                    />
+                  </li>
+                }
+              </ul>
+            }
+          }
+          @case ('outgoing') {
+            @if (store.outgoing().length === 0) {
+              <p class="friends-page__empty">No enviaste ninguna solicitud.</p>
+            } @else {
+              <ul class="friends-page__list">
+                @for (request of store.outgoing(); track request.addresseeUsername) {
+                  <li>
+                    <app-outgoing-request-row
+                      [addresseeUsername]="request.addresseeUsername"
+                      (cancel)="onCancel($event)"
+                    />
+                  </li>
+                }
+              </ul>
+            }
+          }
+        }
+      </div>
+    }
+  </div>
+</section>

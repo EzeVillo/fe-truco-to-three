@@ -55,6 +55,11 @@
     color: var(--t3-text-muted);
   }
 
+  &__nav-link {
+    font-size: 0.85rem;
+    color: var(--t3-text-muted);
+  }
+
   &__user-link {
     text-decoration: none;
 

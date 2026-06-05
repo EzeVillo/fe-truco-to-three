@@ -45,8 +45,29 @@ export type MatchWsEvent =
     > & { matchId: string });
 // Resto de eventTypes se añaden al implementar cada feature (AVAILABLE_ACTIONS_UPDATED, etc.)
 
-// Análogamente: LeagueWsEvent, CupWsEvent, ChatWsEvent, SocialWsEvent, ProfileWsEvent, SpectateWsEvent, PublicLobbyWsEvent
+/**
+ * Eventos sociales (amistades) — canal /user/queue/social.
+ * Fuente: docs/CONTRATOS_API.md §9.5e (eventType) y §9.6 (payload).
+ *
+ * El mismo canal emite además eventos `RESOURCE_INVITATION_*` (invitaciones a
+ * recursos), fuera de alcance del MVP de amistades (feature 024); el consumidor
+ * los ignora en su default case.
+ */
+export type SocialWsEvent =
+  | WsEventBase<'FRIEND_REQUEST_RECEIVED', { requesterUsername: string; addresseeUsername: string }>
+  | WsEventBase<'FRIEND_REQUEST_ACCEPTED', { requesterUsername: string; addresseeUsername: string }>
+  | WsEventBase<'FRIEND_REQUEST_DECLINED', { requesterUsername: string; addresseeUsername: string }>
+  | WsEventBase<
+      'FRIEND_REQUEST_CANCELLED',
+      { requesterUsername: string; addresseeUsername: string }
+    >
+  | WsEventBase<
+      'FRIENDSHIP_REMOVED',
+      { requesterUsername: string; addresseeUsername: string; removedByUsername: string }
+    >;
+
+// Análogamente: LeagueWsEvent, CupWsEvent, ChatWsEvent, SpectateWsEvent, PublicLobbyWsEvent
 // se completan conforme se implementan las features correspondientes.
 
 /** Unión discriminada general de eventos WebSocket. */
-export type WsEvent = MatchWsEvent /* | LeagueWsEvent | ... */;
+export type WsEvent = MatchWsEvent | SocialWsEvent /* | LeagueWsEvent | ... */;

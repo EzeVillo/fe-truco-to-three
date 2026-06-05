@@ -18,6 +18,9 @@
   <span class="global-header__spacer"></span>
 
   @if (authStore.isAuthenticated()) {
+    @if (showFriends()) {
+      <a class="global-header__nav-link global-header__user-link" routerLink="/friends">Amigos</a>
+    }
     @if (profileLink(); as link) {
       @if (inMatch()) {
         <span class="global-header__user">{{ userLabel() }}</span>

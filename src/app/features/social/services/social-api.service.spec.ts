@@ -1,0 +1,96 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { SocialApiService } from './social-api.service';
+import { environment } from '../../../../environments/environment';
+import type {
+  FriendSummary,
+  IncomingFriendshipRequest,
+  OutgoingFriendshipRequest,
+} from '../../../core/models/social.models';
+
+describe('SocialApiService', () => {
+  let service: SocialApiService;
+  let httpMock: HttpTestingController;
+  const base = environment.apiUrl;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting(), SocialApiService],
+    });
+    service = TestBed.inject(SocialApiService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => httpMock.verify());
+
+  it('listFriends(): GET /social/friendships', () => {
+    const friends: FriendSummary[] = [{ friendUsername: 'martina' }];
+    let result: FriendSummary[] | null = null;
+    service.listFriends().subscribe((r) => (result = r));
+
+    const req = httpMock.expectOne(`${base}/social/friendships`);
+    expect(req.request.method).toBe('GET');
+    req.flush(friends);
+    expect(result).toEqual(friends);
+  });
+
+  it('listIncoming(): GET /social/friendship-requests/incoming', () => {
+    const incoming: IncomingFriendshipRequest[] = [{ requesterUsername: 'juancho' }];
+    let result: IncomingFriendshipRequest[] | null = null;
+    service.listIncoming().subscribe((r) => (result = r));
+
+    const req = httpMock.expectOne(`${base}/social/friendship-requests/incoming`);
+    expect(req.request.method).toBe('GET');
+    req.flush(incoming);
+    expect(result).toEqual(incoming);
+  });
+
+  it('listOutgoing(): GET /social/friendship-requests/outgoing', () => {
+    const outgoing: OutgoingFriendshipRequest[] = [{ addresseeUsername: 'martina' }];
+    let result: OutgoingFriendshipRequest[] | null = null;
+    service.listOutgoing().subscribe((r) => (result = r));
+
+    const req = httpMock.expectOne(`${base}/social/friendship-requests/outgoing`);
+    expect(req.request.method).toBe('GET');
+    req.flush(outgoing);
+    expect(result).toEqual(outgoing);
+  });
+
+  it('sendRequest(): POST /social/friendship-requests con { username }', () => {
+    service.sendRequest('martina').subscribe();
+    const req = httpMock.expectOne(`${base}/social/friendship-requests`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ username: 'martina' });
+    req.flush(null);
+  });
+
+  it('acceptRequest(): POST .../{username}/accept con username encodeado', () => {
+    service.acceptRequest('a b').subscribe();
+    const req = httpMock.expectOne(`${base}/social/friendship-requests/a%20b/accept`);
+    expect(req.request.method).toBe('POST');
+    req.flush(null);
+  });
+
+  it('declineRequest(): POST .../{username}/decline', () => {
+    service.declineRequest('juancho').subscribe();
+    const req = httpMock.expectOne(`${base}/social/friendship-requests/juancho/decline`);
+    expect(req.request.method).toBe('POST');
+    req.flush(null);
+  });
+
+  it('cancelRequest(): POST .../{username}/cancel', () => {
+    service.cancelRequest('martina').subscribe();
+    const req = httpMock.expectOne(`${base}/social/friendship-requests/martina/cancel`);
+    expect(req.request.method).toBe('POST');
+    req.flush(null);
+  });
+
+  it('removeFriend(): DELETE /social/friendships/{username}', () => {
+    service.removeFriend('martina').subscribe();
+    const req = httpMock.expectOne(`${base}/social/friendships/martina`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
+  });
+});

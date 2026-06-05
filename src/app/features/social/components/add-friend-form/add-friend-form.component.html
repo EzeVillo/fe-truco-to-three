@@ -1,0 +1,25 @@
+<form class="add-friend" (ngSubmit)="onSubmit()">
+  <label class="add-friend__label" for="add-friend-username">Agregar amigo</label>
+  <div class="add-friend__row">
+    <input
+      id="add-friend-username"
+      class="add-friend__input"
+      type="text"
+      name="username"
+      autocomplete="off"
+      placeholder="Nombre de usuario"
+      [ngModel]="username()"
+      (ngModelChange)="username.set($event)"
+    />
+    <button
+      type="submit"
+      class="t3-btn t3-btn--primary add-friend__submit"
+      [disabled]="!username().trim()"
+    >
+      Enviar
+    </button>
+  </div>
+  @if (errorMessage()) {
+    <p class="add-friend__error" role="alert">{{ errorMessage() }}</p>
+  }
+</form>

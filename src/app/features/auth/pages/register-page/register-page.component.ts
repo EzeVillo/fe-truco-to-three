@@ -69,8 +69,13 @@ export class RegisterPageComponent implements OnInit {
 
     this.authService.register({ username, password }).subscribe({
       next: () => {
-        this.loading.set(false);
-        void this.router.navigateByUrl(this.returnUrl ?? '/lobby');
+        // No apagamos loading acá: el componente se destruye al navegar.
+        // Si la navegación se cancela (p. ej. un guard), re-habilitamos el botón.
+        void this.router.navigateByUrl(this.returnUrl ?? '/lobby').then((ok) => {
+          if (!ok) {
+            this.loading.set(false);
+          }
+        });
       },
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);

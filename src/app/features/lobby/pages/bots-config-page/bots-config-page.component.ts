@@ -105,8 +105,13 @@ export class BotsConfigPageComponent implements OnInit {
       })
       .subscribe({
         next: ({ matchId }) => {
-          this.creatingMatch.set(false);
-          void this.router.navigate(['/match', matchId]);
+          // No apagamos creatingMatch acá: el componente se destruye al navegar.
+          // Si la navegación se cancela (p. ej. un guard), re-habilitamos el botón.
+          void this.router.navigate(['/match', matchId]).then((ok) => {
+            if (!ok) {
+              this.creatingMatch.set(false);
+            }
+          });
         },
         error: (err: unknown) => {
           console.error('[BotsConfigPage] error creando partida', err);

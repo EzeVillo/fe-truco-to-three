@@ -1,0 +1,200 @@
+import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
+import { Subject, of, throwError } from 'rxjs';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AuthStore } from '../auth/auth.store';
+import { SessionStorageService } from '../auth/session-storage.service';
+import type { PresenceWsEvent, UserPresenceResponse } from '../models/presence.models';
+import { PresenceApiService } from './presence-api.service';
+import { PresenceCoordinatorService } from './presence-coordinator.service';
+import { WebSocketService } from './websocket.service';
+
+function busyMatch(id = 'match-1'): UserPresenceResponse {
+  return {
+    busy: true,
+    match: { id, status: 'IN_PROGRESS' },
+    league: null,
+    cup: null,
+    rematch: null,
+  };
+}
+
+function freePresence(): UserPresenceResponse {
+  return {
+    busy: false,
+    match: null,
+    league: null,
+    cup: null,
+    rematch: null,
+  };
+}
+
+function rematchPresence(originMatchId = 'origin-1'): UserPresenceResponse {
+  return {
+    busy: true,
+    match: null,
+    league: null,
+    cup: null,
+    rematch: { id: 'session-1', originMatchId },
+  };
+}
+
+function setup(presence: UserPresenceResponse = freePresence(), routerUrl = '/lobby') {
+  const presenceEvents$ = new Subject<PresenceWsEvent>();
+  const apiMock = {
+    getPresence: vi.fn().mockReturnValue(of(presence)),
+  };
+  const wsMock = {
+    connect: vi.fn(),
+    subscribe: vi.fn().mockReturnValue(presenceEvents$.asObservable()),
+  };
+  const routerMock = {
+    url: routerUrl,
+    navigateByUrl: vi.fn(),
+  };
+  const fakeStorage: Record<string, string> = {};
+  vi.spyOn(Storage.prototype, 'getItem').mockImplementation((key) => fakeStorage[key] ?? null);
+  vi.spyOn(Storage.prototype, 'setItem').mockImplementation((key, value) => {
+    fakeStorage[key] = value;
+  });
+  vi.spyOn(Storage.prototype, 'removeItem').mockImplementation((key) => {
+    delete fakeStorage[key];
+  });
+
+  TestBed.configureTestingModule({
+    providers: [
+      SessionStorageService,
+      AuthStore,
+      PresenceCoordinatorService,
+      { provide: PresenceApiService, useValue: apiMock },
+      { provide: WebSocketService, useValue: wsMock },
+      { provide: Router, useValue: routerMock },
+    ],
+  });
+
+  const store = TestBed.inject(AuthStore);
+  const service = TestBed.inject(PresenceCoordinatorService);
+
+  return { service, store, apiMock, wsMock, routerMock, presenceEvents$ };
+}
+
+function login(store: InstanceType<typeof AuthStore>): void {
+  store.setSession({
+    playerId: 'player-1',
+    username: 'juancho',
+    accessToken: 'token',
+    refreshToken: 'refresh',
+    accessTokenExpiresIn: 900,
+    refreshTokenExpiresIn: 2592000,
+  });
+}
+
+describe('PresenceCoordinatorService', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('no arranca si no hay sesion autenticada', () => {
+    const { service, apiMock, wsMock } = setup();
+
+    service.start();
+
+    expect(apiMock.getPresence).not.toHaveBeenCalled();
+    expect(wsMock.connect).not.toHaveBeenCalled();
+  });
+
+  it('bootstrap autenticado navega a /match/:id cuando hay partida activa', () => {
+    const { service, store, routerMock } = setup(busyMatch('match-42'));
+    login(store);
+
+    service.start();
+
+    expect(routerMock.navigateByUrl).toHaveBeenCalledWith('/match/match-42');
+  });
+
+  it('no navega si ya esta en el destino correcto', () => {
+    const { service, store, routerMock } = setup(busyMatch('match-42'), '/match/match-42');
+    login(store);
+
+    service.start();
+
+    expect(routerMock.navigateByUrl).not.toHaveBeenCalled();
+  });
+
+  it('ignora errores de bootstrap sin mostrar copy crudo', () => {
+    const { service, store, apiMock, routerMock } = setup();
+    apiMock.getPresence.mockReturnValue(
+      throwError(() => ({ status: 500, error: { message: 'raw backend message' } })),
+    );
+    login(store);
+
+    service.start();
+
+    expect(routerMock.navigateByUrl).not.toHaveBeenCalled();
+  });
+
+  it('se suscribe a /user/queue/presence y procesa PRESENCE_UPDATED', () => {
+    const { service, store, wsMock, routerMock, presenceEvents$ } = setup(freePresence());
+    login(store);
+
+    service.start();
+    presenceEvents$.next({
+      eventType: 'PRESENCE_UPDATED',
+      timestamp: 1,
+      payload: busyMatch('match-push'),
+    });
+
+    expect(wsMock.connect).toHaveBeenCalledTimes(1);
+    expect(wsMock.subscribe).toHaveBeenCalledWith('/user/queue/presence');
+    expect(routerMock.navigateByUrl).toHaveBeenCalledWith('/match/match-push');
+  });
+
+  it('deduplica snapshots repetidos hacia el mismo destino', () => {
+    const { service, store, routerMock, presenceEvents$ } = setup(freePresence());
+    login(store);
+
+    service.start();
+    const event: PresenceWsEvent = {
+      eventType: 'PRESENCE_UPDATED',
+      timestamp: 1,
+      payload: busyMatch('same-match'),
+    };
+    presenceEvents$.next(event);
+    presenceEvents$.next(event);
+
+    expect(routerMock.navigateByUrl).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancela suscripciones al cerrar sesion', () => {
+    const { service, store, routerMock, presenceEvents$ } = setup(freePresence());
+    login(store);
+    service.start();
+
+    store.clearSession();
+    presenceEvents$.next({
+      eventType: 'PRESENCE_UPDATED',
+      timestamp: 1,
+      payload: busyMatch('after-logout'),
+    });
+
+    expect(routerMock.navigateByUrl).not.toHaveBeenCalled();
+  });
+
+  it('navega al match de origen cuando hay revancha abierta sin match activo', () => {
+    const { service, store, routerMock } = setup(rematchPresence('origin-42'));
+    login(store);
+
+    service.start();
+
+    expect(routerMock.navigateByUrl).toHaveBeenCalledWith('/match/origin-42');
+  });
+
+  it('no navega por revancha si ya esta en el match de origen', () => {
+    const { service, store, routerMock } = setup(rematchPresence('origin-42'), '/match/origin-42');
+    login(store);
+
+    service.start();
+
+    expect(routerMock.navigateByUrl).not.toHaveBeenCalled();
+  });
+});

@@ -165,6 +165,23 @@ describe('RematchDialogComponent', () => {
     expect(mockDialogRef.close).toHaveBeenCalledWith({ confirmedMatchId: null });
   });
 
+  it.each(['EXPIRED', 'CLOSED_BY_LEAVE'] as const)(
+    'click en "Salir" NO llama leave() cuando status=%s (solo cierra)',
+    (status) => {
+      mockRematchState.session.set(makeSession({ status }));
+      fixture.detectChanges();
+
+      const btns: HTMLButtonElement[] = Array.from(
+        fixture.nativeElement.querySelectorAll('button'),
+      );
+      const salirBtn = btns.find((b) => b.textContent?.trim() === 'Salir');
+      salirBtn?.click();
+
+      expect(mockRematchState.leave).not.toHaveBeenCalled();
+      expect(mockDialogRef.close).toHaveBeenCalledWith({ confirmedMatchId: null });
+    },
+  );
+
   // --- navegación en CONFIRMED ---
 
   it('cierra el diálogo con confirmedMatchId cuando session pasa a CONFIRMED', async () => {

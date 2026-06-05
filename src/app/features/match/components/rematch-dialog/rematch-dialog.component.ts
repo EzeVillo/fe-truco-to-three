@@ -88,7 +88,12 @@ export class RematchDialogComponent implements OnDestroy {
   }
 
   onLeave(): void {
-    this.rematchState.leave();
+    // Solo abandonar (POST …/rematch/leave) mientras la oferta sigue abierta.
+    // Si ya venció, la cerró el rival o se confirmó, el BE rechaza el leave y
+    // genera alertas; en esos casos solo cerramos el diálogo.
+    if (this.isOpen()) {
+      this.rematchState.leave();
+    }
     this.dialogRef.close({ confirmedMatchId: null });
   }
 

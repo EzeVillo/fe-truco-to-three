@@ -1,4 +1,4 @@
-import { DestroyRef, Injectable, effect, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, computed, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { EMPTY, catchError } from 'rxjs';
 import type { Subscription } from 'rxjs';
@@ -31,6 +31,7 @@ export class PresenceCoordinatorService {
   /** Última presencia conocida (bootstrap REST o PRESENCE_UPDATED). null hasta el primer fetch. */
   private readonly _presence = signal<UserPresenceResponse | null>(null);
   readonly presence = this._presence.asReadonly();
+  readonly busy = computed(() => this._presence()?.busy === true);
 
   constructor() {
     effect(() => {

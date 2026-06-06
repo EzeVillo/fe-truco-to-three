@@ -1984,8 +1984,8 @@ con los identificadores necesarios.
 `GET /api/me/presence`
 
 Opera **siempre sobre el usuario autenticado** (sale del token; no recibe `userId`). Es de **solo
-lectura**: no modifica partidas, ligas, copas ni revanchas, ni reinicia sus temporizadores de
-inactividad.
+lectura**: no modifica partidas, ligas, copas, revanchas ni cola Quick Match, ni reinicia sus
+temporizadores de inactividad.
 
 Response `200`:
 
@@ -2002,11 +2002,13 @@ Response `200`:
     "currentMatchId": "550e8400-e29b-41d4-a716-446655440000"
   },
   "cup": null,
-  "rematch": null
+  "rematch": null,
+  "quickMatch": null
 }
 ```
 
-- `busy` es `true` si y solo si al menos uno de `match`, `league`, `cup` o `rematch` es no-nulo.
+- `busy` es `true` si y solo si al menos uno de `match`, `league`, `cup`, `rematch` o `quickMatch`
+  es no-nulo.
 - Cada dominio en el que el usuario **no** está ocupado se devuelve como `null` explícito (nunca se
   omite la clave).
 - `match`: partida **no finalizada** del usuario (estados `WAITING_FOR_PLAYERS`, `READY` o
@@ -2016,7 +2018,9 @@ Response `200`:
   (la partida del torneo aparece en **ambos** dominios).
 - `rematch`: sesión de revancha abierta. Trae `id` (de la sesión) y `originMatchId` (partida de
   origen).
-- **Quick Match queda fuera**: no sobrevive a la desconexión, por lo que nunca aparece aquí.
+- `quickMatch`: busqueda Quick Match activa en la cola runtime. Trae `status = SEARCHING` y
+  `enqueuedAt`. No persiste en DB ni sobrevive a refresco/desconexion; desaparece al cancelar,
+  matchear o desconectarse la sesion WebSocket asociada.
 
 Usuario sin ocupación alguna:
 
@@ -2026,7 +2030,24 @@ Usuario sin ocupación alguna:
   "match": null,
   "league": null,
   "cup": null,
-  "rematch": null
+  "rematch": null,
+  "quickMatch": null
+}
+```
+
+Usuario buscando Quick Match:
+
+```json
+{
+  "busy": true,
+  "match": null,
+  "league": null,
+  "cup": null,
+  "rematch": null,
+  "quickMatch": {
+    "status": "SEARCHING",
+    "enqueuedAt": "2026-05-20T10:00:00Z"
+  }
 }
 ```
 
@@ -2043,7 +2064,7 @@ los cambios por WebSocket/STOMP a la cola de usuario:
 `/user/queue/presence`
 
 Un mismo usuario puede tener la sesión iniciada en varios lugares (pestañas/dispositivos). Cuando su
-ocupación **cambia** en un dominio reconectable (entra a una partida, su liga/copa arranca o avanza,
+ocupación **cambia** (entra/sale de Quick Match, entra a una partida, su liga/copa arranca o avanza,
 se abre/cierra una revancha, o se libera al finalizar), **todas** sus sesiones activas —incluida la
 que originó el cambio— reciben un mensaje con el snapshot completo de presencia, para derivar al
 recurso correcto (p. ej., una sesión ociosa que no entró al match igual se entera y deriva ahí).
@@ -2066,13 +2087,15 @@ Mensaje empujado:
       "currentMatchId": "550e8400-e29b-41d4-a716-446655440000"
     },
     "cup": null,
-    "rematch": null
+    "rematch": null,
+    "quickMatch": null
   }
 }
 ```
 
 - `payload` tiene **exactamente el mismo shape** que el body de `GET /api/me/presence`
-  (`UserPresenceResponse`): `busy` + `match`/`league`/`cup`/`rematch` (objeto u `null`).
+  (`UserPresenceResponse`): `busy` + `match`/`league`/`cup`/`rematch`/`quickMatch` (objeto u
+  `null`).
 - Las notificaciones llegan **solo** a las sesiones del propio usuario (nunca a terceros).
 - Es **solo lectura**: emitir el push no modifica partidas/ligas/copas/revanchas ni reinicia sus
   temporizadores de inactividad.
@@ -2080,8 +2103,8 @@ Mensaje empujado:
   **
   a la suscripción; el arranque en frío y la reconciliación ante un mensaje perdido se resuelven con
   la consulta pull (entrega best-effort).
-- **Quick Match** y **bots** quedan fuera (la cola de quick match no genera push; sí la partida ya
-  creada).
+- **Bots** quedan fuera. Quick Match genera push mientras existe un ticket de cola; al matchear, la
+  partida creada genera el push de `match`.
 
 ## 8. Enums y valores permitidos
 
@@ -2827,6 +2850,12 @@ Errores:
 
 Requiere Bearer token.
 
+Header opcional:
+
+| Header                   | Tipo     | Descripcion                                                                  |
+|--------------------------|----------|------------------------------------------------------------------------------|
+| `X-WebSocket-Session-Id` | `string` | ID de sesion STOMP que queda asociado al ticket para cleanup al desconectar. |
+
 Request:
 
 ```json
@@ -2870,6 +2899,10 @@ Si `status = MATCHED`, el jugador tambien recibe el evento WebSocket `GAME_START
 
 La llamada es idempotente: si el jugador ya estaba en cola, devuelve `SEARCHING` con el
 `enqueuedAt` original sin modificar su posicion en la cola.
+
+Si el ticket fue creado con `X-WebSocket-Session-Id`, al desconectarse esa sesion STOMP el backend
+lo elimina de la cola y emite `PRESENCE_UPDATED`/`FRIEND_AVAILABILITY_CHANGED`. Para compatibilidad,
+los tickets sin session id se limpian al desconectarse cualquier sesion STOMP del usuario.
 
 Errores:
 

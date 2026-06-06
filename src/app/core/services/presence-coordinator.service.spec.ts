@@ -16,6 +16,7 @@ function busyMatch(id = 'match-1'): UserPresenceResponse {
     league: null,
     cup: null,
     rematch: null,
+    quickMatch: null,
   };
 }
 
@@ -26,6 +27,7 @@ function freePresence(): UserPresenceResponse {
     league: null,
     cup: null,
     rematch: null,
+    quickMatch: null,
   };
 }
 
@@ -36,6 +38,7 @@ function rematchPresence(originMatchId = 'origin-1'): UserPresenceResponse {
     league: null,
     cup: null,
     rematch: { id: 'session-1', originMatchId },
+    quickMatch: null,
   };
 }
 
@@ -207,5 +210,21 @@ describe('PresenceCoordinatorService', () => {
     service.start();
 
     expect(service.presence()?.rematch?.originMatchId).toBe('origin-9');
+  });
+
+  it('expone busy segun el snapshot de presencia vigente', () => {
+    const { service, store, presenceEvents$ } = setup(freePresence());
+    login(store);
+
+    service.start();
+    expect(service.busy()).toBe(false);
+
+    presenceEvents$.next({
+      eventType: 'PRESENCE_UPDATED',
+      timestamp: 1,
+      payload: busyMatch('busy-match'),
+    });
+
+    expect(service.busy()).toBe(true);
   });
 });

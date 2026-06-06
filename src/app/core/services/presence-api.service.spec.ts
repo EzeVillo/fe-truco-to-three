@@ -27,6 +27,7 @@ describe('PresenceApiService', () => {
       league: null,
       cup: null,
       rematch: null,
+      quickMatch: null,
     };
     let result: UserPresenceResponse | null = null;
 

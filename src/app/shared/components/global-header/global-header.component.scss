@@ -50,43 +50,24 @@
     flex: 1;
   }
 
-  &__user {
-    font-size: 0.85rem;
-    color: var(--t3-text-muted);
+  &__menu {
+    position: relative;
+    display: flex;
+    align-items: center;
   }
 
-  &__nav-link {
-    font-size: 0.85rem;
-    color: var(--t3-text-muted);
-  }
-
-  &__user-link {
-    text-decoration: none;
-
-    @media (hover: hover) {
-      &:hover {
-        color: var(--t3-gold-500);
-      }
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--t3-gold-400);
-      outline-offset: 2px;
-      border-radius: var(--t3-radius-sm);
-    }
-  }
-
-  &__logout {
+  &__menu-button {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    width: 40px;
+    height: 40px;
     background: transparent;
     border: 1px solid var(--t3-card-border);
-    color: var(--t3-gold-500);
-    font-weight: 600;
-    padding: var(--t3-gap-xs) var(--t3-gap-md);
+    color: var(--t3-text);
     border-radius: var(--t3-radius-md);
     cursor: pointer;
-    font-family: inherit;
-    font-size: 0.85rem;
-    min-height: 36px;
     transition:
       background-color 0.18s ease,
       border-color 0.18s ease;
@@ -101,6 +82,63 @@
     &:focus-visible {
       outline: 2px solid var(--t3-gold-400);
       outline-offset: 2px;
+    }
+  }
+
+  &__menu-line {
+    display: block;
+    width: 18px;
+    height: 2px;
+    margin: 0 auto;
+    background: currentcolor;
+    border-radius: var(--t3-radius-sm);
+  }
+
+  &__menu-panel {
+    position: absolute;
+    top: calc(100% + var(--t3-gap-sm));
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    width: min(78vw, 240px);
+    padding: var(--t3-gap-sm);
+    background: var(--t3-card-bg);
+    border: 1px solid var(--t3-card-border);
+    border-radius: var(--t3-radius-md);
+    box-shadow: var(--t3-shadow-card);
+  }
+
+  &__menu-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 40px;
+    padding: var(--t3-gap-sm) var(--t3-gap-md);
+    background: transparent;
+    border: 0;
+    border-radius: var(--t3-radius-sm);
+    color: var(--t3-text);
+    font: inherit;
+    font-size: 0.9rem;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+
+    @media (hover: hover) {
+      &:hover {
+        background: var(--t3-gold-bg-subtle);
+        color: var(--t3-gold-500);
+      }
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--t3-gold-400);
+      outline-offset: 2px;
+    }
+
+    &--readonly {
+      color: var(--t3-text-muted);
+      cursor: default;
     }
   }
 

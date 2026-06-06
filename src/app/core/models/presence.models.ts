@@ -21,12 +21,18 @@ export interface PresenceRematch {
   originMatchId: string;
 }
 
+export interface PresenceQuickMatch {
+  status: 'SEARCHING';
+  enqueuedAt: string;
+}
+
 export interface UserPresenceResponse {
   busy: boolean;
   match: PresenceMatch | null;
   league: PresenceTournament | null;
   cup: PresenceTournament | null;
   rematch: PresenceRematch | null;
+  quickMatch: PresenceQuickMatch | null;
 }
 
 export interface PresenceWsEvent {

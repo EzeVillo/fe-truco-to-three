@@ -13,6 +13,7 @@ const _presenceCheck = {
   league: null,
   cup: null,
   rematch: null,
+  quickMatch: null,
 } satisfies UserPresenceResponse;
 
 const _eventCheck = {
@@ -40,7 +41,7 @@ describe('Contract: presencia / reconexion §7.6', () => {
   it('docs/CONTRATOS_API.md documenta el shape completo de UserPresenceResponse', () => {
     const content = docs();
 
-    for (const field of ['busy', 'match', 'league', 'cup', 'rematch']) {
+    for (const field of ['busy', 'match', 'league', 'cup', 'rematch', 'quickMatch']) {
       expect(content).toContain(`"${field}"`);
     }
     expect(content).toContain('"originMatchId"');
@@ -56,6 +57,7 @@ describe('Contract: presencia / reconexion §7.6', () => {
       league: null,
       cup: null,
       rematch: { id: 'session-1', originMatchId: 'origin-1' },
+      quickMatch: null,
     };
 
     expect(derivePresenceDestination(presence)).toEqual({ kind: 'match', matchId: 'match-1' });
@@ -68,6 +70,7 @@ describe('Contract: presencia / reconexion §7.6', () => {
       league: null,
       cup: null,
       rematch: { id: 'session-1', originMatchId: 'origin-1' },
+      quickMatch: null,
     };
 
     expect(derivePresenceDestination(presence)).toEqual({
@@ -83,6 +86,7 @@ describe('Contract: presencia / reconexion §7.6', () => {
       league: null,
       cup: null,
       rematch: null,
+      quickMatch: null,
     };
     const tournamentOnly: UserPresenceResponse = {
       busy: true,
@@ -90,9 +94,19 @@ describe('Contract: presencia / reconexion §7.6', () => {
       league: { id: 'league-1', status: 'IN_PROGRESS', currentMatchId: 'match-league' },
       cup: null,
       rematch: null,
+      quickMatch: null,
+    };
+    const quickMatchOnly: UserPresenceResponse = {
+      busy: true,
+      match: null,
+      league: null,
+      cup: null,
+      rematch: null,
+      quickMatch: { status: 'SEARCHING', enqueuedAt: '2026-05-20T10:00:00Z' },
     };
 
     expect(derivePresenceDestination(free)).toEqual({ kind: 'none' });
     expect(derivePresenceDestination(tournamentOnly)).toEqual({ kind: 'none' });
+    expect(derivePresenceDestination(quickMatchOnly)).toEqual({ kind: 'none' });
   });
 });

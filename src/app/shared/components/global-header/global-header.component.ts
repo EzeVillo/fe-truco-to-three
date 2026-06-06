@@ -1,10 +1,11 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, ElementRef, HostListener, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { AuthStore } from '../../../core/auth/auth.store';
 import { AuthService } from '../../../core/auth/auth.service';
+import { PresenceCoordinatorService } from '../../../core/services/presence-coordinator.service';
 import { ConfirmLogoutDialogComponent } from '../confirm-logout-dialog/confirm-logout-dialog.component';
 
 @Component({
@@ -17,8 +18,12 @@ import { ConfirmLogoutDialogComponent } from '../confirm-logout-dialog/confirm-l
 export class GlobalHeaderComponent {
   readonly authStore = inject(AuthStore);
   private readonly authService = inject(AuthService);
+  private readonly presenceCoordinator = inject(PresenceCoordinatorService);
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
+  private readonly host = inject(ElementRef<HTMLElement>);
+
+  readonly menuOpen = signal(false);
 
   private readonly currentUrl = toSignal(
     this.router.events.pipe(
@@ -31,10 +36,11 @@ export class GlobalHeaderComponent {
 
   /** Estando dentro de una partida, la navegación del header se bloquea (salvo "Salir"). */
   readonly inMatch = computed(() => /^\/match\//.test(this.currentUrl()));
+  readonly busy = computed(() => this.inMatch() || this.presenceCoordinator.busy());
 
   /** El acceso a Amigos es sólo para usuarios registrados (no guests) y fuera de partida. */
   readonly showFriends = computed(
-    () => this.authStore.isAuthenticated() && !this.authStore.isGuest() && !this.inMatch(),
+    () => this.authStore.isAuthenticated() && !this.authStore.isGuest() && !this.busy(),
   );
 
   userLabel(): string {
@@ -46,7 +52,16 @@ export class GlobalHeaderComponent {
     return this.authStore.isGuest() || !username ? null : `/profile/${username}`;
   }
 
+  toggleMenu(): void {
+    this.menuOpen.update((open) => !open);
+  }
+
+  closeMenu(): void {
+    this.menuOpen.set(false);
+  }
+
   onLogoutClick(): void {
+    this.closeMenu();
     const ref = this.dialog.open<ConfirmLogoutDialogComponent, void, boolean>(
       ConfirmLogoutDialogComponent,
       { autoFocus: false, restoreFocus: true },
@@ -57,5 +72,22 @@ export class GlobalHeaderComponent {
         void this.router.navigateByUrl('/login');
       }
     });
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.menuOpen()) {
+      return;
+    }
+
+    const target = event.target;
+    if (target instanceof Node && !this.host.nativeElement.contains(target)) {
+      this.closeMenu();
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.closeMenu();
   }
 }

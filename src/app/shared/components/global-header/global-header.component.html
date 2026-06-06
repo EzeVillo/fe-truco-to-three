@@ -21,20 +21,43 @@
   <span class="global-header__spacer"></span>
 
   @if (authStore.isAuthenticated()) {
-    @if (showFriends()) {
-      <a class="global-header__nav-link global-header__user-link" routerLink="/friends">Amigos</a>
-    }
-    @if (profileLink(); as link) {
-      @if (inMatch()) {
-        <span class="global-header__user">{{ userLabel() }}</span>
-      } @else {
-        <a class="global-header__user global-header__user-link" [routerLink]="link">{{
-          userLabel()
-        }}</a>
+    <div class="global-header__menu">
+      <button
+        type="button"
+        class="global-header__menu-button"
+        aria-label="Abrir menú"
+        [attr.aria-expanded]="menuOpen()"
+        aria-controls="global-header-menu"
+        (click)="toggleMenu()"
+      >
+        <span class="global-header__menu-line" aria-hidden="true"></span>
+        <span class="global-header__menu-line" aria-hidden="true"></span>
+        <span class="global-header__menu-line" aria-hidden="true"></span>
+      </button>
+
+      @if (menuOpen()) {
+        <nav id="global-header-menu" class="global-header__menu-panel" aria-label="Menú principal">
+          @if (showFriends()) {
+            <a class="global-header__menu-item" routerLink="/friends" (click)="closeMenu()">
+              Amigos
+            </a>
+          }
+          @if (!busy()) {
+            @if (profileLink(); as link) {
+              <a class="global-header__menu-item" [routerLink]="link" (click)="closeMenu()">
+                Mi perfil
+              </a>
+            } @else {
+              <span class="global-header__menu-item global-header__menu-item--readonly">
+                {{ userLabel() }}
+              </span>
+            }
+          }
+          <button type="button" class="global-header__menu-item" (click)="onLogoutClick()">
+            Salir
+          </button>
+        </nav>
       }
-    } @else {
-      <span class="global-header__user">{{ userLabel() }}</span>
-    }
-    <button type="button" class="global-header__logout" (click)="onLogoutClick()">Salir</button>
+    </div>
   }
 </header>

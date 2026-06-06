@@ -35,6 +35,7 @@ export class FriendsPageComponent implements OnInit {
   readonly store = inject(SocialStore);
 
   readonly activeTab = signal<FriendsTab>('friends');
+  readonly creatingMatchFor = signal<string | null>(null);
 
   private readonly addFriendForm = viewChild(AddFriendFormComponent);
 
@@ -68,6 +69,17 @@ export class FriendsPageComponent implements OnInit {
 
   onCancel(username: string): void {
     this.store.cancelRequest(username);
+  }
+
+  onInviteToMatch(username: string): void {
+    if (this.creatingMatchFor() !== null) {
+      return;
+    }
+
+    this.creatingMatchFor.set(username);
+    void this.router
+      .navigate(['/lobby/online'], { queryParams: { inviteFriend: username } })
+      .finally(() => this.creatingMatchFor.set(null));
   }
 
   onRemove(username: string): void {

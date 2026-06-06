@@ -5,6 +5,39 @@
   min-height: 0;
 }
 
+.waiting-room__invite,
+.waiting-room__invites-sent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--t3-gap-xs);
+}
+
+.waiting-room__invite {
+  gap: var(--t3-gap-sm);
+  margin-top: var(--t3-gap-sm);
+}
+
+.waiting-room__invites-sent {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.waiting-room__invite-sent {
+  display: flex;
+  align-items: center;
+  gap: var(--t3-gap-sm);
+  padding: var(--t3-gap-xs) var(--t3-gap-sm);
+  border: 1px solid var(--t3-card-border);
+  border-radius: var(--t3-radius-sm);
+}
+
+.waiting-room__invite-status {
+  color: var(--t3-text-dim);
+  font-size: 0.8125rem;
+  margin-inline-start: auto;
+}
+
 .waiting-room {
   flex: 1;
   display: flex;
@@ -165,7 +198,6 @@
   @media (min-width: 1024px) {
     &__card {
       max-width: 480px;
-      padding: var(--t3-gap-lg);
     }
 
     &__copy,
@@ -181,10 +213,6 @@
   }
 }
 
-// ---------------------------------------------------------------------------
-// Variantes de botón tematizadas (sin Material crudos) — patrón del proyecto.
-// ---------------------------------------------------------------------------
-
 .t3-btn {
   display: inline-flex;
   align-items: center;
@@ -199,7 +227,10 @@
   font-size: 0.9rem;
   cursor: pointer;
   text-decoration: none;
-  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
 
   &:disabled,
   &[disabled] {

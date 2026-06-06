@@ -1,5 +1,11 @@
 import type { Card, AvailableAction } from '../../../core/models/match.models';
-import type { Seat, TrucoCall, TrucoResponse, EnvidoCall, EnvidoResponse } from '../../../core/models/enums';
+import type {
+  Seat,
+  TrucoCall,
+  TrucoResponse,
+  EnvidoCall,
+  EnvidoResponse,
+} from '../../../core/models/enums';
 
 export type MatchEventType =
   | 'CARD_PLAYED'

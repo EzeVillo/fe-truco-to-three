@@ -11,7 +11,10 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import type { CreateBotMatchRequest, CreateBotMatchResponse } from '../../app/core/models/match.models';
+import type {
+  CreateBotMatchRequest,
+  CreateBotMatchResponse,
+} from '../../app/core/models/match.models';
 import { seriesFormatToGamesToPlay } from '../../app/core/models/match.models';
 
 // ─── Paridad de campos via `satisfies` (compile-time) ───────────────────────
@@ -26,7 +29,10 @@ const _reqKeysCheck = {
 // Mismo mecanismo para la response.
 const _resKeysCheck = {
   matchId: '',
-} satisfies Record<keyof CreateBotMatchResponse, CreateBotMatchResponse[keyof CreateBotMatchResponse]>;
+} satisfies Record<
+  keyof CreateBotMatchResponse,
+  CreateBotMatchResponse[keyof CreateBotMatchResponse]
+>;
 
 // Fuerza que el linter no elimine los objetos (se usan en runtime).
 void _reqKeysCheck;

@@ -8,12 +8,7 @@ import type { Card } from '../../../../core/models/match.models';
   imports: [CommonModule],
   template: `
     @if (card) {
-      <img
-        class="card-view__image"
-        [src]="cardImageUrl"
-        [alt]="cardAltText"
-        loading="lazy"
-      />
+      <img class="card-view__image" [src]="cardImageUrl" [alt]="cardAltText" loading="lazy" />
     } @else {
       <img
         class="card-view__image card-view__image--hidden"

@@ -10,9 +10,21 @@
 
   &__info {
     display: flex;
-    flex-direction: column;
-    gap: 2px;
+    align-items: center;
+    gap: var(--t3-gap-xs);
     min-width: 0;
+  }
+
+  &__dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: var(--t3-radius-lg);
+    background: var(--t3-text-muted);
+    flex: 0 0 auto;
+
+    &--online {
+      background: var(--t3-green-600);
+    }
   }
 
   &__name {
@@ -23,8 +35,15 @@
     white-space: nowrap;
   }
 
+  &__reason {
+    color: var(--t3-text-dim);
+    font-size: 0.8125rem;
+    align-self: center;
+  }
+
   &__actions {
     display: flex;
+    align-items: center;
     gap: var(--t3-gap-xs);
     flex-shrink: 0;
   }
@@ -43,7 +62,10 @@
   font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
-  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
 }
 
 .t3-btn--destructive {

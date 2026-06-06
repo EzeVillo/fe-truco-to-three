@@ -34,8 +34,7 @@ export class GlobalHeaderComponent {
 
   /** El acceso a Amigos es sólo para usuarios registrados (no guests) y fuera de partida. */
   readonly showFriends = computed(
-    () =>
-      this.authStore.isAuthenticated() && !this.authStore.isGuest() && !this.inMatch(),
+    () => this.authStore.isAuthenticated() && !this.authStore.isGuest() && !this.inMatch(),
   );
 
   userLabel(): string {

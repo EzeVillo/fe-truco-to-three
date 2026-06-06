@@ -1,19 +1,43 @@
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, signal, ViewContainerRef, type OnInit, type OnDestroy } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  inject,
+  signal,
+  ViewContainerRef,
+  type OnInit,
+  type OnDestroy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { deriveMatchView, type MatchView } from '../../utils/derive-match-view';
 import { derivePendingCall } from '../../utils/derive-pending-call';
-import { computeElapsedFraction, computeRemainingMsFromSnapshot, isUrgent } from '../../utils/turn-timer';
+import {
+  computeElapsedFraction,
+  computeRemainingMsFromSnapshot,
+  isUrgent,
+} from '../../utils/turn-timer';
 import { callDisplayMapper } from '../../utils/call-display-mapper';
 import { GameBoardComponent } from '../../components/game-board/game-board.component';
 import { WaitingRoomComponent } from '../../components/waiting-room/waiting-room.component';
 import { MatchesApiService } from '../../../lobby/services/matches-api.service';
 import { readJoinCode, clearJoinCode } from '../../utils/join-code-store';
-import { GameWonDialogComponent, type GameWonDialogData } from '../../components/game-won-dialog/game-won-dialog.component';
-import { EnvidoResultDialogComponent, type EnvidoResultDialogData } from '../../components/envido-result-dialog/envido-result-dialog.component';
-import { RematchDialogComponent, type RematchDialogResult } from '../../components/rematch-dialog/rematch-dialog.component';
+import {
+  GameWonDialogComponent,
+  type GameWonDialogData,
+} from '../../components/game-won-dialog/game-won-dialog.component';
+import {
+  EnvidoResultDialogComponent,
+  type EnvidoResultDialogData,
+} from '../../components/envido-result-dialog/envido-result-dialog.component';
+import {
+  RematchDialogComponent,
+  type RematchDialogResult,
+} from '../../components/rematch-dialog/rematch-dialog.component';
 import { MatchStateService } from '../../services/match-state.service';
 import { MatchEventQueueService } from '../../services/match-event-queue.service';
 import { RematchStateService } from '../../services/rematch-state.service';
@@ -21,7 +45,13 @@ import { RematchApiService } from '../../services/rematch-api.service';
 import { MatchCallAudioService } from '../../services/match-call-audio.service';
 import { PresenceCoordinatorService } from '../../../../core/services/presence-coordinator.service';
 import { getErrorCopy } from '../../../../shared/error-copy/error-copy';
-import type { MatchEndedEvent, MatchWsEvent, GameWonPayload, EnvidoResolvedPayload, PlayerReadyPayload } from '../../models/match-ws-events';
+import type {
+  MatchEndedEvent,
+  MatchWsEvent,
+  GameWonPayload,
+  EnvidoResolvedPayload,
+  PlayerReadyPayload,
+} from '../../models/match-ws-events';
 import type { Subscription } from 'rxjs';
 
 @Component({
@@ -33,7 +63,6 @@ import type { Subscription } from 'rxjs';
   styleUrl: './match-screen.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-
 export class MatchScreenComponent implements OnInit, OnDestroy {
   readonly matchId = signal<string>('');
   readonly matchView = computed<MatchView | null>(() => {
@@ -41,7 +70,9 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     return state ? deriveMatchView(state) : null;
   });
   readonly errorMessage = computed(() => {
-    if (!this.matchStateService.error()) {return '';}
+    if (!this.matchStateService.error()) {
+      return '';
+    }
     return getErrorCopy('MATCH_LOAD', null);
   });
   readonly selfCallText = signal<string | null>(null);
@@ -135,10 +166,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   readonly viewerActionTimedOut = computed(() => {
     const v = this.matchView();
     return (
-      !!v &&
-      v.status === 'IN_PROGRESS' &&
-      v.deadlineIsSelf === true &&
-      this.timerRemainingMs() <= 0
+      !!v && v.status === 'IN_PROGRESS' && v.deadlineIsSelf === true && this.timerRemainingMs() <= 0
     );
   });
 
@@ -187,8 +215,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
       const id = this.matchId();
       if (state && id && !this._rematchInited) {
         this._rematchInited = true;
-        const hasActiveRematch =
-          this.presenceCoordinator.presence()?.rematch?.originMatchId === id;
+        const hasActiveRematch = this.presenceCoordinator.presence()?.rematch?.originMatchId === id;
         this.rematchStateService.init(id, state.viewerSeat, hasActiveRematch);
       }
     });
@@ -241,7 +268,9 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     // Usar paramMap para detectar cambios de matchId al navegar a la revancha (D4).
     this._paramSub = this.route.paramMap.subscribe((params) => {
       const newId = params.get('matchId') ?? '';
-      if (!newId || newId === this.matchId()) {return;}
+      if (!newId || newId === this.matchId()) {
+        return;
+      }
       this.matchId.set(newId);
       this._rematchInited = false;
       this._callHydratedMatchId = null;
@@ -254,7 +283,9 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
       this.opponentReady.set(false);
       // Recuperar el joinCode: primero del navigation state (recién creada),
       // luego de sessionStorage (sobrevive a recarga). Feature 015 (D5).
-      const navState = (history.state ?? {}) as { joinCode?: string };
+      const navState = (history.state ?? {}) as {
+        joinCode?: string;
+      };
       this.joinCode.set(navState.joinCode ?? readJoinCode(newId));
       this.rematchStateService.reset();
       this.matchStateService.init(newId);
@@ -344,16 +375,23 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
 
     // Handle ENVIDO_RESOLVED: infer responder seat as opposite of last envido caller
     if (event.eventType === 'ENVIDO_RESOLVED') {
-      const payload = event.payload as { response: string; winnerSeat: 'PLAYER_ONE' | 'PLAYER_TWO' };
+      const payload = event.payload as {
+        response: string;
+        winnerSeat: 'PLAYER_ONE' | 'PLAYER_TWO';
+      };
       const textMap: Record<string, string> = {
         QUIERO: '\u00a1Quiero!',
         NO_QUIERO: '\u00a1No quiero!',
       };
       const text = textMap[payload.response];
-      if (!text) {return;}
+      if (!text) {
+        return;
+      }
 
       const state = this.matchStateService.state();
-      if (!state) {return;}
+      if (!state) {
+        return;
+      }
 
       // Solo puede haber un call text visible a la vez: limpiar ambos antes
       this.selfCallText.set(null);
@@ -389,10 +427,14 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     }
 
     const displayEvent = callDisplayMapper(event);
-    if (!displayEvent) {return;}
+    if (!displayEvent) {
+      return;
+    }
 
     const state = this.matchStateService.state();
-    if (!state) {return;}
+    if (!state) {
+      return;
+    }
 
     // Solo puede haber un call text visible a la vez: limpiar ambos antes
     this.selfCallText.set(null);
@@ -445,9 +487,13 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
 
   /** Marca al jugador listo (§4.5). La transicion al tablero llega por GAME_STARTED. */
   onStartMatch(): void {
-    if (this.starting() || this.selfReady()) {return;}
+    if (this.starting() || this.selfReady()) {
+      return;
+    }
     const id = this.matchId();
-    if (!id) {return;}
+    if (!id) {
+      return;
+    }
     this.starting.set(true);
     this.matchesApiService.startMatch(id).subscribe({
       next: () => {
@@ -477,9 +523,13 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
 
   /** Cualquier jugador sale de la sala antes de comenzar (§4.13). */
   onLeaveMatch(): void {
-    if (this.leaving()) {return;}
+    if (this.leaving()) {
+      return;
+    }
     const id = this.matchId();
-    if (!id) {return;}
+    if (!id) {
+      return;
+    }
     this.leaving.set(true);
     this.matchesApiService.leaveMatch(id).subscribe({
       next: () => {
@@ -494,7 +544,9 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
 
   private openResultDialog(event: MatchEndedEvent): void {
     const state = this.matchStateService.state();
-    if (!state) {return;}
+    if (!state) {
+      return;
+    }
 
     const data: GameWonDialogData = this.mapMatchEndedToDialogData(event, state);
 
@@ -505,7 +557,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
         panelClass: 't3-game-won-dialog',
         backdropClass: 't3-game-won-backdrop',
         disableClose: true,
-      }
+      },
     );
 
     dialogRef.afterClosed().subscribe(() => {
@@ -595,7 +647,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
         panelClass: 't3-game-won-dialog',
         backdropClass: 't3-game-won-backdrop',
         disableClose: false,
-      }
+      },
     );
 
     dialogRef.afterClosed().subscribe(() => {
@@ -641,7 +693,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
           panelClass: 't3-envido-result-dialog',
           backdropClass: 't3-envido-result-backdrop',
           disableClose: false,
-        }
+        },
       );
 
       dialogRef.afterClosed().subscribe(() => {
@@ -650,7 +702,10 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     }, MatchScreenComponent.ENVIDO_RESULT_MODAL_DELAY_MS);
   }
 
-  private mapMatchEndedToDialogData(event: MatchEndedEvent, state: ReturnType<typeof this.matchStateService.state>): GameWonDialogData {
+  private mapMatchEndedToDialogData(
+    event: MatchEndedEvent,
+    state: ReturnType<typeof this.matchStateService.state>,
+  ): GameWonDialogData {
     if (!state) {
       throw new Error('State is null when mapping match ended data');
     }

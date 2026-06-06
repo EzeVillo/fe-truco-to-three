@@ -1,8 +1,27 @@
 <div class="social-row">
   <div class="social-row__info">
+    <span
+      class="social-row__dot"
+      [class.social-row__dot--online]="online()"
+      [attr.aria-label]="online() ? 'En línea' : 'Desconectado'"
+    ></span>
     <span class="social-row__name">{{ friendUsername() }}</span>
   </div>
   <div class="social-row__actions">
+    @if (canInvite()) {
+      <button
+        type="button"
+        class="t3-btn t3-btn--primary"
+        [disabled]="inviting()"
+        (click)="onInvite()"
+      >
+        Invitar a partida
+      </button>
+    } @else {
+      @if (reasonLabel()) {
+        <span class="social-row__reason">{{ reasonLabel() }}</span>
+      }
+    }
     <button type="button" class="t3-btn t3-btn--destructive" (click)="onRemove()">Eliminar</button>
   </div>
 </div>

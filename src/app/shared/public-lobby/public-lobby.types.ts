@@ -13,9 +13,7 @@ export interface PublicLobbyPage<T> {
 }
 
 /** Delta normalizado proveniente del topic WS de un lobby público. */
-export type PublicLobbyDelta<T> =
-  | { kind: 'upsert'; item: T }
-  | { kind: 'removed'; id: string };
+export type PublicLobbyDelta<T> = { kind: 'upsert'; item: T } | { kind: 'removed'; id: string };
 
 /** Configuración con la que el caller instancia el motor genérico. */
 export interface PublicLobbyConfig<T> {

@@ -43,7 +43,11 @@ function makeState(overrides: Partial<MatchState> = {}): MatchState {
   };
 }
 
-function makeEvent(type: MatchWsEvent['eventType'], payload: unknown, stateVersion = 1): MatchWsEvent {
+function makeEvent(
+  type: MatchWsEvent['eventType'],
+  payload: unknown,
+  stateVersion = 1,
+): MatchWsEvent {
   return {
     matchId: 'test-match',
     eventType: type,
@@ -57,7 +61,10 @@ describe('applyMatchEvent', () => {
   describe('CARD_PLAYED', () => {
     it('updates cardPlayerOne when seat is PLAYER_ONE', () => {
       const state = makeState();
-      const event = makeEvent('CARD_PLAYED', { seat: 'PLAYER_ONE', card: { suit: 'ESPADA', number: 1 } });
+      const event = makeEvent('CARD_PLAYED', {
+        seat: 'PLAYER_ONE',
+        card: { suit: 'ESPADA', number: 1 },
+      });
       const next = applyMatchEvent(state, event);
       expect(next.roundGame?.currentHand.cardPlayerOne).toEqual({ suit: 'ESPADA', number: 1 });
       expect(next.roundGame?.currentHand.cardPlayerTwo).toBeNull();
@@ -65,14 +72,20 @@ describe('applyMatchEvent', () => {
 
     it('updates cardPlayerTwo when seat is PLAYER_TWO', () => {
       const state = makeState();
-      const event = makeEvent('CARD_PLAYED', { seat: 'PLAYER_TWO', card: { suit: 'COPA', number: 5 } });
+      const event = makeEvent('CARD_PLAYED', {
+        seat: 'PLAYER_TWO',
+        card: { suit: 'COPA', number: 5 },
+      });
       const next = applyMatchEvent(state, event);
       expect(next.roundGame?.currentHand.cardPlayerTwo).toEqual({ suit: 'COPA', number: 5 });
     });
 
     it('is idempotent', () => {
       const state = makeState();
-      const event = makeEvent('CARD_PLAYED', { seat: 'PLAYER_ONE', card: { suit: 'ESPADA', number: 1 } });
+      const event = makeEvent('CARD_PLAYED', {
+        seat: 'PLAYER_ONE',
+        card: { suit: 'ESPADA', number: 1 },
+      });
       const next1 = applyMatchEvent(state, event);
       const next2 = applyMatchEvent(next1, event);
       expect(next2.roundGame?.currentHand.cardPlayerOne).toEqual({ suit: 'ESPADA', number: 1 });
@@ -107,8 +120,14 @@ describe('applyMatchEvent', () => {
 
   describe('TRUCO_RESPONDED', () => {
     it('sets roundStatus to PLAYING', () => {
-      const state = makeState({ roundGame: { ...makeState().roundGame!, roundStatus: 'TRUCO_IN_PROGRESS' } });
-      const event = makeEvent('TRUCO_RESPONDED', { responderSeat: 'PLAYER_TWO', response: 'QUIERO', call: 'TRUCO' });
+      const state = makeState({
+        roundGame: { ...makeState().roundGame!, roundStatus: 'TRUCO_IN_PROGRESS' },
+      });
+      const event = makeEvent('TRUCO_RESPONDED', {
+        responderSeat: 'PLAYER_TWO',
+        response: 'QUIERO',
+        call: 'TRUCO',
+      });
       const next = applyMatchEvent(state, event);
       expect(next.roundGame?.roundStatus).toBe('PLAYING');
     });
@@ -125,7 +144,9 @@ describe('applyMatchEvent', () => {
 
   describe('ENVIDO_RESOLVED', () => {
     it('sets roundStatus to PLAYING', () => {
-      const state = makeState({ roundGame: { ...makeState().roundGame!, roundStatus: 'ENVIDO_IN_PROGRESS' } });
+      const state = makeState({
+        roundGame: { ...makeState().roundGame!, roundStatus: 'ENVIDO_IN_PROGRESS' },
+      });
       const event = makeEvent('ENVIDO_RESOLVED', { response: 'QUIERO', winnerSeat: 'PLAYER_ONE' });
       const next = applyMatchEvent(state, event);
       expect(next.roundGame?.roundStatus).toBe('PLAYING');
@@ -157,7 +178,13 @@ describe('applyMatchEvent', () => {
       const state = makeState({
         roundGame: {
           ...makeState().roundGame!,
-          playedHands: [{ cardPlayerOne: { suit: 'ESPADA', number: 1 }, cardPlayerTwo: { suit: 'COPA', number: 5 }, winner: 'juancho' }],
+          playedHands: [
+            {
+              cardPlayerOne: { suit: 'ESPADA', number: 1 },
+              cardPlayerTwo: { suit: 'COPA', number: 5 },
+              winner: 'juancho',
+            },
+          ],
           currentTrucoCall: 'TRUCO',
           winner: 'juancho',
         },
@@ -250,14 +277,20 @@ describe('applyMatchEvent', () => {
   describe('HAND_DEALT', () => {
     it('updates myCards when seat matches viewerSeat', () => {
       const state = makeState({ viewerSeat: 'PLAYER_ONE' });
-      const event = makeEvent('HAND_DEALT', { seat: 'PLAYER_ONE', cards: [{ suit: 'ESPADA', number: 1 }] });
+      const event = makeEvent('HAND_DEALT', {
+        seat: 'PLAYER_ONE',
+        cards: [{ suit: 'ESPADA', number: 1 }],
+      });
       const next = applyMatchEvent(state, event);
       expect(next.roundGame?.myCards).toEqual([{ suit: 'ESPADA', number: 1 }]);
     });
 
     it('ignores when seat does not match viewerSeat', () => {
       const state = makeState({ viewerSeat: 'PLAYER_ONE' });
-      const event = makeEvent('HAND_DEALT', { seat: 'PLAYER_TWO', cards: [{ suit: 'COPA', number: 5 }] });
+      const event = makeEvent('HAND_DEALT', {
+        seat: 'PLAYER_TWO',
+        cards: [{ suit: 'COPA', number: 5 }],
+      });
       const next = applyMatchEvent(state, event);
       expect(next.roundGame?.myCards).toEqual(state.roundGame!.myCards);
     });
@@ -266,7 +299,11 @@ describe('applyMatchEvent', () => {
   describe('MATCH_FINISHED', () => {
     it('sets status, matchWinner and gamesWon', () => {
       const state = makeState();
-      const event = makeEvent('MATCH_FINISHED', { winnerSeat: 'PLAYER_ONE', gamesWonPlayerOne: 2, gamesWonPlayerTwo: 1 });
+      const event = makeEvent('MATCH_FINISHED', {
+        winnerSeat: 'PLAYER_ONE',
+        gamesWonPlayerOne: 2,
+        gamesWonPlayerTwo: 1,
+      });
       const next = applyMatchEvent(state, event);
       expect(next.status).toBe('FINISHED');
       expect(next.matchWinner).toBe('juancho');
@@ -278,7 +315,12 @@ describe('applyMatchEvent', () => {
   describe('MATCH_ABANDONED', () => {
     it('sets status, matchWinner and gamesWon', () => {
       const state = makeState();
-      const event = makeEvent('MATCH_ABANDONED', { winnerSeat: 'PLAYER_ONE', abandonerSeat: 'PLAYER_TWO', gamesWonPlayerOne: 1, gamesWonPlayerTwo: 0 });
+      const event = makeEvent('MATCH_ABANDONED', {
+        winnerSeat: 'PLAYER_ONE',
+        abandonerSeat: 'PLAYER_TWO',
+        gamesWonPlayerOne: 1,
+        gamesWonPlayerTwo: 0,
+      });
       const next = applyMatchEvent(state, event);
       expect(next.status).toBe('FINISHED');
       expect(next.matchWinner).toBe('juancho');
@@ -288,7 +330,12 @@ describe('applyMatchEvent', () => {
   describe('MATCH_FORFEITED', () => {
     it('sets status, matchWinner and gamesWon', () => {
       const state = makeState();
-      const event = makeEvent('MATCH_FORFEITED', { winnerSeat: 'PLAYER_ONE', loserSeat: 'PLAYER_TWO', gamesWonPlayerOne: 1, gamesWonPlayerTwo: 0 });
+      const event = makeEvent('MATCH_FORFEITED', {
+        winnerSeat: 'PLAYER_ONE',
+        loserSeat: 'PLAYER_TWO',
+        gamesWonPlayerOne: 1,
+        gamesWonPlayerTwo: 0,
+      });
       const next = applyMatchEvent(state, event);
       expect(next.status).toBe('FINISHED');
       expect(next.matchWinner).toBe('juancho');
@@ -370,7 +417,12 @@ describe('applyMatchDerivedEvent', () => {
 
     it('reemplaza un plazo previo (reinicio del reloj)', () => {
       const state = makeState({
-        roundGame: { ...makeState().roundGame!, actionDeadline: 1, turnDurationMillis: 2, actionDeadlineSeat: 'PLAYER_ONE' },
+        roundGame: {
+          ...makeState().roundGame!,
+          actionDeadline: 1,
+          turnDurationMillis: 2,
+          actionDeadlineSeat: 'PLAYER_ONE',
+        },
       });
       const event: MatchDerivedEvent = {
         matchId: 'test',
@@ -398,7 +450,12 @@ describe('applyMatchDerivedEvent', () => {
   describe('ACTION_DEADLINE_CLEARED', () => {
     it('limpia los tres campos del plazo', () => {
       const state = makeState({
-        roundGame: { ...makeState().roundGame!, actionDeadline: 1, turnDurationMillis: 2, actionDeadlineSeat: 'PLAYER_ONE' },
+        roundGame: {
+          ...makeState().roundGame!,
+          actionDeadline: 1,
+          turnDurationMillis: 2,
+          actionDeadlineSeat: 'PLAYER_ONE',
+        },
       });
       const event: MatchDerivedEvent = {
         matchId: 'test',

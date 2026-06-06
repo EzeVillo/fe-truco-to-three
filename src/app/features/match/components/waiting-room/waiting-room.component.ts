@@ -10,17 +10,19 @@ import {
   type OnDestroy,
 } from '@angular/core';
 import { buildJoinUrl } from '../../utils/join-link';
+import { InviteFriendPickerComponent } from '../../../social/components/invite-friend-picker/invite-friend-picker.component';
+import { SocialStore } from '../../../social/services/social.store';
 
 /**
  * Sala de espera de una partida privada (estados previos a IN_PROGRESS).
  * Presentacional: recibe el estado derivado y emite las acciones (iniciar/salir).
- * El anfitrion ve el codigo compartible y puede copiarlo. Cuando ambos jugadores
- * estan presentes, cada uno confirma que esta listo antes de empezar. Feature 015.
+ * Cuando ambos jugadores estan presentes, cada uno confirma que esta listo antes
+ * de empezar. Feature 015.
  */
 @Component({
   selector: 'app-waiting-room',
   standalone: true,
-  imports: [],
+  imports: [InviteFriendPickerComponent],
   templateUrl: './waiting-room.component.html',
   styleUrl: './waiting-room.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,7 +30,9 @@ import { buildJoinUrl } from '../../utils/join-link';
 export class WaitingRoomComponent implements OnDestroy {
   /** El visor es el anfitrión (PLAYER_ONE). */
   readonly isHost = input<boolean>(false);
-  /** Código compartible. Solo relevante para el anfitrión. */
+  /** Id de la partida (target de las invitaciones a amigos). */
+  readonly matchId = input<string | null>(null);
+  /** Codigo privado recibido al crear la partida. */
   readonly joinCode = input<string | null>(null);
   /** Nombre del anfitrión. */
   readonly hostUsername = input<string>('');
@@ -54,19 +58,44 @@ export class WaitingRoomComponent implements OnDestroy {
   readonly start = output<void>();
   readonly leave = output<void>();
 
-  /** Feedback efímero tras copiar el código. */
   readonly copied = signal<boolean>(false);
-  /** Feedback efímero tras compartir el enlace. */
   readonly linkShareState = signal<'idle' | 'shared' | 'copied'>('idle');
   private copiedTimer: number | null = null;
   private linkShareTimer: number | null = null;
 
   private readonly clipboard = inject(WaitingRoomClipboard);
   private readonly linkSharer = inject(WaitingRoomLinkSharer);
+  private readonly social = inject(SocialStore);
   readonly joinUrl = computed(() => {
     const code = this.joinCode();
     return code ? buildJoinUrl(code) : '';
   });
+
+  /** Muestra/oculta el selector de amigos a invitar. */
+  readonly invitePanelOpen = signal<boolean>(false);
+
+  /** Invitaciones a partida enviadas pendientes para esta partida (US3). */
+  readonly outgoingInvitations = computed(() => {
+    const id = this.matchId();
+    return id === null ? [] : this.social.outgoingInvitations().filter((i) => i.targetId === id);
+  });
+
+  toggleInvitePanel(): void {
+    this.invitePanelOpen.update((open) => !open);
+  }
+
+  /** El picker emitió un amigo a invitar (US1). */
+  onInvitePicked(friendUsername: string): void {
+    const id = this.matchId();
+    if (id !== null) {
+      this.social.inviteFriend(friendUsername, id);
+    }
+  }
+
+  /** Cancela una invitación enviada (US3). */
+  onCancelInvitation(invitationId: string): void {
+    this.social.cancelInvitation(invitationId);
+  }
 
   startButtonLabel(): string {
     if (this.selfReady() && this.opponentReady()) {
@@ -170,10 +199,6 @@ export class WaitingRoomComponent implements OnDestroy {
   }
 }
 
-/**
- * Envoltorio fino sobre la Clipboard API para que sea inyectable/mockeable en
- * tests (evita acceder a `navigator.clipboard` directamente en el componente).
- */
 @Injectable({ providedIn: 'root' })
 export class WaitingRoomClipboard {
   async copy(text: string): Promise<boolean> {

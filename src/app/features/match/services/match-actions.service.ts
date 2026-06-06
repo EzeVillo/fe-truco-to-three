@@ -1,7 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { catchError, EMPTY, type Observable } from 'rxjs';
-import type { PlayCardRequest, CallEnvidoRequest, RespondTrucoRequest, RespondEnvidoRequest } from '../../../core/models/match.models';
+import type {
+  PlayCardRequest,
+  CallEnvidoRequest,
+  RespondTrucoRequest,
+  RespondEnvidoRequest,
+} from '../../../core/models/match.models';
 import type { EnvidoCall, TrucoResponse, EnvidoResponse } from '../../../core/models/enums';
 import { environment } from '../../../../environments/environment';
 

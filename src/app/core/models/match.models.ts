@@ -2,7 +2,14 @@
 // Sirven de cimiento para features de lobby y partida
 // Fuente: docs/CONTRATOS_API.md §4.14 y §8
 
-import type { Suit, MatchStatus, RoundStatus, TrucoCall, AvailableActionType, Visibility } from './enums';
+import type {
+  Suit,
+  MatchStatus,
+  RoundStatus,
+  TrucoCall,
+  AvailableActionType,
+  Visibility,
+} from './enums';
 
 export interface Card {
   suit: Suit; // 'ESPADA' | 'BASTO' | 'COPA' | 'ORO'
@@ -48,12 +55,13 @@ export interface AvailableAction {
  * Chequea si una acción ofrece una sub-opción dada, soportando ambos formatos
  * del BE (WS `parameter` singular y REST `parameters` array).
  */
-export function hasActionParameter(
-  action: AvailableAction,
-  parameter: string,
-): boolean {
-  if (action.parameter === parameter) {return true;}
-  if (action.parameters?.includes(parameter)) {return true;}
+export function hasActionParameter(action: AvailableAction, parameter: string): boolean {
+  if (action.parameter === parameter) {
+    return true;
+  }
+  if (action.parameters?.includes(parameter)) {
+    return true;
+  }
   return false;
 }
 

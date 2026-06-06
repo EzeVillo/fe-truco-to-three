@@ -2,7 +2,10 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 import { CommonModule } from '@angular/common';
 import type { AvailableActionType } from '../../../../../core/models/enums';
 import type { TrucoCall } from '../../../../../core/models/enums';
-import { hasAnyEnvidoCallOption, type EnvidoCallOptions } from '../../../utils/derive-envido-call-options';
+import {
+  hasAnyEnvidoCallOption,
+  type EnvidoCallOptions,
+} from '../../../utils/derive-envido-call-options';
 
 export interface ActionBarItem {
   label: string;
@@ -23,7 +26,10 @@ function trucoLabel(call: TrucoCall | null): string {
   }
 }
 
-function actionEnabled(actions: ReadonlyArray<{ type: AvailableActionType }>, type: AvailableActionType): boolean {
+function actionEnabled(
+  actions: ReadonlyArray<{ type: AvailableActionType }>,
+  type: AvailableActionType,
+): boolean {
   return actions.some((a) => a.type === type);
 }
 

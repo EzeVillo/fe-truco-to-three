@@ -39,6 +39,8 @@ describe('Contract: Profile WS achievements', () => {
 
   it('el contrato excluye bots del tracking de logros', () => {
     expect(content).toContain('ACHIEVEMENT_UNLOCKED');
-    expect(content).toMatch(/bots no generan tracking ni unlocks|partidas contra bots no generan tracking ni unlocks/i);
+    expect(content).toMatch(
+      /bots no generan tracking ni unlocks|partidas contra bots no generan tracking ni unlocks/i,
+    );
   });
 });

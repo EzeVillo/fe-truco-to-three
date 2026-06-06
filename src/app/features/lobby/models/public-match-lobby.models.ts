@@ -44,6 +44,4 @@ export interface PublicMatchLobbyRemovedEvent {
   payload: { id: string };
 }
 
-export type PublicMatchLobbyEvent =
-  | PublicMatchLobbyUpsertEvent
-  | PublicMatchLobbyRemovedEvent;
+export type PublicMatchLobbyEvent = PublicMatchLobbyUpsertEvent | PublicMatchLobbyRemovedEvent;

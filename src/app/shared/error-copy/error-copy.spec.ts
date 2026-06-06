@@ -64,9 +64,7 @@ describe('getErrorCopy - PROFILE', () => {
 
   it('red y servidor devuelven copy de reintento', () => {
     expect(getErrorCopy('PROFILE', httpErr(0))).toBe('No pudimos cargar el perfil. ReintentÃ¡.');
-    expect(getErrorCopy('PROFILE', httpErr(500))).toBe(
-      'No pudimos cargar el perfil. ReintentÃ¡.',
-    );
+    expect(getErrorCopy('PROFILE', httpErr(500))).toBe('No pudimos cargar el perfil. ReintentÃ¡.');
   });
 
   it('no filtra el mensaje del backend', () => {

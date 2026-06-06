@@ -63,8 +63,8 @@ La pertenencia al recurso y las reglas de acceso se validan dentro de los casos 
 - un jugador solo puede operar sobre partidas en las que participa
 - un espectador solo puede consultar una partida si ya quedo registrado como espectador de esa
   partida
-- spectate solo esta permitido para miembros de la misma liga o copa del match, nunca para uno de
-  los dos jugadores activos
+- spectate esta permitido para miembros de la misma liga/copa del match o para amigos confirmados
+  de alguno de los jugadores, nunca para uno de los dos jugadores activos
 
 ### 1.4 IDs
 
@@ -803,11 +803,12 @@ El flujo actual de spectate es WebSocket-first:
 Restricciones de negocio:
 
 - el match debe estar `IN_PROGRESS`
-- el espectador debe pertenecer a la misma liga o copa del match
+- el espectador debe pertenecer a la misma liga/copa del match o tener amistad confirmada con
+  alguno de los jugadores
 - un jugador no puede spectear su propio match
 - un jugador no puede spectear dos matches al mismo tiempo
-- al terminar el match, o si el espectador pasa a ser jugador activo en una liga/copa, el backend
-  lo desregistra automaticamente
+- al terminar el match, si el espectador pasa a ser jugador activo en una liga/copa, o si se elimina
+  la amistad que era su unico motivo de elegibilidad, el backend lo desregistra automaticamente
 
 ### 4.17 Revancha (Rematch)
 
@@ -1679,10 +1680,42 @@ Response `200`:
 ```json
 [
   {
-    "friendUsername": "martina"
+    "friendUsername": "martina",
+    "online": true,
+    "availability": "BUSY",
+    "busyReason": "IN_MATCH",
+    "spectatableMatch": {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "status": "IN_PROGRESS"
+    }
+  },
+  {
+    "friendUsername": "agus",
+    "online": false,
+    "availability": "AVAILABLE",
+    "busyReason": null,
+    "spectatableMatch": null
   }
 ]
 ```
+
+Notas:
+
+- `availability` indica si el amigo puede recibir o aceptar una invitacion a partida:
+  `AVAILABLE` o `BUSY`.
+- `busyReason` es `null` si `availability = AVAILABLE`; si esta `BUSY`, puede ser `IN_MATCH`,
+  `IN_LEAGUE`, `IN_CUP`, `OPEN_REMATCH`, `IN_QUICK_QUEUE`, `PENDING_INVITATION`,
+  `PENDING_FRIEND_REQUEST` o `UNKNOWN`.
+- `online` es presencia aproximada por sesiones WebSocket activas conocidas y no cambia por si
+  misma la disponibilidad para invitar.
+- `spectatableMatch` es `null` cuando el amigo no tiene una partida `IN_PROGRESS`.
+- `spectatableMatch.id` se usa como header `matchId` al suscribirse a
+  `/user/queue/match-spectate`.
+- El alta de espectador sigue siendo WebSocket-first; este endpoint solo permite descubrir partidas
+  espectables de amigos.
+- El estado inicial puede reconciliarse luego por `/user/queue/social` con
+  `FRIEND_AVAILABILITY_STATE`, y los cambios posteriores llegan como
+  `FRIEND_AVAILABILITY_CHANGED`.
 
 ### 7.4.6 Listar solicitudes recibidas
 
@@ -2266,6 +2299,52 @@ Cada tipo de recurso tiene su propia estructura de evento:
 }
 ```
 
+Disponibilidad de amigos, snapshot al suscribirse a `/user/queue/social`:
+
+```json
+{
+  "eventType": "FRIEND_AVAILABILITY_STATE",
+  "timestamp": 1772768158123,
+  "payload": {
+    "friends": [
+      {
+        "friendUsername": "martina",
+        "online": true,
+        "availability": "BUSY",
+        "busyReason": "IN_MATCH",
+        "spectatableMatch": {
+          "id": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
+          "status": "IN_PROGRESS"
+        }
+      },
+      {
+        "friendUsername": "agus",
+        "online": false,
+        "availability": "AVAILABLE",
+        "busyReason": null,
+        "spectatableMatch": null
+      }
+    ]
+  }
+}
+```
+
+Disponibilidad de amigos, delta:
+
+```json
+{
+  "eventType": "FRIEND_AVAILABILITY_CHANGED",
+  "timestamp": 1772768158123,
+  "payload": {
+    "friendUsername": "martina",
+    "online": true,
+    "availability": "AVAILABLE",
+    "busyReason": null,
+    "spectatableMatch": null
+  }
+}
+```
+
 **Profile** (`/user/queue/profile`):
 
 ```json
@@ -2424,6 +2503,10 @@ Nota: los eventos `REMATCH_*` viajan por `/user/queue/match` con el `matchId` to
 - `RESOURCE_INVITATION_DECLINED` - el destinatario rechazó una invitación enviada por el usuario
 - `RESOURCE_INVITATION_EXPIRED` - una invitación pendiente expiró por tiempo o por recurso no
   joinable
+- `FRIEND_AVAILABILITY_STATE` - snapshot completo de disponibilidad de amigos aceptados enviado al
+  suscribirse a `/user/queue/social`
+- `FRIEND_AVAILABILITY_CHANGED` - delta de un amigo cuando cambia disponibilidad, online o
+  `spectatableMatch`
 
 ### 9.5f eventType posibles - Profile (`/user/queue/profile`, usuarios registrados)
 
@@ -2844,6 +2927,14 @@ La operacion es idempotente: si el jugador no estaba en cola, devuelve `204` igu
   solo emiten deltas `PUBLIC_*_LOBBY_UPSERT` y `PUBLIC_*_LOBBY_REMOVED`.
 - Las novedades sociales llegan por `/user/queue/social`; no reemplazan el flujo existente de
   `joinCode`, solo agregan targeting y UX mas rapida entre amigos.
+- Al suscribirse a `/user/queue/social`, el backend envia `FRIEND_AVAILABILITY_STATE` para
+  reconciliar
+  la lista de amigos despues del bootstrap REST o una reconexion. Luego envia
+  `FRIEND_AVAILABILITY_CHANGED` cuando cambia `availability`, `busyReason`, `online` o
+  `spectatableMatch`.
+- La disponibilidad social de amigos solo incluye `friendUsername`, `online`, `availability`,
+  `busyReason` y `spectatableMatch` nullable. No incluye cartas, acciones disponibles ni estado
+  privado de ronda.
 - Los logros llegan por `/user/queue/profile` con evento `ACHIEVEMENT_UNLOCKED` y payload
   `{ achievementCode, unlockedAt, matchId, gameNumber }`.
 - El FE debe suscribirse al lobby solo mientras esa pantalla este activa y desuscribirse al
@@ -2852,6 +2943,9 @@ La operacion es idempotente: si el jugador no estaba en cola, devuelve `204` igu
   ver un item, esa exclusion es responsabilidad del lifecycle del cliente.
 - Spectate se activa por WebSocket, no por REST: para empezar a mirar un match hay que suscribirse
   a `/user/queue/match-spectate` con header `matchId`.
+- Para amigos, el `matchId` puede obtenerse de `GET /api/social/friendships` en
+  `spectatableMatch.id`; la amistad confirmada habilita el alta igual que la pertenencia a
+  liga/copa.
 - Si la conexion WebSocket del espectador se corta o hace `UNSUBSCRIBE`, el backend deja de
   registrarlo como espectador de ese match.
 - `GET /api/matches/{matchId}/spectate` sirve para refrescar el snapshot de un espectador ya
@@ -2922,8 +3016,9 @@ procesar `UNSUBSCRIBE` o `DISCONNECT`.
 - Mientras la sesion este `OPEN`, el jugador tiene disponibilidad bloqueada: cualquier intento de
   crear o unirse a otra partida, liga, copa o aceptar una invitacion social devolvera `422` con
   `PlayerHasOpenRematchSessionException`. Mostrar mensaje orientativo.
-- Si el bot es oponente, acepta automaticamente al abrirse la sesion (`REMATCH_OPPONENT_WANTS` no
-  se emite). El bot no puede abandonar. El FE puede ignorar el estado `playerTwoChoice` en
-  partidas contra bot.
+- Si el bot es oponente, acepta automaticamente al abrirse la sesion: junto con
+  `REMATCH_SESSION_OPENED` se emite un `REMATCH_OPPONENT_WANTS` con el bot como `actor`, de modo
+  que el FE recibe por push que el oponente ya quiere revancha (mismo evento que para un humano).
+  El bot no puede abandonar.
 - La sesion expira por TTL configurable (por defecto `PT2M`). Tras `REMATCH_EXPIRED` la
   disponibilidad del jugador se libera automaticamente.

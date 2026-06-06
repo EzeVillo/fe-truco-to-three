@@ -36,7 +36,10 @@
               aria-hidden="true"
             ></span>
           } @else {
-            <span class="status-panel__turn-dot" [class.active]="view().currentTurnIsSelf === false"></span>
+            <span
+              class="status-panel__turn-dot"
+              [class.active]="view().currentTurnIsSelf === false"
+            ></span>
           }
         </div>
         <span class="status-panel__player-name">{{ view().opponent.username }}</span>
@@ -47,10 +50,20 @@
     <div class="status-panel__series-row">
       <div
         class="status-panel__squares"
-        [attr.aria-label]="view().seriesLabel + ': ganaste ' + view().self.gamesWon + ', rival ' + view().opponent.gamesWon"
+        [attr.aria-label]="
+          view().seriesLabel +
+          ': ganaste ' +
+          view().self.gamesWon +
+          ', rival ' +
+          view().opponent.gamesWon
+        "
       >
         @for (slot of seriesSlots(); track $index) {
-          <span class="status-panel__square" [class.won-self]="slot === 'self'" [class.won-opponent]="slot === 'opponent'"></span>
+          <span
+            class="status-panel__square"
+            [class.won-self]="slot === 'self'"
+            [class.won-opponent]="slot === 'opponent'"
+          ></span>
         }
       </div>
     </div>

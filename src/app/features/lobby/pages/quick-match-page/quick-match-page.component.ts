@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -13,10 +7,7 @@ import {
   SERIES_FORMAT_LABELS,
   seriesFormatToGamesToPlay,
 } from '../../../../core/models/match.models';
-import type {
-  QuickMatchResponse,
-  SeriesFormat,
-} from '../../../../core/models/match.models';
+import type { QuickMatchResponse, SeriesFormat } from '../../../../core/models/match.models';
 import { WebSocketService } from '../../../../core/services/websocket.service';
 import { BackButtonComponent } from '../../../../shared/components/back-button';
 import { getErrorCopy } from '../../../../shared/error-copy/error-copy';
@@ -24,22 +15,12 @@ import type { MatchWsEvent } from '../../../match/models/match-ws-events';
 import { SeriesFormatSelectorComponent } from '../../components/series-format-selector/series-format-selector.component';
 import { MatchesApiService } from '../../services/matches-api.service';
 
-type QuickMatchUiState =
-  | 'idle'
-  | 'submitting'
-  | 'searching'
-  | 'cancelling'
-  | 'matched'
-  | 'error';
+type QuickMatchUiState = 'idle' | 'submitting' | 'searching' | 'cancelling' | 'matched' | 'error';
 
 @Component({
   selector: 'app-quick-match-page',
   standalone: true,
-  imports: [
-    BackButtonComponent,
-    MatProgressSpinnerModule,
-    SeriesFormatSelectorComponent,
-  ],
+  imports: [BackButtonComponent, MatProgressSpinnerModule, SeriesFormatSelectorComponent],
   templateUrl: './quick-match-page.component.html',
   styleUrl: './quick-match-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

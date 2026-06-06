@@ -3,7 +3,11 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { Subject, Observable, BehaviorSubject } from 'rxjs';
-import { createEnvironmentInjector, EnvironmentInjector, runInInjectionContext } from '@angular/core';
+import {
+  createEnvironmentInjector,
+  EnvironmentInjector,
+  runInInjectionContext,
+} from '@angular/core';
 import { MatchStateService } from './match-state.service';
 import { MatchEventQueueService } from './match-event-queue.service';
 import { WebSocketService } from '../../../core/services/websocket.service';
@@ -59,10 +63,7 @@ describe('MatchStateService', () => {
     mockEventQueue = new MockMatchEventQueueService();
 
     TestBed.configureTestingModule({
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-      ],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     });
 
     const parentInjector = TestBed.inject(EnvironmentInjector);
@@ -110,10 +111,7 @@ describe('MatchStateService', () => {
         currentTrucoCall: null,
         currentEnvidoCall: null,
         winner: null,
-        availableActions: [
-          { type: 'PLAY_CARD' },
-          { type: 'CALL_TRUCO' },
-        ],
+        availableActions: [{ type: 'PLAY_CARD' }, { type: 'CALL_TRUCO' }],
         playedHands: [],
         currentHand: {
           cardPlayerOne: null,
@@ -198,11 +196,13 @@ describe('MatchStateService', () => {
       });
 
       const refreshReq = httpMock.expectOne(`${environment.apiUrl}/matches/test-match`);
-      refreshReq.flush(makeWaitingSnapshot({
-        status: 'READY',
-        playerTwoUsername: 'martina',
-        stateVersion: 2,
-      }));
+      refreshReq.flush(
+        makeWaitingSnapshot({
+          status: 'READY',
+          playerTwoUsername: 'martina',
+          stateVersion: 2,
+        }),
+      );
 
       expect(service.state()?.status).toBe('READY');
       expect(service.state()?.playerTwoUsername).toBe('martina');
@@ -232,11 +232,13 @@ describe('MatchStateService', () => {
 
       // ensureRosterNames dispara un GET para completar identidades faltantes.
       const rosterReq = httpMock.expectOne(`${environment.apiUrl}/matches/test-match`);
-      rosterReq.flush(makeWaitingSnapshot({
-        status: 'IN_PROGRESS',
-        playerTwoUsername: 'martina',
-        stateVersion: 2,
-      }));
+      rosterReq.flush(
+        makeWaitingSnapshot({
+          status: 'IN_PROGRESS',
+          playerTwoUsername: 'martina',
+          stateVersion: 2,
+        }),
+      );
 
       // El nombre del rival aparece y el status NO se revierte a WAITING.
       expect(service.state()?.playerTwoUsername).toBe('martina');
@@ -316,7 +318,11 @@ describe('MatchStateService', () => {
         matchId: 'test-match',
         eventType: 'ACTION_DEADLINE_SET',
         timestamp: Date.now(),
-        payload: { seat: 'PLAYER_ONE', actionDeadline: Date.now() + 30_000, turnDurationMillis: 30_000 },
+        payload: {
+          seat: 'PLAYER_ONE',
+          actionDeadline: Date.now() + 30_000,
+          turnDurationMillis: 30_000,
+        },
         stateVersion: null,
       } as unknown as MatchWsEvent;
 
@@ -356,7 +362,11 @@ describe('MatchStateService', () => {
         matchId: 'test-match',
         eventType: 'ACTION_DEADLINE_SET',
         timestamp: fixedNow + 4000,
-        payload: { seat: 'PLAYER_ONE', actionDeadline: fixedNow + 34_000, turnDurationMillis: 30_000 },
+        payload: {
+          seat: 'PLAYER_ONE',
+          actionDeadline: fixedNow + 34_000,
+          turnDurationMillis: 30_000,
+        },
         stateVersion: null,
       } as unknown as MatchWsEvent);
 
@@ -449,11 +459,13 @@ describe('MatchStateService', () => {
       initialReq.flush(makeWaitingSnapshot());
 
       const refreshReq = httpMock.expectOne(`${environment.apiUrl}/matches/test-match`);
-      refreshReq.flush(makeWaitingSnapshot({
-        status: 'READY',
-        playerTwoUsername: 'martina',
-        stateVersion: 2,
-      }));
+      refreshReq.flush(
+        makeWaitingSnapshot({
+          status: 'READY',
+          playerTwoUsername: 'martina',
+          stateVersion: 2,
+        }),
+      );
 
       expect(service.state()?.status).toBe('READY');
       expect(service.state()?.playerTwoUsername).toBe('martina');
@@ -511,10 +523,7 @@ describe('MatchStateService', () => {
           currentTrucoCall: null,
           currentEnvidoCall: null,
           winner: null,
-          availableActions: [
-            { type: 'PLAY_CARD' },
-            { type: 'CALL_TRUCO' },
-          ],
+          availableActions: [{ type: 'PLAY_CARD' }, { type: 'CALL_TRUCO' }],
           playedHands: [],
           currentHand: {
             cardPlayerOne: null,
@@ -536,29 +545,32 @@ describe('MatchStateService', () => {
       'REMATCH_EXPIRED',
     ] as const;
 
-    it.each(REMATCH_TYPES)('%s se emite por rematch$ y NO por la cola transaccional', (eventType) => {
-      const eventSubject = mockWsService.getEventSubject();
-      service.init('test-match');
-      flushSnapshot();
+    it.each(REMATCH_TYPES)(
+      '%s se emite por rematch$ y NO por la cola transaccional',
+      (eventType) => {
+        const eventSubject = mockWsService.getEventSubject();
+        service.init('test-match');
+        flushSnapshot();
 
-      const rematchEvents: unknown[] = [];
-      service.rematch$.subscribe((e) => rematchEvents.push(e));
+        const rematchEvents: unknown[] = [];
+        service.rematch$.subscribe((e) => rematchEvents.push(e));
 
-      const wsEvent: MatchWsEvent = {
-        matchId: 'test-match',
-        eventType,
-        timestamp: Date.now(),
-        payload: { sessionId: 'sid', originMatchId: 'test-match' },
-        stateVersion: 99,
-      };
+        const wsEvent: MatchWsEvent = {
+          matchId: 'test-match',
+          eventType,
+          timestamp: Date.now(),
+          payload: { sessionId: 'sid', originMatchId: 'test-match' },
+          stateVersion: 99,
+        };
 
-      eventSubject.next(wsEvent);
+        eventSubject.next(wsEvent);
 
-      expect(rematchEvents).toHaveLength(1);
-      expect((rematchEvents[0] as MatchWsEvent).eventType).toBe(eventType);
-      // No pasa por la cola ack-gated
-      expect(mockEventQueue.enqueueTransactional).not.toHaveBeenCalled();
-    });
+        expect(rematchEvents).toHaveLength(1);
+        expect((rematchEvents[0] as MatchWsEvent).eventType).toBe(eventType);
+        // No pasa por la cola ack-gated
+        expect(mockEventQueue.enqueueTransactional).not.toHaveBeenCalled();
+      },
+    );
 
     it('REMATCH_AVAILABLE durante loading se bufferea en rematch$ (no en buffer transaccional)', () => {
       const eventSubject = mockWsService.getEventSubject();

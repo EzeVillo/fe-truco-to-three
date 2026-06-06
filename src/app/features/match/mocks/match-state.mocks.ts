@@ -70,11 +70,7 @@ export const mockMatchViewerPlayerTwo: MatchState = {
     currentTrucoCall: null,
     currentEnvidoCall: null,
     winner: null,
-    availableActions: [
-      { type: 'CALL_TRUCO' },
-      { type: 'CALL_ENVIDO' },
-      { type: 'FOLD' },
-    ],
+    availableActions: [{ type: 'CALL_TRUCO' }, { type: 'CALL_ENVIDO' }, { type: 'FOLD' }],
     playedHands: [
       {
         cardPlayerOne: { suit: 'ORO', number: 3 },
@@ -117,11 +113,7 @@ export const mockMatchEmptyTable: MatchState = {
     currentTrucoCall: null,
     currentEnvidoCall: null,
     winner: null,
-    availableActions: [
-      { type: 'CALL_TRUCO' },
-      { type: 'CALL_ENVIDO' },
-      { type: 'FOLD' },
-    ],
+    availableActions: [{ type: 'CALL_TRUCO' }, { type: 'CALL_ENVIDO' }, { type: 'FOLD' }],
     playedHands: [],
     currentHand: {
       cardPlayerOne: null,
@@ -149,18 +141,12 @@ export const mockMatchAsymmetricHand: MatchState = {
   roundGame: {
     status: 'IN_PROGRESS',
     currentTurn: 'martina',
-    myCards: [
-      { suit: 'ESPADA', number: 1 },
-    ],
+    myCards: [{ suit: 'ESPADA', number: 1 }],
     roundStatus: 'PLAYING',
     currentTrucoCall: null,
     currentEnvidoCall: null,
     winner: null,
-    availableActions: [
-      { type: 'CALL_TRUCO' },
-      { type: 'CALL_ENVIDO' },
-      { type: 'FOLD' },
-    ],
+    availableActions: [{ type: 'CALL_TRUCO' }, { type: 'CALL_ENVIDO' }, { type: 'FOLD' }],
     playedHands: [
       {
         cardPlayerOne: { suit: 'ORO', number: 3 },

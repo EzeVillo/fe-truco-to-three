@@ -8,10 +8,7 @@
       </div>
     </header>
 
-    <app-add-friend-form
-      [errorMessage]="store.actionError()"
-      (submitRequest)="onSend($event)"
-    />
+    <app-add-friend-form [errorMessage]="store.actionError()" (submitRequest)="onSend($event)" />
 
     <nav class="friends-page__tabs" role="tablist" aria-label="Secciones de amigos">
       <button
@@ -59,14 +56,24 @@
       <div class="friends-page__panel">
         @switch (activeTab()) {
           @case ('friends') {
+            @if (store.inviteActionError(); as inviteErr) {
+              <p class="friends-page__state friends-page__state--error">{{ inviteErr }}</p>
+            }
             @if (store.friends().length === 0) {
-              <p class="friends-page__empty">Todavía no tenés amigos. Agregá a alguien por su usuario.</p>
+              <p class="friends-page__empty">
+                Todavía no tenés amigos. Agregá a alguien por su usuario.
+              </p>
             } @else {
               <ul class="friends-page__list">
                 @for (friend of store.friends(); track friend.friendUsername) {
                   <li>
                     <app-friend-row
                       [friendUsername]="friend.friendUsername"
+                      [online]="friend.online"
+                      [availability]="friend.availability"
+                      [busyReason]="friend.busyReason"
+                      [inviting]="creatingMatchFor() === friend.friendUsername"
+                      (invite)="onInviteToMatch($event)"
                       (remove)="onRemove($event)"
                     />
                   </li>

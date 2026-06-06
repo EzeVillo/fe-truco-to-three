@@ -29,6 +29,7 @@
       @if (waitingView(); as wv) {
         <app-waiting-room
           [isHost]="wv.isHost"
+          [matchId]="matchId()"
           [joinCode]="wv.joinCode"
           [hostUsername]="wv.hostUsername"
           [rivalUsername]="wv.rivalUsername"

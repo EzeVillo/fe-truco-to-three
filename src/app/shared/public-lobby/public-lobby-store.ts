@@ -11,11 +11,7 @@
 
 import { signal, computed, type Signal } from '@angular/core';
 import type { Subscription } from 'rxjs';
-import type {
-  PublicLobbyConfig,
-  PublicLobbyDelta,
-  PublicLobbyStatus,
-} from './public-lobby.types';
+import type { PublicLobbyConfig, PublicLobbyDelta, PublicLobbyStatus } from './public-lobby.types';
 
 export class PublicLobbyStore<T> {
   private readonly entries = new Map<string, T>();

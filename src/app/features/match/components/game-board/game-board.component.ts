@@ -34,6 +34,6 @@ export class GameBoardComponent {
   readonly viewerActionTimedOut = input<boolean>(false);
 
   readonly playCardsEnabled = computed(() =>
-    this.view().availableActions.some((a) => a.type === 'PLAY_CARD')
+    this.view().availableActions.some((a) => a.type === 'PLAY_CARD'),
   );
 }

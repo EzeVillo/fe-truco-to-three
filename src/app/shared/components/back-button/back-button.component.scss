@@ -11,7 +11,10 @@
   background: transparent;
   color: var(--t3-btn-neutral-text);
   cursor: pointer;
-  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
 
   mat-icon {
     display: block;

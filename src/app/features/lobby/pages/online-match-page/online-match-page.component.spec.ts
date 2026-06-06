@@ -7,8 +7,13 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { OnlineMatchPageComponent } from './online-match-page.component';
 import { MatchesApiService } from '../../services/matches-api.service';
 import { WebSocketService } from '../../../../core/services/websocket.service';
+import { SocialStore } from '../../../social/services/social.store';
 
-function setup(apiMock: Partial<MatchesApiService>, joinCode: string | null = null) {
+function setup(
+  apiMock: Partial<MatchesApiService>,
+  joinCode: string | null = null,
+  inviteFriend: string | null = null,
+) {
   // El store del lobby (provisto en el componente) llama listPublicMatches al
   // arrancar y se suscribe al topic; damos defaults para que no rompa el TestBed.
   const api: Partial<MatchesApiService> = {
@@ -27,11 +32,18 @@ function setup(apiMock: Partial<MatchesApiService>, joinCode: string | null = nu
         useValue: { connect: vi.fn(), connected: EMPTY, subscribe: () => EMPTY },
       },
       {
+        provide: SocialStore,
+        useValue: { inviteFriend: vi.fn() },
+      },
+      {
         provide: ActivatedRoute,
         useValue: {
           snapshot: {
             paramMap: {
               get: (key: string) => (key === 'joinCode' ? joinCode : null),
+            },
+            queryParamMap: {
+              get: (key: string) => (key === 'inviteFriend' ? inviteFriend : null),
             },
           },
         },
@@ -48,7 +60,9 @@ describe('OnlineMatchPageComponent', () => {
   // ─── US1: crear partida privada ───────────────────────────────────────────
 
   it('crea una partida privada con el formato elegido y navega a /match/:id', () => {
-    const createSpy = vi.fn().mockReturnValue(of({ matchId: 'm1', joinCode: 'ABC123', visibility: 'PRIVATE' }));
+    const createSpy = vi
+      .fn()
+      .mockReturnValue(of({ matchId: 'm1', joinCode: 'ABC123', visibility: 'PRIVATE' }));
     setup({ createMatch: createSpy });
     const fixture = TestBed.createComponent(OnlineMatchPageComponent);
     const navSpy = vi.spyOn(fixture.componentInstance['router'], 'navigate');
@@ -62,7 +76,9 @@ describe('OnlineMatchPageComponent', () => {
   });
 
   it('crea una partida pública cuando se elige visibilidad PUBLIC', () => {
-    const createSpy = vi.fn().mockReturnValue(of({ matchId: 'mp', joinCode: 'PUB123', visibility: 'PUBLIC' }));
+    const createSpy = vi
+      .fn()
+      .mockReturnValue(of({ matchId: 'mp', joinCode: 'PUB123', visibility: 'PUBLIC' }));
     setup({ createMatch: createSpy });
     const fixture = TestBed.createComponent(OnlineMatchPageComponent);
     vi.spyOn(fixture.componentInstance['router'], 'navigate').mockResolvedValue(true);
@@ -72,6 +88,43 @@ describe('OnlineMatchPageComponent', () => {
     fixture.componentInstance.onCreate();
 
     expect(createSpy).toHaveBeenCalledWith({ gamesToPlay: 3, visibility: 'PUBLIC' });
+  });
+
+  it('desde Amigos oculta lobby, unirse por codigo y selector de visibilidad', () => {
+    setup(
+      { createMatch: () => of({ matchId: 'm', joinCode: 'C', visibility: 'PRIVATE' }) },
+      null,
+      'martina',
+    );
+    const fixture = TestBed.createComponent(OnlineMatchPageComponent);
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Invitar a partida');
+    expect(text).toContain('Crear e invitar');
+    expect(text).not.toContain('Partidas públicas');
+    expect(text).not.toContain('Unirme con código');
+    expect(fixture.nativeElement.querySelector('app-visibility-selector')).toBeNull();
+  });
+
+  it('desde Amigos crea privada, invita al amigo y navega con joinCode visible en sala', () => {
+    const createSpy = vi
+      .fn()
+      .mockReturnValue(of({ matchId: 'mf', joinCode: 'FRIEND1', visibility: 'PRIVATE' }));
+    setup({ createMatch: createSpy }, null, 'martina');
+    const fixture = TestBed.createComponent(OnlineMatchPageComponent);
+    const navSpy = vi.spyOn(fixture.componentInstance['router'], 'navigate');
+    const social = TestBed.inject(SocialStore) as unknown as {
+      inviteFriend: ReturnType<typeof vi.fn>;
+    };
+    fixture.detectChanges();
+
+    fixture.componentInstance.onChangeVisibility('PUBLIC');
+    fixture.componentInstance.onCreate();
+
+    expect(createSpy).toHaveBeenCalledWith({ gamesToPlay: 3, visibility: 'PRIVATE' });
+    expect(social.inviteFriend).toHaveBeenCalledWith('martina', 'mf');
+    expect(navSpy).toHaveBeenCalledWith(['/match', 'mf'], { state: { joinCode: 'FRIEND1' } });
   });
 
   it('por defecto la visibilidad es PRIVATE', () => {
@@ -101,7 +154,9 @@ describe('OnlineMatchPageComponent', () => {
     fixture.componentInstance.onCreate();
 
     expect(fixture.componentInstance.creating()).toBe(false);
-    expect(fixture.componentInstance.createError()).toBe('Ya estás en una partida o tenés una revancha pendiente.');
+    expect(fixture.componentInstance.createError()).toBe(
+      'Ya estás en una partida o tenés una revancha pendiente.',
+    );
   });
 
   // ─── US2: unirse por código ────────────────────────────────────────────────
@@ -154,7 +209,9 @@ describe('OnlineMatchPageComponent', () => {
     fixture.componentInstance.onJoin();
 
     expect(fixture.componentInstance.joining()).toBe(false);
-    expect(fixture.componentInstance.joinError()).toBe('Ese código no corresponde a ninguna partida.');
+    expect(fixture.componentInstance.joinError()).toBe(
+      'Ese código no corresponde a ninguna partida.',
+    );
   });
 
   it('si el código no resuelve a MATCH, informa y no navega', () => {

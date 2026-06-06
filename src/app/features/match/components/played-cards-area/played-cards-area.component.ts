@@ -18,11 +18,11 @@ export class PlayedCardsAreaComponent {
   readonly opponentPlayedInPreviousHands = input<(Card | null)[]>([]);
 
   readonly selfRow = computed(() =>
-    [...this.selfPlayedInPreviousHands(), this.selfPlayedInCurrentHand()].slice(0, 3)
+    [...this.selfPlayedInPreviousHands(), this.selfPlayedInCurrentHand()].slice(0, 3),
   );
 
   readonly opponentRow = computed(() =>
-    [...this.opponentPlayedInPreviousHands(), this.opponentPlayedInCurrentHand()].slice(0, 3)
+    [...this.opponentPlayedInPreviousHands(), this.opponentPlayedInCurrentHand()].slice(0, 3),
   );
 
   readonly selfPadding = computed(() => Math.max(0, 3 - this.selfRow().length));

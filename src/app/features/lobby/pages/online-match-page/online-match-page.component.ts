@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal, type OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+  type OnInit,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -19,6 +26,7 @@ import type { Visibility } from '../../../../core/models/enums';
 import type { PublicMatchLobbyItem } from '../../models/public-match-lobby.models';
 import { saveJoinCode } from '../../../match/utils/join-code-store';
 import { getErrorCopy } from '../../../../shared/error-copy/error-copy';
+import { SocialStore } from '../../../social/services/social.store';
 
 @Component({
   selector: 'app-online-match-page',
@@ -41,51 +49,54 @@ export class OnlineMatchPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly snackBar = inject(MatSnackBar);
   private readonly authStore = inject(AuthStore);
+  private readonly socialStore = inject(SocialStore);
   protected readonly lobby = inject(PublicMatchLobbyStore);
 
-  // ---- Lobby público ----
   readonly currentUsername = this.authStore.username;
-  /** matchId de la partida a la que se está uniendo (deshabilita esa card). */
   readonly joiningId = signal<string | null>(null);
 
-  // ---- Crear partida ----
   readonly seriesFormat = signal<SeriesFormat>(DEFAULT_SERIES_FORMAT);
   readonly visibility = signal<Visibility>(VISIBILITY.PRIVATE);
   readonly creating = signal<boolean>(false);
   readonly createError = signal<string | null>(null);
+  readonly inviteFriendUsername = signal<string | null>(null);
 
   readonly isPublicCreate = computed(() => this.visibility() === VISIBILITY.PUBLIC);
+  readonly isFriendInviteFlow = computed(() => this.inviteFriendUsername() !== null);
   readonly createCtaLabel = computed(() =>
-    this.isPublicCreate() ? 'Crear partida pública' : 'Crear partida privada',
+    this.isFriendInviteFlow()
+      ? 'Crear e invitar'
+      : this.isPublicCreate()
+        ? 'Crear partida pública'
+        : 'Crear partida privada',
   );
 
-  // ---- Unirse por código ----
   readonly joinCodeInput = signal<string>('');
   readonly joining = signal<boolean>(false);
   readonly joinError = signal<string | null>(null);
   readonly inviteJoinCode = signal<string | null>(null);
 
   readonly isInviteLink = computed(() => this.inviteJoinCode() !== null);
-
-  readonly canJoin = computed(
-    () => !this.joining() && this.joinCodeInput().trim().length > 0,
-  );
+  readonly canJoin = computed(() => !this.joining() && this.joinCodeInput().trim().length > 0);
 
   ngOnInit(): void {
     const joinCode = this.route.snapshot.paramMap.get('joinCode')?.trim() ?? '';
     if (joinCode) {
-      // Llegada por enlace de invitación: no mostramos el lobby, vamos al join.
       this.inviteJoinCode.set(joinCode);
       this.joinCodeInput.set(joinCode);
       void this.onJoin();
       return;
     }
 
-    // Vista normal de "Jugar online": arrancamos el lobby público.
+    const inviteFriend = this.route.snapshot.queryParamMap.get('inviteFriend')?.trim() ?? '';
+    if (inviteFriend) {
+      this.inviteFriendUsername.set(inviteFriend);
+      this.visibility.set(VISIBILITY.PRIVATE);
+      return;
+    }
+
     this.lobby.start();
   }
-
-  // ---- Lobby público: acciones ----
 
   onLoadMorePublic(): void {
     this.lobby.loadMore();
@@ -95,12 +106,6 @@ export class OnlineMatchPageComponent implements OnInit {
     this.lobby.retry();
   }
 
-  /**
-   * Une al usuario a una partida pública del lobby. Si es su propia partida,
-   * vuelve a la sala. Ante una race condition (la partida se llenó/cerró justo),
-   * muestra un toast no bloqueante y lo deja en el lobby: la baja llega sola por
-   * el delta WS (no forzamos refresco).
-   */
   onJoinPublic(item: PublicMatchLobbyItem): void {
     if (this.joiningId() !== null) {
       return;
@@ -131,7 +136,6 @@ export class OnlineMatchPageComponent implements OnInit {
       error: (err: unknown) => {
         console.error('[OnlineMatchPage] error uniéndose a partida pública', err);
         this.joiningId.set(null);
-        // Toast no bloqueante; sin refresco forzado: la baja llega por delta WS.
         this.snackBar.open(getErrorCopy('JOIN_MATCH', err), 'Cerrar', {
           duration: 4000,
           panelClass: 'public-lobby-snackbar',
@@ -159,7 +163,7 @@ export class OnlineMatchPageComponent implements OnInit {
   }
 
   goBack(): void {
-    void this.router.navigateByUrl('/lobby');
+    void this.router.navigateByUrl(this.isFriendInviteFlow() ? '/friends' : '/lobby');
   }
 
   onCreate(): void {
@@ -169,16 +173,19 @@ export class OnlineMatchPageComponent implements OnInit {
     this.creating.set(true);
     this.createError.set(null);
 
+    const inviteFriend = this.inviteFriendUsername();
     this.api
       .createMatch({
         gamesToPlay: seriesFormatToGamesToPlay(this.seriesFormat()),
-        visibility: this.visibility(),
+        visibility: inviteFriend ? VISIBILITY.PRIVATE : this.visibility(),
       })
       .subscribe({
         next: ({ matchId, joinCode }) => {
           this.creating.set(false);
-          // Persistir el código para recuperarlo en la sala tras recarga (D5).
           saveJoinCode(matchId, joinCode);
+          if (inviteFriend) {
+            this.socialStore.inviteFriend(inviteFriend, matchId);
+          }
           void this.router.navigate(['/match', matchId], { state: { joinCode } });
         },
         error: (err: unknown) => {
@@ -201,7 +208,6 @@ export class OnlineMatchPageComponent implements OnInit {
       next: ({ targetType, targetId }) => {
         this.joining.set(false);
         if (targetType !== 'MATCH') {
-          // El MVP solo maneja partidas; un código de liga/copa no aplica acá.
           this.joinError.set('Ese código no corresponde a una partida.');
           return;
         }

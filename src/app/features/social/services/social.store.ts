@@ -21,9 +21,15 @@ import { SocialApiService } from './social-api.service';
 import type {
   FriendSummary,
   IncomingFriendshipRequest,
+  IncomingResourceInvitation,
   OutgoingFriendshipRequest,
+  OutgoingResourceInvitation,
 } from '../../../core/models/social.models';
-import type { SocialWsEvent } from '../../../core/models/ws.models';
+import type {
+  FriendAvailabilityDelta,
+  FriendAvailabilitySnapshotItem,
+  SocialWsEvent,
+} from '../../../core/models/ws.models';
 
 interface SocialState {
   friends: FriendSummary[];
@@ -37,6 +43,13 @@ interface SocialState {
   actionError: string | null;
   /** Username del solicitante de la última solicitud recibida en vivo (toast). */
   incomingToast: string | null;
+  // ─── Invitaciones a partida (feature 025) ──────────────────────────────────
+  /** Invitaciones a partida enviadas pendientes (US3). */
+  outgoingInvitations: OutgoingResourceInvitation[];
+  /** Invitación a partida recibida a mostrar como toast (D5). null = sin toast. */
+  incomingInvitationToast: IncomingResourceInvitation | null;
+  /** Error de la última acción de invitar/cancelar/aceptar/rechazar (copy del front). */
+  inviteActionError: string | null;
 }
 
 const INITIAL: SocialState = {
@@ -47,6 +60,9 @@ const INITIAL: SocialState = {
   error: null,
   actionError: null,
   incomingToast: null,
+  outgoingInvitations: [],
+  incomingInvitationToast: null,
+  inviteActionError: null,
 };
 
 // ─── Helpers puros de reconciliación (idempotentes por username) ─────────────
@@ -60,9 +76,28 @@ function sameUsername(a: string, b: string): boolean {
 }
 
 function upsertFriend(list: FriendSummary[], friendUsername: string): FriendSummary[] {
+  // Al agregar un amigo recién aceptado no conocemos su disponibilidad; usamos
+  // defaults conservadores que el snapshot/delta de disponibilidad reconcilia.
   return list.some((f) => sameUsername(f.friendUsername, friendUsername))
     ? list
-    : [...list, { friendUsername }];
+    : [...list, { friendUsername, online: false, availability: 'AVAILABLE', busyReason: null }];
+}
+
+/** Merge de disponibilidad sobre un amigo existente (no-op si no está en la lista). */
+function mergeAvailability(
+  list: FriendSummary[],
+  item: FriendAvailabilitySnapshotItem | FriendAvailabilityDelta,
+): FriendSummary[] {
+  return list.map((f) =>
+    sameUsername(f.friendUsername, item.friendUsername)
+      ? {
+          ...f,
+          online: item.online,
+          availability: item.availability,
+          busyReason: item.busyReason,
+        }
+      : f,
+  );
 }
 
 function removeFriendFrom(list: FriendSummary[], friendUsername: string): FriendSummary[] {
@@ -99,6 +134,24 @@ function removeOutgoing(
   addresseeUsername: string,
 ): OutgoingFriendshipRequest[] {
   return list.filter((r) => !sameUsername(r.addresseeUsername, addresseeUsername));
+}
+
+// ─── Helpers de invitaciones a partida (idempotentes por invitationId) ───────
+
+function upsertOutgoingInvitation(
+  list: OutgoingResourceInvitation[],
+  invitation: OutgoingResourceInvitation,
+): OutgoingResourceInvitation[] {
+  return list.some((i) => i.invitationId === invitation.invitationId)
+    ? list.map((i) => (i.invitationId === invitation.invitationId ? invitation : i))
+    : [...list, invitation];
+}
+
+function removeOutgoingInvitation(
+  list: OutgoingResourceInvitation[],
+  invitationId: string,
+): OutgoingResourceInvitation[] {
+  return list.filter((i) => i.invitationId !== invitationId);
 }
 
 /** Dado el par de un FRIENDSHIP_REMOVED, devuelve el username del otro jugador. */
@@ -172,16 +225,74 @@ export const SocialStore = signalStore(
           patchState(store, {
             friends: removeFriendFrom(
               store.friends(),
-              otherParty(
-                self,
-                event.payload.requesterUsername,
-                event.payload.addresseeUsername,
-              ),
+              otherParty(self, event.payload.requesterUsername, event.payload.addresseeUsername),
             ),
           });
           break;
+        // ─── Disponibilidad de amigos (feature 025) ────────────────────────
+        case 'FRIEND_AVAILABILITY_STATE': {
+          let next = store.friends();
+          for (const item of event.payload.friends) {
+            next = mergeAvailability(next, item);
+          }
+          patchState(store, { friends: next });
+          break;
+        }
+        case 'FRIEND_AVAILABILITY_CHANGED':
+          patchState(store, {
+            friends: mergeAvailability(store.friends(), event.payload),
+          });
+          break;
+        // ─── Invitaciones a partida (feature 025) ──────────────────────────
+        case 'RESOURCE_INVITATION_RECEIVED':
+          // Sólo invitaciones a partida; liga/copa fuera de alcance.
+          if (event.payload.targetType === 'MATCH') {
+            patchState(store, {
+              incomingInvitationToast: {
+                invitationId: event.payload.invitationId,
+                senderUsername: event.payload.senderUsername,
+                targetType: event.payload.targetType,
+                targetId: event.payload.targetId,
+                status: 'PENDING',
+                expiresAt: event.payload.expiresAt,
+              },
+            });
+          }
+          break;
+        case 'RESOURCE_INVITATION_ACCEPTED':
+        case 'RESOURCE_INVITATION_DECLINED':
+          patchState(store, {
+            outgoingInvitations: removeOutgoingInvitation(
+              store.outgoingInvitations(),
+              event.payload.invitationId,
+            ),
+          });
+          break;
+        case 'RESOURCE_INVITATION_CANCELLED':
+          patchState(store, {
+            outgoingInvitations: removeOutgoingInvitation(
+              store.outgoingInvitations(),
+              event.payload.invitationId,
+            ),
+            incomingInvitationToast:
+              store.incomingInvitationToast()?.invitationId === event.payload.invitationId
+                ? null
+                : store.incomingInvitationToast(),
+          });
+          break;
+        case 'RESOURCE_INVITATION_EXPIRED':
+          patchState(store, {
+            outgoingInvitations: removeOutgoingInvitation(
+              store.outgoingInvitations(),
+              event.payload.invitationId,
+            ),
+            incomingInvitationToast:
+              store.incomingInvitationToast()?.invitationId === event.payload.invitationId
+                ? null
+                : store.incomingInvitationToast(),
+          });
+          break;
         default:
-          // Eventos RESOURCE_INVITATION_* del mismo canal: fuera de alcance (FR-018).
           break;
       }
     }
@@ -191,9 +302,9 @@ export const SocialStore = signalStore(
         return;
       }
       ws.connect();
-      wsSub = ws.subscribe<SocialWsEvent>('/user/queue/social').subscribe((event) =>
-        applyEvent(event),
-      );
+      wsSub = ws
+        .subscribe<SocialWsEvent>('/user/queue/social')
+        .subscribe((event) => applyEvent(event));
       // Re-bootstrap al (re)conectar para cerrar la brecha de eventos perdidos.
       connectedSub = ws.connected.subscribe((isConnected) => {
         if (isConnected && started) {
@@ -229,9 +340,25 @@ export const SocialStore = signalStore(
         friends: api.listFriends(),
         incoming: api.listIncoming(),
         outgoing: api.listOutgoing(),
+        outgoingInvitations: api.listOutgoingInvitations(),
+        incomingInvitations: api.listIncomingInvitations(),
       }).subscribe({
-        next: ({ friends, incoming, outgoing }) => {
-          patchState(store, { friends, incoming, outgoing, loading: false });
+        next: ({ friends, incoming, outgoing, outgoingInvitations, incomingInvitations }) => {
+          // Re-surface (D5): si hay una invitación a partida pendiente recibida y no
+          // hay toast vigente, mostrarla como toast (sin lista persistente).
+          const pendingIncoming = incomingInvitations.find(
+            (i) => i.status === 'PENDING' && i.targetType === 'MATCH',
+          );
+          patchState(store, {
+            friends,
+            incoming,
+            outgoing,
+            outgoingInvitations: outgoingInvitations.filter(
+              (i) => i.status === 'PENDING' && i.targetType === 'MATCH',
+            ),
+            incomingInvitationToast: store.incomingInvitationToast() ?? pendingIncoming ?? null,
+            loading: false,
+          });
         },
         error: (err: unknown) => {
           patchState(store, { loading: false, error: getErrorCopy('SOCIAL', err) });
@@ -354,6 +481,94 @@ export const SocialStore = signalStore(
             patchState(store, { friends: previous, actionError: getErrorCopy('SOCIAL', err) });
           },
         });
+      },
+
+      // ─── Invitaciones a partida (feature 025) ────────────────────────────
+
+      clearInviteActionError(): void {
+        patchState(store, { inviteActionError: null });
+      },
+
+      /** US1/US1b — invitar a un amigo a la partida `targetId`. */
+      inviteFriend(recipientUsername: string, targetId: string): void {
+        patchState(store, { inviteActionError: null });
+        api.createInvitation({ recipientUsername, targetType: 'MATCH', targetId }).subscribe({
+          next: ({ invitationId, expiresAt }) => {
+            patchState(store, {
+              outgoingInvitations: upsertOutgoingInvitation(store.outgoingInvitations(), {
+                invitationId,
+                recipientUsername,
+                targetType: 'MATCH',
+                targetId,
+                status: 'PENDING',
+                expiresAt,
+              }),
+            });
+          },
+          error: (err: unknown) => {
+            patchState(store, { inviteActionError: getErrorCopy('SOCIAL', err) });
+          },
+        });
+      },
+
+      /**
+       * US2 — aceptar una invitación recibida. El BE hace el join; la navegación
+       * la maneja la presencia. Limpia el toast de forma optimista. `onJoined` se
+       * invoca tras el 204 como fallback de navegación.
+       */
+      acceptInvitation(invitationId: string, onJoined?: (targetId: string) => void): void {
+        const toast = store.incomingInvitationToast();
+        const targetId = toast?.targetId ?? null;
+        patchState(store, {
+          inviteActionError: null,
+          incomingInvitationToast: toast?.invitationId === invitationId ? null : toast,
+        });
+        api.acceptInvitation(invitationId).subscribe({
+          next: () => {
+            if (targetId !== null) {
+              onJoined?.(targetId);
+            }
+          },
+          error: (err: unknown) => {
+            patchState(store, { inviteActionError: getErrorCopy('SOCIAL', err) });
+          },
+        });
+      },
+
+      /** US2 — rechazar una invitación recibida (descarta el toast). */
+      declineInvitation(invitationId: string): void {
+        const toast = store.incomingInvitationToast();
+        patchState(store, {
+          inviteActionError: null,
+          incomingInvitationToast: toast?.invitationId === invitationId ? null : toast,
+        });
+        api.declineInvitation(invitationId).subscribe({
+          error: (err: unknown) => {
+            patchState(store, { inviteActionError: getErrorCopy('SOCIAL', err) });
+          },
+        });
+      },
+
+      /** US3 — cancelar una invitación enviada (optimista con rollback). */
+      cancelInvitation(invitationId: string): void {
+        patchState(store, { inviteActionError: null });
+        const previous = store.outgoingInvitations();
+        patchState(store, {
+          outgoingInvitations: removeOutgoingInvitation(previous, invitationId),
+        });
+        api.cancelInvitation(invitationId).subscribe({
+          error: (err: unknown) => {
+            patchState(store, {
+              outgoingInvitations: previous,
+              inviteActionError: getErrorCopy('SOCIAL', err),
+            });
+          },
+        });
+      },
+
+      /** Descarta el toast de invitación recibida sin rechazarla. */
+      dismissInvitationToast(): void {
+        patchState(store, { incomingInvitationToast: null });
       },
     };
   }),

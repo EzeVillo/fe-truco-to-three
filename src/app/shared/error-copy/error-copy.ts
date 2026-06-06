@@ -6,6 +6,7 @@
 // El caso 401 se maneja a nivel interceptor; devolvemos '' para que la UI no muestre nada.
 
 import { HttpErrorResponse } from '@angular/common/http';
+import type { FriendBusyReason } from '../../core/models/social.models';
 
 export type ErrorCopyScope =
   | 'BOT_CATALOG'
@@ -20,6 +21,31 @@ export type ErrorCopyScope =
   | 'SOCIAL';
 
 const FALLBACK = 'Ocurrió un error inesperado. Reintentá.';
+
+/**
+ * Copy del front para el motivo de ocupación de un amigo (feature 025, FR-002e).
+ * Nunca se muestra el código crudo del enum. `UNKNOWN` o no catalogado → genérico.
+ */
+export function busyReasonCopy(reason: FriendBusyReason | null): string {
+  switch (reason) {
+    case 'IN_MATCH':
+      return 'En partida';
+    case 'IN_LEAGUE':
+      return 'En una liga';
+    case 'IN_CUP':
+      return 'En una copa';
+    case 'OPEN_REMATCH':
+      return 'Con revancha pendiente';
+    case 'IN_QUICK_QUEUE':
+      return 'Buscando rival';
+    case 'PENDING_INVITATION':
+      return 'Con una invitación pendiente';
+    case 'PENDING_FRIEND_REQUEST':
+      return 'Con una solicitud pendiente';
+    default:
+      return 'No disponible';
+  }
+}
 
 export function getErrorCopy(scope: ErrorCopyScope, error: unknown): string {
   const status = error instanceof HttpErrorResponse ? error.status : -1;

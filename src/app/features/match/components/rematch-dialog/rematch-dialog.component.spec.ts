@@ -113,9 +113,7 @@ describe('RematchDialogComponent', () => {
   });
 
   it('muestra "¡Revancha! Empezando…" cuando CONFIRMED', () => {
-    mockRematchState.session.set(
-      makeSession({ status: 'CONFIRMED', resultMatchId: 'new-mid' }),
-    );
+    mockRematchState.session.set(makeSession({ status: 'CONFIRMED', resultMatchId: 'new-mid' }));
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Revancha! Empezando');
@@ -142,9 +140,7 @@ describe('RematchDialogComponent', () => {
     mockRematchState.session.set(makeSession({ status: 'OPEN', selfChoice: 'UNDECIDED' }));
     fixture.detectChanges();
 
-    const btns: HTMLButtonElement[] = Array.from(
-      fixture.nativeElement.querySelectorAll('button'),
-    );
+    const btns: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll('button'));
     const rematchBtn = btns.find((b) => b.textContent?.trim() === 'Revancha');
     rematchBtn?.click();
 
@@ -155,9 +151,7 @@ describe('RematchDialogComponent', () => {
     mockRematchState.session.set(makeSession());
     fixture.detectChanges();
 
-    const btns: HTMLButtonElement[] = Array.from(
-      fixture.nativeElement.querySelectorAll('button'),
-    );
+    const btns: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll('button'));
     const salirBtn = btns.find((b) => b.textContent?.trim() === 'Salir');
     salirBtn?.click();
 

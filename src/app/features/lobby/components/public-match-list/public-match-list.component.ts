@@ -30,13 +30,9 @@ export class PublicMatchListComponent {
   readonly isInitialLoading = computed(
     () => this.status() === 'loading' && this.items().length === 0,
   );
-  readonly isInitialError = computed(
-    () => this.status() === 'error' && this.items().length === 0,
-  );
+  readonly isInitialError = computed(() => this.status() === 'error' && this.items().length === 0);
   readonly isEmpty = computed(() => this.status() === 'ready' && this.items().length === 0);
-  readonly isLoadingMore = computed(
-    () => this.status() === 'loading' && this.items().length > 0,
-  );
+  readonly isLoadingMore = computed(() => this.status() === 'loading' && this.items().length > 0);
 
   isOwn(item: PublicMatchLobbyItem): boolean {
     const me = this.currentUsername();

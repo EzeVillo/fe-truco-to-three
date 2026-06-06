@@ -1,4 +1,10 @@
-import type { MatchState, ViewerSeat, Card, PlayedHand, AvailableAction } from '../../../core/models/match.models';
+import type {
+  MatchState,
+  ViewerSeat,
+  Card,
+  PlayedHand,
+  AvailableAction,
+} from '../../../core/models/match.models';
 import type { TrucoCall } from '../../../core/models/enums';
 import { hasActiveDeadline } from './turn-timer';
 
@@ -42,11 +48,17 @@ function oppositeSeat(seat: ViewerSeat): ViewerSeat {
   return seat === 'PLAYER_ONE' ? 'PLAYER_TWO' : 'PLAYER_ONE';
 }
 
-function seatCard(playedHand: { cardPlayerOne: Card | null; cardPlayerTwo: Card | null }, seat: ViewerSeat): Card | null {
+function seatCard(
+  playedHand: { cardPlayerOne: Card | null; cardPlayerTwo: Card | null },
+  seat: ViewerSeat,
+): Card | null {
   return seat === 'PLAYER_ONE' ? playedHand.cardPlayerOne : playedHand.cardPlayerTwo;
 }
 
-function playedBySeat(playedHands: Array<{ cardPlayerOne: Card | null; cardPlayerTwo: Card | null }>, seat: ViewerSeat): number {
+function playedBySeat(
+  playedHands: Array<{ cardPlayerOne: Card | null; cardPlayerTwo: Card | null }>,
+  seat: ViewerSeat,
+): number {
   return playedHands.reduce((count, hand) => {
     const card = seatCard(hand, seat);
     return card !== null ? count + 1 : count;
@@ -60,12 +72,16 @@ export function deriveMatchView(state: MatchState): MatchView {
   // playerTwoUsername puede ser null en WAITING_FOR_PLAYERS (§4.14). El tablero no
   // se renderiza en estado de espera (la sala usa su propia vista), así que aquí
   // se coacciona a '' para mantener SeatView.username estable. Feature 015 (D2).
-  const selfUsername = (selfSeat === 'PLAYER_ONE' ? state.playerOneUsername : state.playerTwoUsername) ?? '';
-  const opponentUsername = (oppSeat === 'PLAYER_ONE' ? state.playerOneUsername : state.playerTwoUsername) ?? '';
+  const selfUsername =
+    (selfSeat === 'PLAYER_ONE' ? state.playerOneUsername : state.playerTwoUsername) ?? '';
+  const opponentUsername =
+    (oppSeat === 'PLAYER_ONE' ? state.playerOneUsername : state.playerTwoUsername) ?? '';
   const selfScore = selfSeat === 'PLAYER_ONE' ? state.scorePlayerOne : state.scorePlayerTwo;
   const opponentScore = oppSeat === 'PLAYER_ONE' ? state.scorePlayerOne : state.scorePlayerTwo;
-  const selfGamesWon = selfSeat === 'PLAYER_ONE' ? state.gamesWonPlayerOne : state.gamesWonPlayerTwo;
-  const opponentGamesWon = oppSeat === 'PLAYER_ONE' ? state.gamesWonPlayerOne : state.gamesWonPlayerTwo;
+  const selfGamesWon =
+    selfSeat === 'PLAYER_ONE' ? state.gamesWonPlayerOne : state.gamesWonPlayerTwo;
+  const opponentGamesWon =
+    oppSeat === 'PLAYER_ONE' ? state.gamesWonPlayerOne : state.gamesWonPlayerTwo;
 
   const seriesLabels: Record<1 | 3 | 5, string> = {
     1: 'Mejor de 1',
@@ -117,19 +133,22 @@ export function deriveMatchView(state: MatchState): MatchView {
   const round = state.roundGame;
   const selfPlayedInHands = playedBySeat(round.playedHands, selfSeat);
   const opponentPlayedInHands = playedBySeat(round.playedHands, oppSeat);
-  const selfPlayedCurrent = round.currentHand.cardPlayerOne !== null && selfSeat === 'PLAYER_ONE'
-    || round.currentHand.cardPlayerTwo !== null && selfSeat === 'PLAYER_TWO';
-  const opponentPlayedCurrent = round.currentHand.cardPlayerOne !== null && oppSeat === 'PLAYER_ONE'
-    || round.currentHand.cardPlayerTwo !== null && oppSeat === 'PLAYER_TWO';
+  const selfPlayedCurrent =
+    (round.currentHand.cardPlayerOne !== null && selfSeat === 'PLAYER_ONE') ||
+    (round.currentHand.cardPlayerTwo !== null && selfSeat === 'PLAYER_TWO');
+  const opponentPlayedCurrent =
+    (round.currentHand.cardPlayerOne !== null && oppSeat === 'PLAYER_ONE') ||
+    (round.currentHand.cardPlayerTwo !== null && oppSeat === 'PLAYER_TWO');
 
   const selfHandCount = 3 - selfPlayedInHands - (selfPlayedCurrent ? 1 : 0);
   const opponentHandCount = 3 - opponentPlayedInHands - (opponentPlayedCurrent ? 1 : 0);
 
-  const currentTurnIsSelf = round.currentTurn === selfUsername
-    ? true
-    : round.currentTurn === opponentUsername
-      ? false
-      : null;
+  const currentTurnIsSelf =
+    round.currentTurn === selfUsername
+      ? true
+      : round.currentTurn === opponentUsername
+        ? false
+        : null;
   const currentTurnUsername = round.currentTurn ?? null;
 
   // Temporizador de turno (feature 013-turn-timer): el reloj corre sobre

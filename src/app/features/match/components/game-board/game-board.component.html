@@ -14,7 +14,12 @@
       [selfPlayedInPreviousHands]="view().self.playedInPreviousHands"
       [opponentPlayedInPreviousHands]="view().opponent.playedInPreviousHands"
     />
-    <app-player-area [self]="view().self" [matchId]="matchId()" [playCardsEnabled]="playCardsEnabled()" [isProcessingDelay]="isProcessingDelay()" />
+    <app-player-area
+      [self]="view().self"
+      [matchId]="matchId()"
+      [playCardsEnabled]="playCardsEnabled()"
+      [isProcessingDelay]="isProcessingDelay()"
+    />
   </div>
   <app-available-actions-panel
     [availableActions]="view().availableActions"

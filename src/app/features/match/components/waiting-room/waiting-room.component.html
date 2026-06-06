@@ -60,6 +60,41 @@
       {{ statusMessage() }}
     </p>
 
+    @if (isHost() && !rivalPresent()) {
+      <div class="waiting-room__invite">
+        <button
+          type="button"
+          class="t3-btn t3-btn--primary waiting-room__invite-toggle"
+          [attr.aria-expanded]="invitePanelOpen()"
+          (click)="toggleInvitePanel()"
+        >
+          {{ invitePanelOpen() ? 'Ocultar amigos' : 'Invitar amigo' }}
+        </button>
+
+        @if (invitePanelOpen()) {
+          <app-invite-friend-picker [matchId]="matchId()" (invite)="onInvitePicked($event)" />
+        }
+
+        @if (outgoingInvitations().length > 0) {
+          <ul class="waiting-room__invites-sent" aria-label="Invitaciones enviadas">
+            @for (inv of outgoingInvitations(); track inv.invitationId) {
+              <li class="waiting-room__invite-sent">
+                <span class="waiting-room__invite-name">{{ inv.recipientUsername }}</span>
+                <span class="waiting-room__invite-status">Invitación pendiente</span>
+                <button
+                  type="button"
+                  class="t3-btn t3-btn--destructive waiting-room__invite-cancel"
+                  (click)="onCancelInvitation(inv.invitationId)"
+                >
+                  Cancelar
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    }
+
     <div class="waiting-room__actions">
       <button
         type="button"

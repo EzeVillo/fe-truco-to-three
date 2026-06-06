@@ -109,7 +109,11 @@ describe('jwtInterceptor', () => {
     });
 
     it('NO refresca proactivamente cuando no hay refreshToken (guest)', () => {
-      store.setSession({ playerId: 'guest-1', accessToken: 'guest-token', accessTokenExpiresIn: -1 });
+      store.setSession({
+        playerId: 'guest-1',
+        accessToken: 'guest-token',
+        accessTokenExpiresIn: -1,
+      });
 
       http.get('http://localhost:8080/api/matches').subscribe();
 

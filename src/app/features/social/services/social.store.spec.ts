@@ -13,6 +13,23 @@ function httpErr(status: number): HttpErrorResponse {
   return new HttpErrorResponse({ status, error: { message: 'BE-secret' } });
 }
 
+/** Forma completa de un amigo con disponibilidad por defecto (feature 025). */
+function friend(
+  friendUsername: string,
+  overrides: Partial<{
+    online: boolean;
+    availability: 'AVAILABLE' | 'BUSY';
+    busyReason: string | null;
+  }> = {},
+) {
+  return {
+    friendUsername,
+    online: overrides.online ?? false,
+    availability: overrides.availability ?? 'AVAILABLE',
+    busyReason: overrides.busyReason ?? null,
+  };
+}
+
 function setup(opts: { self?: string; guest?: boolean; authed?: boolean } = {}) {
   const events$ = new Subject<SocialWsEvent>();
   const connected$ = new Subject<boolean>();
@@ -29,6 +46,13 @@ function setup(opts: { self?: string; guest?: boolean; authed?: boolean } = {}) 
     declineRequest: vi.fn().mockReturnValue(of(undefined)),
     cancelRequest: vi.fn().mockReturnValue(of(undefined)),
     removeFriend: vi.fn().mockReturnValue(of(undefined)),
+    // Invitaciones a partida (feature 025)
+    createInvitation: vi.fn().mockReturnValue(of({ invitationId: 'inv-1', expiresAt: 1_000 })),
+    acceptInvitation: vi.fn().mockReturnValue(of(undefined)),
+    declineInvitation: vi.fn().mockReturnValue(of(undefined)),
+    cancelInvitation: vi.fn().mockReturnValue(of(undefined)),
+    listIncomingInvitations: vi.fn().mockReturnValue(of([])),
+    listOutgoingInvitations: vi.fn().mockReturnValue(of([])),
   };
   const wsMock = {
     connect: vi.fn(),
@@ -47,7 +71,16 @@ function setup(opts: { self?: string; guest?: boolean; authed?: boolean } = {}) 
   });
 
   const store = TestBed.inject(SocialStore);
-  return { store, api: apiMock, ws: wsMock, events$, connected$, username, isAuthenticated, isGuest };
+  return {
+    store,
+    api: apiMock,
+    ws: wsMock,
+    events$,
+    connected$,
+    username,
+    isAuthenticated,
+    isGuest,
+  };
 }
 
 describe('SocialStore', () => {
@@ -55,10 +88,10 @@ describe('SocialStore', () => {
 
   it('bootstrap(): carga las tres listas y baja loading', () => {
     const { store, api } = setup();
-    api.listFriends.mockReturnValue(of([{ friendUsername: 'ana' }]));
+    api.listFriends.mockReturnValue(of([friend('ana')]));
     api.listIncoming.mockReturnValue(of([{ requesterUsername: 'leo' }]));
     store.bootstrap();
-    expect(store.friends()).toEqual([{ friendUsername: 'ana' }]);
+    expect(store.friends()).toEqual([friend('ana')]);
     expect(store.incoming()).toEqual([{ requesterUsername: 'leo' }]);
     expect(store.outgoing()).toEqual([]);
     expect(store.loading()).toBe(false);
@@ -175,7 +208,7 @@ describe('SocialStore', () => {
       payload: { requesterUsername: 'me', addresseeUsername: 'martina' },
     });
     expect(store.outgoing()).toEqual([]);
-    expect(store.friends()).toEqual([{ friendUsername: 'martina' }]);
+    expect(store.friends()).toEqual([friend('martina')]);
   });
 
   it('FRIEND_REQUEST_ACCEPTED: quita de outgoing aunque difiera el casing del username', () => {
@@ -190,7 +223,7 @@ describe('SocialStore', () => {
       payload: { requesterUsername: 'me', addresseeUsername: 'martina' },
     });
     expect(store.outgoing()).toEqual([]);
-    expect(store.friends()).toEqual([{ friendUsername: 'martina' }]);
+    expect(store.friends()).toEqual([friend('martina')]);
   });
 
   it('FRIEND_REQUEST_DECLINED: quita de outgoing', () => {
@@ -225,7 +258,7 @@ describe('SocialStore', () => {
     const { store, events$ } = setup();
     store.start();
     store.acceptRequest('ana');
-    expect(store.friends()).toEqual([{ friendUsername: 'ana' }]);
+    expect(store.friends()).toEqual([friend('ana')]);
     // self = 'me' es el addressee; el otro es 'ana'
     events$.next({
       eventType: 'FRIENDSHIP_REMOVED',
@@ -288,19 +321,236 @@ describe('SocialStore', () => {
     });
     store.acceptRequest('leo');
     expect(store.incoming()).toEqual([]);
-    expect(store.friends()).toEqual([{ friendUsername: 'leo' }]);
+    expect(store.friends()).toEqual([friend('leo')]);
   });
 
   it('removeFriend(): optimista; rollback ante fallo', () => {
     const { store, api } = setup();
     store.acceptRequest('ana');
-    expect(store.friends()).toEqual([{ friendUsername: 'ana' }]);
+    expect(store.friends()).toEqual([friend('ana')]);
     api.removeFriend.mockReturnValue(throwError(() => httpErr(422)));
     store.removeFriend('ana');
-    expect(store.friends()).toEqual([{ friendUsername: 'ana' }]);
+    expect(store.friends()).toEqual([friend('ana')]);
     expect(store.actionError()).toBe(
       'No se pudo completar la acción: revisá el estado de la solicitud.',
     );
+  });
+
+  // ─── Invitaciones a partida + disponibilidad (feature 025) ───────────────────
+
+  it('FRIEND_AVAILABILITY_STATE: hace merge de disponibilidad sobre los amigos', () => {
+    const { store, api, events$ } = setup();
+    api.listFriends.mockReturnValue(of([friend('ana'), friend('leo')]));
+    store.bootstrap();
+    store.start();
+    events$.next({
+      eventType: 'FRIEND_AVAILABILITY_STATE',
+      timestamp: 1,
+      payload: {
+        friends: [
+          { friendUsername: 'ana', online: true, availability: 'BUSY', busyReason: 'IN_MATCH' },
+        ],
+      },
+    });
+    expect(store.friends()).toEqual([
+      friend('ana', { online: true, availability: 'BUSY', busyReason: 'IN_MATCH' }),
+      friend('leo'),
+    ]);
+  });
+
+  it('FRIEND_AVAILABILITY_CHANGED: actualiza un amigo; no-op si no está', () => {
+    const { store, api, events$ } = setup();
+    api.listFriends.mockReturnValue(of([friend('ana')]));
+    store.bootstrap();
+    store.start();
+    events$.next({
+      eventType: 'FRIEND_AVAILABILITY_CHANGED',
+      timestamp: 1,
+      payload: { friendUsername: 'ana', online: true, availability: 'BUSY', busyReason: 'IN_CUP' },
+    });
+    expect(store.friends()).toEqual([
+      friend('ana', { online: true, availability: 'BUSY', busyReason: 'IN_CUP' }),
+    ]);
+    // Amigo inexistente → no rompe ni agrega.
+    events$.next({
+      eventType: 'FRIEND_AVAILABILITY_CHANGED',
+      timestamp: 2,
+      payload: {
+        friendUsername: 'fantasma',
+        online: true,
+        availability: 'AVAILABLE',
+        busyReason: null,
+      },
+    });
+    expect(store.friends()).toHaveLength(1);
+  });
+
+  it('inviteFriend(): éxito → upsert en outgoingInvitations', () => {
+    const { store, api } = setup();
+    store.inviteFriend('martina', 'match-1');
+    expect(api.createInvitation).toHaveBeenCalledWith({
+      recipientUsername: 'martina',
+      targetType: 'MATCH',
+      targetId: 'match-1',
+    });
+    expect(store.outgoingInvitations()).toEqual([
+      {
+        invitationId: 'inv-1',
+        recipientUsername: 'martina',
+        targetType: 'MATCH',
+        targetId: 'match-1',
+        status: 'PENDING',
+        expiresAt: 1_000,
+      },
+    ]);
+  });
+
+  it('inviteFriend(): error → inviteActionError con copy del front, sin BE-secret', () => {
+    const { store, api } = setup();
+    api.createInvitation.mockReturnValue(throwError(() => httpErr(422)));
+    store.inviteFriend('martina', 'match-1');
+    expect(store.inviteActionError()).toBe(
+      'No se pudo completar la acción: revisá el estado de la solicitud.',
+    );
+    expect(store.inviteActionError()).not.toContain('BE-secret');
+    expect(store.outgoingInvitations()).toEqual([]);
+  });
+
+  it('RESOURCE_INVITATION_RECEIVED (MATCH): setea el toast de invitación', () => {
+    const { store, events$ } = setup();
+    store.start();
+    events$.next({
+      eventType: 'RESOURCE_INVITATION_RECEIVED',
+      timestamp: 1,
+      payload: {
+        invitationId: 'inv-9',
+        senderUsername: 'leo',
+        targetType: 'MATCH',
+        targetId: 'match-9',
+        expiresAt: 5_000,
+      },
+    });
+    expect(store.incomingInvitationToast()).toEqual({
+      invitationId: 'inv-9',
+      senderUsername: 'leo',
+      targetType: 'MATCH',
+      targetId: 'match-9',
+      status: 'PENDING',
+      expiresAt: 5_000,
+    });
+  });
+
+  it('RESOURCE_INVITATION_RECEIVED (LEAGUE): no muestra toast (fuera de alcance)', () => {
+    const { store, events$ } = setup();
+    store.start();
+    events$.next({
+      eventType: 'RESOURCE_INVITATION_RECEIVED',
+      timestamp: 1,
+      payload: {
+        invitationId: 'inv-l',
+        senderUsername: 'leo',
+        targetType: 'LEAGUE',
+        targetId: 'league-1',
+        expiresAt: 5_000,
+      },
+    });
+    expect(store.incomingInvitationToast()).toBeNull();
+  });
+
+  it('acceptInvitation(): limpia el toast y llama onJoined con el targetId', () => {
+    const { store, api, events$ } = setup();
+    store.start();
+    events$.next({
+      eventType: 'RESOURCE_INVITATION_RECEIVED',
+      timestamp: 1,
+      payload: {
+        invitationId: 'inv-9',
+        senderUsername: 'leo',
+        targetType: 'MATCH',
+        targetId: 'match-9',
+        expiresAt: 5_000,
+      },
+    });
+    const joined = vi.fn();
+    store.acceptInvitation('inv-9', joined);
+    expect(api.acceptInvitation).toHaveBeenCalledWith('inv-9');
+    expect(store.incomingInvitationToast()).toBeNull();
+    expect(joined).toHaveBeenCalledWith('match-9');
+  });
+
+  it('cancelInvitation(): optimista; rollback ante fallo', () => {
+    const { store, api } = setup();
+    store.inviteFriend('martina', 'match-1');
+    expect(store.outgoingInvitations()).toHaveLength(1);
+    api.cancelInvitation.mockReturnValue(throwError(() => httpErr(422)));
+    store.cancelInvitation('inv-1');
+    expect(store.outgoingInvitations()).toHaveLength(1);
+    expect(store.inviteActionError()).toBe(
+      'No se pudo completar la acción: revisá el estado de la solicitud.',
+    );
+  });
+
+  it('RESOURCE_INVITATION_ACCEPTED/EXPIRED: quita de outgoingInvitations', () => {
+    const { store, events$ } = setup();
+    store.start();
+    store.inviteFriend('martina', 'match-1');
+    events$.next({
+      eventType: 'RESOURCE_INVITATION_ACCEPTED',
+      timestamp: 2,
+      payload: {
+        invitationId: 'inv-1',
+        recipientUsername: 'martina',
+        targetType: 'MATCH',
+        targetId: 'match-1',
+      },
+    });
+    expect(store.outgoingInvitations()).toEqual([]);
+  });
+
+  it('RESOURCE_INVITATION_EXPIRED: limpia el toast recibido si coincide', () => {
+    const { store, events$ } = setup();
+    store.start();
+    events$.next({
+      eventType: 'RESOURCE_INVITATION_RECEIVED',
+      timestamp: 1,
+      payload: {
+        invitationId: 'inv-9',
+        senderUsername: 'leo',
+        targetType: 'MATCH',
+        targetId: 'match-9',
+        expiresAt: 5_000,
+      },
+    });
+    events$.next({
+      eventType: 'RESOURCE_INVITATION_EXPIRED',
+      timestamp: 2,
+      payload: {
+        invitationId: 'inv-9',
+        senderUsername: 'leo',
+        recipientUsername: 'me',
+        targetType: 'MATCH',
+        targetId: 'match-9',
+      },
+    });
+    expect(store.incomingInvitationToast()).toBeNull();
+  });
+
+  it('bootstrap(): re-surface de invitación recibida pendiente como toast', () => {
+    const { store, api } = setup();
+    api.listIncomingInvitations.mockReturnValue(
+      of([
+        {
+          invitationId: 'inv-7',
+          senderUsername: 'leo',
+          targetType: 'MATCH',
+          targetId: 'match-7',
+          status: 'PENDING',
+          expiresAt: 9_000,
+        },
+      ]),
+    );
+    store.bootstrap();
+    expect(store.incomingInvitationToast()?.invitationId).toBe('inv-7');
   });
 
   // ─── Gating ──────────────────────────────────────────────────────────────────

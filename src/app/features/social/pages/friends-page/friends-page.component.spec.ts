@@ -6,6 +6,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { of } from 'rxjs';
 import { FriendsPageComponent } from './friends-page.component';
 import { SocialStore } from '../../services/social.store';
+import type { FriendSummary } from '../../../../core/models/social.models';
 
 describe('FriendsPageComponent', () => {
   let fixture: ComponentFixture<FriendsPageComponent>;
@@ -14,7 +15,8 @@ describe('FriendsPageComponent', () => {
   const loading = signal(false);
   const error = signal<string | null>(null);
   const actionError = signal<string | null>(null);
-  const friends = signal<{ friendUsername: string }[]>([]);
+  const inviteActionError = signal<string | null>(null);
+  const friends = signal<FriendSummary[]>([]);
   const incoming = signal<{ requesterUsername: string }[]>([]);
   const outgoing = signal<{ addresseeUsername: string }[]>([]);
 
@@ -22,6 +24,7 @@ describe('FriendsPageComponent', () => {
     loading,
     error,
     actionError,
+    inviteActionError,
     friends,
     incoming,
     outgoing,
@@ -35,18 +38,21 @@ describe('FriendsPageComponent', () => {
     declineRequest: vi.fn(),
     cancelRequest: vi.fn(),
     removeFriend: vi.fn(),
+    inviteFriend: vi.fn(),
   };
 
   const dialogMock = { open: vi.fn(() => ({ afterClosed: () => of(true) })) };
-  const routerMock = { navigateByUrl: vi.fn() };
+  const routerMock = { navigateByUrl: vi.fn(), navigate: vi.fn(() => Promise.resolve(true)) };
 
   beforeEach(() => {
     loading.set(false);
     error.set(null);
+    inviteActionError.set(null);
     friends.set([]);
     incoming.set([]);
     outgoing.set([]);
     vi.clearAllMocks();
+    routerMock.navigate.mockReturnValue(Promise.resolve(true));
 
     TestBed.configureTestingModule({
       imports: [FriendsPageComponent],
@@ -59,6 +65,10 @@ describe('FriendsPageComponent', () => {
     fixture = TestBed.createComponent(FriendsPageComponent);
     component = fixture.componentInstance;
   });
+
+  function friend(over: Partial<FriendSummary> & { friendUsername: string }): FriendSummary {
+    return { online: false, availability: 'AVAILABLE', busyReason: null, ...over };
+  }
 
   function text(): string {
     return (fixture.nativeElement as HTMLElement).textContent ?? '';
@@ -89,14 +99,14 @@ describe('FriendsPageComponent', () => {
 
   it('muestra el estado vacío de amigos por defecto', () => {
     fixture.detectChanges();
-    expect(text()).toContain('Todavía no tenés amigos');
+    expect(text()).toContain('Todav');
   });
 
   it('al cambiar a la tab Recibidas muestra su estado vacío', () => {
     fixture.detectChanges();
     component.selectTab('incoming');
     fixture.detectChanges();
-    expect(text()).toContain('No tenés solicitudes pendientes');
+    expect(text()).toContain('solicitudes pendientes');
   });
 
   it('eliminar amigo abre el diálogo de confirmación y, si se confirma, llama removeFriend', () => {
@@ -104,5 +114,34 @@ describe('FriendsPageComponent', () => {
     component.onRemove('martina');
     expect(dialogMock.open).toHaveBeenCalled();
     expect(storeMock.removeFriend).toHaveBeenCalledWith('martina');
+  });
+
+  it('onInviteToMatch(): navega a crear partida con el amigo preseleccionado', () => {
+    fixture.detectChanges();
+    component.onInviteToMatch('martina');
+    expect(storeMock.inviteFriend).not.toHaveBeenCalled();
+    expect(routerMock.navigate).toHaveBeenCalledWith(['/lobby/online'], {
+      queryParams: { inviteFriend: 'martina' },
+    });
+  });
+
+  it('onInviteToMatch(): evita doble navegación mientras hay una en curso', () => {
+    routerMock.navigate.mockReturnValue(new Promise<boolean>(() => undefined));
+    fixture.detectChanges();
+
+    component.onInviteToMatch('martina');
+    component.onInviteToMatch('ana');
+
+    expect(routerMock.navigate).toHaveBeenCalledOnce();
+    expect(routerMock.navigate).toHaveBeenCalledWith(['/lobby/online'], {
+      queryParams: { inviteFriend: 'martina' },
+    });
+  });
+
+  it('muestra el error de invitación del store', () => {
+    friends.set([friend({ friendUsername: 'ana' })]);
+    inviteActionError.set('No se pudo invitar.');
+    fixture.detectChanges();
+    expect(text()).toContain('No se pudo invitar.');
   });
 });

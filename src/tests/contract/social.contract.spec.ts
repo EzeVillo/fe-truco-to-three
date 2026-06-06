@@ -18,19 +18,31 @@ import type { SocialWsEvent } from '../../app/core/models/ws.models';
 
 const _friend = {
   friendUsername: '',
+  online: false,
+  availability: 'AVAILABLE',
+  busyReason: null,
 } satisfies Record<keyof FriendSummary, FriendSummary[keyof FriendSummary]>;
 
 const _incoming = {
   requesterUsername: '',
-} satisfies Record<keyof IncomingFriendshipRequest, IncomingFriendshipRequest[keyof IncomingFriendshipRequest]>;
+} satisfies Record<
+  keyof IncomingFriendshipRequest,
+  IncomingFriendshipRequest[keyof IncomingFriendshipRequest]
+>;
 
 const _outgoing = {
   addresseeUsername: '',
-} satisfies Record<keyof OutgoingFriendshipRequest, OutgoingFriendshipRequest[keyof OutgoingFriendshipRequest]>;
+} satisfies Record<
+  keyof OutgoingFriendshipRequest,
+  OutgoingFriendshipRequest[keyof OutgoingFriendshipRequest]
+>;
 
 const _createPayload = {
   username: '',
-} satisfies Record<keyof CreateFriendshipRequestPayload, CreateFriendshipRequestPayload[keyof CreateFriendshipRequestPayload]>;
+} satisfies Record<
+  keyof CreateFriendshipRequestPayload,
+  CreateFriendshipRequestPayload[keyof CreateFriendshipRequestPayload]
+>;
 
 void _friend;
 void _incoming;
@@ -48,9 +60,19 @@ const SOCIAL_EVENT_TYPES: SocialWsEvent['eventType'][] = [
 ];
 
 describe('Contract: Social (§7.5/§8.2/§9.5e)', () => {
-  it('FriendSummary expone exactamente { friendUsername }', () => {
-    const dto: FriendSummary = { friendUsername: 'martina' };
-    expect(Object.keys(dto).sort()).toEqual(['friendUsername']);
+  it('FriendSummary expone { friendUsername, online, availability, busyReason } (§7.4.5)', () => {
+    const dto: FriendSummary = {
+      friendUsername: 'martina',
+      online: true,
+      availability: 'BUSY',
+      busyReason: 'IN_MATCH',
+    };
+    expect(Object.keys(dto).sort()).toEqual([
+      'availability',
+      'busyReason',
+      'friendUsername',
+      'online',
+    ]);
   });
 
   it('IncomingFriendshipRequest expone exactamente { requesterUsername }', () => {

@@ -40,7 +40,12 @@ describe('MatchScreenComponent', () => {
     };
 
     TestBed.configureTestingModule({
-      imports: [MatchScreenComponent, MatDialogModule, GameWonDialogComponent, EnvidoResultDialogComponent],
+      imports: [
+        MatchScreenComponent,
+        MatDialogModule,
+        GameWonDialogComponent,
+        EnvidoResultDialogComponent,
+      ],
       providers: [
         provideRouter([]),
         provideHttpClient(),
@@ -430,7 +435,12 @@ describe('MatchScreenComponent', () => {
         matchId: 'test-match',
         eventType: 'MATCH_ABANDONED',
         timestamp: Date.now(),
-        payload: { winnerSeat: 'PLAYER_ONE', abandonerSeat: 'PLAYER_TWO', gamesWonPlayerOne: 0, gamesWonPlayerTwo: 0 },
+        payload: {
+          winnerSeat: 'PLAYER_ONE',
+          abandonerSeat: 'PLAYER_TWO',
+          gamesWonPlayerOne: 0,
+          gamesWonPlayerTwo: 0,
+        },
         stateVersion: 4,
       });
 
@@ -450,7 +460,12 @@ describe('MatchScreenComponent', () => {
         matchId: 'test-match',
         eventType: 'MATCH_FORFEITED',
         timestamp: Date.now(),
-        payload: { winnerSeat: 'PLAYER_ONE', loserSeat: 'PLAYER_TWO', gamesWonPlayerOne: 0, gamesWonPlayerTwo: 0 },
+        payload: {
+          winnerSeat: 'PLAYER_ONE',
+          loserSeat: 'PLAYER_TWO',
+          gamesWonPlayerOne: 0,
+          gamesWonPlayerTwo: 0,
+        },
         stateVersion: 4,
       });
 
@@ -775,7 +790,11 @@ describe('MatchScreenComponent', () => {
       const afterClosed$ = new Subject<void>();
       const dialogSpy = vi
         .spyOn(fixture.componentInstance['dialog'], 'open')
-        .mockReturnValue(mockDialogRef(afterClosed$) as unknown as ReturnType<typeof fixture.componentInstance['dialog']['open']>);
+        .mockReturnValue(
+          mockDialogRef(afterClosed$) as unknown as ReturnType<
+            (typeof fixture.componentInstance)['dialog']['open']
+          >,
+        );
 
       matchStateService.envidoResolved$.next({
         response: 'QUIERO',
@@ -830,7 +849,11 @@ describe('MatchScreenComponent', () => {
       const afterClosed$ = new Subject<void>();
       const dialogSpy = vi
         .spyOn(fixture.componentInstance['dialog'], 'open')
-        .mockReturnValue(mockDialogRef(afterClosed$) as unknown as ReturnType<typeof fixture.componentInstance['dialog']['open']>);
+        .mockReturnValue(
+          mockDialogRef(afterClosed$) as unknown as ReturnType<
+            (typeof fixture.componentInstance)['dialog']['open']
+          >,
+        );
 
       matchStateService.gameWon$.next({ winnerSeat: 'PLAYER_ONE' });
 
@@ -892,16 +915,23 @@ describe('MatchScreenComponent', () => {
       matchStateService.state.set(mockMatchViewerPlayerOne);
       fixture.detectChanges();
 
-      const rematchStateService = fixture.componentInstance['rematchStateService'] as RematchStateService;
+      const rematchStateService = fixture.componentInstance[
+        'rematchStateService'
+      ] as RematchStateService;
       const session: RematchSession = {
-        sessionId: 'sid-1', originMatchId: 'test-match', status: 'OPEN',
-        selfChoice: 'UNDECIDED', opponentChoice: 'UNDECIDED',
-        expiresAt: Date.now() + 30_000, resultMatchId: null,
+        sessionId: 'sid-1',
+        originMatchId: 'test-match',
+        status: 'OPEN',
+        selfChoice: 'UNDECIDED',
+        opponentChoice: 'UNDECIDED',
+        expiresAt: Date.now() + 30_000,
+        resultMatchId: null,
       };
       rematchStateService.session.set(session);
 
       const afterClosed$ = new Subject<void>();
-      const dialogSpy = vi.spyOn(fixture.componentInstance['dialog'], 'open')
+      const dialogSpy = vi
+        .spyOn(fixture.componentInstance['dialog'], 'open')
         .mockReturnValue(mockDialogRefWith(afterClosed$) as never);
 
       matchStateService.matchEnded$.next({
@@ -927,7 +957,9 @@ describe('MatchScreenComponent', () => {
       fixture.detectChanges();
 
       const initSpy = vi.spyOn(matchStateService, 'init');
-      const rematchStateService = fixture.componentInstance['rematchStateService'] as RematchStateService;
+      const rematchStateService = fixture.componentInstance[
+        'rematchStateService'
+      ] as RematchStateService;
       const resetSpy = vi.spyOn(rematchStateService, 'reset');
 
       // Simular navegación a un nuevo matchId (paramMap cambia)

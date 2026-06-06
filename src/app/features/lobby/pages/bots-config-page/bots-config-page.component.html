@@ -48,10 +48,7 @@
       (click)="onCreate()"
     >
       @if (creatingMatch()) {
-        <mat-spinner
-          diameter="18"
-          class="bots-config__spinner"
-        />
+        <mat-spinner diameter="18" class="bots-config__spinner" />
         <span>Creando…</span>
       } @else {
         <span>Crear partida</span>

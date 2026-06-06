@@ -33,10 +33,7 @@ export const MATCH_EVENT_DELAYS_MS: Record<MatchEventType, number> = {
   REMATCH_EXPIRED: 0,
 };
 
-export function resolveDelay(
-  eventType: MatchEventType,
-  local: boolean,
-): number {
+export function resolveDelay(eventType: MatchEventType, local: boolean): number {
   if (local) {
     return 0;
   }

@@ -2,7 +2,12 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { createEnvironmentInjector, EnvironmentInjector, runInInjectionContext, signal } from '@angular/core';
+import {
+  createEnvironmentInjector,
+  EnvironmentInjector,
+  runInInjectionContext,
+  signal,
+} from '@angular/core';
 import { Subject } from 'rxjs';
 import { RematchStateService } from './rematch-state.service';
 import { RematchApiService } from './rematch-api.service';
@@ -47,10 +52,7 @@ describe('RematchStateService', () => {
 
     const parentInjector = TestBed.inject(EnvironmentInjector);
     childInjector = createEnvironmentInjector(
-      [
-        RematchApiService,
-        { provide: MatchStateService, useValue: mockMatchState },
-      ],
+      [RematchApiService, { provide: MatchStateService, useValue: mockMatchState }],
       parentInjector,
     );
 
@@ -70,9 +72,9 @@ describe('RematchStateService', () => {
   describe('init() — snapshot REST', () => {
     it('setea session cuando getSession devuelve 200 (viewerSeat PLAYER_ONE)', () => {
       service.init('mid-1', 'PLAYER_ONE', true);
-      httpMock.expectOne(`${BASE}/mid-1/rematch`).flush(
-        makeDto({ playerOneChoice: 'WANTS_REMATCH', playerTwoChoice: 'UNDECIDED' }),
-      );
+      httpMock
+        .expectOne(`${BASE}/mid-1/rematch`)
+        .flush(makeDto({ playerOneChoice: 'WANTS_REMATCH', playerTwoChoice: 'UNDECIDED' }));
 
       const s = service.session();
       expect(s).not.toBeNull();
@@ -84,9 +86,9 @@ describe('RematchStateService', () => {
 
     it('mapea playerTwo como self cuando viewerSeat es PLAYER_TWO', () => {
       service.init('mid-1', 'PLAYER_TWO', true);
-      httpMock.expectOne(`${BASE}/mid-1/rematch`).flush(
-        makeDto({ playerOneChoice: 'UNDECIDED', playerTwoChoice: 'WANTS_REMATCH' }),
-      );
+      httpMock
+        .expectOne(`${BASE}/mid-1/rematch`)
+        .flush(makeDto({ playerOneChoice: 'UNDECIDED', playerTwoChoice: 'WANTS_REMATCH' }));
 
       expect(service.session()!.selfChoice).toBe('WANTS_REMATCH');
       expect(service.session()!.opponentChoice).toBe('UNDECIDED');
@@ -113,7 +115,9 @@ describe('RematchStateService', () => {
       httpMock.expectNone(`${BASE}/mid-1/rematch`);
 
       mockMatchState.rematch$.next({
-        matchId: 'mid-1', eventType: 'REMATCH_AVAILABLE', timestamp: Date.now(),
+        matchId: 'mid-1',
+        eventType: 'REMATCH_AVAILABLE',
+        timestamp: Date.now(),
         payload: { sessionId: 'sid-9', originMatchId: 'mid-1', expiresAt: 9_999_999_999 },
         stateVersion: 0,
       });
@@ -141,7 +145,9 @@ describe('RematchStateService', () => {
 
     it('REMATCH_AVAILABLE crea sesión OPEN con UNDECIDED/UNDECIDED', () => {
       mockMatchState.rematch$.next({
-        matchId: 'mid-1', eventType: 'REMATCH_AVAILABLE', timestamp: Date.now(),
+        matchId: 'mid-1',
+        eventType: 'REMATCH_AVAILABLE',
+        timestamp: Date.now(),
         payload: { sessionId: 'sid-2', originMatchId: 'mid-1', expiresAt: 9_999_999_999 },
         stateVersion: 0,
       });
@@ -155,7 +161,9 @@ describe('RematchStateService', () => {
 
     it('REMATCH_OPPONENT_WANTS actualiza opponentChoice a WANTS_REMATCH', () => {
       mockMatchState.rematch$.next({
-        matchId: 'mid-1', eventType: 'REMATCH_OPPONENT_WANTS', timestamp: Date.now(),
+        matchId: 'mid-1',
+        eventType: 'REMATCH_OPPONENT_WANTS',
+        timestamp: Date.now(),
         payload: { sessionId: 'sid-1', originMatchId: 'mid-1', actor: 'martina' },
         stateVersion: 0,
       });
@@ -165,8 +173,16 @@ describe('RematchStateService', () => {
 
     it('REMATCH_CONFIRMED actualiza status y resultMatchId', () => {
       mockMatchState.rematch$.next({
-        matchId: 'mid-1', eventType: 'REMATCH_CONFIRMED', timestamp: Date.now(),
-        payload: { sessionId: 'sid-1', originMatchId: 'mid-1', newMatchId: 'mid-2', newPlayerOne: 'a', newPlayerTwo: 'b' },
+        matchId: 'mid-1',
+        eventType: 'REMATCH_CONFIRMED',
+        timestamp: Date.now(),
+        payload: {
+          sessionId: 'sid-1',
+          originMatchId: 'mid-1',
+          newMatchId: 'mid-2',
+          newPlayerOne: 'a',
+          newPlayerTwo: 'b',
+        },
         stateVersion: 0,
       });
 
@@ -176,7 +192,9 @@ describe('RematchStateService', () => {
 
     it('REMATCH_CLOSED_BY_LEAVE actualiza status y opponentChoice', () => {
       mockMatchState.rematch$.next({
-        matchId: 'mid-1', eventType: 'REMATCH_CLOSED_BY_LEAVE', timestamp: Date.now(),
+        matchId: 'mid-1',
+        eventType: 'REMATCH_CLOSED_BY_LEAVE',
+        timestamp: Date.now(),
         payload: { sessionId: 'sid-1', originMatchId: 'mid-1', actor: 'martina' },
         stateVersion: 0,
       });
@@ -187,7 +205,9 @@ describe('RematchStateService', () => {
 
     it('REMATCH_EXPIRED actualiza status a EXPIRED', () => {
       mockMatchState.rematch$.next({
-        matchId: 'mid-1', eventType: 'REMATCH_EXPIRED', timestamp: Date.now(),
+        matchId: 'mid-1',
+        eventType: 'REMATCH_EXPIRED',
+        timestamp: Date.now(),
         payload: { sessionId: 'sid-1', originMatchId: 'mid-1' },
         stateVersion: 0,
       });
@@ -206,7 +226,9 @@ describe('RematchStateService', () => {
 
     it('setea selfChoice=WANTS_REMATCH inmediatamente', () => {
       service.accept();
-      httpMock.expectOne(`${BASE}/mid-1/rematch/choose`).flush(null, { status: 204, statusText: 'No Content' });
+      httpMock
+        .expectOne(`${BASE}/mid-1/rematch/choose`)
+        .flush(null, { status: 204, statusText: 'No Content' });
 
       expect(service.session()!.selfChoice).toBe('WANTS_REMATCH');
     });
@@ -231,7 +253,9 @@ describe('RematchStateService', () => {
 
     it('setea status=CLOSED_BY_LEAVE y selfChoice=LEFT inmediatamente', () => {
       service.leave();
-      httpMock.expectOne(`${BASE}/mid-1/rematch/leave`).flush(null, { status: 204, statusText: 'No Content' });
+      httpMock
+        .expectOne(`${BASE}/mid-1/rematch/leave`)
+        .flush(null, { status: 204, statusText: 'No Content' });
 
       const s = service.session()!;
       expect(s.status).toBe('CLOSED_BY_LEAVE');
@@ -268,8 +292,16 @@ describe('RematchStateService', () => {
       service.reset();
 
       mockMatchState.rematch$.next({
-        matchId: 'mid-1', eventType: 'REMATCH_CONFIRMED', timestamp: Date.now(),
-        payload: { sessionId: 'sid-1', originMatchId: 'mid-1', newMatchId: 'mid-2', newPlayerOne: 'a', newPlayerTwo: 'b' },
+        matchId: 'mid-1',
+        eventType: 'REMATCH_CONFIRMED',
+        timestamp: Date.now(),
+        payload: {
+          sessionId: 'sid-1',
+          originMatchId: 'mid-1',
+          newMatchId: 'mid-2',
+          newPlayerOne: 'a',
+          newPlayerTwo: 'b',
+        },
         stateVersion: 0,
       });
 
@@ -300,7 +332,10 @@ describe('RematchStateService', () => {
       service.accept();
       httpMock
         .expectOne(`${BASE}/mid-1/rematch/choose`)
-        .flush({ message: 'La sesión no está abierta' }, { status: 422, statusText: 'Unprocessable' });
+        .flush(
+          { message: 'La sesión no está abierta' },
+          { status: 422, statusText: 'Unprocessable' },
+        );
 
       expect(service.errorMessage()).not.toContain('La sesión no está abierta');
       expect(service.errorMessage().length).toBeGreaterThan(0);

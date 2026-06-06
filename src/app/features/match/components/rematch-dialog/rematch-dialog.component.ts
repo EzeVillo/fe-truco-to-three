@@ -35,7 +35,8 @@ export interface RematchDialogResult {
 export class RematchDialogComponent implements OnDestroy {
   private readonly rematchState = inject(RematchStateService);
   private readonly matchState = inject(MatchStateService);
-  private readonly dialogRef = inject<MatDialogRef<RematchDialogComponent, RematchDialogResult>>(MatDialogRef);
+  private readonly dialogRef =
+    inject<MatDialogRef<RematchDialogComponent, RematchDialogResult>>(MatDialogRef);
 
   private readonly nowMs = signal(Date.now());
   private tickInterval: ReturnType<typeof setInterval> | null = null;
@@ -51,11 +52,7 @@ export class RematchDialogComponent implements OnDestroy {
   readonly confirmedId = computed(() => confirmedMatchId(this.session()));
 
   readonly remainingMs = computed(() =>
-    computeRematchCountdown(
-      this.session(),
-      this.matchState.serverClockOffsetMs(),
-      this.nowMs(),
-    ),
+    computeRematchCountdown(this.session(), this.matchState.serverClockOffsetMs(), this.nowMs()),
   );
 
   readonly remainingSeconds = computed(() => Math.ceil(this.remainingMs() / 1000));

@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { finalize } from 'rxjs';
 import type { AvailableAction } from '../../../../core/models/match.models';
@@ -8,14 +16,23 @@ import { EnvidoSubmenuComponent } from './envido-submenu/envido-submenu.componen
 import { EnvidoResponsePanelComponent } from './envido-response-panel/envido-response-panel.component';
 import { TrucoResponsePanelComponent } from './truco-response-panel/truco-response-panel.component';
 import { deriveEnvidoResponseOptions } from '../../utils/derive-envido-response-options';
-import { deriveEnvidoCallOptions, hasAnyEnvidoCallOption } from '../../utils/derive-envido-call-options';
+import {
+  deriveEnvidoCallOptions,
+  hasAnyEnvidoCallOption,
+} from '../../utils/derive-envido-call-options';
 import { deriveTrucoResponseOptions } from '../../utils/derive-truco-response-options';
 import { MatchActionsService } from '../../services/match-actions.service';
 
 @Component({
   selector: 'app-available-actions-panel',
   standalone: true,
-  imports: [CommonModule, ActionBarComponent, EnvidoSubmenuComponent, EnvidoResponsePanelComponent, TrucoResponsePanelComponent],
+  imports: [
+    CommonModule,
+    ActionBarComponent,
+    EnvidoSubmenuComponent,
+    EnvidoResponsePanelComponent,
+    TrucoResponsePanelComponent,
+  ],
   templateUrl: './available-actions-panel.component.html',
   styleUrl: './available-actions-panel.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,25 +69,23 @@ export class AvailableActionsPanelComponent {
   readonly isFolding = signal<boolean>(false);
 
   readonly isTrucoResponseMode = computed(() =>
-    this.availableActions().some((a) => a.type === 'RESPOND_TRUCO')
+    this.availableActions().some((a) => a.type === 'RESPOND_TRUCO'),
   );
 
   readonly isEnvidoResponseMode = computed(() =>
-    this.availableActions().some((a) => a.type === 'RESPOND_ENVIDO')
+    this.availableActions().some((a) => a.type === 'RESPOND_ENVIDO'),
   );
 
   readonly shouldCollapseToActionBar = computed(() => this.isProcessingDelay());
 
   readonly envidoResponseOptions = computed(() =>
-    deriveEnvidoResponseOptions(this.availableActions())
+    deriveEnvidoResponseOptions(this.availableActions()),
   );
 
-  readonly envidoCallOptions = computed(() =>
-    deriveEnvidoCallOptions(this.availableActions())
-  );
+  readonly envidoCallOptions = computed(() => deriveEnvidoCallOptions(this.availableActions()));
 
   readonly trucoResponseOptions = computed(() =>
-    deriveTrucoResponseOptions(this.availableActions())
+    deriveTrucoResponseOptions(this.availableActions()),
   );
 
   /** "Volver" del submenú sólo tiene sentido si hay otra acción principal a la que regresar. */
@@ -80,7 +95,9 @@ export class AvailableActionsPanelComponent {
   });
 
   onEnvidoClick(): void {
-    if (!hasAnyEnvidoCallOption(this.envidoCallOptions())) {return;}
+    if (!hasAnyEnvidoCallOption(this.envidoCallOptions())) {
+      return;
+    }
     this.envidoSubmenuOpen.set(true);
   }
 
@@ -88,76 +105,111 @@ export class AvailableActionsPanelComponent {
     this.envidoSubmenuOpen.set(false);
   }
 
-  onAction(action: AvailableActionType | EnvidoCall | 'ENVIDO_QUIERO' | 'ENVIDO_NO_QUIERO' | 'TRUCO_QUIERO' | 'TRUCO_NO_QUIERO' | 'TRUCO_QUIERO_Y_ME_VOY_AL_MAZO'): void {
+  onAction(
+    action:
+      | AvailableActionType
+      | EnvidoCall
+      | 'ENVIDO_QUIERO'
+      | 'ENVIDO_NO_QUIERO'
+      | 'TRUCO_QUIERO'
+      | 'TRUCO_NO_QUIERO'
+      | 'TRUCO_QUIERO_Y_ME_VOY_AL_MAZO',
+  ): void {
     const matchId = this.matchId();
-    if (!matchId) {return;}
+    if (!matchId) {
+      return;
+    }
 
     switch (action) {
       case 'CALL_TRUCO':
-        if (this.isCallingTruco()) {return;}
+        if (this.isCallingTruco()) {
+          return;
+        }
         this.isCallingTruco.set(true);
-        this.matchActionsService.callTruco(matchId).pipe(
-          finalize(() => this.isCallingTruco.set(false))
-        ).subscribe();
+        this.matchActionsService
+          .callTruco(matchId)
+          .pipe(finalize(() => this.isCallingTruco.set(false)))
+          .subscribe();
         break;
 
       case 'ENVIDO':
       case 'REAL_ENVIDO':
       case 'FALTA_ENVIDO':
-        if (this.isCallingEnvido()) {return;}
+        if (this.isCallingEnvido()) {
+          return;
+        }
         this.isCallingEnvido.set(true);
         this.envidoSubmenuOpen.set(false);
-        this.matchActionsService.callEnvido(matchId, action).pipe(
-          finalize(() => this.isCallingEnvido.set(false))
-        ).subscribe();
+        this.matchActionsService
+          .callEnvido(matchId, action)
+          .pipe(finalize(() => this.isCallingEnvido.set(false)))
+          .subscribe();
         break;
 
       case 'TRUCO_QUIERO':
-        if (this.isRespondingTruco()) {return;}
+        if (this.isRespondingTruco()) {
+          return;
+        }
         this.isRespondingTruco.set(true);
-        this.matchActionsService.respondTruco(matchId, 'QUIERO').pipe(
-          finalize(() => this.isRespondingTruco.set(false))
-        ).subscribe();
+        this.matchActionsService
+          .respondTruco(matchId, 'QUIERO')
+          .pipe(finalize(() => this.isRespondingTruco.set(false)))
+          .subscribe();
         break;
 
       case 'TRUCO_NO_QUIERO':
-        if (this.isRespondingTruco()) {return;}
+        if (this.isRespondingTruco()) {
+          return;
+        }
         this.isRespondingTruco.set(true);
-        this.matchActionsService.respondTruco(matchId, 'NO_QUIERO').pipe(
-          finalize(() => this.isRespondingTruco.set(false))
-        ).subscribe();
+        this.matchActionsService
+          .respondTruco(matchId, 'NO_QUIERO')
+          .pipe(finalize(() => this.isRespondingTruco.set(false)))
+          .subscribe();
         break;
 
       case 'TRUCO_QUIERO_Y_ME_VOY_AL_MAZO':
-        if (this.isRespondingTruco()) {return;}
+        if (this.isRespondingTruco()) {
+          return;
+        }
         this.isRespondingTruco.set(true);
-        this.matchActionsService.respondTruco(matchId, 'QUIERO_Y_ME_VOY_AL_MAZO').pipe(
-          finalize(() => this.isRespondingTruco.set(false))
-        ).subscribe();
+        this.matchActionsService
+          .respondTruco(matchId, 'QUIERO_Y_ME_VOY_AL_MAZO')
+          .pipe(finalize(() => this.isRespondingTruco.set(false)))
+          .subscribe();
         break;
 
       case 'ENVIDO_QUIERO':
-        if (this.isRespondingEnvido()) {return;}
+        if (this.isRespondingEnvido()) {
+          return;
+        }
         this.isRespondingEnvido.set(true);
-        this.matchActionsService.respondEnvido(matchId, 'QUIERO').pipe(
-          finalize(() => this.isRespondingEnvido.set(false))
-        ).subscribe();
+        this.matchActionsService
+          .respondEnvido(matchId, 'QUIERO')
+          .pipe(finalize(() => this.isRespondingEnvido.set(false)))
+          .subscribe();
         break;
 
       case 'ENVIDO_NO_QUIERO':
-        if (this.isRespondingEnvido()) {return;}
+        if (this.isRespondingEnvido()) {
+          return;
+        }
         this.isRespondingEnvido.set(true);
-        this.matchActionsService.respondEnvido(matchId, 'NO_QUIERO').pipe(
-          finalize(() => this.isRespondingEnvido.set(false))
-        ).subscribe();
+        this.matchActionsService
+          .respondEnvido(matchId, 'NO_QUIERO')
+          .pipe(finalize(() => this.isRespondingEnvido.set(false)))
+          .subscribe();
         break;
 
       case 'FOLD':
-        if (this.isFolding()) {return;}
+        if (this.isFolding()) {
+          return;
+        }
         this.isFolding.set(true);
-        this.matchActionsService.fold(matchId).pipe(
-          finalize(() => this.isFolding.set(false))
-        ).subscribe();
+        this.matchActionsService
+          .fold(matchId)
+          .pipe(finalize(() => this.isFolding.set(false)))
+          .subscribe();
         break;
     }
   }

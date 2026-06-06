@@ -22,7 +22,9 @@ export function callDisplayMapper(event: MatchWsEvent): CallDisplayEvent | null 
         VALE_CUATRO: '¡Vale cuatro!',
       };
       const text = textMap[payload.call];
-      if (!text) {return null;}
+      if (!text) {
+        return null;
+      }
       // El canto de truco persiste en pantalla hasta que se responda (quiero/no quiero).
       return { seat: payload.callerSeat, text, autoClear: false };
     }
@@ -35,7 +37,9 @@ export function callDisplayMapper(event: MatchWsEvent): CallDisplayEvent | null 
         QUIERO_Y_ME_VOY_AL_MAZO: '¡Quiero y me voy al mazo!',
       };
       const text = textMap[payload.response];
-      if (!text) {return null;}
+      if (!text) {
+        return null;
+      }
       // QUIERO del truco se auto-limpia; NO_QUIERO y QUIERO_Y_ME_VOY_AL_MAZO persisten.
       return { seat: payload.responderSeat, text, autoClear: payload.response === 'QUIERO' };
     }
@@ -48,7 +52,9 @@ export function callDisplayMapper(event: MatchWsEvent): CallDisplayEvent | null 
         FALTA_ENVIDO: '¡Falta envido!',
       };
       const text = textMap[payload.call];
-      if (!text) {return null;}
+      if (!text) {
+        return null;
+      }
       // El canto de envido persiste en pantalla hasta que se resuelva (quiero/no quiero).
       return { seat: payload.callerSeat, text, autoClear: false };
     }

@@ -70,14 +70,18 @@ function setup(profileOrError: PlayerProfile | HttpErrorResponse, options: Setup
       {
         provide: ProfileApiService,
         useValue: {
-          getProfile: vi.fn().mockReturnValue(
-            profileOrError instanceof HttpErrorResponse
-              ? throwError(() => profileOrError)
-              : of(profileOrError),
-          ),
-          getAchievementsCatalog: vi.fn().mockReturnValue(
-            catalog instanceof HttpErrorResponse ? throwError(() => catalog) : of(catalog),
-          ),
+          getProfile: vi
+            .fn()
+            .mockReturnValue(
+              profileOrError instanceof HttpErrorResponse
+                ? throwError(() => profileOrError)
+                : of(profileOrError),
+            ),
+          getAchievementsCatalog: vi
+            .fn()
+            .mockReturnValue(
+              catalog instanceof HttpErrorResponse ? throwError(() => catalog) : of(catalog),
+            ),
         },
       },
       {
@@ -121,7 +125,10 @@ describe('ProfilePageComponent', () => {
   });
 
   it('con perfil sin desbloqueos muestra el catálogo completo en bloqueado', () => {
-    setup({ achievements: [], stats: { matchesPlayed: 0, matchesWon: 0, matchesLost: 0, winRate: 0 } });
+    setup({
+      achievements: [],
+      stats: { matchesPlayed: 0, matchesWon: 0, matchesLost: 0, winRate: 0 },
+    });
 
     const fixture = TestBed.createComponent(ProfilePageComponent);
     fixture.detectChanges();
@@ -217,7 +224,12 @@ describe('ProfilePageComponent', () => {
     const fixture = TestBed.createComponent(ProfilePageComponent);
     fixture.detectChanges();
 
-    unlocked$.next({ achievementCode: FOLD, unlockedAt: 9999999999999, matchId: 'm', gameNumber: 2 });
+    unlocked$.next({
+      achievementCode: FOLD,
+      unlockedAt: 9999999999999,
+      matchId: 'm',
+      gameNumber: 2,
+    });
     fixture.detectChanges();
 
     const views = fixture.componentInstance.achievements();
@@ -235,7 +247,12 @@ describe('ProfilePageComponent', () => {
     fixture.detectChanges();
     const before = fixture.componentInstance.achievements();
 
-    unlocked$.next({ achievementCode: FOLD, unlockedAt: 9999999999999, matchId: 'm', gameNumber: 2 });
+    unlocked$.next({
+      achievementCode: FOLD,
+      unlockedAt: 9999999999999,
+      matchId: 'm',
+      gameNumber: 2,
+    });
     fixture.detectChanges();
 
     expect(fixture.componentInstance.achievements()).toEqual(before);

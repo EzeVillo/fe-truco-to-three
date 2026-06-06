@@ -14,7 +14,9 @@ describe('ConfirmLogoutDialogComponent — wrapper delgado', () => {
   beforeEach(() => {
     dialogRefMock = { close: vi.fn() };
     innerDialogAfterClosed$ = new Subject<boolean | undefined>();
-    innerDialogRefMock = { afterClosed: vi.fn().mockReturnValue(innerDialogAfterClosed$.asObservable()) };
+    innerDialogRefMock = {
+      afterClosed: vi.fn().mockReturnValue(innerDialogAfterClosed$.asObservable()),
+    };
     dialogOpenSpy = vi.fn().mockReturnValue(innerDialogRefMock);
 
     TestBed.configureTestingModule({
@@ -33,7 +35,10 @@ describe('ConfirmLogoutDialogComponent — wrapper delgado', () => {
 
     expect(dialogOpenSpy).toHaveBeenCalledOnce();
 
-    const [, config] = dialogOpenSpy.mock.calls[0] as [unknown, { data: Record<string, unknown>; panelClass: string }];
+    const [, config] = dialogOpenSpy.mock.calls[0] as [
+      unknown,
+      { data: Record<string, unknown>; panelClass: string },
+    ];
     expect(config.data['variant']).toBe('destructive');
     expect(config.data['title']).toBe('¿Cerrar sesión?');
     expect(config.data['confirmLabel']).toBe('Salir');

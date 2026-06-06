@@ -50,10 +50,7 @@ export function isUrgent(remainingMs: number): boolean {
  * inválida (<= 0): devuelve 1 (agotado) para no mostrar un reloj en marcha
  * incorrecto (FR-013).
  */
-export function computeElapsedFraction(
-  remainingMs: number,
-  turnDurationMillis: number,
-): number {
+export function computeElapsedFraction(remainingMs: number, turnDurationMillis: number): number {
   if (turnDurationMillis <= 0) {
     return 1;
   }

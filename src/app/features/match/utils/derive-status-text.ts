@@ -6,8 +6,10 @@ export function deriveStatusText(state: MatchState): string {
   }
 
   const round = state.roundGame;
-  const selfUsername = state.viewerSeat === 'PLAYER_ONE' ? state.playerOneUsername : state.playerTwoUsername;
-  const opponentUsername = state.viewerSeat === 'PLAYER_ONE' ? state.playerTwoUsername : state.playerOneUsername;
+  const selfUsername =
+    state.viewerSeat === 'PLAYER_ONE' ? state.playerOneUsername : state.playerTwoUsername;
+  const opponentUsername =
+    state.viewerSeat === 'PLAYER_ONE' ? state.playerTwoUsername : state.playerOneUsername;
 
   const handNumber = Math.min(Math.max(round.playedHands.length + 1, 1), 3);
   const handText = `Mano ${handNumber} de 3`;

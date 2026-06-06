@@ -28,7 +28,9 @@ describe('PlayerHandComponent', () => {
     fixture.componentRef.setInput('playCardsEnabled', true);
     fixture.detectChanges();
 
-    const service = TestBed.inject(MatchActionsService) as unknown as { playCard: ReturnType<typeof vi.fn> };
+    const service = TestBed.inject(MatchActionsService) as unknown as {
+      playCard: ReturnType<typeof vi.fn>;
+    };
     const cardBtn = fixture.nativeElement.querySelector('.player-hand__card-btn');
     expect(cardBtn).toBeTruthy();
 
@@ -42,7 +44,9 @@ describe('PlayerHandComponent', () => {
     fixture.componentRef.setInput('playCardsEnabled', false);
     fixture.detectChanges();
 
-    const service = TestBed.inject(MatchActionsService) as unknown as { playCard: ReturnType<typeof vi.fn> };
+    const service = TestBed.inject(MatchActionsService) as unknown as {
+      playCard: ReturnType<typeof vi.fn>;
+    };
     const cardBtn = fixture.nativeElement.querySelector('.player-hand__card-btn');
     expect(cardBtn).toBeTruthy();
 
@@ -56,7 +60,9 @@ describe('PlayerHandComponent', () => {
     fixture.componentRef.setInput('playCardsEnabled', false);
     fixture.detectChanges();
 
-    const cardBtn = fixture.nativeElement.querySelector('.player-hand__card-btn') as HTMLButtonElement;
+    const cardBtn = fixture.nativeElement.querySelector(
+      '.player-hand__card-btn',
+    ) as HTMLButtonElement;
     expect(cardBtn.disabled).toBe(true);
   });
 
@@ -66,7 +72,9 @@ describe('PlayerHandComponent', () => {
     fixture.componentRef.setInput('playCardsEnabled', true);
     fixture.detectChanges();
 
-    const cardBtn = fixture.nativeElement.querySelector('.player-hand__card-btn') as HTMLButtonElement;
+    const cardBtn = fixture.nativeElement.querySelector(
+      '.player-hand__card-btn',
+    ) as HTMLButtonElement;
     expect(cardBtn.disabled).toBe(false);
   });
 });

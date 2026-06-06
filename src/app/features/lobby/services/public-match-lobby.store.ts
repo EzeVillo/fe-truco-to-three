@@ -7,7 +7,7 @@
 
 import { Injectable, inject, DestroyRef } from '@angular/core';
 import { filter, map } from 'rxjs';
-import type { Observable , Subscription } from 'rxjs';
+import type { Observable, Subscription } from 'rxjs';
 import { WebSocketService } from '../../../core/services/websocket.service';
 import { MatchesApiService } from './matches-api.service';
 import { PublicLobbyStore } from '../../../shared/public-lobby/public-lobby-store';

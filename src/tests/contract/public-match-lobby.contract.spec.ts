@@ -57,7 +57,15 @@ describe('Contract: Lobby público de matches', () => {
       joinCode: 'ABC12345',
     };
     expect(Object.keys(item).sort()).toEqual(
-      ['gamesToPlay', 'host', 'joinCode', 'matchId', 'occupiedSlots', 'status', 'totalSlots'].sort(),
+      [
+        'gamesToPlay',
+        'host',
+        'joinCode',
+        'matchId',
+        'occupiedSlots',
+        'status',
+        'totalSlots',
+      ].sort(),
     );
   });
 
@@ -97,7 +105,14 @@ describe('Contract: Lobby público de matches', () => {
   it('docs §4.3 documenta GET /api/matches/public con los campos del item', () => {
     const content = readFileSync(resolve(process.cwd(), 'docs/CONTRATOS_API.md'), 'utf-8');
     expect(content).toContain('GET /api/matches/public');
-    for (const field of ['matchId', 'host', 'gamesToPlay', 'totalSlots', 'occupiedSlots', 'status']) {
+    for (const field of [
+      'matchId',
+      'host',
+      'gamesToPlay',
+      'totalSlots',
+      'occupiedSlots',
+      'status',
+    ]) {
       expect(content).toContain(field);
     }
   });

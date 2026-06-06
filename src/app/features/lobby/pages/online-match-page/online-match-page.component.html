@@ -1,11 +1,13 @@
 <section class="online-match">
   <div class="online-match__topbar">
     <app-back-button label="Volver al lobby" (back)="goBack()" />
-    <h1 class="online-match__title">Jugar online</h1>
+    <h1 class="online-match__title">
+      {{ isFriendInviteFlow() ? 'Invitar a partida' : 'Jugar online' }}
+    </h1>
   </div>
 
   <div class="online-match__scroll">
-    @if (!isInviteLink()) {
+    @if (!isInviteLink() && !isFriendInviteFlow()) {
       <div class="online-match__panel">
         <h2 class="online-match__panel-title">Partidas públicas</h2>
         <p class="online-match__panel-desc">
@@ -23,21 +25,27 @@
           (retry)="onRetryPublic()"
         />
       </div>
+    }
 
+    @if (!isInviteLink()) {
       <div class="online-match__panel">
         <h2 class="online-match__panel-title">Crear partida</h2>
         <p class="online-match__panel-desc">
-          @if (isPublicCreate()) {
+          @if (isFriendInviteFlow()) {
+            Creá una partida privada para invitar a {{ inviteFriendUsername() }}.
+          } @else if (isPublicCreate()) {
             Tu partida aparecerá en el lobby para que cualquiera se una.
           } @else {
             Creá una partida privada y compartí el código o el enlace con tu rival.
           }
         </p>
 
-        <app-visibility-selector
-          [visibility]="visibility()"
-          (visibilityChange)="onChangeVisibility($event)"
-        />
+        @if (!isFriendInviteFlow()) {
+          <app-visibility-selector
+            [visibility]="visibility()"
+            (visibilityChange)="onChangeVisibility($event)"
+          />
+        }
 
         <app-series-format-selector
           [format]="seriesFormat()"
@@ -65,47 +73,49 @@
       </div>
     }
 
-    <div class="online-match__panel">
-      <h2 class="online-match__panel-title">
-        {{ isInviteLink() ? 'Unirme con enlace' : 'Unirme con código' }}
-      </h2>
-      <p class="online-match__panel-desc">
-        @if (isInviteLink()) {
-          Abrimos el enlace y cargamos el código de la partida para que te unas enseguida.
-        } @else {
-          Ingresá el código que te compartieron para entrar a la sala.
+    @if (!isFriendInviteFlow()) {
+      <div class="online-match__panel">
+        <h2 class="online-match__panel-title">
+          {{ isInviteLink() ? 'Unirme con enlace' : 'Unirme con código' }}
+        </h2>
+        <p class="online-match__panel-desc">
+          @if (isInviteLink()) {
+            Abrimos el enlace y cargamos el código de la partida para que te unas enseguida.
+          } @else {
+            Ingresá el código que te compartieron para entrar a la sala.
+          }
+        </p>
+
+        <input
+          type="text"
+          class="online-match__input"
+          placeholder="Código de partida"
+          autocomplete="off"
+          autocapitalize="characters"
+          aria-label="Código de partida"
+          [value]="joinCodeInput()"
+          (input)="onJoinCodeInput($any($event.target).value)"
+        />
+
+        @if (joinError()) {
+          <p class="online-match__error" role="alert">{{ joinError() }}</p>
         }
-      </p>
 
-      <input
-        type="text"
-        class="online-match__input"
-        placeholder="Código de partida"
-        autocomplete="off"
-        autocapitalize="characters"
-        aria-label="Código de partida"
-        [value]="joinCodeInput()"
-        (input)="onJoinCodeInput($any($event.target).value)"
-      />
-
-      @if (joinError()) {
-        <p class="online-match__error" role="alert">{{ joinError() }}</p>
-      }
-
-      <button
-        type="button"
-        class="t3-btn t3-btn--primary online-match__cta"
-        [disabled]="!canJoin()"
-        [attr.aria-busy]="joining() ? 'true' : null"
-        (click)="onJoin()"
-      >
-        @if (joining()) {
-          <mat-spinner diameter="18" class="online-match__spinner" />
-          <span>Uniéndome…</span>
-        } @else {
-          <span>Unirme</span>
-        }
-      </button>
-    </div>
+        <button
+          type="button"
+          class="t3-btn t3-btn--primary online-match__cta"
+          [disabled]="!canJoin()"
+          [attr.aria-busy]="joining() ? 'true' : null"
+          (click)="onJoin()"
+        >
+          @if (joining()) {
+            <mat-spinner diameter="18" class="online-match__spinner" />
+            <span>Uniéndome…</span>
+          } @else {
+            <span>Unirme</span>
+          }
+        </button>
+      </div>
+    }
   </div>
 </section>

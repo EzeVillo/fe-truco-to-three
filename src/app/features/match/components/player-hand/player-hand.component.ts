@@ -24,11 +24,14 @@ export class PlayerHandComponent {
 
   onCardClick(card: Card): void {
     const matchId = this.matchId();
-    if (!matchId || !this.playCardsEnabled() || this.isPlayingCard() || this.isProcessingDelay()) {return;}
+    if (!matchId || !this.playCardsEnabled() || this.isPlayingCard() || this.isProcessingDelay()) {
+      return;
+    }
 
     this.isPlayingCard.set(true);
-    this.matchActionsService.playCard(matchId, { suit: card.suit, number: card.number }).pipe(
-      finalize(() => this.isPlayingCard.set(false))
-    ).subscribe();
+    this.matchActionsService
+      .playCard(matchId, { suit: card.suit, number: card.number })
+      .pipe(finalize(() => this.isPlayingCard.set(false)))
+      .subscribe();
   }
 }

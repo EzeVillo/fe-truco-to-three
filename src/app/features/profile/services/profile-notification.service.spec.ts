@@ -84,7 +84,9 @@ describe('ProfileNotificationService', () => {
   it('publica notificacion visible y deduplica por codigo', () => {
     const { service, events$ } = setupWithSession();
     const unlocked: string[] = [];
-    service.achievementUnlocked$.subscribe((achievement) => unlocked.push(achievement.achievementCode));
+    service.achievementUnlocked$.subscribe((achievement) =>
+      unlocked.push(achievement.achievementCode),
+    );
 
     service.start();
     events$.next(EVENT);

@@ -46,6 +46,8 @@ export function computeRematchCountdown(
   serverClockOffsetMs: number,
   nowMs: number = Date.now(),
 ): number {
-  if (!session || session.expiresAt === null) {return 0;}
+  if (!session || session.expiresAt === null) {
+    return 0;
+  }
   return computeRemainingMsFromSnapshot(session.expiresAt, serverClockOffsetMs, nowMs);
 }

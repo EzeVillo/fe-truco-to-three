@@ -29,8 +29,14 @@ function usernameFromSeat(seat: Seat, state: MatchState): string {
   return seat === 'PLAYER_ONE' ? state.playerOneUsername : (state.playerTwoUsername ?? '');
 }
 
-function updateCurrentHandCard(state: MatchState, seat: Seat, card: { suit: string; number: number } | null): MatchState {
-  if (!state.roundGame) {return state;}
+function updateCurrentHandCard(
+  state: MatchState,
+  seat: Seat,
+  card: { suit: string; number: number } | null,
+): MatchState {
+  if (!state.roundGame) {
+    return state;
+  }
   const key = seat === 'PLAYER_ONE' ? 'cardPlayerOne' : 'cardPlayerTwo';
   return {
     ...state,
@@ -53,7 +59,9 @@ export function applyMatchEvent(state: MatchState, event: MatchWsEvent): MatchSt
 
     case 'TURN_CHANGED': {
       const payload = event.payload as TurnChangedPayload;
-      if (!state.roundGame) {return state;}
+      if (!state.roundGame) {
+        return state;
+      }
       return {
         ...state,
         roundGame: {
@@ -65,7 +73,9 @@ export function applyMatchEvent(state: MatchState, event: MatchWsEvent): MatchSt
 
     case 'TRUCO_CALLED': {
       const payload = event.payload as TrucoCalledPayload;
-      if (!state.roundGame) {return state;}
+      if (!state.roundGame) {
+        return state;
+      }
       return {
         ...state,
         roundGame: {
@@ -78,7 +88,9 @@ export function applyMatchEvent(state: MatchState, event: MatchWsEvent): MatchSt
 
     case 'TRUCO_RESPONDED': {
       const payload = event.payload as TrucoRespondedPayload;
-      if (!state.roundGame) {return state;}
+      if (!state.roundGame) {
+        return state;
+      }
       return {
         ...state,
         roundGame: {
@@ -91,7 +103,9 @@ export function applyMatchEvent(state: MatchState, event: MatchWsEvent): MatchSt
 
     case 'ENVIDO_CALLED': {
       const payload = event.payload as EnvidoCalledPayload;
-      if (!state.roundGame) {return state;}
+      if (!state.roundGame) {
+        return state;
+      }
       return {
         ...state,
         roundGame: {
@@ -103,7 +117,9 @@ export function applyMatchEvent(state: MatchState, event: MatchWsEvent): MatchSt
     }
 
     case 'ENVIDO_RESOLVED': {
-      if (!state.roundGame) {return state;}
+      if (!state.roundGame) {
+        return state;
+      }
       return {
         ...state,
         roundGame: {
@@ -160,7 +176,9 @@ export function applyMatchEvent(state: MatchState, event: MatchWsEvent): MatchSt
 
     case 'ROUND_ENDED': {
       const payload = event.payload as RoundEndedPayload;
-      if (!state.roundGame) {return state;}
+      if (!state.roundGame) {
+        return state;
+      }
       return {
         ...state,
         roundGame: {
@@ -187,7 +205,9 @@ export function applyMatchEvent(state: MatchState, event: MatchWsEvent): MatchSt
 
     case 'HAND_RESOLVED': {
       const payload = event.payload as HandResolvedPayload;
-      if (!state.roundGame) {return state;}
+      if (!state.roundGame) {
+        return state;
+      }
       const winner = usernameFromSeat(payload.winnerSeat, state);
       return {
         ...state,
@@ -212,7 +232,9 @@ export function applyMatchEvent(state: MatchState, event: MatchWsEvent): MatchSt
 
     case 'HAND_DEALT': {
       const payload = event.payload as HandDealtPayload;
-      if (!state.roundGame || payload.seat !== state.viewerSeat) {return state;}
+      if (!state.roundGame || payload.seat !== state.viewerSeat) {
+        return state;
+      }
       return {
         ...state,
         roundGame: {
@@ -295,12 +317,16 @@ export function applyMatchEvent(state: MatchState, event: MatchWsEvent): MatchSt
 }
 
 export function applyMatchDerivedEvent(state: MatchState, event: MatchDerivedEvent): MatchState {
-  if (!state.roundGame) {return state;}
+  if (!state.roundGame) {
+    return state;
+  }
 
   switch (event.eventType) {
     case 'AVAILABLE_ACTIONS_UPDATED': {
       const payload = event.payload as AvailableActionsUpdatedPayload;
-      if (payload.seat !== state.viewerSeat) {return state;}
+      if (payload.seat !== state.viewerSeat) {
+        return state;
+      }
       return {
         ...state,
         roundGame: {
@@ -312,7 +338,9 @@ export function applyMatchDerivedEvent(state: MatchState, event: MatchDerivedEve
 
     case 'PLAYER_HAND_UPDATED': {
       const payload = event.payload as PlayerHandUpdatedPayload;
-      if (payload.seat !== state.viewerSeat) {return state;}
+      if (payload.seat !== state.viewerSeat) {
+        return state;
+      }
       return {
         ...state,
         roundGame: {

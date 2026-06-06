@@ -37,7 +37,10 @@ describe('mergeAchievements', () => {
 
   it('copia unlockedAt/matchId/gameNumber en los desbloqueados y los omite en bloqueados', () => {
     const code = 'WIN_GAME_THREE_ZERO_VIA_ACCEPTED_RETRUCO';
-    const result = mergeAchievements([code, 'FOLD_BEFORE_ANY_CARD_IS_PLAYED'], [unlocked(code, 1234)]);
+    const result = mergeAchievements(
+      [code, 'FOLD_BEFORE_ANY_CARD_IS_PLAYED'],
+      [unlocked(code, 1234)],
+    );
     const byCode = Object.fromEntries(result.map((v) => [v.code, v]));
 
     expect(byCode[code].unlockedAt).toBe(1234);
@@ -83,10 +86,7 @@ describe('mergeAchievements', () => {
   });
 
   it('desempata de forma estable por código ascendente (misma fecha o ambos bloqueados)', () => {
-    const sameDate = mergeAchievements(
-      [],
-      [unlocked('B_CODE', 1000), unlocked('A_CODE', 1000)],
-    );
+    const sameDate = mergeAchievements([], [unlocked('B_CODE', 1000), unlocked('A_CODE', 1000)]);
     expect(sameDate.map((v) => v.code)).toEqual(['A_CODE', 'B_CODE']);
 
     const bothLocked = mergeAchievements(['B_LOCKED', 'A_LOCKED'], []);

@@ -1,4 +1,9 @@
 <div class="player-area">
   <span class="player-area__name">{{ self().username }}</span>
-  <app-player-hand [cards]="self().handCards" [matchId]="matchId()" [playCardsEnabled]="playCardsEnabled()" [isProcessingDelay]="isProcessingDelay()" />
+  <app-player-hand
+    [cards]="self().handCards"
+    [matchId]="matchId()"
+    [playCardsEnabled]="playCardsEnabled()"
+    [isProcessingDelay]="isProcessingDelay()"
+  />
 </div>

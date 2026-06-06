@@ -17,7 +17,9 @@ export class MatchStatusPanelComponent {
   /** El plazo está en zona de urgencia (≤ 5 s). */
   readonly timerIsUrgent = input<boolean>(false);
 
-  readonly totalGamesWon = computed(() => this.view().self.gamesWon + this.view().opponent.gamesWon);
+  readonly totalGamesWon = computed(
+    () => this.view().self.gamesWon + this.view().opponent.gamesWon,
+  );
 
   /** El reloj de turno corre sobre el asiento propio. */
   readonly selfTimerActive = computed(() => this.view().self.hasActiveDeadline);
@@ -37,8 +39,12 @@ export class MatchStatusPanelComponent {
     const selfWon = v.self.gamesWon;
     const oppWon = v.opponent.gamesWon;
     return Array.from({ length: total }, (_, i) => {
-      if (i < selfWon) {return 'self';}
-      if (i >= total - oppWon) {return 'opponent';}
+      if (i < selfWon) {
+        return 'self';
+      }
+      if (i >= total - oppWon) {
+        return 'opponent';
+      }
       return 'empty';
     });
   });

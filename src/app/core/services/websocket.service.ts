@@ -40,7 +40,12 @@ export class WebSocketService implements OnDestroy {
         console.error('WS error', evt);
       },
       onWebSocketClose: (evt) => {
-        console.warn('WS closed — code:', (evt as CloseEvent).code, 'reason:', (evt as CloseEvent).reason);
+        console.warn(
+          'WS closed — code:',
+          (evt as CloseEvent).code,
+          'reason:',
+          (evt as CloseEvent).reason,
+        );
       },
     });
 

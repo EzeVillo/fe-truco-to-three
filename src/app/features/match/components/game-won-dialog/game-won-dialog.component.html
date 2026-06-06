@@ -1,5 +1,16 @@
-<div class="game-won" role="dialog" aria-modal="true" [attr.aria-labelledby]="'game-won-title'" mat-dialog-content>
-  <h2 id="game-won-title" class="game-won__title" [class.game-won__title--match-won]="isMatchWon" [class.game-won__title--match-lost]="isMatchLost">
+<div
+  class="game-won"
+  role="dialog"
+  aria-modal="true"
+  [attr.aria-labelledby]="'game-won-title'"
+  mat-dialog-content
+>
+  <h2
+    id="game-won-title"
+    class="game-won__title"
+    [class.game-won__title--match-won]="isMatchWon"
+    [class.game-won__title--match-lost]="isMatchLost"
+  >
     {{ titleText }}
   </h2>
 
@@ -9,7 +20,11 @@
     <div class="game-won__scoreboard">
       <div class="game-won__player">
         <span class="game-won__player-name" [title]="data.playerName">{{ data.playerName }}</span>
-        <span class="game-won__player-games" [class.game-won__player-games--win]="data.playerGamesWon >= data.opponentGamesWon" [class.game-won__player-games--lose]="data.playerGamesWon < data.opponentGamesWon">
+        <span
+          class="game-won__player-games"
+          [class.game-won__player-games--win]="data.playerGamesWon >= data.opponentGamesWon"
+          [class.game-won__player-games--lose]="data.playerGamesWon < data.opponentGamesWon"
+        >
           {{ data.playerGamesWon }}
         </span>
       </div>
@@ -17,21 +32,36 @@
       <span class="game-won__divider">—</span>
 
       <div class="game-won__player">
-        <span class="game-won__player-name" [title]="data.opponentName">{{ data.opponentName }}</span>
-        <span class="game-won__player-games" [class.game-won__player-games--win]="data.opponentGamesWon > data.playerGamesWon" [class.game-won__player-games--lose]="data.opponentGamesWon <= data.playerGamesWon">
+        <span class="game-won__player-name" [title]="data.opponentName">{{
+          data.opponentName
+        }}</span>
+        <span
+          class="game-won__player-games"
+          [class.game-won__player-games--win]="data.opponentGamesWon > data.playerGamesWon"
+          [class.game-won__player-games--lose]="data.opponentGamesWon <= data.playerGamesWon"
+        >
           {{ data.opponentGamesWon }}
         </span>
       </div>
     </div>
 
     @if (contextMessage) {
-      <p class="game-won__context" [class.game-won__context--match-won]="isMatchWon" [class.game-won__context--match-lost]="isMatchLost">
+      <p
+        class="game-won__context"
+        [class.game-won__context--match-won]="isMatchWon"
+        [class.game-won__context--match-lost]="isMatchLost"
+      >
         {{ contextMessage }}
       </p>
     }
   </div>
 
-  <button type="button" class="t3-btn t3-btn--primary game-won__accept" cdkFocusInitial (click)="close()">
+  <button
+    type="button"
+    class="t3-btn t3-btn--primary game-won__accept"
+    cdkFocusInitial
+    (click)="close()"
+  >
     Continuar
   </button>
 </div>

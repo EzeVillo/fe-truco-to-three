@@ -24,17 +24,23 @@ export class TrucoResponsePanelComponent {
   readonly quieroYMazoClicked = output<void>();
 
   onQuiero(): void {
-    if (!this.options().quiero) {return;}
+    if (!this.options().quiero) {
+      return;
+    }
     this.quieroClicked.emit();
   }
 
   onNoQuiero(): void {
-    if (!this.options().noQuiero) {return;}
+    if (!this.options().noQuiero) {
+      return;
+    }
     this.noQuieroClicked.emit();
   }
 
   onQuieroYMazo(): void {
-    if (!this.options().quieroYMazo) {return;}
+    if (!this.options().quieroYMazo) {
+      return;
+    }
     this.quieroYMazoClicked.emit();
   }
 }

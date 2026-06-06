@@ -13,7 +13,11 @@ export const MATCH_CALL_AUDIO_ASSETS: readonly MatchCallAudioAsset[] = [
   { key: 'FOLD', fileName: 'me-voy-al-mazo.mp3', path: '/audio/calls/me-voy-al-mazo.mp3' },
   { key: 'NO_QUIERO', fileName: 'no-quiero.mp3', path: '/audio/calls/no-quiero.mp3' },
   { key: 'QUIERO', fileName: 'quiero.mp3', path: '/audio/calls/quiero.mp3' },
-  { key: 'QUIERO_Y_ME_VOY_AL_MAZO', fileName: 'quiero-y-me-voy-al-mazo.mp3', path: '/audio/calls/quiero-y-me-voy-al-mazo.mp3' },
+  {
+    key: 'QUIERO_Y_ME_VOY_AL_MAZO',
+    fileName: 'quiero-y-me-voy-al-mazo.mp3',
+    path: '/audio/calls/quiero-y-me-voy-al-mazo.mp3',
+  },
   { key: 'REAL_ENVIDO', fileName: 'real-envido.mp3', path: '/audio/calls/real-envido.mp3' },
   { key: 'RETRUCO', fileName: 'retruco.mp3', path: '/audio/calls/retruco.mp3' },
   { key: 'TRUCO', fileName: 'truco.mp3', path: '/audio/calls/truco.mp3' },

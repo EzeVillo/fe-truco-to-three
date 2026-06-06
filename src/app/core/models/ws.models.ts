@@ -2,6 +2,11 @@
 // Fuente: docs/CONTRATOS_API.md §9 y specs/001-auth-models-foundation/data-model.md §4
 
 import type { Seat, Suit, TrucoCall, EnvidoCall, TrucoResponse, EnvidoResponse } from './enums';
+import type {
+  FriendAvailability,
+  FriendBusyReason,
+  ResourceInvitationTargetType,
+} from './social.models';
 
 interface WsEventBase<TType extends string, TPayload> {
   eventType: TType;
@@ -45,8 +50,93 @@ export type MatchWsEvent =
     > & { matchId: string });
 // Resto de eventTypes se añaden al implementar cada feature (AVAILABLE_ACTIONS_UPDATED, etc.)
 
-// Análogamente: LeagueWsEvent, CupWsEvent, ChatWsEvent, SocialWsEvent, ProfileWsEvent, SpectateWsEvent, PublicLobbyWsEvent
+/** Item del snapshot FRIEND_AVAILABILITY_STATE (§9.6). spectatableMatch ignorado. */
+export interface FriendAvailabilitySnapshotItem {
+  friendUsername: string;
+  online: boolean;
+  availability: FriendAvailability;
+  busyReason: FriendBusyReason | null;
+}
+
+/** Delta FRIEND_AVAILABILITY_CHANGED — un amigo (§9.6). */
+export interface FriendAvailabilityDelta {
+  friendUsername: string;
+  online: boolean;
+  availability: FriendAvailability;
+  busyReason: FriendBusyReason | null;
+}
+
+/**
+ * Eventos sociales (amistades + invitaciones + disponibilidad) — canal
+ * /user/queue/social. Fuente: docs/CONTRATOS_API.md §9.5e (eventType) y §9.6 (payload).
+ *
+ * Los eventos `RESOURCE_INVITATION_*` y `FRIEND_AVAILABILITY_*` se agregan en la
+ * feature 025; el consumidor maneja sólo invitaciones con `targetType === 'MATCH'`.
+ */
+export type SocialWsEvent =
+  | WsEventBase<'FRIEND_REQUEST_RECEIVED', { requesterUsername: string; addresseeUsername: string }>
+  | WsEventBase<'FRIEND_REQUEST_ACCEPTED', { requesterUsername: string; addresseeUsername: string }>
+  | WsEventBase<'FRIEND_REQUEST_DECLINED', { requesterUsername: string; addresseeUsername: string }>
+  | WsEventBase<
+      'FRIEND_REQUEST_CANCELLED',
+      { requesterUsername: string; addresseeUsername: string }
+    >
+  | WsEventBase<
+      'FRIENDSHIP_REMOVED',
+      { requesterUsername: string; addresseeUsername: string; removedByUsername: string }
+    >
+  | WsEventBase<
+      'RESOURCE_INVITATION_RECEIVED',
+      {
+        invitationId: string;
+        senderUsername: string;
+        targetType: ResourceInvitationTargetType;
+        targetId: string;
+        expiresAt: number;
+      }
+    >
+  | WsEventBase<
+      'RESOURCE_INVITATION_ACCEPTED',
+      {
+        invitationId: string;
+        recipientUsername: string;
+        targetType: ResourceInvitationTargetType;
+        targetId: string;
+      }
+    >
+  | WsEventBase<
+      'RESOURCE_INVITATION_DECLINED',
+      {
+        invitationId: string;
+        recipientUsername: string;
+        targetType: ResourceInvitationTargetType;
+        targetId: string;
+      }
+    >
+  | WsEventBase<
+      'RESOURCE_INVITATION_CANCELLED',
+      {
+        invitationId: string;
+        senderUsername: string;
+        targetType: ResourceInvitationTargetType;
+        targetId: string;
+      }
+    >
+  | WsEventBase<
+      'RESOURCE_INVITATION_EXPIRED',
+      {
+        invitationId: string;
+        senderUsername: string;
+        recipientUsername: string;
+        targetType: ResourceInvitationTargetType;
+        targetId: string;
+      }
+    >
+  | WsEventBase<'FRIEND_AVAILABILITY_STATE', { friends: FriendAvailabilitySnapshotItem[] }>
+  | WsEventBase<'FRIEND_AVAILABILITY_CHANGED', FriendAvailabilityDelta>;
+
+// Análogamente: LeagueWsEvent, CupWsEvent, ChatWsEvent, SpectateWsEvent, PublicLobbyWsEvent
 // se completan conforme se implementan las features correspondientes.
 
 /** Unión discriminada general de eventos WebSocket. */
-export type WsEvent = MatchWsEvent /* | LeagueWsEvent | ... */;
+export type WsEvent = MatchWsEvent | SocialWsEvent /* | LeagueWsEvent | ... */;

@@ -7,7 +7,10 @@
       >
     </span>
   } @else {
-    <a class="global-header__brand" [routerLink]="authStore.isAuthenticated() ? '/lobby' : '/login'">
+    <a
+      class="global-header__brand"
+      [routerLink]="authStore.isAuthenticated() ? '/lobby' : '/login'"
+    >
       <img src="icon.png" alt="" class="global-header__brand-logo" />
       <span class="global-header__brand-text"
         >Truco<span class="global-header__brand-accent">a 3</span></span
@@ -18,6 +21,9 @@
   <span class="global-header__spacer"></span>
 
   @if (authStore.isAuthenticated()) {
+    @if (showFriends()) {
+      <a class="global-header__nav-link global-header__user-link" routerLink="/friends">Amigos</a>
+    }
     @if (profileLink(); as link) {
       @if (inMatch()) {
         <span class="global-header__user">{{ userLabel() }}</span>

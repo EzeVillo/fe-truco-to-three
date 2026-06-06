@@ -6,6 +6,7 @@
 // El caso 401 se maneja a nivel interceptor; devolvemos '' para que la UI no muestre nada.
 
 import { HttpErrorResponse } from '@angular/common/http';
+import type { FriendBusyReason } from '../../core/models/social.models';
 
 export type ErrorCopyScope =
   | 'BOT_CATALOG'
@@ -16,9 +17,35 @@ export type ErrorCopyScope =
   | 'CREATE_MATCH'
   | 'JOIN_MATCH'
   | 'QUICK_MATCH'
-  | 'PUBLIC_LOBBY';
+  | 'PUBLIC_LOBBY'
+  | 'SOCIAL';
 
 const FALLBACK = 'Ocurrió un error inesperado. Reintentá.';
+
+/**
+ * Copy del front para el motivo de ocupación de un amigo (feature 025, FR-002e).
+ * Nunca se muestra el código crudo del enum. `UNKNOWN` o no catalogado → genérico.
+ */
+export function busyReasonCopy(reason: FriendBusyReason | null): string {
+  switch (reason) {
+    case 'IN_MATCH':
+      return 'En partida';
+    case 'IN_LEAGUE':
+      return 'En una liga';
+    case 'IN_CUP':
+      return 'En una copa';
+    case 'OPEN_REMATCH':
+      return 'Con revancha pendiente';
+    case 'IN_QUICK_QUEUE':
+      return 'Buscando rival';
+    case 'PENDING_INVITATION':
+      return 'Con una invitación pendiente';
+    case 'PENDING_FRIEND_REQUEST':
+      return 'Con una solicitud pendiente';
+    default:
+      return 'No disponible';
+  }
+}
 
 export function getErrorCopy(scope: ErrorCopyScope, error: unknown): string {
   const status = error instanceof HttpErrorResponse ? error.status : -1;
@@ -162,6 +189,27 @@ export function getErrorCopy(scope: ErrorCopyScope, error: unknown): string {
       default:
         if (status >= 500 && status < 600) {
           return 'No pudimos cargar las partidas. Reintentá.';
+        }
+        return FALLBACK;
+    }
+  }
+
+  if (scope === 'SOCIAL') {
+    switch (status) {
+      case 401:
+        return '';
+      case 403:
+        return 'No tenés permiso para esta acción.';
+      case 404:
+        return 'Ese usuario no existe o la solicitud ya no está disponible.';
+      case 409:
+      case 422:
+        return 'No se pudo completar la acción: revisá el estado de la solicitud.';
+      case 0:
+        return 'No pudimos conectarnos. Reintentá en unos segundos.';
+      default:
+        if (status >= 500 && status < 600) {
+          return 'No pudimos conectarnos. Reintentá en unos segundos.';
         }
         return FALLBACK;
     }

@@ -59,7 +59,9 @@ describe('MatchStatusPanelComponent', () => {
     fixture.componentRef.setInput('opponentCallText', null);
     fixture.detectChanges();
 
-    const selfCallEl = fixture.nativeElement.querySelector('.status-panel__player-col:not(.status-panel__player-col--right) .status-panel__call-text');
+    const selfCallEl = fixture.nativeElement.querySelector(
+      '.status-panel__player-col:not(.status-panel__player-col--right) .status-panel__call-text',
+    );
     expect(selfCallEl).toBeTruthy();
     expect(selfCallEl.textContent.trim()).toBe('\u00a1Envido!');
   });
@@ -70,7 +72,9 @@ describe('MatchStatusPanelComponent', () => {
     fixture.componentRef.setInput('opponentCallText', '\u00a1Truco!');
     fixture.detectChanges();
 
-    const opponentCallEl = fixture.nativeElement.querySelector('.status-panel__player-col--right .status-panel__call-text');
+    const opponentCallEl = fixture.nativeElement.querySelector(
+      '.status-panel__player-col--right .status-panel__call-text',
+    );
     expect(opponentCallEl).toBeTruthy();
     expect(opponentCallEl.textContent.trim()).toBe('\u00a1Truco!');
   });
@@ -125,7 +129,9 @@ describe('MatchStatusPanelComponent', () => {
       fixture.componentRef.setInput('view', createMockView('PLAYER_TWO'));
       fixture.detectChanges();
 
-      const rightHeader = fixture.nativeElement.querySelector('.status-panel__player-header--right');
+      const rightHeader = fixture.nativeElement.querySelector(
+        '.status-panel__player-header--right',
+      );
       expect(rightHeader.querySelector('.status-panel__turn-ring')).toBeTruthy();
     });
 

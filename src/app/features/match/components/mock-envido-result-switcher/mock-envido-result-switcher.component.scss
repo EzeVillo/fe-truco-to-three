@@ -21,7 +21,9 @@
     font-weight: 600;
     font-size: 0.8rem;
     cursor: pointer;
-    transition: background-color 120ms ease, border-color 120ms ease;
+    transition:
+      background-color 120ms ease,
+      border-color 120ms ease;
 
     @media (hover: hover) {
       &:hover {

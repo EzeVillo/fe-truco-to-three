@@ -2,7 +2,11 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import type { Subscription } from 'rxjs';
 import type { ViewerSeat } from '../../../core/models/match.models';
-import type { RematchSession, RematchChoice, RematchSessionResponse } from '../models/rematch.models';
+import type {
+  RematchSession,
+  RematchChoice,
+  RematchSessionResponse,
+} from '../models/rematch.models';
 import type {
   RematchAvailablePayload,
   RematchOpponentWantsPayload,
@@ -45,7 +49,9 @@ export class RematchStateService {
       this.handleRematchEvent(event.eventType, event.payload);
     });
 
-    if (!fetchSession) {return;}
+    if (!fetchSession) {
+      return;
+    }
 
     this.api.getSession(matchId).subscribe({
       next: (dto) => {
@@ -104,9 +110,13 @@ export class RematchStateService {
 
   /** Acepta la revancha (optimista). Llama POST …/rematch/choose. */
   accept(): void {
-    if (!this.matchId) {return;}
+    if (!this.matchId) {
+      return;
+    }
     const prev = this.session();
-    if (!prev || prev.status !== 'OPEN') {return;}
+    if (!prev || prev.status !== 'OPEN') {
+      return;
+    }
 
     this.session.update((s) => s && { ...s, selfChoice: 'WANTS_REMATCH' });
 
@@ -120,7 +130,9 @@ export class RematchStateService {
 
   /** Abandona la sesión de revancha (optimista). Llama POST …/rematch/leave. */
   leave(): void {
-    if (!this.matchId) {return;}
+    if (!this.matchId) {
+      return;
+    }
     const prev = this.session();
 
     this.session.update((s) =>
@@ -130,7 +142,9 @@ export class RematchStateService {
     this.api.leave(this.matchId).subscribe({
       error: (err: unknown) => {
         this.session.set(prev);
-        this.errorMessage.set(getErrorCopy('REMATCH', err instanceof HttpErrorResponse ? err : err));
+        this.errorMessage.set(
+          getErrorCopy('REMATCH', err instanceof HttpErrorResponse ? err : err),
+        );
       },
     });
   }
@@ -164,7 +178,9 @@ export class RematchStateService {
       case 'REMATCH_CLOSED_BY_LEAVE': {
         const _p = payload as RematchClosedByLeavePayload;
         void _p;
-        this.session.update((s) => s && { ...s, status: 'CLOSED_BY_LEAVE', opponentChoice: 'LEFT' });
+        this.session.update(
+          (s) => s && { ...s, status: 'CLOSED_BY_LEAVE', opponentChoice: 'LEFT' },
+        );
         break;
       }
       case 'REMATCH_EXPIRED': {

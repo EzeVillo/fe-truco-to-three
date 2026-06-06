@@ -5,7 +5,14 @@ import type { Subscription } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { WebSocketService } from '../../../core/services/websocket.service';
 import type { MatchState } from '../../../core/models/match.models';
-import type { MatchWsEvent, MatchDerivedEvent, MatchEndedEvent, GameWonPayload, EnvidoResolvedPayload, GameScoreChangedPayload } from '../models/match-ws-events';
+import type {
+  MatchWsEvent,
+  MatchDerivedEvent,
+  MatchEndedEvent,
+  GameWonPayload,
+  EnvidoResolvedPayload,
+  GameScoreChangedPayload,
+} from '../models/match-ws-events';
 import { applyMatchEvent, applyMatchDerivedEvent } from '../reducers/match-event.reducer';
 import { MatchEventQueueService } from './match-event-queue.service';
 
@@ -100,50 +107,54 @@ export class MatchStateService {
     this.wsService.connect();
 
     // Subscribe to WS channels BEFORE the GET to avoid losing events
-    const matchSub = this.wsService.subscribe<MatchWsEvent>('/user/queue/match').subscribe((event) => {
-      this.updateServerClockOffset(event.timestamp);
-      // Los eventos de revancha se rutean por canal dedicado: fuera de la cola
-      // ack-gated y de la reconciliación por stateVersion (research D1, feature 014).
-      if (isRematchEvent(event)) {
-        this.rematch$.next(event);
-        return;
-      }
-      if (event.eventType === 'PLAYER_JOINED') {
-        this.refresh();
-      }
-      // Los eventos del temporizador viajan por /user/queue/match pero con
-      // stateVersion null: se tratan como derivados (no avanzan stateVersion ni
-      // disparan detección de huecos). Ver docs/CONTRATOS_API.md §9.5 (research D1).
-      if (isTimerEvent(event)) {
-        const derived = event as unknown as MatchDerivedEvent;
-        if (this.loading()) {
-          this.derivedBuffer.push(derived);
-        } else {
-          this.processLiveDerivedEvent(derived);
+    const matchSub = this.wsService
+      .subscribe<MatchWsEvent>('/user/queue/match')
+      .subscribe((event) => {
+        this.updateServerClockOffset(event.timestamp);
+        // Los eventos de revancha se rutean por canal dedicado: fuera de la cola
+        // ack-gated y de la reconciliación por stateVersion (research D1, feature 014).
+        if (isRematchEvent(event)) {
+          this.rematch$.next(event);
+          return;
         }
-        return;
-      }
-      if (this.loading()) {
-        this.buffer.push(event);
-      } else {
-        this.processLiveEvent(event);
-      }
-    });
+        if (event.eventType === 'PLAYER_JOINED') {
+          this.refresh();
+        }
+        // Los eventos del temporizador viajan por /user/queue/match pero con
+        // stateVersion null: se tratan como derivados (no avanzan stateVersion ni
+        // disparan detección de huecos). Ver docs/CONTRATOS_API.md §9.5 (research D1).
+        if (isTimerEvent(event)) {
+          const derived = event as unknown as MatchDerivedEvent;
+          if (this.loading()) {
+            this.derivedBuffer.push(derived);
+          } else {
+            this.processLiveDerivedEvent(derived);
+          }
+          return;
+        }
+        if (this.loading()) {
+          this.buffer.push(event);
+        } else {
+          this.processLiveEvent(event);
+        }
+      });
 
-    const derivedSub = this.wsService.subscribe<MatchDerivedEvent>('/user/queue/match-derived').subscribe((event) => {
-      this.updateServerClockOffset(event.timestamp);
-      // El backend puede enviar REMATCH_* por match-derived en lugar de match.
-      // Ambos canales los redirigen al canal dedicado (research D1, feature 014).
-      if (isRematchEvent(event as unknown as MatchWsEvent)) {
-        this.rematch$.next(event as unknown as MatchWsEvent);
-        return;
-      }
-      if (this.loading()) {
-        this.derivedBuffer.push(event);
-      } else {
-        this.processLiveDerivedEvent(event);
-      }
-    });
+    const derivedSub = this.wsService
+      .subscribe<MatchDerivedEvent>('/user/queue/match-derived')
+      .subscribe((event) => {
+        this.updateServerClockOffset(event.timestamp);
+        // El backend puede enviar REMATCH_* por match-derived en lugar de match.
+        // Ambos canales los redirigen al canal dedicado (research D1, feature 014).
+        if (isRematchEvent(event as unknown as MatchWsEvent)) {
+          this.rematch$.next(event as unknown as MatchWsEvent);
+          return;
+        }
+        if (this.loading()) {
+          this.derivedBuffer.push(event);
+        } else {
+          this.processLiveDerivedEvent(event);
+        }
+      });
 
     this.subscriptions.push(matchSub, derivedSub);
 
@@ -307,7 +318,9 @@ export class MatchStateService {
 
   private applyAndIncrement(event: MatchWsEvent): void {
     const current = this.state();
-    if (!current) {return;}
+    if (!current) {
+      return;
+    }
 
     const next = applyMatchEvent(current, event);
     this.state.set(next);
@@ -358,13 +371,17 @@ export class MatchStateService {
 
   private applyDerivedEvent(event: MatchDerivedEvent): void {
     const current = this.state();
-    if (!current) {return;}
+    if (!current) {
+      return;
+    }
     const next = applyMatchDerivedEvent(current, event);
     this.state.set(next);
   }
 
   private triggerRefetch(): void {
-    if (!this.currentMatchId || this.loading()) {return;}
+    if (!this.currentMatchId || this.loading()) {
+      return;
+    }
     this.loading.set(true);
     this.buffer = [];
     this.derivedBuffer = [];
@@ -427,7 +444,11 @@ export class MatchStateService {
   }
 
   private emitMatchEnded(event: MatchWsEvent): void {
-    const payload = event.payload as { winnerSeat: 'PLAYER_ONE' | 'PLAYER_TWO'; gamesWonPlayerOne: number; gamesWonPlayerTwo: number };
+    const payload = event.payload as {
+      winnerSeat: 'PLAYER_ONE' | 'PLAYER_TWO';
+      gamesWonPlayerOne: number;
+      gamesWonPlayerTwo: number;
+    };
     const reason: MatchEndedEvent['reason'] =
       event.eventType === 'MATCH_FINISHED'
         ? 'FINISHED'
@@ -447,9 +468,7 @@ export class MatchStateService {
     // When loading an already-finished match, we don't know the exact reason
     // Default to FINISHED; this is an edge case
     const winnerSeat: 'PLAYER_ONE' | 'PLAYER_TWO' =
-      state.matchWinner === state.playerOneUsername
-        ? 'PLAYER_ONE'
-        : 'PLAYER_TWO';
+      state.matchWinner === state.playerOneUsername ? 'PLAYER_ONE' : 'PLAYER_TWO';
 
     this.matchEnded$.next({
       winnerSeat,

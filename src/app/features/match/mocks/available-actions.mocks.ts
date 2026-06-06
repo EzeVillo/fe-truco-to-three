@@ -22,9 +22,7 @@ export const mockActionsCallOnly: AvailableAction[] = [
 export const mockActionsEmpty: AvailableAction[] = [];
 
 // Acciones parcialmente habilitadas (solo mazo)
-export const mockActionsOnlyFold: AvailableAction[] = [
-  { type: 'FOLD' },
-];
+export const mockActionsOnlyFold: AvailableAction[] = [{ type: 'FOLD' }];
 
 // Modo respuesta de envido: el rival cantó envido y el jugador debe responder.
 // Envido deshabilitado (ya fue cantado), Real Envido y Falta Envido habilitados.
@@ -43,6 +41,4 @@ export const mockActionsRespondEnvido: AvailableAction[] = [
 ];
 
 // Modo respuesta de truco: el rival cantó truco y el jugador debe responder.
-export const mockActionsRespondTruco: AvailableAction[] = [
-  { type: 'RESPOND_TRUCO' },
-];
+export const mockActionsRespondTruco: AvailableAction[] = [{ type: 'RESPOND_TRUCO' }];

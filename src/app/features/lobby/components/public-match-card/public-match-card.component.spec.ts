@@ -13,7 +13,9 @@ const item: PublicMatchLobbyItem = {
   joinCode: 'ABC123',
 };
 
-function createCard(overrides: Partial<{ own: boolean; busy: boolean; item: PublicMatchLobbyItem }> = {}) {
+function createCard(
+  overrides: Partial<{ own: boolean; busy: boolean; item: PublicMatchLobbyItem }> = {},
+) {
   TestBed.configureTestingModule({ imports: [PublicMatchCardComponent] });
   const fixture = TestBed.createComponent(PublicMatchCardComponent);
   fixture.componentRef.setInput('item', overrides.item ?? item);

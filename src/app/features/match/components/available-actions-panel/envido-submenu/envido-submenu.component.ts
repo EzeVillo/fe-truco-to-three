@@ -35,19 +35,41 @@ export class EnvidoSubmenuComponent {
   readonly items = computed<EnvidoOption[]>(() => {
     const opts = this.options();
     return [
-      { label: 'Envido', shortLabel: 'Envido', stackedLines: ['Envido'], call: 'ENVIDO', enabled: opts.envido },
-      { label: 'Real Envido', shortLabel: 'Real Env.', stackedLines: ['Real', 'Envido'], call: 'REAL_ENVIDO', enabled: opts.realEnvido },
-      { label: 'Falta Envido', shortLabel: 'Falta Env.', stackedLines: ['Falta', 'Envido'], call: 'FALTA_ENVIDO', enabled: opts.faltaEnvido },
+      {
+        label: 'Envido',
+        shortLabel: 'Envido',
+        stackedLines: ['Envido'],
+        call: 'ENVIDO',
+        enabled: opts.envido,
+      },
+      {
+        label: 'Real Envido',
+        shortLabel: 'Real Env.',
+        stackedLines: ['Real', 'Envido'],
+        call: 'REAL_ENVIDO',
+        enabled: opts.realEnvido,
+      },
+      {
+        label: 'Falta Envido',
+        shortLabel: 'Falta Env.',
+        stackedLines: ['Falta', 'Envido'],
+        call: 'FALTA_ENVIDO',
+        enabled: opts.faltaEnvido,
+      },
     ];
   });
 
   onOptionClick(opt: EnvidoOption): void {
-    if (!opt.enabled) {return;}
+    if (!opt.enabled) {
+      return;
+    }
     this.optionClicked.emit(opt.call);
   }
 
   onBackClick(): void {
-    if (!this.backEnabled()) {return;}
+    if (!this.backEnabled()) {
+      return;
+    }
     this.backClicked.emit();
   }
 }

@@ -14,11 +14,7 @@ describe('MatchActionsService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        MatchActionsService,
-        provideHttpClient(),
-        provideHttpClientTesting(),
-      ],
+      providers: [MatchActionsService, provideHttpClient(), provideHttpClientTesting()],
     });
     service = TestBed.inject(MatchActionsService);
     httpMock = TestBed.inject(HttpTestingController);

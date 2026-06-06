@@ -50,10 +50,14 @@ describe('rematch-view — canAccept', () => {
 
 describe('rematch-view — waitingForOpponent', () => {
   it('true si OPEN + WANTS_REMATCH propio', () => {
-    expect(waitingForOpponent(makeSession({ status: 'OPEN', selfChoice: 'WANTS_REMATCH' }))).toBe(true);
+    expect(waitingForOpponent(makeSession({ status: 'OPEN', selfChoice: 'WANTS_REMATCH' }))).toBe(
+      true,
+    );
   });
   it('false si OPEN + UNDECIDED', () => {
-    expect(waitingForOpponent(makeSession({ status: 'OPEN', selfChoice: 'UNDECIDED' }))).toBe(false);
+    expect(waitingForOpponent(makeSession({ status: 'OPEN', selfChoice: 'UNDECIDED' }))).toBe(
+      false,
+    );
   });
   it('false si null', () => {
     expect(waitingForOpponent(null)).toBe(false);
@@ -62,10 +66,14 @@ describe('rematch-view — waitingForOpponent', () => {
 
 describe('rematch-view — opponentWants', () => {
   it('true si OPEN + opponentChoice WANTS_REMATCH', () => {
-    expect(opponentWants(makeSession({ status: 'OPEN', opponentChoice: 'WANTS_REMATCH' }))).toBe(true);
+    expect(opponentWants(makeSession({ status: 'OPEN', opponentChoice: 'WANTS_REMATCH' }))).toBe(
+      true,
+    );
   });
   it('false si CLOSED_BY_LEAVE aunque opponentChoice fuera WANTS_REMATCH', () => {
-    expect(opponentWants(makeSession({ status: 'CLOSED_BY_LEAVE', opponentChoice: 'WANTS_REMATCH' }))).toBe(false);
+    expect(
+      opponentWants(makeSession({ status: 'CLOSED_BY_LEAVE', opponentChoice: 'WANTS_REMATCH' })),
+    ).toBe(false);
   });
   it('false si null', () => {
     expect(opponentWants(null)).toBe(false);
@@ -98,7 +106,9 @@ describe('rematch-view — expired', () => {
 
 describe('rematch-view — confirmedMatchId', () => {
   it('devuelve resultMatchId si CONFIRMED', () => {
-    const id = confirmedMatchId(makeSession({ status: 'CONFIRMED', resultMatchId: 'new-match-99' }));
+    const id = confirmedMatchId(
+      makeSession({ status: 'CONFIRMED', resultMatchId: 'new-match-99' }),
+    );
     expect(id).toBe('new-match-99');
   });
   it('null si no CONFIRMED', () => {

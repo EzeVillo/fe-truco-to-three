@@ -9,10 +9,7 @@ import type {
   QuickMatchRequest,
   QuickMatchResponse,
 } from '../../../core/models/match.models';
-import type {
-  PublicMatchLobbyItem,
-  PublicMatchesPage,
-} from '../models/public-match-lobby.models';
+import type { PublicMatchLobbyItem, PublicMatchesPage } from '../models/public-match-lobby.models';
 
 /** Shape crudo de un item de GET /api/matches/public (§4.3), con _links HAL. */
 interface RawPublicMatchItem {

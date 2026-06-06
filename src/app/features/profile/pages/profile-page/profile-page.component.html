@@ -13,7 +13,9 @@
     } @else if (error()) {
       <div class="profile-page__state profile-page__state--error">
         <p>{{ error() }}</p>
-        <button type="button" class="t3-btn t3-btn--primary" (click)="loadProfile()">Reintentar</button>
+        <button type="button" class="t3-btn t3-btn--primary" (click)="loadProfile()">
+          Reintentar
+        </button>
       </div>
     } @else if (profile(); as currentProfile) {
       <dl class="profile-page__stats" aria-label="Estadisticas del jugador">
@@ -51,7 +53,9 @@
                   <p>{{ achievement.description }}</p>
                 </div>
                 @if (achievement.unlocked) {
-                  <time [attr.datetime]="achievement.unlockedAt">{{ unlockedAt(achievement) }}</time>
+                  <time [attr.datetime]="achievement.unlockedAt">{{
+                    unlockedAt(achievement)
+                  }}</time>
                 } @else {
                   <mat-icon class="profile-page__lock" aria-label="Logro bloqueado">lock</mat-icon>
                 }

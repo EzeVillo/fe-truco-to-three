@@ -43,7 +43,9 @@ describe('SeriesFormatSelectorComponent', () => {
     );
     expect(best3).toBeTruthy();
     expect(best3!.nativeElement.getAttribute('aria-checked')).toBe('true');
-    expect((best3!.nativeElement as HTMLElement).classList.contains('series-format__option--active')).toBe(true);
+    expect(
+      (best3!.nativeElement as HTMLElement).classList.contains('series-format__option--active'),
+    ).toBe(true);
   });
 
   it('las opciones inactivas tienen aria-checked="false"', () => {

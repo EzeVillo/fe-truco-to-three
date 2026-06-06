@@ -10,11 +10,7 @@
 
 .mock-switcher__label {
   color: var(--t3-text-muted);
-  font:
-    var(--mat-sys-label-small),
-    Inter,
-    system-ui,
-    sans-serif;
+  font: var(--mat-sys-label-small), Inter, system-ui, sans-serif;
   font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -35,11 +31,7 @@
   color: var(--t3-text-muted);
   border: 1px solid var(--t3-input-border);
   border-radius: var(--t3-radius-sm);
-  font:
-    var(--mat-sys-label-small),
-    Inter,
-    system-ui,
-    sans-serif;
+  font: var(--mat-sys-label-small), Inter, system-ui, sans-serif;
   font-size: 0.75rem;
   cursor: pointer;
   transition:

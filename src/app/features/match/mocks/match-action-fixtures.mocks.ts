@@ -119,8 +119,6 @@ export const mockMatchActionsRespondTruco: MatchState = {
     ...BASE_MATCH.roundGame!,
     roundStatus: 'TRUCO_IN_PROGRESS',
     currentTrucoCall: 'TRUCO',
-    availableActions: [
-      { type: 'RESPOND_TRUCO' },
-    ],
+    availableActions: [{ type: 'RESPOND_TRUCO' }],
   },
 };

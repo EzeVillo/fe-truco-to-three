@@ -10,7 +10,12 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import type { PlayCardRequest, CallEnvidoRequest, RespondTrucoRequest, RespondEnvidoRequest } from '../../app/core/models/match.models';
+import type {
+  PlayCardRequest,
+  CallEnvidoRequest,
+  RespondTrucoRequest,
+  RespondEnvidoRequest,
+} from '../../app/core/models/match.models';
 import type { Suit, EnvidoCall, TrucoResponse, EnvidoResponse } from '../../app/core/models/enums';
 
 // ─── Paridad de campos via `satisfies` (compile-time) ───────────────────────

@@ -31,7 +31,9 @@ const ALL_DISABLED: EnvidoResponseOptions = {
 export function deriveEnvidoResponseOptions(
   actions: ReadonlyArray<AvailableAction>,
 ): EnvidoResponseOptions {
-  if (actions.length === 0) {return ALL_DISABLED;}
+  if (actions.length === 0) {
+    return ALL_DISABLED;
+  }
 
   const has = (type: string, parameter: string): boolean =>
     actions.some((a) => a.type === type && hasActionParameter(a, parameter));

@@ -40,9 +40,7 @@ export type PresenceDestination =
   | { kind: 'rematch'; originMatchId: string }
   | { kind: 'none' };
 
-export function derivePresenceDestination(
-  presence: UserPresenceResponse,
-): PresenceDestination {
+export function derivePresenceDestination(presence: UserPresenceResponse): PresenceDestination {
   if (presence.match) {
     return { kind: 'match', matchId: presence.match.id };
   }

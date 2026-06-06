@@ -41,7 +41,12 @@ export class ConfirmDialogComponent {
 
   constructor() {
     if (!this.data?.title?.trim()) {
-      throwError(() => new Error('[ConfirmDialogComponent] El campo "title" es obligatorio y no puede estar vacío.'));
+      throwError(
+        () =>
+          new Error(
+            '[ConfirmDialogComponent] El campo "title" es obligatorio y no puede estar vacío.',
+          ),
+      );
       // fallback defensivo para evitar render roto en producción
     }
     this.variant = this.data?.variant ?? 'primary';

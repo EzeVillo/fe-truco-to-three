@@ -1,5 +1,10 @@
-<div class="rematch-dialog" role="dialog" aria-modal="true" aria-labelledby="rematch-title" mat-dialog-content>
-
+<div
+  class="rematch-dialog"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="rematch-title"
+  mat-dialog-content
+>
   @if (session()?.status === 'CONFIRMED') {
     <p class="rematch-dialog__confirmed">¡Revancha! Empezando…</p>
   } @else {
@@ -35,10 +40,7 @@
           Revancha
         </button>
       }
-      <button type="button" class="t3-btn t3-btn--neutral" (click)="onLeave()">
-        Salir
-      </button>
+      <button type="button" class="t3-btn t3-btn--neutral" (click)="onLeave()">Salir</button>
     </div>
   }
-
 </div>

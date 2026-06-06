@@ -203,7 +203,9 @@ describe('QuickMatchPageComponent', () => {
 
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(component.state()).toBe('error');
-    expect(text).toContain('Ya estás en una partida, una revancha pendiente o una búsqueda activa.');
+    expect(text).toContain(
+      'Ya estás en una partida, una revancha pendiente o una búsqueda activa.',
+    );
     expect(text).not.toContain('PlayerAlreadyInMatchException');
   });
 

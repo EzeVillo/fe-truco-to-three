@@ -184,7 +184,7 @@ export class MatchEventQueueService {
   }
 
   private updateProcessingDelayState(): void {
-    const hasPendingDelay = this.queue.some(item => item.delayMs > 0);
+    const hasPendingDelay = this.queue.some((item) => item.delayMs > 0);
     // Mientras un evento bloqueante esté esperando ACK (modal abierto), la UI
     // de fondo debe quedar congelada igual que durante un delay — si no, los
     // botones (p. ej. QUIERO/NO QUIERO del envido) quedan habilitados detrás

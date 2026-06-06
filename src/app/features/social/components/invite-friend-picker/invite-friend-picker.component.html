@@ -1,0 +1,40 @@
+<div class="invite-picker">
+  @if (store.inviteActionError(); as err) {
+    <p class="invite-picker__error" role="alert">{{ err }}</p>
+  }
+
+  @if (store.friends().length === 0) {
+    <p class="invite-picker__empty">
+      Todavía no tenés amigos. Agregá a alguien para poder invitarlo.
+    </p>
+  } @else {
+    <ul class="invite-picker__list" aria-label="Amigos para invitar">
+      @for (friend of store.friends(); track friend.friendUsername) {
+        <li class="invite-picker__row">
+          <span class="invite-picker__info">
+            <span
+              class="invite-picker__dot"
+              [class.invite-picker__dot--online]="friend.online"
+              [attr.aria-label]="friend.online ? 'En línea' : 'Desconectado'"
+            ></span>
+            <span class="invite-picker__name">{{ friend.friendUsername }}</span>
+          </span>
+
+          @if (canInvite(friend)) {
+            <button
+              type="button"
+              class="t3-btn t3-btn--primary invite-picker__action"
+              (click)="onInvite(friend)"
+            >
+              Invitar
+            </button>
+          } @else {
+            @if (reasonLabel(friend)) {
+              <span class="invite-picker__reason">{{ reasonLabel(friend) }}</span>
+            }
+          }
+        </li>
+      }
+    </ul>
+  }
+</div>

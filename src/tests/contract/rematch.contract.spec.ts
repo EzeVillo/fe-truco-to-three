@@ -121,7 +121,13 @@ describe('Contract: Rematch §4.17 REST + §9.6 WS + §8.2 enums', () => {
 
   it('§9.6 REMATCH_CONFIRMED payload tiene sessionId, originMatchId, newMatchId, newPlayerOne, newPlayerTwo', () => {
     const keys = Object.keys(_rematchConfirmed).sort();
-    expect(keys).toEqual(['newMatchId', 'newPlayerOne', 'newPlayerTwo', 'originMatchId', 'sessionId']);
+    expect(keys).toEqual([
+      'newMatchId',
+      'newPlayerOne',
+      'newPlayerTwo',
+      'originMatchId',
+      'sessionId',
+    ]);
   });
 
   it('§9.6 REMATCH_CLOSED_BY_LEAVE payload tiene sessionId, originMatchId, actor', () => {

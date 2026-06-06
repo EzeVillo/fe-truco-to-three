@@ -32,6 +32,11 @@ export class GlobalHeaderComponent {
   /** Estando dentro de una partida, la navegación del header se bloquea (salvo "Salir"). */
   readonly inMatch = computed(() => /^\/match\//.test(this.currentUrl()));
 
+  /** El acceso a Amigos es sólo para usuarios registrados (no guests) y fuera de partida. */
+  readonly showFriends = computed(
+    () => this.authStore.isAuthenticated() && !this.authStore.isGuest() && !this.inMatch(),
+  );
+
   userLabel(): string {
     return this.authStore.isGuest() ? 'Invitado' : (this.authStore.username() ?? 'Jugador');
   }

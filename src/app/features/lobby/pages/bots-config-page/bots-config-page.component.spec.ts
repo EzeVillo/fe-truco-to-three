@@ -415,5 +415,4 @@ describe('BotsConfigPageComponent', () => {
     const cta = fixture.debugElement.query(By.css('.bots-config__cta'));
     expect((cta.nativeElement as HTMLElement).getAttribute('aria-busy')).toBe('true');
   });
-
 });

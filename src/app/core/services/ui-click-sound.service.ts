@@ -6,26 +6,57 @@ export const UI_CLICK_AUDIO_PATH = '/audio/mixkit-camera-shutter-click-1133.wav'
 /** Qué elementos cuentan como "botón" para disparar el click. */
 const BUTTON_SELECTOR = 'button, [role="button"]';
 
+type AudioContextCtor = typeof AudioContext;
+
+/** Resuelve el constructor de AudioContext (incluye el prefijo webkit de iOS). */
+function resolveAudioContextCtor(): AudioContextCtor | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  const w = window as unknown as {
+    AudioContext?: AudioContextCtor;
+    webkitAudioContext?: AudioContextCtor;
+  };
+  return w.AudioContext ?? w.webkitAudioContext ?? null;
+}
+
 /**
  * Reproduce un SFX de click en cualquier botón de la app mediante un único
  * listener global en fase de captura: así suena aunque un handler haga
  * `stopPropagation`, y no hay que cablear el sonido componente por componente.
  *
- * El click es un gesto del usuario, así que `play()` no choca con el bloqueo de
- * autoplay de iOS/WebKit (a diferencia de los SFX diferidos de la partida, que
- * se precalientan en `MatchCallAudioService`). Es no-bloqueante: nunca debe
- * romper la interacción si el audio falla.
+ * Usa Web Audio API (no `HTMLAudioElement`): decodifica el WAV una sola vez a un
+ * `AudioBuffer` y dispara un `AudioBufferSourceNode` por click. En iOS/WebKit un
+ * `<audio>.play()` arranca una pipeline pesada (buffering + seek) que se siente
+ * con delay perceptible; un buffer source ya decodificado suena con latencia
+ * casi nula y permite solapar clicks. Cae a `HTMLAudioElement` si Web Audio no
+ * está disponible. Es no-bloqueante: nunca debe romper la interacción.
+ *
+ * El click es un gesto del usuario, así que reanudar el contexto y reproducir no
+ * choca con el bloqueo de autoplay de iOS/WebKit.
  */
 @Injectable({ providedIn: 'root' })
 export class UiClickSoundService {
-  private audio: HTMLAudioElement | null = null;
   private clickHandler: ((event: Event) => void) | null = null;
+
+  private context: AudioContext | null = null;
+  private buffer: AudioBuffer | null = null;
+  /** Evita relanzar el fetch/decode si ya está en curso o falló. */
+  private bufferLoad: Promise<void> | null = null;
+
+  /** Fallback cuando Web Audio no está disponible. */
+  private fallbackAudio: HTMLAudioElement | null = null;
+  private useFallback = false;
 
   /** Engancha el SFX a todos los botones de la app. Idempotente. */
   start(): void {
     if (this.clickHandler || typeof document === 'undefined') {
       return;
     }
+    // Arrancamos el fetch/decode del buffer ya, para que el primer click suene
+    // sin esperar la descarga.
+    this.prepare();
+
     const handler = (event: Event) => {
       const target = event.target as Element | null;
       if (target?.closest?.(BUTTON_SELECTOR)) {
@@ -45,8 +76,70 @@ export class UiClickSoundService {
     this.clickHandler = null;
   }
 
+  /** Crea el contexto y empieza a decodificar el buffer (best-effort). */
+  private prepare(): void {
+    const Ctor = resolveAudioContextCtor();
+    if (!Ctor) {
+      this.useFallback = true;
+      return;
+    }
+    if (!this.context) {
+      try {
+        this.context = new Ctor();
+      } catch {
+        this.useFallback = true;
+        return;
+      }
+    }
+    this.loadBuffer();
+  }
+
+  private loadBuffer(): void {
+    if (this.buffer || this.bufferLoad || !this.context) {
+      return;
+    }
+    const context = this.context;
+    this.bufferLoad = (async () => {
+      try {
+        const response = await fetch(UI_CLICK_AUDIO_PATH);
+        const data = await response.arrayBuffer();
+        this.buffer = await context.decodeAudioData(data);
+      } catch {
+        // Si el decode falla, caemos al elemento <audio> en el próximo click.
+        this.useFallback = true;
+      }
+    })();
+  }
+
   private play(): void {
-    const audio = this.getAudio();
+    if (this.useFallback || !this.context) {
+      this.playFallback();
+      return;
+    }
+
+    // El click es un gesto válido: reanudamos el contexto si iOS lo suspendió.
+    if (this.context.state === 'suspended') {
+      this.context.resume().catch(() => undefined);
+    }
+
+    if (!this.buffer) {
+      // Todavía decodificando: este click usa el fallback para no perderse.
+      this.playFallback();
+      return;
+    }
+
+    try {
+      const source = this.context.createBufferSource();
+      source.buffer = this.buffer;
+      source.connect(this.context.destination);
+      source.start(0);
+    } catch {
+      // El SFX de click es un realce no-bloqueante de la UI.
+    }
+  }
+
+  private playFallback(): void {
+    const audio = this.getFallbackAudio();
     if (!audio) {
       return;
     }
@@ -61,13 +154,13 @@ export class UiClickSoundService {
     }
   }
 
-  private getAudio(): HTMLAudioElement | null {
-    if (this.audio) {
-      return this.audio;
+  private getFallbackAudio(): HTMLAudioElement | null {
+    if (this.fallbackAudio) {
+      return this.fallbackAudio;
     }
     try {
-      this.audio = new Audio(UI_CLICK_AUDIO_PATH);
-      return this.audio;
+      this.fallbackAudio = new Audio(UI_CLICK_AUDIO_PATH);
+      return this.fallbackAudio;
     } catch {
       return null;
     }

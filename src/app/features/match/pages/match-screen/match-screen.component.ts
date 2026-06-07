@@ -44,6 +44,7 @@ import { RematchStateService } from '../../services/rematch-state.service';
 import { RematchApiService } from '../../services/rematch-api.service';
 import { MatchCallAudioService } from '../../services/match-call-audio.service';
 import { BackgroundMusicService } from '../../services/background-music.service';
+import { CardPreloadService } from '../../services/card-preload.service';
 import { PresenceCoordinatorService } from '../../../../core/services/presence-coordinator.service';
 import { getErrorCopy } from '../../../../shared/error-copy/error-copy';
 import type {
@@ -180,6 +181,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   private readonly rematchApiService = inject(RematchApiService);
   private readonly matchCallAudioService = inject(MatchCallAudioService);
   private readonly backgroundMusic = inject(BackgroundMusicService);
+  private readonly cardPreload = inject(CardPreloadService);
   private readonly presenceCoordinator = inject(PresenceCoordinatorService);
   private readonly matchesApiService = inject(MatchesApiService);
   private readonly vcr = inject(ViewContainerRef);
@@ -269,6 +271,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.cardPreload.preloadDeck();
     this.backgroundMusic.start();
     // Usar paramMap para detectar cambios de matchId al navegar a la revancha (D4).
     this._paramSub = this.route.paramMap.subscribe((params) => {

@@ -26,6 +26,7 @@ import { SpectateStateService } from '../../services/spectate-state.service';
 import { MatchEventQueueService } from '../../../match/services/match-event-queue.service';
 import { MatchCallAudioService } from '../../../match/services/match-call-audio.service';
 import { BackgroundMusicService } from '../../../match/services/background-music.service';
+import { CardPreloadService } from '../../../match/services/card-preload.service';
 import { derivePendingCall } from '../../../match/utils/derive-pending-call';
 import { callDisplayMapper } from '../../../match/utils/call-display-mapper';
 import {
@@ -60,6 +61,7 @@ export class SpectateScreenComponent implements OnInit, OnDestroy {
   private readonly eventQueue = inject(MatchEventQueueService);
   private readonly callAudio = inject(MatchCallAudioService);
   private readonly backgroundMusic = inject(BackgroundMusicService);
+  private readonly cardPreload = inject(CardPreloadService);
 
   private _gameWonSub?: Subscription;
   private _envidoSub?: Subscription;
@@ -146,6 +148,7 @@ export class SpectateScreenComponent implements OnInit, OnDestroy {
   );
 
   ngOnInit(): void {
+    this.cardPreload.preloadDeck();
     this.backgroundMusic.start();
     const matchId = this.route.snapshot.paramMap.get('matchId') ?? '';
     this.matchId.set(matchId);

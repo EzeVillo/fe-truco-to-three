@@ -3,6 +3,7 @@ import { Subject } from 'rxjs';
 import type { Subscription } from 'rxjs';
 import { AuthStore } from '../../../core/auth/auth.store';
 import type { ProfileWsEvent, UnlockedAchievement } from '../../../core/models/profile.models';
+import { AudioPlaybackService } from '../../../core/services/audio-playback.service';
 import { WebSocketService } from '../../../core/services/websocket.service';
 import { getAchievementDisplay } from '../utils/achievement-display';
 
@@ -20,11 +21,11 @@ export class ProfileNotificationService {
   private readonly authStore = inject(AuthStore);
   private readonly wsService = inject(WebSocketService);
   private readonly injector = inject(Injector);
+  private readonly playback = inject(AudioPlaybackService);
   private readonly seenCodes = new Set<string>();
   private readonly unlockedSubject = new Subject<UnlockedAchievement>();
   private subscription: Subscription | null = null;
   private started = false;
-  private unlockAudio: HTMLAudioElement | null = null;
 
   readonly current = signal<AchievementNotification | null>(null);
   readonly achievementUnlocked$ = this.unlockedSubject.asObservable();
@@ -34,6 +35,7 @@ export class ProfileNotificationService {
       return;
     }
     this.started = true;
+    this.playback.preload([ACHIEVEMENT_UNLOCK_AUDIO_PATH]);
     this.syncSubscription();
 
     effect(
@@ -101,17 +103,8 @@ export class ProfileNotificationService {
   }
 
   private playUnlockSound(): void {
-    try {
-      if (!this.unlockAudio) {
-        this.unlockAudio = new Audio(ACHIEVEMENT_UNLOCK_AUDIO_PATH);
-      }
-      this.unlockAudio.currentTime = 0;
-      const result = this.unlockAudio.play();
-      if (result) {
-        result.catch(() => undefined);
-      }
-    } catch {
-      // El SFX es una mejora no bloqueante; si falla, la notificacion sigue funcionando.
-    }
+    // El logro llega por WS (fuera de un gesto): el canal central ya está
+    // desbloqueado desde el primer toque de la sesión, así que suena en iOS.
+    this.playback.play(ACHIEVEMENT_UNLOCK_AUDIO_PATH);
   }
 }

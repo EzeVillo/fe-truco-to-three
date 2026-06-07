@@ -1,9 +1,12 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
 import {
   MATCH_CALL_AUDIO_ASSETS,
+  MATCH_CARD_THROW_AUDIO_PATH,
   MatchCallAudioService,
   resolveMatchCallAudioPath,
 } from './match-call-audio.service';
+import { AudioPlaybackService } from '../../../core/services/audio-playback.service';
 import type { MatchWsEvent } from '../models/match-ws-events';
 
 function makeEvent(eventType: MatchWsEvent['eventType'], payload: unknown): MatchWsEvent {
@@ -95,27 +98,21 @@ describe('resolveMatchCallAudioPath', () => {
 });
 
 describe('MatchCallAudioService', () => {
-  let createdAudios: Array<{ src: string; currentTime: number; play: ReturnType<typeof vi.fn> }>;
+  let playback: { preload: ReturnType<typeof vi.fn>; play: ReturnType<typeof vi.fn> };
+
+  function createService(): MatchCallAudioService {
+    playback = { preload: vi.fn(), play: vi.fn() };
+    TestBed.configureTestingModule({
+      providers: [
+        MatchCallAudioService,
+        { provide: AudioPlaybackService, useValue: playback },
+      ],
+    });
+    return TestBed.inject(MatchCallAudioService);
+  }
 
   beforeEach(() => {
-    createdAudios = [];
-
-    vi.stubGlobal(
-      'Audio',
-      function AudioMock(
-        this: { src: string; currentTime: number; play: ReturnType<typeof vi.fn> },
-        src: string,
-      ) {
-        this.src = src;
-        this.currentTime = 12;
-        this.play = vi.fn().mockResolvedValue(undefined);
-        createdAudios.push(this);
-      },
-    );
-  });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
+    TestBed.resetTestingModule();
   });
 
   it('expone la lista canonica de los 10 audios soportados', () => {
@@ -135,42 +132,42 @@ describe('MatchCallAudioService', () => {
     );
   });
 
-  it('reproduce el audio desde el inicio', () => {
-    const service = new MatchCallAudioService();
+  it('precarga las 17 pistas conocidas al construirse', () => {
+    createService();
+
+    expect(playback.preload).toHaveBeenCalledOnce();
+    // 10 cantos + SFX de carta + 3 jingles win/lose = 17 pistas.
+    expect(playback.preload.mock.calls[0][0]).toHaveLength(17);
+  });
+
+  it('reproduce la pista del canto vía el canal central', () => {
+    const service = createService();
 
     service.playForEvent(makeEvent('TRUCO_CALLED', { callerSeat: 'PLAYER_ONE', call: 'TRUCO' }));
 
-    expect(createdAudios).toHaveLength(1);
-    expect(createdAudios[0].src).toBe('/audio/calls/truco.mp3');
-    expect(createdAudios[0].currentTime).toBe(0);
-    expect(createdAudios[0].play).toHaveBeenCalledOnce();
+    expect(playback.play).toHaveBeenCalledWith('/audio/calls/truco.mp3');
   });
 
-  it('playCardThrow reproduce el SFX de carta', () => {
-    const service = new MatchCallAudioService();
+  it('playCardThrow reproduce el SFX de carta vía el canal central', () => {
+    const service = createService();
 
     service.playCardThrow();
 
-    expect(createdAudios).toHaveLength(1);
-    expect(createdAudios[0].src).toBe('/audio/freesound_community-card-sounds-35956.mp3');
-    expect(createdAudios[0].play).toHaveBeenCalledOnce();
+    expect(playback.play).toHaveBeenCalledWith(MATCH_CARD_THROW_AUDIO_PATH);
   });
 
-  it('reinicia el mismo audio si el canto se repite', () => {
-    const service = new MatchCallAudioService();
-    const event = makeEvent('TRUCO_CALLED', { callerSeat: 'PLAYER_ONE', call: 'TRUCO' });
+  it('playOutcome elige la pista de victoria/derrota según el resultado', () => {
+    const service = createService();
 
-    service.playForEvent(event);
-    createdAudios[0].currentTime = 4;
-    service.playForEvent(event);
+    service.playOutcome('MATCH', true);
+    expect(playback.play).toHaveBeenLastCalledWith('/audio/mixkit-video-game-win-2016.wav');
 
-    expect(createdAudios).toHaveLength(1);
-    expect(createdAudios[0].currentTime).toBe(0);
-    expect(createdAudios[0].play).toHaveBeenCalledTimes(2);
+    service.playOutcome('ENVIDO', false);
+    expect(playback.play).toHaveBeenLastCalledWith('/audio/mixkit-losing-piano-2024.wav');
   });
 
-  it('ignora eventos desconocidos sin crear audio', () => {
-    const service = new MatchCallAudioService();
+  it('ignora eventos desconocidos sin reproducir nada', () => {
+    const service = createService();
 
     expect(() =>
       service.playForEvent(
@@ -178,69 +175,6 @@ describe('MatchCallAudioService', () => {
       ),
     ).not.toThrow();
 
-    expect(createdAudios).toHaveLength(0);
-  });
-
-  it('desbloquea todas las pistas en el primer gesto del usuario', () => {
-    vi.stubGlobal(
-      'Audio',
-      function AudioMock(
-        this: {
-          src: string;
-          currentTime: number;
-          muted: boolean;
-          play: ReturnType<typeof vi.fn>;
-          pause: ReturnType<typeof vi.fn>;
-        },
-        src: string,
-      ) {
-        this.src = src;
-        this.currentTime = 5;
-        this.muted = false;
-        this.play = vi.fn().mockResolvedValue(undefined);
-        this.pause = vi.fn();
-        createdAudios.push(this as never);
-      },
-    );
-
-    const listeners = new Map<string, () => void>();
-    vi.stubGlobal('document', {
-      addEventListener: (type: string, handler: () => void) => listeners.set(type, handler),
-      removeEventListener: (type: string) => listeners.delete(type),
-    });
-
-    // El servicio se suscribe al primer gesto en el constructor.
-    new MatchCallAudioService();
-    listeners.get('pointerdown')?.();
-
-    // 10 cantos + SFX de carta + 3 jingles win/lose = 17 pistas precargadas.
-    expect(createdAudios).toHaveLength(17);
-    expect(createdAudios.every((audio) => audio.play.mock.calls.length >= 1)).toBe(true);
-  });
-
-  it('no propaga rechazos de play()', async () => {
-    vi.stubGlobal(
-      'Audio',
-      function AudioMock(
-        this: { src: string; currentTime: number; play: ReturnType<typeof vi.fn> },
-        src: string,
-      ) {
-        this.src = src;
-        this.currentTime = 0;
-        this.play = vi.fn().mockRejectedValue(new Error('blocked'));
-        createdAudios.push(this);
-      },
-    );
-
-    const service = new MatchCallAudioService();
-
-    expect(() =>
-      service.playForEvent(
-        makeEvent('ENVIDO_CALLED', { callerSeat: 'PLAYER_ONE', call: 'ENVIDO' }),
-      ),
-    ).not.toThrow();
-    await Promise.resolve();
-
-    expect(createdAudios[0].play).toHaveBeenCalledOnce();
+    expect(playback.play).not.toHaveBeenCalled();
   });
 });

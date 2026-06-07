@@ -4,6 +4,7 @@ import { Subject } from 'rxjs';
 import { AuthStore } from '../../../core/auth/auth.store';
 import { SessionStorageService } from '../../../core/auth/session-storage.service';
 import type { ProfileWsEvent } from '../../../core/models/profile.models';
+import { AudioPlaybackService } from '../../../core/services/audio-playback.service';
 import { WebSocketService } from '../../../core/services/websocket.service';
 import { ProfileNotificationService } from './profile-notification.service';
 
@@ -39,6 +40,7 @@ function setupWithSession(isGuest = false) {
       AuthStore,
       ProfileNotificationService,
       { provide: WebSocketService, useValue: wsMock },
+      { provide: AudioPlaybackService, useValue: { preload: vi.fn(), play: vi.fn() } },
     ],
   });
   const store = TestBed.inject(AuthStore);

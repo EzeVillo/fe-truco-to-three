@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AuthService } from './core/auth/auth.service';
+import { AudioPlaybackService } from './core/services/audio-playback.service';
 import { PresenceCoordinatorService } from './core/services/presence-coordinator.service';
 import { UiClickSoundService } from './core/services/ui-click-sound.service';
 import { ProfileNotificationService } from './features/profile/services/profile-notification.service';
@@ -21,6 +22,7 @@ export class App {
   readonly profileNotifications = inject(ProfileNotificationService);
   readonly social = inject(SocialStore);
   private readonly uiClickSound = inject(UiClickSoundService);
+  private readonly audioPlayback = inject(AudioPlaybackService);
 
   constructor() {
     this.authService.rehydrateIdentityIfNeeded().subscribe();
@@ -28,5 +30,7 @@ export class App {
     this.profileNotifications.start();
     this.social.start();
     this.uiClickSound.start();
+    // Ancla el desbloqueo de audio de iOS al primer gesto, desde el bootstrap.
+    this.audioPlayback.start();
   }
 }

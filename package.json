@@ -14,6 +14,7 @@
     "lint:styles": "stylelint \"src/app/{features,shared/components}/**/*.scss\"",
     "lint:themes": "node scripts/check-themed-templates.mjs",
     "lint:hover": "node scripts/check-hover-gating.mjs",
+    "lint:audio": "node scripts/check-audio-unlock.mjs",
     "prepare": "husky"
   },
   "private": true,
@@ -21,7 +22,8 @@
   "lint-staged": {
     "*.ts": [
       "eslint --fix",
-      "prettier --write"
+      "prettier --write",
+      "node scripts/check-audio-unlock.mjs"
     ],
     "*.{html,scss,json}": [
       "prettier --write"

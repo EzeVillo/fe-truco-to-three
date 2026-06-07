@@ -5,6 +5,21 @@ metadata:
   type: project
 ---
 
+**Desbloqueo de audio iOS — canal central (`AudioPlaybackService`, core)**: todos los
+SFX puntuales (cantos, carta tirada, jingles de resultado, sonido de logro) se reproducen
+vía este servicio. Usa **un único `AudioContext`** (Web Audio): un solo `resume()` en el
+primer gesto desbloquea **toda** reproducción futura (cualquier buffer, dentro o fuera de
+gesto), con latencia casi nula. El unlock se ancla **al bootstrap** desde `App`
+(`audioPlayback.start()`), no en el primer inject de cada servicio — antes el unlock era
+lazy y, al entrar a espectar, los listeners se registraban *después* del tap de navegación,
+así que la primera partida espectada en iPhone no tenía sonido de cartas (bug corregido).
+`preload(paths)` decodifica buffers; `play(path)` dispara un `AudioBufferSourceNode` (cae a
+`HTMLAudioElement` si no hay Web Audio). **Regla**: ningún SFX nuevo debe hacer `new Audio()`
+directo — el guardarraíl `scripts/check-audio-unlock.mjs` (en `lint:audio` y lint-staged de
+`*.ts`) lo prohíbe fuera de la allowlist (`audio-playback`, `ui-click-sound`,
+`background-music`). `MatchCallAudioService` y `ProfileNotificationService` son wrappers
+delgados que delegan en el canal central.
+
 El audio de partida se sincroniza solo con lo visual gracias a la cola de eventos:
 `MatchEventQueueService` aplica cada evento post-delay (local=0ms, rival/espectador=600ms
 vía `match-event-delays.config.ts`) y recién ahí `match-state.service` emite `matchEvent$`.
@@ -32,14 +47,12 @@ apareciendo — no hay que manejar delays a mano.
   con paths en `MATCH_OUTCOME_AUDIO_PATHS`. El de ENVIDO se dispara dentro de un `setTimeout`
   de 1200ms en `openEnvidoResultDialog` (match-screen) para dejar ver el "¡Quiero!" antes del
   modal — esto lo desacopla del gesto del usuario.
-  **iOS/WebKit**: `audio.play()` fuera de un gesto es rechazado salvo que ese elemento ya se
-  haya reproducido dentro de un gesto. Como el jingle sale de un setTimeout, en iPhone no sonaba
-  al ganar el envido (y quedaba pendiente, soltándose pegado al siguiente tap). Fix:
-  `MatchCallAudioService` engancha un listener de un solo uso (pointerdown/touchend/keydown) en
-  el constructor que precalienta en silencio (`play()`→`pause()`, `muted`) las 17 pistas
-  conocidas (`ALL_MATCH_AUDIO_PATHS`), dejándolas desbloqueadas. **Regla**: cualquier SFX nuevo
-  que pueda dispararse fuera de un gesto (timeout, observable, dialog afterClosed) debe estar en
-  `ALL_MATCH_AUDIO_PATHS` o no sonará en iOS.
+  **iOS/WebKit**: `audio.play()` fuera de un gesto (el jingle sale de un setTimeout; el sonido
+  de logro llega por WS) es rechazado salvo que el audio ya esté desbloqueado. Esto lo resuelve
+  ahora el canal central `AudioPlaybackService` (ver arriba): el `resume()` del primer gesto
+  desbloquea todo, así que estos disparos diferidos suenan. `MatchCallAudioService` sólo precarga
+  sus 17 pistas (`ALL_MATCH_AUDIO_PATHS`) vía `playback.preload()` para que no haya latencia en
+  el primer SFX.
 
 - **SFX de click de UI**: `UiClickSoundService` (core), listener global en captura sobre
   `button, [role="button"]`. Usa **Web Audio API** (decodifica el WAV una vez a `AudioBuffer`,

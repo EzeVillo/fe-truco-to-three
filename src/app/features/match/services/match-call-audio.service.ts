@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { AudioPlaybackService } from '../../../core/services/audio-playback.service';
 import type { MatchWsEvent } from '../models/match-ws-events';
 
 export interface MatchCallAudioAsset {
@@ -98,14 +99,19 @@ export function resolveMatchCallAudioPath(event: MatchWsEvent): string | null {
   }
 }
 
+/**
+ * SFX de partida (cantos, carta tirada, jingles de resultado). Es un wrapper
+ * delgado sobre {@link AudioPlaybackService}: resuelve qué pista corresponde a
+ * cada evento y delega la reproducción y el desbloqueo de iOS al canal central.
+ * Precarga (decodifica) las pistas conocidas al construirse para que el primer
+ * SFX suene sin latencia; el unlock ya está anclado globalmente desde `App`.
+ */
 @Injectable({ providedIn: 'root' })
 export class MatchCallAudioService {
-  private readonly audioByPath = new Map<string, HTMLAudioElement>();
-  private unlocked = false;
-  private unlockHandler: (() => void) | null = null;
+  private readonly playback = inject(AudioPlaybackService);
 
   constructor() {
-    this.attachUnlock();
+    this.playback.preload(ALL_MATCH_AUDIO_PATHS);
   }
 
   playForEvent(event: MatchWsEvent): void {
@@ -113,117 +119,17 @@ export class MatchCallAudioService {
     if (!path) {
       return;
     }
-    this.playPath(path);
+    this.playback.play(path);
   }
 
   /** Sonido de carta arrojada. Se invoca al aplicar CARD_PLAYED (post-delay). */
   playCardThrow(): void {
-    this.playPath(MATCH_CARD_THROW_AUDIO_PATH);
+    this.playback.play(MATCH_CARD_THROW_AUDIO_PATH);
   }
 
   /** Jingle de victoria/derrota al resolverse un envido, game o match. */
   playOutcome(level: MatchOutcomeLevel, won: boolean): void {
     const paths = MATCH_OUTCOME_AUDIO_PATHS[level];
-    this.playPath(won ? paths.win : paths.lose);
-  }
-
-  private playPath(path: string): void {
-    const audio = this.getAudio(path);
-    if (!audio) {
-      return;
-    }
-
-    try {
-      audio.currentTime = 0;
-      const result = audio.play();
-      if (result) {
-        result.catch(() => undefined);
-      }
-    } catch {
-      // Audio is a non-blocking enhancement for the match experience.
-    }
-  }
-
-  /**
-   * Registra un listener de un solo uso para desbloquear el audio en iOS/WebKit:
-   * un `play()` disparado fuera de un gesto del usuario (p. ej. el jingle de
-   * resultado del envido, que sale de un `setTimeout`) es rechazado salvo que el
-   * elemento ya haya sido reproducido al menos una vez dentro de un gesto. En el
-   * primer toque/tecla precalentamos todas las pistas para dejarlas habilitadas.
-   */
-  private attachUnlock(): void {
-    if (typeof document === 'undefined' || this.unlockHandler) {
-      return;
-    }
-    const handler = () => {
-      this.unlockAll();
-    };
-    this.unlockHandler = handler;
-    document.addEventListener('pointerdown', handler, { once: true });
-    document.addEventListener('touchend', handler, { once: true });
-    document.addEventListener('keydown', handler, { once: true });
-  }
-
-  private detachUnlock(): void {
-    if (!this.unlockHandler || typeof document === 'undefined') {
-      return;
-    }
-    document.removeEventListener('pointerdown', this.unlockHandler);
-    document.removeEventListener('touchend', this.unlockHandler);
-    document.removeEventListener('keydown', this.unlockHandler);
-    this.unlockHandler = null;
-  }
-
-  /** Reproduce y pausa en silencio cada pista para desbloquearla en iOS. */
-  private unlockAll(): void {
-    if (this.unlocked) {
-      return;
-    }
-    this.unlocked = true;
-    this.detachUnlock();
-
-    for (const path of ALL_MATCH_AUDIO_PATHS) {
-      const audio = this.getAudio(path);
-      if (!audio) {
-        continue;
-      }
-      try {
-        audio.muted = true;
-        const result = audio.play();
-        const reset = () => {
-          try {
-            audio.pause();
-            audio.currentTime = 0;
-          } catch {
-            // El reset es best-effort: el elemento ya quedó desbloqueado.
-          }
-          audio.muted = false;
-        };
-        if (result) {
-          result.then(reset).catch(() => {
-            audio.muted = false;
-          });
-        } else {
-          reset();
-        }
-      } catch {
-        audio.muted = false;
-      }
-    }
-  }
-
-  private getAudio(path: string): HTMLAudioElement | null {
-    const cached = this.audioByPath.get(path);
-    if (cached) {
-      return cached;
-    }
-
-    try {
-      const audio = new Audio(path);
-      this.audioByPath.set(path, audio);
-      return audio;
-    } catch {
-      return null;
-    }
+    this.playback.play(won ? paths.win : paths.lose);
   }
 }

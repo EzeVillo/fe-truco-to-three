@@ -28,5 +28,18 @@ apareciendo — no hay que manejar delays a mano.
   `audio.volume` cuando no hay Web Audio (desktop/tests). El AudioContext arranca `suspended`
   y se hace `resume()` en el gesto de unlock.
 
+- **Jingles de resultado (envido/game/match)**: `MatchCallAudioService.playOutcome(level, won)`
+  con paths en `MATCH_OUTCOME_AUDIO_PATHS`. El de ENVIDO se dispara dentro de un `setTimeout`
+  de 1200ms en `openEnvidoResultDialog` (match-screen) para dejar ver el "¡Quiero!" antes del
+  modal — esto lo desacopla del gesto del usuario.
+  **iOS/WebKit**: `audio.play()` fuera de un gesto es rechazado salvo que ese elemento ya se
+  haya reproducido dentro de un gesto. Como el jingle sale de un setTimeout, en iPhone no sonaba
+  al ganar el envido (y quedaba pendiente, soltándose pegado al siguiente tap). Fix:
+  `MatchCallAudioService` engancha un listener de un solo uso (pointerdown/touchend/keydown) en
+  el constructor que precalienta en silencio (`play()`→`pause()`, `muted`) las 17 pistas
+  conocidas (`ALL_MATCH_AUDIO_PATHS`), dejándolas desbloqueadas. **Regla**: cualquier SFX nuevo
+  que pueda dispararse fuera de un gesto (timeout, observable, dialog afterClosed) debe estar en
+  `ALL_MATCH_AUDIO_PATHS` o no sonará en iOS.
+
 Todo el audio es no-bloqueante: siempre envuelto en try/catch, nunca debe romper el flujo
 visual de la partida.

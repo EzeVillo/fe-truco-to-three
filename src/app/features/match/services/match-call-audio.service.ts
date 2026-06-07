@@ -57,6 +57,17 @@ export const MATCH_OUTCOME_AUDIO_PATHS: Record<MatchOutcomeLevel, { win: string;
 
 const audioPathByKey = new Map(MATCH_CALL_AUDIO_ASSETS.map((asset) => [asset.key, asset.path]));
 
+/**
+ * Todas las pistas que el servicio puede llegar a reproducir: cantos, SFX de
+ * carta y jingles de resultado. Se usan para precargarlas/desbloquearlas en el
+ * primer gesto del usuario (ver `MatchCallAudioService`).
+ */
+const ALL_MATCH_AUDIO_PATHS: readonly string[] = [
+  ...MATCH_CALL_AUDIO_ASSETS.map((asset) => asset.path),
+  MATCH_CARD_THROW_AUDIO_PATH,
+  ...Object.values(MATCH_OUTCOME_AUDIO_PATHS).flatMap((outcome) => [outcome.win, outcome.lose]),
+];
+
 export function resolveMatchCallAudioPath(event: MatchWsEvent): string | null {
   switch (event.eventType) {
     case 'TRUCO_CALLED': {
@@ -90,6 +101,12 @@ export function resolveMatchCallAudioPath(event: MatchWsEvent): string | null {
 @Injectable({ providedIn: 'root' })
 export class MatchCallAudioService {
   private readonly audioByPath = new Map<string, HTMLAudioElement>();
+  private unlocked = false;
+  private unlockHandler: (() => void) | null = null;
+
+  constructor() {
+    this.attachUnlock();
+  }
 
   playForEvent(event: MatchWsEvent): void {
     const path = resolveMatchCallAudioPath(event);
@@ -124,6 +141,74 @@ export class MatchCallAudioService {
       }
     } catch {
       // Audio is a non-blocking enhancement for the match experience.
+    }
+  }
+
+  /**
+   * Registra un listener de un solo uso para desbloquear el audio en iOS/WebKit:
+   * un `play()` disparado fuera de un gesto del usuario (p. ej. el jingle de
+   * resultado del envido, que sale de un `setTimeout`) es rechazado salvo que el
+   * elemento ya haya sido reproducido al menos una vez dentro de un gesto. En el
+   * primer toque/tecla precalentamos todas las pistas para dejarlas habilitadas.
+   */
+  private attachUnlock(): void {
+    if (typeof document === 'undefined' || this.unlockHandler) {
+      return;
+    }
+    const handler = () => {
+      this.unlockAll();
+    };
+    this.unlockHandler = handler;
+    document.addEventListener('pointerdown', handler, { once: true });
+    document.addEventListener('touchend', handler, { once: true });
+    document.addEventListener('keydown', handler, { once: true });
+  }
+
+  private detachUnlock(): void {
+    if (!this.unlockHandler || typeof document === 'undefined') {
+      return;
+    }
+    document.removeEventListener('pointerdown', this.unlockHandler);
+    document.removeEventListener('touchend', this.unlockHandler);
+    document.removeEventListener('keydown', this.unlockHandler);
+    this.unlockHandler = null;
+  }
+
+  /** Reproduce y pausa en silencio cada pista para desbloquearla en iOS. */
+  private unlockAll(): void {
+    if (this.unlocked) {
+      return;
+    }
+    this.unlocked = true;
+    this.detachUnlock();
+
+    for (const path of ALL_MATCH_AUDIO_PATHS) {
+      const audio = this.getAudio(path);
+      if (!audio) {
+        continue;
+      }
+      try {
+        audio.muted = true;
+        const result = audio.play();
+        const reset = () => {
+          try {
+            audio.pause();
+            audio.currentTime = 0;
+          } catch {
+            // El reset es best-effort: el elemento ya quedó desbloqueado.
+          }
+          audio.muted = false;
+        };
+        if (result) {
+          result.then(reset).catch(() => {
+            audio.muted = false;
+          });
+        } else {
+          reset();
+        }
+      } catch {
+        audio.muted = false;
+      }
     }
   }
 

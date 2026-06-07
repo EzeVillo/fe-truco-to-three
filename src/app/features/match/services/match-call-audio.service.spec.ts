@@ -181,6 +181,43 @@ describe('MatchCallAudioService', () => {
     expect(createdAudios).toHaveLength(0);
   });
 
+  it('desbloquea todas las pistas en el primer gesto del usuario', () => {
+    vi.stubGlobal(
+      'Audio',
+      function AudioMock(
+        this: {
+          src: string;
+          currentTime: number;
+          muted: boolean;
+          play: ReturnType<typeof vi.fn>;
+          pause: ReturnType<typeof vi.fn>;
+        },
+        src: string,
+      ) {
+        this.src = src;
+        this.currentTime = 5;
+        this.muted = false;
+        this.play = vi.fn().mockResolvedValue(undefined);
+        this.pause = vi.fn();
+        createdAudios.push(this as never);
+      },
+    );
+
+    const listeners = new Map<string, () => void>();
+    vi.stubGlobal('document', {
+      addEventListener: (type: string, handler: () => void) => listeners.set(type, handler),
+      removeEventListener: (type: string) => listeners.delete(type),
+    });
+
+    // El servicio se suscribe al primer gesto en el constructor.
+    new MatchCallAudioService();
+    listeners.get('pointerdown')?.();
+
+    // 10 cantos + SFX de carta + 3 jingles win/lose = 17 pistas precargadas.
+    expect(createdAudios).toHaveLength(17);
+    expect(createdAudios.every((audio) => audio.play.mock.calls.length >= 1)).toBe(true);
+  });
+
   it('no propaga rechazos de play()', async () => {
     vi.stubGlobal(
       'Audio',

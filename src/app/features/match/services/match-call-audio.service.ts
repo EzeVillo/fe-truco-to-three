@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { AudioPlaybackService } from '../../../core/services/audio-playback.service';
+import { NOTIFICATION_CUE_AUDIO_PATH } from '../../../core/services/notification-cue-audio.service';
 import type { MatchWsEvent } from '../models/match-ws-events';
 
 export interface MatchCallAudioAsset {
@@ -38,7 +39,7 @@ export const MATCH_CARD_THROW_AUDIO_PATH = '/audio/freesound_community-card-soun
  * El espectador no tiene bando, así que no le corresponde un jingle de win/lose:
  * suena este "tick" como aviso de "apareció un resultado, mirá". Sólo en spectate.
  */
-export const SPECTATOR_OUTCOME_CUE_AUDIO_PATH = '/audio/mixkit-select-click-1109.wav';
+export const SPECTATOR_OUTCOME_CUE_AUDIO_PATH = NOTIFICATION_CUE_AUDIO_PATH;
 
 /** Niveles de resolución con jingle de victoria/derrota, en intensidad creciente. */
 export type MatchOutcomeLevel = 'ENVIDO' | 'GAME' | 'MATCH';

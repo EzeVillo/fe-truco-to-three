@@ -15,6 +15,7 @@ import { signalStore, withState, withMethods, withComputed, patchState } from '@
 import { computed } from '@angular/core';
 import { forkJoin, type Subscription } from 'rxjs';
 import { AuthStore } from '../../../core/auth/auth.store';
+import { NotificationCueAudioService } from '../../../core/services/notification-cue-audio.service';
 import { WebSocketService } from '../../../core/services/websocket.service';
 import { getErrorCopy } from '../../../shared/error-copy/error-copy';
 import { SocialApiService } from './social-api.service';
@@ -191,6 +192,7 @@ export const SocialStore = signalStore(
     const api = inject(SocialApiService);
     const ws = inject(WebSocketService);
     const authStore = inject(AuthStore);
+    const notificationCueAudio = inject(NotificationCueAudioService);
     const injector = inject(Injector);
 
     let wsSub: Subscription | null = null;
@@ -207,6 +209,7 @@ export const SocialStore = signalStore(
       const self = authStore.username();
       switch (event.eventType) {
         case 'FRIEND_REQUEST_RECEIVED':
+          playNotificationCue();
           patchState(store, {
             incoming: upsertIncoming(store.incoming(), event.payload.requesterUsername),
             incomingToast: event.payload.requesterUsername,
@@ -257,6 +260,7 @@ export const SocialStore = signalStore(
         case 'RESOURCE_INVITATION_RECEIVED':
           // Sólo invitaciones a partida; liga/copa fuera de alcance.
           if (event.payload.targetType === 'MATCH') {
+            playNotificationCue();
             patchState(store, {
               incomingInvitationToast: {
                 invitationId: event.payload.invitationId,
@@ -304,6 +308,14 @@ export const SocialStore = signalStore(
           break;
         default:
           break;
+      }
+    }
+
+    function playNotificationCue(): void {
+      try {
+        notificationCueAudio.play();
+      } catch {
+        // El audio es un aviso no-bloqueante: nunca debe romper la UI social.
       }
     }
 

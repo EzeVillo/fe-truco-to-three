@@ -6,6 +6,7 @@ import { Subject, of, throwError } from 'rxjs';
 import { SocialStore } from './social.store';
 import { SocialApiService } from './social-api.service';
 import { AuthStore } from '../../../core/auth/auth.store';
+import { NotificationCueAudioService } from '../../../core/services/notification-cue-audio.service';
 import { WebSocketService } from '../../../core/services/websocket.service';
 import type { SocialWsEvent } from '../../../core/models/ws.models';
 
@@ -61,6 +62,9 @@ function setup(opts: { self?: string; guest?: boolean; authed?: boolean } = {}) 
     connected: connected$.asObservable(),
     disconnect: vi.fn(),
   };
+  const notificationCueAudioMock = {
+    play: vi.fn(),
+  };
 
   TestBed.configureTestingModule({
     providers: [
@@ -68,6 +72,7 @@ function setup(opts: { self?: string; guest?: boolean; authed?: boolean } = {}) 
       { provide: SocialApiService, useValue: apiMock },
       { provide: WebSocketService, useValue: wsMock },
       { provide: AuthStore, useValue: { username, isAuthenticated, isGuest } },
+      { provide: NotificationCueAudioService, useValue: notificationCueAudioMock },
     ],
   });
 
@@ -76,6 +81,7 @@ function setup(opts: { self?: string; guest?: boolean; authed?: boolean } = {}) 
     store,
     api: apiMock,
     ws: wsMock,
+    notificationCueAudio: notificationCueAudioMock,
     events$,
     connected$,
     username,
@@ -124,7 +130,7 @@ describe('SocialStore', () => {
   });
 
   it('FRIEND_REQUEST_RECEIVED: expone el solicitante en incomingToast', () => {
-    const { store, events$ } = setup();
+    const { store, events$, notificationCueAudio } = setup();
     store.start();
     expect(store.incomingToast()).toBeNull();
     events$.next({
@@ -133,6 +139,7 @@ describe('SocialStore', () => {
       payload: { requesterUsername: 'leo', addresseeUsername: 'me' },
     });
     expect(store.incomingToast()).toBe('leo');
+    expect(notificationCueAudio.play).toHaveBeenCalledOnce();
   });
 
   it('dismissToast(): limpia el toast sin tocar incoming', () => {
@@ -419,7 +426,7 @@ describe('SocialStore', () => {
   });
 
   it('RESOURCE_INVITATION_RECEIVED (MATCH): setea el toast de invitación', () => {
-    const { store, events$ } = setup();
+    const { store, events$, notificationCueAudio } = setup();
     store.start();
     events$.next({
       eventType: 'RESOURCE_INVITATION_RECEIVED',
@@ -440,10 +447,11 @@ describe('SocialStore', () => {
       status: 'PENDING',
       expiresAt: 5_000,
     });
+    expect(notificationCueAudio.play).toHaveBeenCalledOnce();
   });
 
   it('RESOURCE_INVITATION_RECEIVED (LEAGUE): no muestra toast (fuera de alcance)', () => {
-    const { store, events$ } = setup();
+    const { store, events$, notificationCueAudio } = setup();
     store.start();
     events$.next({
       eventType: 'RESOURCE_INVITATION_RECEIVED',
@@ -457,6 +465,7 @@ describe('SocialStore', () => {
       },
     });
     expect(store.incomingInvitationToast()).toBeNull();
+    expect(notificationCueAudio.play).not.toHaveBeenCalled();
   });
 
   it('acceptInvitation(): limpia el toast y llama onJoined con el targetId', () => {

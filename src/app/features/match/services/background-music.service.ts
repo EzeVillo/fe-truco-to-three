@@ -58,9 +58,18 @@ export class BackgroundMusicService {
   stop(): void {
     this.active = false;
     this.detachUnlock();
+    // En iOS el audio ruteado por el grafo (MediaElementSource → GainNode →
+    // destination) no corta al instante con `pause()`: queda un tail bufferizado
+    // sonando un par de segundos. Bajamos el gain a 0 para silenciar de
+    // inmediato y suspendemos el contexto para frenar el grafo; el próximo
+    // `start()` reanuda y `applyVolume()` restaura el volumen.
+    if (this.gainNode) {
+      this.gainNode.gain.value = 0;
+    }
     if (this.audio) {
       this.audio.pause();
     }
+    void this.audioContext?.suspend().catch(() => undefined);
   }
 
   /** Enciende/apaga la música; persiste la preferencia. */

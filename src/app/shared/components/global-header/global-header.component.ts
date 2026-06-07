@@ -33,6 +33,7 @@ export class GlobalHeaderComponent {
   readonly effectsVolume = inject(EffectsVolumeService);
 
   readonly menuOpen = signal(false);
+  readonly soundOpen = signal(false);
 
   private readonly currentUrl = toSignal(
     this.router.events.pipe(
@@ -106,7 +107,18 @@ export class GlobalHeaderComponent {
   }
 
   toggleMenu(): void {
+    this.soundOpen.set(false);
     this.menuOpen.update((open) => !open);
+  }
+
+  /** Popover de sonido: vive al lado de la hamburguesa y es mutuamente excluyente con ella. */
+  toggleSound(): void {
+    this.menuOpen.set(false);
+    this.soundOpen.update((open) => !open);
+  }
+
+  closeSound(): void {
+    this.soundOpen.set(false);
   }
 
   /** Deja de mirar: vuelve a Amigos. SpectateScreenComponent.ngOnDestroy libera la sesión. */
@@ -168,18 +180,20 @@ export class GlobalHeaderComponent {
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
-    if (!this.menuOpen()) {
+    if (!this.menuOpen() && !this.soundOpen()) {
       return;
     }
 
     const target = event.target;
     if (target instanceof Node && !this.host.nativeElement.contains(target)) {
       this.closeMenu();
+      this.closeSound();
     }
   }
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
     this.closeMenu();
+    this.closeSound();
   }
 }

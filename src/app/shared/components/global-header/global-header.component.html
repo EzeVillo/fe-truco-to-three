@@ -33,43 +33,26 @@
 
   <div class="global-header__right">
     @if (authStore.isAuthenticated()) {
-      <div class="global-header__menu">
+      <div class="global-header__sound">
         <button
           type="button"
-          class="global-header__menu-button"
-          aria-label="Abrir menú"
-          [attr.aria-expanded]="menuOpen()"
-          aria-controls="global-header-menu"
-          (click)="toggleMenu()"
+          class="global-header__sound-button"
+          [class.global-header__sound-button--muted]="!effectsVolume.enabled()"
+          aria-label="Ajustes de sonido"
+          [attr.aria-expanded]="soundOpen()"
+          aria-controls="global-header-sound"
+          (click)="toggleSound()"
         >
-          <span class="global-header__menu-line" aria-hidden="true"></span>
-          <span class="global-header__menu-line" aria-hidden="true"></span>
-          <span class="global-header__menu-line" aria-hidden="true"></span>
+          <span aria-hidden="true">{{ effectsVolume.enabled() ? '🔊' : '🔇' }}</span>
         </button>
 
-        @if (menuOpen()) {
-          <nav id="global-header-menu" class="global-header__menu-panel" aria-label="Menú principal">
-            @if (!busy()) {
-              @if (profileLink(); as link) {
-                <a class="global-header__menu-item" [routerLink]="link" (click)="closeMenu()">
-                  Mi perfil
-                </a>
-              } @else {
-                <span class="global-header__menu-item global-header__menu-item--readonly">
-                  {{ userLabel() }}
-                </span>
-              }
-            }
-            @if (showFriends()) {
-              <a class="global-header__menu-item" routerLink="/friends" (click)="closeMenu()">
-                Amigos
-              </a>
-            }
-            @if (isSpectating()) {
-              <button type="button" class="global-header__menu-item" (click)="leaveSpectate()">
-                Dejar de ver
-              </button>
-            }
+        @if (soundOpen()) {
+          <div
+            id="global-header-sound"
+            class="global-header__sound-panel"
+            role="group"
+            aria-label="Ajustes de sonido"
+          >
             <div class="global-header__music" role="group" aria-label="Efectos de sonido">
               <button
                 type="button"
@@ -116,6 +99,47 @@
                   (input)="onMusicVolumeInput($event)"
                 />
               </div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="global-header__menu">
+        <button
+          type="button"
+          class="global-header__menu-button"
+          aria-label="Abrir menú"
+          [attr.aria-expanded]="menuOpen()"
+          aria-controls="global-header-menu"
+          (click)="toggleMenu()"
+        >
+          <span class="global-header__menu-line" aria-hidden="true"></span>
+          <span class="global-header__menu-line" aria-hidden="true"></span>
+          <span class="global-header__menu-line" aria-hidden="true"></span>
+        </button>
+
+        @if (menuOpen()) {
+          <nav id="global-header-menu" class="global-header__menu-panel" aria-label="Menú principal">
+            @if (!busy()) {
+              @if (profileLink(); as link) {
+                <a class="global-header__menu-item" [routerLink]="link" (click)="closeMenu()">
+                  Mi perfil
+                </a>
+              } @else {
+                <span class="global-header__menu-item global-header__menu-item--readonly">
+                  {{ userLabel() }}
+                </span>
+              }
+            }
+            @if (showFriends()) {
+              <a class="global-header__menu-item" routerLink="/friends" (click)="closeMenu()">
+                Amigos
+              </a>
+            }
+            @if (isSpectating()) {
+              <button type="button" class="global-header__menu-item" (click)="leaveSpectate()">
+                Dejar de ver
+              </button>
             }
             @if (showAbandonMatch()) {
               <button type="button" class="global-header__menu-item" (click)="onAbandonClick()">

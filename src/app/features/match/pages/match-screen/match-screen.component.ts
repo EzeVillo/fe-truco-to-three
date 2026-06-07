@@ -569,14 +569,24 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
 
     dialogRef.afterClosed().subscribe(() => {
       this.eventQueue.resumeAck();
-      this.decideAfterResultDialog();
+      this.decideAfterResultDialog(event.reason);
     });
   }
 
-  private decideAfterResultDialog(): void {
+  private decideAfterResultDialog(reason: MatchEndedEvent['reason']): void {
     const session = this.rematchStateService.session();
     if (session) {
       this.openRematchDialog();
+      return;
+    }
+
+    // La revancha es puramente event-driven (FR-001/FR-002): el backend solo abre la
+    // sesión y emite REMATCH_AVAILABLE en finales naturales (FINISHED). En abandono o
+    // forfeit (timeout) NO hay revancha, así que no tiene sentido la consulta de carrera:
+    // volvemos directo al lobby. Sin esto, el getSession espurio "buscaba" una revancha
+    // inexistente en esos finales.
+    if (reason !== 'FINISHED') {
+      this.router.navigate(['/']);
       return;
     }
 

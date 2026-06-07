@@ -21,6 +21,7 @@ const _friend = {
   online: false,
   availability: 'AVAILABLE',
   busyReason: null,
+  spectatableMatch: null,
 } satisfies Record<keyof FriendSummary, FriendSummary[keyof FriendSummary]>;
 
 const _incoming = {
@@ -60,18 +61,20 @@ const SOCIAL_EVENT_TYPES: SocialWsEvent['eventType'][] = [
 ];
 
 describe('Contract: Social (§7.5/§8.2/§9.5e)', () => {
-  it('FriendSummary expone { friendUsername, online, availability, busyReason } (§7.4.5)', () => {
+  it('FriendSummary expone { friendUsername, online, availability, busyReason, spectatableMatch } (§7.4.5)', () => {
     const dto: FriendSummary = {
       friendUsername: 'martina',
       online: true,
       availability: 'BUSY',
       busyReason: 'IN_MATCH',
+      spectatableMatch: null,
     };
     expect(Object.keys(dto).sort()).toEqual([
       'availability',
       'busyReason',
       'friendUsername',
       'online',
+      'spectatableMatch',
     ]);
   });
 

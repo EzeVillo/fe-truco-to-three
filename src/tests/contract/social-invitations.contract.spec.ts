@@ -71,6 +71,7 @@ const _friendCheck = {
   online: false,
   availability: 'AVAILABLE',
   busyReason: null,
+  spectatableMatch: null,
 } satisfies Record<keyof FriendSummary, FriendSummary[keyof FriendSummary]>;
 
 void _payloadCheck;

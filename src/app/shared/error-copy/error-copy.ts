@@ -18,9 +18,18 @@ export type ErrorCopyScope =
   | 'JOIN_MATCH'
   | 'QUICK_MATCH'
   | 'PUBLIC_LOBBY'
-  | 'SOCIAL';
+  | 'SOCIAL'
+  | 'SPECTATE';
 
 const FALLBACK = 'Ocurrió un error inesperado. Reintentá.';
+
+/**
+ * Copy genérico para errores del canal de spectate (SPECTATE_ERROR WS o REST).
+ * Ignora el string crudo del backend — nunca se expone al usuario.
+ */
+export function spectateErrorCopy(_rawError?: string): string {
+  return 'No pudiste entrar a mirar esta partida. Puede que ya haya terminado.';
+}
 
 /**
  * Copy del front para el motivo de ocupación de un amigo (feature 025, FR-002e).
@@ -42,6 +51,8 @@ export function busyReasonCopy(reason: FriendBusyReason | null): string {
       return 'Con una invitación pendiente';
     case 'PENDING_FRIEND_REQUEST':
       return 'Con una solicitud pendiente';
+    case 'SPECTATING':
+      return 'Mirando una partida';
     default:
       return 'No disponible';
   }
@@ -205,6 +216,24 @@ export function getErrorCopy(scope: ErrorCopyScope, error: unknown): string {
       case 409:
       case 422:
         return 'No se pudo completar la acción: revisá el estado de la solicitud.';
+      case 0:
+        return 'No pudimos conectarnos. Reintentá en unos segundos.';
+      default:
+        if (status >= 500 && status < 600) {
+          return 'No pudimos conectarnos. Reintentá en unos segundos.';
+        }
+        return FALLBACK;
+    }
+  }
+
+  if (scope === 'SPECTATE') {
+    switch (status) {
+      case 401:
+        return '';
+      case 404:
+        return 'Esta partida no existe o ya terminó.';
+      case 422:
+        return 'No podés entrar a mirar esta partida.';
       case 0:
         return 'No pudimos conectarnos. Reintentá en unos segundos.';
       default:

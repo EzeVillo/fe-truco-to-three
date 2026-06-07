@@ -3,9 +3,9 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { CommonModule } from '@angular/common';
 
 export interface GameWonDialogData {
-  /** Nombre del jugador local. */
+  /** Nombre del jugador local (o PLAYER_ONE en modo espectador). */
   playerName: string;
-  /** Nombre del rival. */
+  /** Nombre del rival (o PLAYER_TWO en modo espectador). */
   opponentName: string;
   /** Partidas ganadas por el jugador local en la serie. */
   playerGamesWon: number;
@@ -17,8 +17,10 @@ export interface GameWonDialogData {
   gameNumber: number;
   /** `true` si la serie ya terminó con esta partida. */
   matchFinished: boolean;
-  /** `true` si el jugador local ganó la serie (solo relevante si matchFinished). */
+  /** `true` si el jugador local (o PLAYER_ONE) ganó. */
   localWonMatch: boolean;
+  /** Modo espectador: texto y colores neutros, sin "ganaste/perdiste". */
+  spectatorMode?: boolean;
 }
 
 @Component({
@@ -53,33 +55,29 @@ export class GameWonDialogComponent {
     return !this.data.matchFinished && !this.data.localWonMatch;
   }
 
-  /** `true` si el resultado mostrado es una victoria (de partida o de serie). */
-  get isWin(): boolean {
-    return this.data.localWonMatch;
+  /** Nombre del ganador (playerName si localWonMatch, opponentName si no). */
+  get winnerName(): string {
+    return this.data.localWonMatch ? this.data.playerName : this.data.opponentName;
   }
 
   /** Texto principal del modal según el estado. */
   get titleText(): string {
-    if (this.isMatchWon) {
-      return '¡Ganaste el match!';
+    if (this.data.spectatorMode) {
+      return this.data.matchFinished
+        ? `Ganó ${this.winnerName}`
+        : `Game para ${this.winnerName}`;
     }
-    if (this.isMatchLost) {
-      return '¡Perdiste el match!';
-    }
-    if (this.isGameOnlyWon) {
-      return '¡Game ganado!';
-    }
+    if (this.isMatchWon) return '¡Ganaste el match!';
+    if (this.isMatchLost) return '¡Perdiste el match!';
+    if (this.isGameOnlyWon) return '¡Game ganado!';
     return 'Game perdido';
   }
 
   /** Texto de contexto según el estado de la serie, o `null` si no corresponde. */
   get contextMessage(): string | null {
-    if (this.isMatchWon) {
-      return '¡Felicitaciones!';
-    }
-    if (this.isMatchLost) {
-      return '¡La próxima será!';
-    }
+    if (this.data.spectatorMode) return null;
+    if (this.isMatchWon) return '¡Felicitaciones!';
+    if (this.isMatchLost) return '¡La próxima será!';
     return null;
   }
 

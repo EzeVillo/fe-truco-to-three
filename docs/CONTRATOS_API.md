@@ -152,6 +152,9 @@ Casos comunes de `422` relacionados a disponibilidad del jugador:
 - `PlayerAlreadyInQueueException` — el jugador ya esta en la cola de Quick Match.
   Se devuelve en `POST /api/matches`, `POST /api/leagues`, `POST /api/cups`,
   `POST /api/matches/bot`, `POST /api/matches/quick` y al aceptar una invitacion social.
+- `PlayerIsSpectatingException` — el jugador esta especteando un match activamente.
+  Se devuelve en `POST /api/matches`, `POST /api/leagues`, `POST /api/cups`,
+  `POST /api/matches/bot`, `POST /api/matches/quick` y al aceptar una invitacion social.
 
 Casos comunes de `400`:
 
@@ -734,10 +737,13 @@ Response `200`:
 {
   "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
   "status": "IN_PROGRESS",
+  "playerOneUsername": "juancho",
+  "playerTwoUsername": "martina",
   "scorePlayerOne": 2,
   "scorePlayerTwo": 1,
   "gamesWonPlayerOne": 1,
   "gamesWonPlayerTwo": 0,
+  "gamesToPlay": 3,
   "matchWinner": null,
   "stateVersion": 5,
   "currentRound": {
@@ -776,6 +782,10 @@ Response `200`:
 Reglas:
 
 - devuelve una vista publica del match: no incluye `myCards` ni `availableActions`
+- `playerOneUsername` y `playerTwoUsername` son el roster asiento->nombre, para que el tablero
+  etiquete ambos lados; `playerTwoUsername` es `null` si todavia no hay rival sentado
+- `gamesToPlay` es la cantidad de games necesarios para ganar el match (best-of); coincide con el
+  `gamesToPlay` de la vista de jugador
 - `actionDeadline`, `turnDurationMillis` y `actionDeadlineSeat` se exponen igual que en §4.14, para
   que el espectador renderice el temporizador del turno sobre el asiento que debe actuar (§4.18)
 - `scorePlayerOne` y `scorePlayerTwo` representan el puntaje del game actual y viven a nivel
@@ -809,6 +819,18 @@ Restricciones de negocio:
 - un jugador no puede spectear dos matches al mismo tiempo
 - al terminar el match, si el espectador pasa a ser jugador activo en una liga/copa, o si se elimina
   la amistad que era su unico motivo de elegibilidad, el backend lo desregistra automaticamente
+- estar especteando deja al jugador en estado `busy = true`: no puede crear partidas, ligas, copas,
+  buscar Quick Match ni aceptar invitaciones sociales mientras tenga una suscripcion de spectate activa
+
+Comportamiento multi-dispositivo:
+
+- si el mismo jugador se suscribe a `/user/queue/match-spectate` con el mismo `matchId` desde
+  un segundo dispositivo/pestaña, el backend lo registra una sola vez (idempotente en la sesion de
+  spectatorship) y devuelve `SPECTATE_STATE` a la nueva sesion
+- el jugador deja de ser espectador **solo cuando se desconecta la ultima sesion activa** que
+  tenia abierta para ese match; desconectarse de un dispositivo no corta la sesion en los demas
+- el frontend puede detectar que el usuario estaba especteando desde `GET /api/me/presence`
+  (`spectating.matchId`) y redirigirlo al match correspondiente al cargar en un nuevo dispositivo
 
 ### 4.17 Revancha (Rematch)
 
@@ -1704,7 +1726,7 @@ Notas:
 - `availability` indica si el amigo puede recibir o aceptar una invitacion a partida:
   `AVAILABLE` o `BUSY`.
 - `busyReason` es `null` si `availability = AVAILABLE`; si esta `BUSY`, puede ser `IN_MATCH`,
-  `IN_LEAGUE`, `IN_CUP`, `OPEN_REMATCH`, `IN_QUICK_QUEUE`, `PENDING_INVITATION`,
+  `IN_LEAGUE`, `IN_CUP`, `OPEN_REMATCH`, `IN_QUICK_QUEUE`, `SPECTATING`, `PENDING_INVITATION`,
   `PENDING_FRIEND_REQUEST` o `UNKNOWN`.
 - `online` es presencia aproximada por sesiones WebSocket activas conocidas y no cambia por si
   misma la disponibilidad para invitar.
@@ -2003,12 +2025,13 @@ Response `200`:
   },
   "cup": null,
   "rematch": null,
-  "quickMatch": null
+  "quickMatch": null,
+  "spectating": null
 }
 ```
 
-- `busy` es `true` si y solo si al menos uno de `match`, `league`, `cup`, `rematch` o `quickMatch`
-  es no-nulo.
+- `busy` es `true` si y solo si al menos uno de `match`, `league`, `cup`, `rematch`, `quickMatch`
+  o `spectating` es no-nulo.
 - Cada dominio en el que el usuario **no** está ocupado se devuelve como `null` explícito (nunca se
   omite la clave).
 - `match`: partida **no finalizada** del usuario (estados `WAITING_FOR_PLAYERS`, `READY` o
@@ -2021,6 +2044,9 @@ Response `200`:
 - `quickMatch`: busqueda Quick Match activa en la cola runtime. Trae `status = SEARCHING` y
   `enqueuedAt`. No persiste en DB ni sobrevive a refresco/desconexion; desaparece al cancelar,
   matchear o desconectarse la sesion WebSocket asociada.
+- `spectating`: match que el usuario esta mirando activamente. Trae `matchId`. Es no-nulo
+  mientras el usuario tenga al menos una suscripcion STOMP activa a `/user/queue/match-spectate`.
+  Util para redirigir al espectador al match correcto al cargar desde un nuevo dispositivo/pestaña.
 
 Usuario sin ocupación alguna:
 
@@ -2031,7 +2057,8 @@ Usuario sin ocupación alguna:
   "league": null,
   "cup": null,
   "rematch": null,
-  "quickMatch": null
+  "quickMatch": null,
+  "spectating": null
 }
 ```
 
@@ -2047,6 +2074,23 @@ Usuario buscando Quick Match:
   "quickMatch": {
     "status": "SEARCHING",
     "enqueuedAt": "2026-05-20T10:00:00Z"
+  },
+  "spectating": null
+}
+```
+
+Usuario especteando un match:
+
+```json
+{
+  "busy": true,
+  "match": null,
+  "league": null,
+  "cup": null,
+  "rematch": null,
+  "quickMatch": null,
+  "spectating": {
+    "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7"
   }
 }
 ```
@@ -2065,9 +2109,10 @@ los cambios por WebSocket/STOMP a la cola de usuario:
 
 Un mismo usuario puede tener la sesión iniciada en varios lugares (pestañas/dispositivos). Cuando su
 ocupación **cambia** (entra/sale de Quick Match, entra a una partida, su liga/copa arranca o avanza,
-se abre/cierra una revancha, o se libera al finalizar), **todas** sus sesiones activas —incluida la
-que originó el cambio— reciben un mensaje con el snapshot completo de presencia, para derivar al
-recurso correcto (p. ej., una sesión ociosa que no entró al match igual se entera y deriva ahí).
+se abre/cierra una revancha, empieza/termina de spectear un match, o se libera al finalizar),
+**todas** sus sesiones activas —incluida la que originó el cambio— reciben un mensaje con el
+snapshot completo de presencia, para derivar al recurso correcto (p. ej., una sesión ociosa que no
+entró al match igual se entera y deriva ahí).
 
 Mensaje empujado:
 
@@ -2088,14 +2133,15 @@ Mensaje empujado:
     },
     "cup": null,
     "rematch": null,
-    "quickMatch": null
+    "quickMatch": null,
+    "spectating": null
   }
 }
 ```
 
 - `payload` tiene **exactamente el mismo shape** que el body de `GET /api/me/presence`
-  (`UserPresenceResponse`): `busy` + `match`/`league`/`cup`/`rematch`/`quickMatch` (objeto u
-  `null`).
+  (`UserPresenceResponse`): `busy` + `match`/`league`/`cup`/`rematch`/`quickMatch`/`spectating`
+  (objeto u `null`).
 - Las notificaciones llegan **solo** a las sesiones del propio usuario (nunca a terceros).
 - Es **solo lectura**: emitir el push no modifica partidas/ligas/copas/revanchas ni reinicia sus
   temporizadores de inactividad.
@@ -2980,9 +3026,15 @@ La operacion es idempotente: si el jugador no estaba en cola, devuelve `204` igu
   `spectatableMatch.id`; la amistad confirmada habilita el alta igual que la pertenencia a
   liga/copa.
 - Si la conexion WebSocket del espectador se corta o hace `UNSUBSCRIBE`, el backend deja de
-  registrarlo como espectador de ese match.
+  registrarlo como espectador de ese match (solo si no quedan otras sesiones activas del mismo
+  usuario con esa suscripcion — ver comportamiento multi-dispositivo en §4.16).
 - `GET /api/matches/{matchId}/spectate` sirve para refrescar el snapshot de un espectador ya
   registrado. Si se consulta despues de perder la sesion de spectate, responde `422`.
+- Mientras el usuario esta especteando, `busy = true` en `GET /api/me/presence` y el campo
+  `spectating.matchId` indica el match que esta mirando. Esto permite al FE detectar la sesion
+  activa y redirigir al usuario al match correcto al abrir una nueva pestaña o dispositivo.
+- Estar especteando bloquea crear partidas, ligas, copas, buscar Quick Match y aceptar
+  invitaciones sociales: el backend responde `422` con `PlayerIsSpectatingException`.
 - En ligas, los partidos se crean **on-demand**: al iniciar la liga solo se crea el partido de la
   fecha 1. Cuando ese partido termina (o es forfeiteado), la liga activa automáticamente el
   siguiente partido elegible y envía un evento `LEAGUE_MATCH_ACTIVATED` a todos los participantes.
@@ -3031,7 +3083,18 @@ Si el cliente estaba en modo espectador y la conexion se cae:
    inicial.
 
 No asumir que la sesion de spectate sigue viva tras una desconexion: el backend la limpia al
-procesar `UNSUBSCRIBE` o `DISCONNECT`.
+procesar `UNSUBSCRIBE` o `DISCONNECT` de la ultima sesion activa del usuario para ese match.
+
+**Apertura desde nuevo dispositivo / pestaña:**
+
+1. Al cargar, llamar `GET /api/me/presence`.
+2. Si `spectating` es no-nulo, usar `spectating.matchId` para suscribirse a
+   `/user/queue/match-spectate` con ese `matchId`.
+3. El backend registra la segunda sesion sin incrementar el contador de espectadores (ya estaba
+   registrado). Llega `SPECTATE_STATE` con el snapshot actual.
+4. Si el primer dispositivo se desconecta despues, el backend **no** termina la sesion de spectate
+   porque la segunda sigue activa. Solo se termina cuando se desconectan **todas** las sesiones del
+   usuario que tenian abierta esa suscripcion.
 
 ### 11.3 Revancha (Rematch)
 

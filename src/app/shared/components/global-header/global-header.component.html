@@ -37,11 +37,6 @@
 
       @if (menuOpen()) {
         <nav id="global-header-menu" class="global-header__menu-panel" aria-label="Menú principal">
-          @if (showFriends()) {
-            <a class="global-header__menu-item" routerLink="/friends" (click)="closeMenu()">
-              Amigos
-            </a>
-          }
           @if (!busy()) {
             @if (profileLink(); as link) {
               <a class="global-header__menu-item" [routerLink]="link" (click)="closeMenu()">
@@ -52,6 +47,11 @@
                 {{ userLabel() }}
               </span>
             }
+          }
+          @if (showFriends()) {
+            <a class="global-header__menu-item" routerLink="/friends" (click)="closeMenu()">
+              Amigos
+            </a>
           }
           <button type="button" class="global-header__menu-item" (click)="onLogoutClick()">
             Salir

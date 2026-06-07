@@ -308,6 +308,58 @@ describe('MatchStateService', () => {
     });
   });
 
+  describe('SPECTATOR_COUNT_CHANGED (feature 026)', () => {
+    it('ignora el evento sin disparar refetch ni enqueue (no es estado de juego)', () => {
+      const eventSubject = mockWsService.getEventSubject();
+      service.init('test-match');
+      flushSnapshot();
+
+      // init() ya llamó clear() una vez; un refetch espurio lo volvería a llamar.
+      const clearCallsBefore = mockEventQueue.clear.mock.calls.length;
+
+      // Un espectador entra: el BE difunde SPECTATOR_COUNT_CHANGED por el canal del
+      // match sin un stateVersion que encaje en la secuencia transaccional.
+      eventSubject.next({
+        matchId: 'test-match',
+        eventType: 'SPECTATOR_COUNT_CHANGED',
+        timestamp: Date.now(),
+        payload: { spectatorCount: 1 },
+      } as unknown as MatchWsEvent);
+
+      // No debe parpadear el tablero (refetch) ni tocar la cola ack-gated.
+      httpMock.expectNone(`${environment.apiUrl}/matches/test-match`);
+      expect(mockEventQueue.enqueueTransactional).not.toHaveBeenCalled();
+      expect(mockEventQueue.enqueueDerived).not.toHaveBeenCalled();
+      expect(mockEventQueue.clear.mock.calls.length).toBe(clearCallsBefore);
+    });
+
+    it('no rompe la reconciliación: un evento de juego posterior se aplica normal', () => {
+      const eventSubject = mockWsService.getEventSubject();
+      service.init('test-match');
+      flushSnapshot();
+
+      eventSubject.next({
+        matchId: 'test-match',
+        eventType: 'SPECTATOR_COUNT_CHANGED',
+        timestamp: Date.now(),
+        payload: { spectatorCount: 2 },
+      } as unknown as MatchWsEvent);
+
+      // El siguiente evento transaccional real (stateVersion = lastApplied + 1) se
+      // encola sin que el evento de espectadores haya alterado lastSeenVersion.
+      eventSubject.next({
+        matchId: 'test-match',
+        eventType: 'TRUCO_CALLED',
+        timestamp: Date.now(),
+        payload: { callerSeat: 'PLAYER_TWO', call: 'TRUCO' },
+        stateVersion: 2,
+      } as unknown as MatchWsEvent);
+
+      expect(mockEventQueue.enqueueTransactional).toHaveBeenCalledTimes(1);
+      httpMock.expectNone(`${environment.apiUrl}/matches/test-match`);
+    });
+  });
+
   describe('eventos del temporizador (013-turn-timer)', () => {
     it('rutea ACTION_DEADLINE_SET como derivado y no dispara refetch', () => {
       const eventSubject = mockWsService.getEventSubject();

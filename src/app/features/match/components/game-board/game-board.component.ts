@@ -32,6 +32,8 @@ export class GameBoardComponent {
   readonly timerRemainingFraction = input<number>(1);
   readonly timerIsUrgent = input<boolean>(false);
   readonly viewerActionTimedOut = input<boolean>(false);
+  /** Modo espectador: oculta el panel de acciones y las cartas en mano propias. */
+  readonly spectator = input<boolean>(false);
 
   readonly playCardsEnabled = computed(() =>
     this.view().availableActions.some((a) => a.type === 'PLAY_CARD'),

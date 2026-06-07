@@ -73,8 +73,10 @@
                       [availability]="friend.availability"
                       [busyReason]="friend.busyReason"
                       [inviting]="creatingMatchFor() === friend.friendUsername"
+                      [spectatableMatchId]="friend.spectatableMatch?.id ?? null"
                       (invite)="onInviteToMatch($event)"
                       (remove)="onRemove($event)"
+                      (spectate)="onSpectateMatch($event)"
                     />
                   </li>
                 }

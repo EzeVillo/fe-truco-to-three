@@ -30,6 +30,44 @@ describe('WebSocketService', () => {
     service = TestBed.inject(WebSocketService);
   });
 
+  it('subscribe pasa headers nativos al frame SUBSCRIBE de STOMP', () => {
+    service.connect();
+    const client = (service as unknown as { client: Client }).client;
+    const subscribeSpy = vi.spyOn(client, 'subscribe').mockReturnValue({
+      id: 'sub-1',
+      unsubscribe: () => undefined,
+    });
+
+    const headers = { matchId: 'match-abc-123' };
+    const sub = service.subscribe<unknown>('/user/queue/match-spectate', headers);
+    // Activar la suscripción simulando que el cliente ya está conectado
+    Object.defineProperty(client, 'connected', { value: true, configurable: true });
+    sub.subscribe(); // dispara doSubscribe
+
+    expect(subscribeSpy).toHaveBeenCalledWith(
+      '/user/queue/match-spectate',
+      expect.any(Function),
+      headers,
+    );
+  });
+
+  it('subscribe sin headers no rompe compatibilidad retroactiva', () => {
+    service.connect();
+    const client = (service as unknown as { client: Client }).client;
+    const subscribeSpy = vi.spyOn(client, 'subscribe').mockReturnValue({
+      id: 'sub-2',
+      unsubscribe: () => undefined,
+    });
+    Object.defineProperty(client, 'connected', { value: true, configurable: true });
+    service.subscribe<unknown>('/user/queue/match').subscribe();
+
+    expect(subscribeSpy).toHaveBeenCalledWith(
+      '/user/queue/match',
+      expect.any(Function),
+      undefined,
+    );
+  });
+
   it('actualiza el header Authorization antes de reconectar con el accessToken vigente', async () => {
     store.setSession({
       playerId: 'player-1',

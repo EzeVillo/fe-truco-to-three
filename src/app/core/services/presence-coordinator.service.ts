@@ -132,6 +132,8 @@ export class PresenceCoordinatorService {
         return `/match/${destination.matchId}`;
       case 'rematch':
         return `/match/${destination.originMatchId}`;
+      case 'spectate':
+        return `/spectate/${destination.matchId}`;
       case 'none':
         return null;
     }

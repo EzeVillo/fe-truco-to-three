@@ -67,7 +67,7 @@ describe('FriendsPageComponent', () => {
   });
 
   function friend(over: Partial<FriendSummary> & { friendUsername: string }): FriendSummary {
-    return { online: false, availability: 'AVAILABLE', busyReason: null, ...over };
+    return { online: false, availability: 'AVAILABLE', busyReason: null, spectatableMatch: null, ...over };
   }
 
   function text(): string {

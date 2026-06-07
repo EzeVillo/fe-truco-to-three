@@ -121,6 +121,57 @@ describe('getErrorCopy — CREATE_BOT_MATCH', () => {
   });
 });
 
+describe('spectateErrorCopy', () => {
+  // Importar el helper
+  const { spectateErrorCopy } = require('./error-copy');
+
+  it('devuelve mensaje amigable sin exponer el rawError', () => {
+    const copy: string = spectateErrorCopy('NotSpectatingException: blah');
+    expect(copy).not.toContain('NotSpectatingException');
+    expect(copy.length).toBeGreaterThan(0);
+  });
+
+  it('funciona sin argumento', () => {
+    expect(spectateErrorCopy()).toContain('partida');
+  });
+});
+
+describe('getErrorCopy — SPECTATE', () => {
+  it('401 → string vacío', () => {
+    expect(getErrorCopy('SPECTATE', httpErr(401))).toBe('');
+  });
+
+  it('404 → copy de partida no encontrada', () => {
+    expect(getErrorCopy('SPECTATE', httpErr(404))).toBe('Esta partida no existe o ya terminó.');
+  });
+
+  it('422 → copy de no autorizado', () => {
+    expect(getErrorCopy('SPECTATE', httpErr(422))).toBe(
+      'No podés entrar a mirar esta partida.',
+    );
+  });
+
+  it('0 y 5xx → copy de red', () => {
+    const expected = 'No pudimos conectarnos. Reintentá en unos segundos.';
+    expect(getErrorCopy('SPECTATE', httpErr(0))).toBe(expected);
+    expect(getErrorCopy('SPECTATE', httpErr(500))).toBe(expected);
+  });
+
+  it('nunca expone el message crudo del backend', () => {
+    for (const status of [404, 422, 500]) {
+      expect(getErrorCopy('SPECTATE', httpErr(status))).not.toContain('BE-secret-leak');
+    }
+  });
+});
+
+describe('busyReasonCopy — SPECTATING', () => {
+  const { busyReasonCopy } = require('./error-copy');
+
+  it('SPECTATING → Mirando una partida', () => {
+    expect(busyReasonCopy('SPECTATING')).toBe('Mirando una partida');
+  });
+});
+
 describe('getErrorCopy — SOCIAL', () => {
   it('401 → string vacío (manejado por interceptor)', () => {
     expect(getErrorCopy('SOCIAL', httpErr(401))).toBe('');

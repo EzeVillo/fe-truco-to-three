@@ -80,7 +80,16 @@ function upsertFriend(list: FriendSummary[], friendUsername: string): FriendSumm
   // defaults conservadores que el snapshot/delta de disponibilidad reconcilia.
   return list.some((f) => sameUsername(f.friendUsername, friendUsername))
     ? list
-    : [...list, { friendUsername, online: false, availability: 'AVAILABLE', busyReason: null }];
+    : [
+        ...list,
+        {
+          friendUsername,
+          online: false,
+          availability: 'AVAILABLE',
+          busyReason: null,
+          spectatableMatch: null,
+        },
+      ];
 }
 
 /** Merge de disponibilidad sobre un amigo existente (no-op si no está en la lista). */
@@ -95,6 +104,7 @@ function mergeAvailability(
           online: item.online,
           availability: item.availability,
           busyReason: item.busyReason,
+          spectatableMatch: item.spectatableMatch,
         }
       : f,
   );

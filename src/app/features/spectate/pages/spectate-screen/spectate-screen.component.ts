@@ -124,7 +124,9 @@ export class SpectateScreenComponent implements OnInit, OnDestroy {
 
   readonly timerRemainingMs = computed(() => {
     const v = this.matchView();
-    if (!v || v.actionDeadline === null || v.turnDurationMillis === null) return 0;
+    if (!v || v.actionDeadline === null || v.turnDurationMillis === null) {
+      return 0;
+    }
     return computeRemainingMsFromSnapshot(
       v.actionDeadline,
       this.spectateService.serverClockOffsetMs(),
@@ -141,22 +143,15 @@ export class SpectateScreenComponent implements OnInit, OnDestroy {
     () => this.timerActive() && isUrgent(this.timerRemainingMs()),
   );
 
-  readonly isMatchFinished = computed<boolean>(() => {
-    const state = this.spectateService.matchState();
-    return state?.status === 'FINISHED';
-  });
-
-  readonly matchWinner = computed<string | null>(
-    () => this.spectateService.matchState()?.matchWinner ?? null,
-  );
-
   ngOnInit(): void {
     const matchId = this.route.snapshot.paramMap.get('matchId') ?? '';
     this.matchId.set(matchId);
     this.spectateService.init(matchId);
 
     this.timerIntervalId = window.setInterval(() => {
-      if (this.timerActive()) this.nowMs.set(Date.now());
+      if (this.timerActive()) {
+        this.nowMs.set(Date.now());
+      }
     }, SpectateScreenComponent.TIMER_TICK_MS);
 
     this._gameWonSub = this.spectateService.gameWon$.subscribe((e) => this.openGameWonDialog(e));
@@ -170,7 +165,9 @@ export class SpectateScreenComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.timerIntervalId !== null) clearInterval(this.timerIntervalId);
+    if (this.timerIntervalId !== null) {
+      clearInterval(this.timerIntervalId);
+    }
     this._gameWonSub?.unsubscribe();
     this._envidoSub?.unsubscribe();
     this._matchEndedSub?.unsubscribe();
@@ -313,7 +310,10 @@ export class SpectateScreenComponent implements OnInit, OnDestroy {
         disableClose: true,
       },
     );
-    ref.afterClosed().subscribe(() => this.eventQueue.resumeAck());
+    ref.afterClosed().subscribe(() => {
+      this.eventQueue.resumeAck();
+      void this.router.navigate(['/friends']);
+    });
   }
 
   private openEnvidoResultDialog(payload: EnvidoResolvedPayload): void {

@@ -11,17 +11,6 @@
         Volver a amigos
       </button>
     </div>
-  } @else if (isMatchFinished()) {
-    <div class="spectate-screen__finished">
-      @if (matchWinner()) {
-        <p class="spectate-screen__winner">Ganó {{ matchWinner() }}</p>
-      } @else {
-        <p class="spectate-screen__winner">Partida finalizada</p>
-      }
-      <button type="button" class="t3-btn t3-btn--neutral" (click)="goBack()">
-        Volver a amigos
-      </button>
-    </div>
   } @else if (matchView()) {
     <header class="spectate-screen__banner">
       <span class="spectate-screen__banner-text">Estás mirando</span>

@@ -22,8 +22,9 @@
       <span class="envido-result__name">{{ data.manoName }}:</span>
       <span
         class="envido-result__points"
-        [class.envido-result__points--win]="data.won"
-        [class.envido-result__points--lose]="!data.won"
+        [class.envido-result__points--win]="!data.spectatorMode && data.won"
+        [class.envido-result__points--lose]="!data.spectatorMode && !data.won"
+        [class.envido-result__points--spectator]="data.spectatorMode"
       >
         {{ manoScoreDisplay }}
       </span>
@@ -33,8 +34,9 @@
       <span class="envido-result__name">{{ data.pieName }}:</span>
       <span
         class="envido-result__points"
-        [class.envido-result__points--win]="data.won"
-        [class.envido-result__points--lose]="!data.won"
+        [class.envido-result__points--win]="!data.spectatorMode && data.won"
+        [class.envido-result__points--lose]="!data.spectatorMode && !data.won"
+        [class.envido-result__points--spectator]="data.spectatorMode"
       >
         {{ pieScoreDisplay }}
       </span>

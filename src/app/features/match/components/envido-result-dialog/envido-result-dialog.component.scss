@@ -61,6 +61,10 @@
     &--lose {
       color: var(--t3-envido-lose-text);
     }
+
+    &--spectator {
+      color: var(--t3-white);
+    }
   }
 
   &__accept {

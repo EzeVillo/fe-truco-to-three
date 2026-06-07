@@ -10,6 +10,7 @@
     class="game-won__title"
     [class.game-won__title--match-won]="!data.spectatorMode && isMatchWon"
     [class.game-won__title--match-lost]="!data.spectatorMode && isMatchLost"
+    [class.game-won__title--spectator]="data.spectatorMode"
   >
     {{ titleText }}
   </h2>
@@ -22,8 +23,9 @@
         <span class="game-won__player-name" [title]="data.playerName">{{ data.playerName }}</span>
         <span
           class="game-won__player-games"
-          [class.game-won__player-games--win]="data.playerGamesWon >= data.opponentGamesWon"
-          [class.game-won__player-games--lose]="data.playerGamesWon < data.opponentGamesWon"
+          [class.game-won__player-games--win]="!data.spectatorMode && data.playerGamesWon >= data.opponentGamesWon"
+          [class.game-won__player-games--lose]="!data.spectatorMode && data.playerGamesWon < data.opponentGamesWon"
+          [class.game-won__player-games--spectator]="data.spectatorMode"
         >
           {{ data.playerGamesWon }}
         </span>
@@ -37,8 +39,9 @@
         }}</span>
         <span
           class="game-won__player-games"
-          [class.game-won__player-games--win]="data.opponentGamesWon > data.playerGamesWon"
-          [class.game-won__player-games--lose]="data.opponentGamesWon <= data.playerGamesWon"
+          [class.game-won__player-games--win]="!data.spectatorMode && data.opponentGamesWon > data.playerGamesWon"
+          [class.game-won__player-games--lose]="!data.spectatorMode && data.opponentGamesWon <= data.playerGamesWon"
+          [class.game-won__player-games--spectator]="data.spectatorMode"
         >
           {{ data.opponentGamesWon }}
         </span>

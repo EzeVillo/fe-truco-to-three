@@ -67,17 +67,29 @@ export class GameWonDialogComponent {
         ? `Ganó ${this.winnerName}`
         : `Game para ${this.winnerName}`;
     }
-    if (this.isMatchWon) return '¡Ganaste el match!';
-    if (this.isMatchLost) return '¡Perdiste el match!';
-    if (this.isGameOnlyWon) return '¡Game ganado!';
+    if (this.isMatchWon) {
+      return '¡Ganaste el match!';
+    }
+    if (this.isMatchLost) {
+      return '¡Perdiste el match!';
+    }
+    if (this.isGameOnlyWon) {
+      return '¡Game ganado!';
+    }
     return 'Game perdido';
   }
 
   /** Texto de contexto según el estado de la serie, o `null` si no corresponde. */
   get contextMessage(): string | null {
-    if (this.data.spectatorMode) return null;
-    if (this.isMatchWon) return '¡Felicitaciones!';
-    if (this.isMatchLost) return '¡La próxima será!';
+    if (this.data.spectatorMode) {
+      return null;
+    }
+    if (this.isMatchWon) {
+      return '¡Felicitaciones!';
+    }
+    if (this.isMatchLost) {
+      return '¡La próxima será!';
+    }
     return null;
   }
 

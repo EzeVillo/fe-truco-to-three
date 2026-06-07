@@ -21,6 +21,10 @@
     &--match-lost {
       color: var(--t3-envido-lose-text);
     }
+
+    &--spectator {
+      color: var(--t3-white);
+    }
   }
 
   &__series {
@@ -78,6 +82,10 @@
 
     &--lose {
       color: var(--t3-envido-lose-text);
+    }
+
+    &--spectator {
+      color: var(--t3-white);
     }
   }
 

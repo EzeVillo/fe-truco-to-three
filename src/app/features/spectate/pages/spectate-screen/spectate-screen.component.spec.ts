@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { By } from '@angular/platform-browser';
+import { MatDialog } from '@angular/material/dialog';
 import { SpectateScreenComponent } from './spectate-screen.component';
 import { SpectateStateService } from '../../services/spectate-state.service';
 import { signal } from '@angular/core';
@@ -31,6 +32,8 @@ function makeMatchState(overrides: Partial<MatchState> = {}): MatchState {
 describe('SpectateScreenComponent', () => {
   let fixture: ComponentFixture<SpectateScreenComponent>;
   let routerSpy: { navigate: ReturnType<typeof vi.fn> };
+  let afterClosed$: Subject<void>;
+  let dialogMock: { open: ReturnType<typeof vi.fn>; closeAll: ReturnType<typeof vi.fn> };
   let mockService: {
     matchState: ReturnType<typeof signal<MatchState | null>>;
     spectatorCount: ReturnType<typeof signal<number>>;
@@ -47,6 +50,13 @@ describe('SpectateScreenComponent', () => {
 
   beforeEach(() => {
     routerSpy = { navigate: vi.fn().mockResolvedValue(true) };
+    afterClosed$ = new Subject<void>();
+    dialogMock = {
+      open: vi.fn(() => ({
+        afterClosed: () => afterClosed$.asObservable(),
+      })),
+      closeAll: vi.fn(),
+    };
 
     mockService = {
       matchState: signal<MatchState | null>(null),
@@ -66,6 +76,7 @@ describe('SpectateScreenComponent', () => {
       imports: [SpectateScreenComponent],
       providers: [
         { provide: Router, useValue: routerSpy },
+        { provide: MatDialog, useValue: dialogMock },
         {
           provide: ActivatedRoute,
           useValue: { snapshot: { paramMap: { get: () => 'match-1' } } },
@@ -123,15 +134,25 @@ describe('SpectateScreenComponent', () => {
     expect(text).toContain('4');
   });
 
-  it('muestra resultado neutral cuando la partida termina (sin modal de jugador)', () => {
+  it('al terminar el match abre el diálogo y al cerrarlo navega a /friends', () => {
     mockService.loading.set(false);
-    mockService.matchState.set(
-      makeMatchState({ status: 'FINISHED', matchWinner: 'alice' }),
-    );
+    mockService.matchState.set(makeMatchState());
     fixture.detectChanges();
-    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('Ganó alice');
-    expect(fixture.debugElement.query(By.css('app-game-board'))).toBeNull();
+
+    mockService.matchEnded$.next({
+      winnerSeat: 'PLAYER_ONE',
+      gamesWonPlayerOne: 2,
+      gamesWonPlayerTwo: 1,
+      reason: 'FINISHED',
+    });
+
+    expect(dialogMock.open).toHaveBeenCalled();
+    expect(routerSpy.navigate).not.toHaveBeenCalledWith(['/friends']);
+
+    afterClosed$.next();
+    afterClosed$.complete();
+
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['/friends']);
   });
 
   it('muestra la respuesta de truco (¡No quiero!) sobre el asiento que respondió', () => {

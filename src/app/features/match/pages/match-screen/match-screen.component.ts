@@ -43,6 +43,7 @@ import { MatchEventQueueService } from '../../services/match-event-queue.service
 import { RematchStateService } from '../../services/rematch-state.service';
 import { RematchApiService } from '../../services/rematch-api.service';
 import { MatchCallAudioService } from '../../services/match-call-audio.service';
+import { BackgroundMusicService } from '../../services/background-music.service';
 import { PresenceCoordinatorService } from '../../../../core/services/presence-coordinator.service';
 import { getErrorCopy } from '../../../../shared/error-copy/error-copy';
 import type {
@@ -178,6 +179,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   private readonly rematchStateService = inject(RematchStateService);
   private readonly rematchApiService = inject(RematchApiService);
   private readonly matchCallAudioService = inject(MatchCallAudioService);
+  private readonly backgroundMusic = inject(BackgroundMusicService);
   private readonly presenceCoordinator = inject(PresenceCoordinatorService);
   private readonly matchesApiService = inject(MatchesApiService);
   private readonly vcr = inject(ViewContainerRef);
@@ -267,6 +269,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.backgroundMusic.start();
     // Usar paramMap para detectar cambios de matchId al navegar a la revancha (D4).
     this._paramSub = this.route.paramMap.subscribe((params) => {
       const newId = params.get('matchId') ?? '';
@@ -332,6 +335,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.backgroundMusic.stop();
     this._paramSub?.unsubscribe();
     this._preGameClosedSub?.unsubscribe();
     this._endedSub?.unsubscribe();
@@ -346,6 +350,12 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   }
 
   private handleMatchEvent(event: MatchWsEvent): void {
+    // El evento llega ya post-delay (applyTransactional), sincronizado con la
+    // carta apareciendo en el tablero: local sin delay, rival con su delay.
+    if (event.eventType === 'CARD_PLAYED') {
+      this.playCardThrowAudio();
+    }
+
     if (event.eventType === 'PLAYER_READY') {
       this.markPlayerReady(event.payload as PlayerReadyPayload);
     }
@@ -465,6 +475,14 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   private playCallAudio(event: MatchWsEvent): void {
     try {
       this.matchCallAudioService.playForEvent(event);
+    } catch {
+      // El audio no debe bloquear ni romper el flujo visual de la partida.
+    }
+  }
+
+  private playCardThrowAudio(): void {
+    try {
+      this.matchCallAudioService.playCardThrow();
     } catch {
       // El audio no debe bloquear ni romper el flujo visual de la partida.
     }

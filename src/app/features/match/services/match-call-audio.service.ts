@@ -24,6 +24,14 @@ export const MATCH_CALL_AUDIO_ASSETS: readonly MatchCallAudioAsset[] = [
   { key: 'VALE_CUATRO', fileName: 'vale-cuatro.mp3', path: '/audio/calls/vale-cuatro.mp3' },
 ];
 
+/**
+ * SFX genérico de "tirar carta". No es un canto (no entra en
+ * resolveMatchCallAudioPath, que mapea sólo voces): se dispara aparte vía
+ * playCardThrow() cuando se aplica un CARD_PLAYED, ya sincronizado con el
+ * delay por rol que resuelve MatchEventQueueService.
+ */
+export const MATCH_CARD_THROW_AUDIO_PATH = '/audio/freesound_community-card-sounds-35956.mp3';
+
 const audioPathByKey = new Map(MATCH_CALL_AUDIO_ASSETS.map((asset) => [asset.key, asset.path]));
 
 export function resolveMatchCallAudioPath(event: MatchWsEvent): string | null {
@@ -66,6 +74,11 @@ export class MatchCallAudioService {
       return;
     }
     this.playPath(path);
+  }
+
+  /** Sonido de carta arrojada. Se invoca al aplicar CARD_PLAYED (post-delay). */
+  playCardThrow(): void {
+    this.playPath(MATCH_CARD_THROW_AUDIO_PATH);
   }
 
   private playPath(path: string): void {

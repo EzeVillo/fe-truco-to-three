@@ -8,6 +8,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { PresenceCoordinatorService } from '../../../core/services/presence-coordinator.service';
 import { SpectatorCountStore } from '../../services/spectator-count.store';
 import { MatchActionsService } from '../../../features/match/services/match-actions.service';
+import { BackgroundMusicService } from '../../../features/match/services/background-music.service';
 import { ConfirmLogoutDialogComponent } from '../confirm-logout-dialog/confirm-logout-dialog.component';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 
@@ -27,6 +28,7 @@ export class GlobalHeaderComponent {
   private readonly router = inject(Router);
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly matchActions = inject(MatchActionsService);
+  readonly backgroundMusic = inject(BackgroundMusicService);
 
   readonly menuOpen = signal(false);
 
@@ -64,6 +66,21 @@ export class GlobalHeaderComponent {
   });
 
   readonly showAbandonMatch = computed(() => this.inMatch() && this.currentMatchId() !== null);
+
+  /** El control de música sólo aplica donde suena: partida o modo espectador. */
+  readonly showMusicControl = computed(() => this.inMatch() || this.isSpectating());
+
+  /** Porcentaje de volumen (0-100) para el input range del menú. */
+  readonly musicVolumePercent = computed(() => Math.round(this.backgroundMusic.volume() * 100));
+
+  toggleMusic(): void {
+    this.backgroundMusic.toggleEnabled();
+  }
+
+  onMusicVolumeInput(event: Event): void {
+    const value = Number((event.target as HTMLInputElement).value);
+    this.backgroundMusic.setVolume(value / 100);
+  }
 
   userLabel(): string {
     return this.authStore.isGuest() ? 'Invitado' : (this.authStore.username() ?? 'Jugador');

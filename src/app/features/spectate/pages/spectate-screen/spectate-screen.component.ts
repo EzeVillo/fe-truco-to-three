@@ -25,6 +25,7 @@ import {
 import { SpectateStateService } from '../../services/spectate-state.service';
 import { MatchEventQueueService } from '../../../match/services/match-event-queue.service';
 import { MatchCallAudioService } from '../../../match/services/match-call-audio.service';
+import { BackgroundMusicService } from '../../../match/services/background-music.service';
 import { derivePendingCall } from '../../../match/utils/derive-pending-call';
 import { callDisplayMapper } from '../../../match/utils/call-display-mapper';
 import {
@@ -58,6 +59,7 @@ export class SpectateScreenComponent implements OnInit, OnDestroy {
   readonly spectateService = inject(SpectateStateService);
   private readonly eventQueue = inject(MatchEventQueueService);
   private readonly callAudio = inject(MatchCallAudioService);
+  private readonly backgroundMusic = inject(BackgroundMusicService);
 
   private _gameWonSub?: Subscription;
   private _envidoSub?: Subscription;
@@ -144,6 +146,7 @@ export class SpectateScreenComponent implements OnInit, OnDestroy {
   );
 
   ngOnInit(): void {
+    this.backgroundMusic.start();
     const matchId = this.route.snapshot.paramMap.get('matchId') ?? '';
     this.matchId.set(matchId);
     this.spectateService.init(matchId);
@@ -165,6 +168,7 @@ export class SpectateScreenComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.backgroundMusic.stop();
     if (this.timerIntervalId !== null) {
       clearInterval(this.timerIntervalId);
     }
@@ -182,6 +186,16 @@ export class SpectateScreenComponent implements OnInit, OnDestroy {
    * MatchScreenComponent.handleMatchEvent pero con viewerSeat fijo en PLAYER_ONE.
    */
   private handleCallDisplay(event: MatchWsEvent): void {
+    // El evento llega post-delay: el espectador ve ambos asientos como remotos,
+    // así que la carta y su sonido aparecen sincronizados con el delay de la cola.
+    if (event.eventType === 'CARD_PLAYED') {
+      try {
+        this.callAudio.playCardThrow();
+      } catch {
+        // El audio nunca debe romper el flujo visual.
+      }
+    }
+
     // Reset al cerrar ronda/juego/partida.
     if (
       event.eventType === 'ROUND_STARTED' ||

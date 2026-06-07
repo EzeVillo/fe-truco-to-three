@@ -146,6 +146,16 @@ describe('MatchCallAudioService', () => {
     expect(createdAudios[0].play).toHaveBeenCalledOnce();
   });
 
+  it('playCardThrow reproduce el SFX de carta', () => {
+    const service = new MatchCallAudioService();
+
+    service.playCardThrow();
+
+    expect(createdAudios).toHaveLength(1);
+    expect(createdAudios[0].src).toBe('/audio/freesound_community-card-sounds-35956.mp3');
+    expect(createdAudios[0].play).toHaveBeenCalledOnce();
+  });
+
   it('reinicia el mismo audio si el canto se repite', () => {
     const service = new MatchCallAudioService();
     const event = makeEvent('TRUCO_CALLED', { callerSeat: 'PLAYER_ONE', call: 'TRUCO' });

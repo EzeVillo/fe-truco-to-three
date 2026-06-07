@@ -70,6 +70,30 @@
                 Dejar de ver
               </button>
             }
+            @if (showMusicControl()) {
+              <div class="global-header__music" role="group" aria-label="Música de fondo">
+                <button
+                  type="button"
+                  class="global-header__music-toggle"
+                  [attr.aria-pressed]="backgroundMusic.enabled()"
+                  [attr.aria-label]="backgroundMusic.enabled() ? 'Silenciar música' : 'Activar música'"
+                  (click)="toggleMusic()"
+                >
+                  <span aria-hidden="true">{{ backgroundMusic.enabled() ? '🔊' : '🔇' }}</span>
+                </button>
+                <input
+                  type="range"
+                  class="global-header__music-slider"
+                  min="0"
+                  max="100"
+                  step="1"
+                  [value]="musicVolumePercent()"
+                  [disabled]="!backgroundMusic.enabled()"
+                  aria-label="Volumen de la música"
+                  (input)="onMusicVolumeInput($event)"
+                />
+              </div>
+            }
             @if (showAbandonMatch()) {
               <button type="button" class="global-header__menu-item" (click)="onAbandonClick()">
                 Abandonar partida

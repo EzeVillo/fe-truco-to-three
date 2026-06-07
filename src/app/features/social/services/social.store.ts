@@ -93,6 +93,16 @@ function upsertFriend(list: FriendSummary[], friendUsername: string): FriendSumm
       ];
 }
 
+function mergeFriendsFromApi(list: FriendSummary[], friends: FriendSummary[]): FriendSummary[] {
+  let next = list;
+  for (const friend of friends) {
+    next = next.some((f) => sameUsername(f.friendUsername, friend.friendUsername))
+      ? next.map((f) => (sameUsername(f.friendUsername, friend.friendUsername) ? friend : f))
+      : [...next, friend];
+  }
+  return next;
+}
+
 /** Merge de disponibilidad sobre un amigo existente (no-op si no está en la lista). */
 function mergeAvailability(
   list: FriendSummary[],
@@ -220,6 +230,7 @@ export const SocialStore = signalStore(
             outgoing: removeOutgoing(store.outgoing(), event.payload.addresseeUsername),
             friends: upsertFriend(store.friends(), event.payload.addresseeUsername),
           });
+          refreshFriends();
           break;
         case 'FRIEND_REQUEST_DECLINED':
           patchState(store, {
@@ -388,6 +399,20 @@ export const SocialStore = signalStore(
       });
     }
 
+    function refreshFriends(): void {
+      if (!authStore.isAuthenticated() || authStore.isGuest()) {
+        return;
+      }
+      api.listFriends().subscribe({
+        next: (friends) => {
+          patchState(store, { friends: mergeFriendsFromApi(store.friends(), friends) });
+        },
+        error: () => {
+          // La acción ya tuvo éxito; si este refresh falla, el bootstrap/WS posterior reconcilia.
+        },
+      });
+    }
+
     return {
       /** Arranca el gating de la suscripción WS (idempotente). */
       start(): void {
@@ -457,6 +482,7 @@ export const SocialStore = signalStore(
               incoming: removeIncoming(store.incoming(), username),
               friends: upsertFriend(store.friends(), username),
             });
+            refreshFriends();
           },
           error: (err: unknown) => {
             patchState(store, { actionError: getErrorCopy('SOCIAL', err) });

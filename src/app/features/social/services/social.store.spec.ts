@@ -234,6 +234,19 @@ describe('SocialStore', () => {
     expect(store.friends()).toEqual([friend('martina')]);
   });
 
+  it('FRIEND_REQUEST_ACCEPTED: reconcilia la presencia del nuevo amigo desde REST', () => {
+    const { store, api, events$ } = setup();
+    api.listFriends.mockReturnValue(of([friend('martina', { online: true })]));
+    store.start();
+    store.sendRequest('martina');
+    events$.next({
+      eventType: 'FRIEND_REQUEST_ACCEPTED',
+      timestamp: 3,
+      payload: { requesterUsername: 'me', addresseeUsername: 'martina' },
+    });
+    expect(store.friends()).toEqual([friend('martina', { online: true })]);
+  });
+
   it('FRIEND_REQUEST_DECLINED: quita de outgoing', () => {
     const { store, events$ } = setup();
     store.start();
@@ -330,6 +343,20 @@ describe('SocialStore', () => {
     store.acceptRequest('leo');
     expect(store.incoming()).toEqual([]);
     expect(store.friends()).toEqual([friend('leo')]);
+  });
+
+  it('acceptRequest(): al aceptar desde amigos refresca online/availability del nuevo amigo', () => {
+    const { store, api, events$ } = setup();
+    api.listFriends.mockReturnValue(of([friend('leo', { online: true })]));
+    store.start();
+    events$.next({
+      eventType: 'FRIEND_REQUEST_RECEIVED',
+      timestamp: 1,
+      payload: { requesterUsername: 'leo', addresseeUsername: 'me' },
+    });
+    store.acceptRequest('leo');
+    expect(store.incoming()).toEqual([]);
+    expect(store.friends()).toEqual([friend('leo', { online: true })]);
   });
 
   it('removeFriend(): optimista; rollback ante fallo', () => {

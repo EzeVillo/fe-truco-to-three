@@ -22,6 +22,12 @@ import { MatchStateService } from '../../services/match-state.service';
 
 export interface RematchDialogResult {
   confirmedMatchId: string | null;
+  /**
+   * true cuando el diálogo se cierra porque ya navegamos a otra partida por fuera
+   * (p. ej. la navegación por presence ganó la carrera al REMATCH_CONFIRMED).
+   * En ese caso el host NO debe volver a navegar al cerrar.
+   */
+  skipNavigation?: boolean;
 }
 
 @Component({

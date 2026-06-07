@@ -14,7 +14,10 @@ import { RematchStateService } from '../../services/rematch-state.service';
 import { MatchCallAudioService } from '../../services/match-call-audio.service';
 import { GameWonDialogComponent } from '../../components/game-won-dialog/game-won-dialog.component';
 import { EnvidoResultDialogComponent } from '../../components/envido-result-dialog/envido-result-dialog.component';
-import { RematchDialogComponent } from '../../components/rematch-dialog/rematch-dialog.component';
+import {
+  RematchDialogComponent,
+  type RematchDialogResult,
+} from '../../components/rematch-dialog/rematch-dialog.component';
 import { mockMatchViewerPlayerOne } from '../../mocks/match-state.mocks';
 import type { RematchSession } from '../../models/rematch.models';
 
@@ -969,6 +972,70 @@ describe('MatchScreenComponent', () => {
       expect(fixture.componentInstance.matchId()).toBe('new-match-42');
       expect(initSpy).toHaveBeenCalled();
       expect(resetSpy).toHaveBeenCalled();
+    });
+
+    it('cierra el diálogo de revancha (sin re-navegar) si navegamos por fuera (carrera con presence)', () => {
+      setupComponent({ matchId: 'test-match' });
+      matchStateService.loading.set(false);
+      matchStateService.state.set(mockMatchViewerPlayerOne);
+      fixture.detectChanges();
+
+      const rematchStateService = fixture.componentInstance[
+        'rematchStateService'
+      ] as RematchStateService;
+      rematchStateService.session.set({
+        sessionId: 'sid-1',
+        originMatchId: 'test-match',
+        status: 'OPEN',
+        selfChoice: 'WANTS_REMATCH',
+        opponentChoice: 'UNDECIDED',
+        expiresAt: Date.now() + 30_000,
+        resultMatchId: null,
+      });
+
+      // Modal de resultado + modal de revancha comparten dialog.open; devolvemos refs distintos.
+      const resultAfterClosed$ = new Subject<void>();
+      const rematchAfterClosed$ = new Subject<RematchDialogResult | undefined>();
+      const rematchClose = vi.fn();
+      const dialogSpy = vi.spyOn(fixture.componentInstance['dialog'], 'open');
+      dialogSpy
+        .mockReturnValueOnce({
+          afterClosed: () => resultAfterClosed$.asObservable(),
+          close: vi.fn(),
+          componentInstance: {},
+        } as never)
+        .mockReturnValueOnce({
+          afterClosed: () => rematchAfterClosed$.asObservable(),
+          close: rematchClose,
+          componentInstance: {},
+        } as never);
+
+      const routerSpy = vi.spyOn(fixture.componentInstance['router'], 'navigate');
+
+      // Fin de partida → modal de resultado → al cerrarlo se abre el de revancha.
+      matchStateService.matchEnded$.next({
+        winnerSeat: 'PLAYER_ONE',
+        gamesWonPlayerOne: 2,
+        gamesWonPlayerTwo: 0,
+        reason: 'FINISHED',
+      });
+      fixture.detectChanges();
+      resultAfterClosed$.next();
+      fixture.detectChanges();
+
+      // Presence gana la carrera: navega a la nueva partida → cambia el paramMap.
+      paramMapSubject.next(makeParamMap({ matchId: 'new-match-42' }));
+      fixture.detectChanges();
+
+      // El diálogo de revancha se cierra pidiendo no re-navegar.
+      expect(rematchClose).toHaveBeenCalledWith({
+        confirmedMatchId: null,
+        skipNavigation: true,
+      });
+
+      // Y su afterClosed con skipNavigation NO debe mandarnos al lobby.
+      rematchAfterClosed$.next({ confirmedMatchId: null, skipNavigation: true });
+      expect(routerSpy).not.toHaveBeenCalledWith(['/']);
     });
   });
 });

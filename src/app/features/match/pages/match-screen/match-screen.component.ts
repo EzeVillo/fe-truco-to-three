@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, type MatDialogRef } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { deriveMatchView, type MatchView } from '../../utils/derive-match-view';
 import { derivePendingCall } from '../../utils/derive-pending-call';
@@ -183,6 +183,8 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   private readonly vcr = inject(ViewContainerRef);
   private readonly destroyRef = inject(DestroyRef);
   private _rematchInited = false;
+  /** Ref al diálogo de revancha abierto, para cerrarlo si navegamos antes de su propio cierre. */
+  private rematchDialogRef: MatDialogRef<RematchDialogComponent, RematchDialogResult> | null = null;
   /** matchId para el que ya se hidrató el bubble de canto desde el snapshot. */
   private _callHydratedMatchId: string | null = null;
   private readonly callDisplayTimers = new Map<string, number>();
@@ -287,6 +289,11 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
         joinCode?: string;
       };
       this.joinCode.set(navState.joinCode ?? readJoinCode(newId));
+      // Si navegamos a otra partida (típico: revancha confirmada cuya navegación llegó
+      // por presence antes de procesar REMATCH_CONFIRMED), el reset() de abajo deja la
+      // sesión en null y el diálogo de revancha quedaría colgado mostrando "Salir" con la
+      // nueva partida de fondo. Lo cerramos acá pidiendo NO volver a navegar.
+      this.rematchDialogRef?.close({ confirmedMatchId: null, skipNavigation: true });
       this.rematchStateService.reset();
       this.matchStateService.init(newId);
     });
@@ -605,7 +612,14 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
       },
     );
 
+    this.rematchDialogRef = dialogRef;
+
     dialogRef.afterClosed().subscribe((result) => {
+      this.rematchDialogRef = null;
+      // Ya navegamos por fuera (carrera con presence): no pisar ese destino.
+      if (result?.skipNavigation) {
+        return;
+      }
       if (result?.confirmedMatchId) {
         this.router.navigate(['/match', result.confirmedMatchId]);
       } else {

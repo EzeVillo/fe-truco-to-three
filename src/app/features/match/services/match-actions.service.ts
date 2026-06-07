@@ -53,8 +53,17 @@ export class MatchActionsService {
     return this.post<PlayCardRequest>(`${this.base}/${matchId}/play-card`, request);
   }
 
-  private post<T>(url: string, body: T | undefined): Observable<void> {
-    return this.http.post<void>(url, body).pipe(
+  /** §4.12 POST /api/matches/{matchId}/abandon */
+  abandon(matchId: string): Observable<void> {
+    return this.post(`${this.base}/${matchId}/abandon`, undefined, false);
+  }
+
+  private post<T>(url: string, body: T | undefined, suppressErrors = true): Observable<void> {
+    const req$ = this.http.post<void>(url, body);
+    if (!suppressErrors) {
+      return req$;
+    }
+    return req$.pipe(
       catchError((err: unknown) => {
         console.warn('[match-actions] Request failed:', url, err);
         return EMPTY;

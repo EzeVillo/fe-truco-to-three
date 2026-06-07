@@ -172,9 +172,11 @@ describe('GlobalHeaderComponent', () => {
 
     expect(el.querySelector('.global-header__menu-item[href]')).toBeNull();
     expect(el.querySelector('.global-header__menu-item--readonly')).toBeNull();
-    expect(el.querySelector('button.global-header__menu-item')?.textContent ?? '').toContain(
-      'Salir',
-    );
+    const buttons = Array.from(
+      el.querySelectorAll<HTMLButtonElement>('button.global-header__menu-item'),
+    ).map((b) => b.textContent ?? '');
+    expect(buttons.some((t) => t.includes('Salir'))).toBe(true);
+    expect(buttons.some((t) => t.includes('Abandonar partida'))).toBe(true);
   });
 
   it('click en "Salir" abre ConfirmLogoutDialog', () => {
@@ -190,8 +192,11 @@ describe('GlobalHeaderComponent', () => {
     fixture.detectChanges();
     openMenu(fixture);
 
-    const btn = fixture.debugElement.query(By.css('button.global-header__menu-item'));
-    btn.nativeElement.click();
+    const btn = fixture.debugElement
+      .queryAll(By.css('button.global-header__menu-item'))
+      .find((de) => (de.nativeElement as HTMLElement).textContent?.includes('Salir'));
+    expect(btn).toBeTruthy();
+    btn!.nativeElement.click();
 
     expect(openSpy).toHaveBeenCalledWith(ConfirmLogoutDialogComponent, expect.any(Object));
   });

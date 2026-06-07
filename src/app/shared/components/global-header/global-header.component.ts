@@ -7,7 +7,9 @@ import { AuthStore } from '../../../core/auth/auth.store';
 import { AuthService } from '../../../core/auth/auth.service';
 import { PresenceCoordinatorService } from '../../../core/services/presence-coordinator.service';
 import { SpectatorCountStore } from '../../services/spectator-count.store';
+import { MatchActionsService } from '../../../features/match/services/match-actions.service';
 import { ConfirmLogoutDialogComponent } from '../confirm-logout-dialog/confirm-logout-dialog.component';
+import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-global-header',
@@ -24,6 +26,7 @@ export class GlobalHeaderComponent {
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
   private readonly host = inject(ElementRef<HTMLElement>);
+  private readonly matchActions = inject(MatchActionsService);
 
   readonly menuOpen = signal(false);
 
@@ -54,6 +57,14 @@ export class GlobalHeaderComponent {
     () => this.authStore.isAuthenticated() && !this.authStore.isGuest() && !this.busy(),
   );
 
+  readonly currentMatchId = computed(() => {
+    const url = this.currentUrl();
+    const match = /^\/match\/([^\/]+)/.exec(url);
+    return match ? match[1] : null;
+  });
+
+  readonly showAbandonMatch = computed(() => this.inMatch() && this.currentMatchId() !== null);
+
   userLabel(): string {
     return this.authStore.isGuest() ? 'Invitado' : (this.authStore.username() ?? 'Jugador');
   }
@@ -71,6 +82,39 @@ export class GlobalHeaderComponent {
   leaveSpectate(): void {
     this.closeMenu();
     void this.router.navigate(['/friends']);
+  }
+
+  onAbandonClick(): void {
+    this.closeMenu();
+    const matchId = this.currentMatchId();
+    if (!matchId) {
+      return;
+    }
+    const ref = this.dialog.open<ConfirmDialogComponent, unknown, boolean>(ConfirmDialogComponent, {
+      data: {
+        title: '¿Abandonar partida?',
+        message: 'Si abandonás, perdés la partida.',
+        variant: 'destructive',
+        confirmLabel: 'Abandonar',
+        cancelLabel: 'Cancelar',
+      },
+      panelClass: 't3-confirm-dialog',
+      backdropClass: 't3-confirm-backdrop',
+      autoFocus: 'button',
+      restoreFocus: true,
+    });
+    ref.afterClosed().subscribe((confirmed) => {
+      if (confirmed === true) {
+        this.matchActions.abandon(matchId).subscribe({
+          next: () => {
+            void this.router.navigateByUrl('/lobby');
+          },
+          error: () => {
+            // Error silencioso; el usuario permanece en la pantalla del match.
+          },
+        });
+      }
+    });
   }
 
   closeMenu(): void {

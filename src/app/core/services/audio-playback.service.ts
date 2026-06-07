@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
+import { EffectsVolumeService } from './effects-volume.service';
 
 type AudioContextCtor = typeof AudioContext;
 
@@ -40,6 +41,8 @@ function resolveAudioContextCtor(): AudioContextCtor | null {
  */
 @Injectable({ providedIn: 'root' })
 export class AudioPlaybackService {
+  private readonly effectsVolume = inject(EffectsVolumeService);
+
   private context: AudioContext | null = null;
   private useFallback = false;
 
@@ -174,10 +177,19 @@ export class AudioPlaybackService {
     if (!context) {
       return;
     }
+    const gainValue = this.effectsVolume.gain();
+    if (gainValue <= 0) {
+      // Efectos muteados: no malgastamos un source silencioso.
+      return;
+    }
     try {
       const source = context.createBufferSource();
       source.buffer = buffer;
-      source.connect(context.destination);
+      // GainNode por disparo: gobierna el volumen del bus de efectos en iOS.
+      const gain = context.createGain();
+      gain.gain.value = gainValue;
+      source.connect(gain);
+      gain.connect(context.destination);
       source.start(0);
     } catch {
       // El SFX es un realce no-bloqueante de la partida.
@@ -254,11 +266,16 @@ export class AudioPlaybackService {
   }
 
   private playFallback(path: string): void {
+    const gainValue = this.effectsVolume.gain();
+    if (gainValue <= 0) {
+      return;
+    }
     const audio = this.getFallbackAudio(path);
     if (!audio) {
       return;
     }
     try {
+      audio.volume = gainValue;
       audio.currentTime = 0;
       const result = audio.play();
       if (result) {

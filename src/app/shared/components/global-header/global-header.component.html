@@ -70,6 +70,28 @@
                 Dejar de ver
               </button>
             }
+            <div class="global-header__music" role="group" aria-label="Efectos de sonido">
+              <button
+                type="button"
+                class="global-header__music-toggle"
+                [attr.aria-pressed]="effectsVolume.enabled()"
+                [attr.aria-label]="effectsVolume.enabled() ? 'Silenciar efectos' : 'Activar efectos'"
+                (click)="toggleEffects()"
+              >
+                <span aria-hidden="true">{{ effectsVolume.enabled() ? '🔊' : '🔇' }}</span>
+              </button>
+              <input
+                type="range"
+                class="global-header__music-slider"
+                min="0"
+                max="100"
+                step="1"
+                [value]="effectsVolumePercent()"
+                [disabled]="!effectsVolume.enabled()"
+                aria-label="Volumen de los efectos"
+                (input)="onEffectsVolumeInput($event)"
+              />
+            </div>
             @if (showMusicControl()) {
               <div class="global-header__music" role="group" aria-label="Música de fondo">
                 <button
@@ -77,9 +99,10 @@
                   class="global-header__music-toggle"
                   [attr.aria-pressed]="backgroundMusic.enabled()"
                   [attr.aria-label]="backgroundMusic.enabled() ? 'Silenciar música' : 'Activar música'"
+                  [class.global-header__music-toggle--muted]="!backgroundMusic.enabled()"
                   (click)="toggleMusic()"
                 >
-                  <span aria-hidden="true">{{ backgroundMusic.enabled() ? '🔊' : '🔇' }}</span>
+                  <span aria-hidden="true">🎵</span>
                 </button>
                 <input
                   type="range"

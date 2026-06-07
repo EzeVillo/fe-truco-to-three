@@ -5,6 +5,7 @@ import {
   MATCH_CARD_THROW_AUDIO_PATH,
   MatchCallAudioService,
   resolveMatchCallAudioPath,
+  SPECTATOR_OUTCOME_CUE_AUDIO_PATH,
 } from './match-call-audio.service';
 import { AudioPlaybackService } from '../../../core/services/audio-playback.service';
 import type { MatchWsEvent } from '../models/match-ws-events';
@@ -132,12 +133,12 @@ describe('MatchCallAudioService', () => {
     );
   });
 
-  it('precarga las 17 pistas conocidas al construirse', () => {
+  it('precarga las 18 pistas conocidas al construirse', () => {
     createService();
 
     expect(playback.preload).toHaveBeenCalledOnce();
-    // 10 cantos + SFX de carta + 3 jingles win/lose = 17 pistas.
-    expect(playback.preload.mock.calls[0][0]).toHaveLength(17);
+    // 10 cantos + SFX de carta + cue de espectador + 3 jingles win/lose = 18 pistas.
+    expect(playback.preload.mock.calls[0][0]).toHaveLength(18);
   });
 
   it('reproduce la pista del canto vía el canal central', () => {
@@ -164,6 +165,14 @@ describe('MatchCallAudioService', () => {
 
     service.playOutcome('ENVIDO', false);
     expect(playback.play).toHaveBeenLastCalledWith('/audio/mixkit-losing-piano-2024.wav');
+  });
+
+  it('playSpectatorOutcomeCue reproduce el cue neutro de espectador', () => {
+    const service = createService();
+
+    service.playSpectatorOutcomeCue();
+
+    expect(playback.play).toHaveBeenCalledWith(SPECTATOR_OUTCOME_CUE_AUDIO_PATH);
   });
 
   it('ignora eventos desconocidos sin reproducir nada', () => {

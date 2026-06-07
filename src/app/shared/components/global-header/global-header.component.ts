@@ -9,6 +9,7 @@ import { PresenceCoordinatorService } from '../../../core/services/presence-coor
 import { SpectatorCountStore } from '../../services/spectator-count.store';
 import { MatchActionsService } from '../../../features/match/services/match-actions.service';
 import { BackgroundMusicService } from '../../../features/match/services/background-music.service';
+import { EffectsVolumeService } from '../../../core/services/effects-volume.service';
 import { ConfirmLogoutDialogComponent } from '../confirm-logout-dialog/confirm-logout-dialog.component';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 
@@ -29,6 +30,7 @@ export class GlobalHeaderComponent {
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly matchActions = inject(MatchActionsService);
   readonly backgroundMusic = inject(BackgroundMusicService);
+  readonly effectsVolume = inject(EffectsVolumeService);
 
   readonly menuOpen = signal(false);
 
@@ -80,6 +82,18 @@ export class GlobalHeaderComponent {
   onMusicVolumeInput(event: Event): void {
     const value = Number((event.target as HTMLInputElement).value);
     this.backgroundMusic.setVolume(value / 100);
+  }
+
+  /** Porcentaje de volumen (0-100) de los efectos para el input range del menú. */
+  readonly effectsVolumePercent = computed(() => Math.round(this.effectsVolume.volume() * 100));
+
+  toggleEffects(): void {
+    this.effectsVolume.toggleEnabled();
+  }
+
+  onEffectsVolumeInput(event: Event): void {
+    const value = Number((event.target as HTMLInputElement).value);
+    this.effectsVolume.setVolume(value / 100);
   }
 
   userLabel(): string {

@@ -1,5 +1,12 @@
+import { TestBed } from '@angular/core/testing';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { EffectsVolumeService } from './effects-volume.service';
 import { UI_CLICK_AUDIO_PATH, UiClickSoundService } from './ui-click-sound.service';
+
+interface GainMock {
+  gain: { value: number };
+  connect: ReturnType<typeof vi.fn>;
+}
 
 interface BufferSourceMock {
   buffer: unknown;
@@ -13,7 +20,13 @@ interface ContextMock {
   resume: ReturnType<typeof vi.fn>;
   decodeAudioData: ReturnType<typeof vi.fn>;
   createBufferSource: ReturnType<typeof vi.fn>;
+  createGain: ReturnType<typeof vi.fn>;
   sources: BufferSourceMock[];
+  gains: GainMock[];
+}
+
+function makeService(): UiClickSoundService {
+  return TestBed.inject(UiClickSoundService);
 }
 
 describe('UiClickSoundService', () => {
@@ -40,6 +53,12 @@ describe('UiClickSoundService', () => {
   beforeEach(() => {
     contexts = [];
     listeners = new Map();
+    try {
+      localStorage.clear();
+    } catch {
+      // Sin localStorage en el entorno de test: nada que limpiar.
+    }
+    TestBed.configureTestingModule({});
 
     vi.stubGlobal(
       'AudioContext',
@@ -47,6 +66,7 @@ describe('UiClickSoundService', () => {
         this.state = 'running';
         this.destination = { id: 'destination' };
         this.sources = [];
+        this.gains = [];
         this.resume = vi.fn().mockResolvedValue(undefined);
         this.decodeAudioData = vi.fn().mockResolvedValue(decodedBuffer);
         this.createBufferSource = vi.fn(() => {
@@ -57,6 +77,11 @@ describe('UiClickSoundService', () => {
           };
           this.sources.push(source);
           return source;
+        });
+        this.createGain = vi.fn(() => {
+          const gain: GainMock = { gain: { value: 1 }, connect: vi.fn() };
+          this.gains.push(gain);
+          return gain;
         });
         contexts.push(this);
       },
@@ -81,7 +106,7 @@ describe('UiClickSoundService', () => {
   });
 
   it('decodifica el WAV una sola vez al arrancar', async () => {
-    const service = new UiClickSoundService();
+    const service = makeService();
     service.start();
     await flush();
 
@@ -91,7 +116,7 @@ describe('UiClickSoundService', () => {
   });
 
   it('dispara un buffer source al hacer click en un botón', async () => {
-    const service = new UiClickSoundService();
+    const service = makeService();
     service.start();
     await flush();
 
@@ -100,12 +125,26 @@ describe('UiClickSoundService', () => {
     const context = contexts[0];
     expect(context.createBufferSource).toHaveBeenCalledOnce();
     expect(context.sources[0].buffer).toBe(decodedBuffer);
-    expect(context.sources[0].connect).toHaveBeenCalledWith(context.destination);
+    // El source pasa por el GainNode del bus de efectos, y éste a destination.
+    expect(context.sources[0].connect).toHaveBeenCalledWith(context.gains[0]);
+    expect(context.gains[0].connect).toHaveBeenCalledWith(context.destination);
+    expect(context.gains[0].gain.value).toBe(1);
     expect(context.sources[0].start).toHaveBeenCalledWith(0);
   });
 
+  it('no reproduce el click cuando los efectos están muteados', async () => {
+    const service = makeService();
+    service.start();
+    await flush();
+    TestBed.inject(EffectsVolumeService).toggleEnabled(); // mute
+
+    clickOn(elementClosest(true));
+
+    expect(contexts[0].createBufferSource).not.toHaveBeenCalled();
+  });
+
   it('no reproduce nada al hacer click fuera de un botón', async () => {
-    const service = new UiClickSoundService();
+    const service = makeService();
     service.start();
     await flush();
 
@@ -115,7 +154,7 @@ describe('UiClickSoundService', () => {
   });
 
   it('crea un buffer source nuevo por cada click (permite solapado)', async () => {
-    const service = new UiClickSoundService();
+    const service = makeService();
     service.start();
     await flush();
 
@@ -127,7 +166,7 @@ describe('UiClickSoundService', () => {
   });
 
   it('reanuda el contexto suspendido (autoplay de iOS) en el click', async () => {
-    const service = new UiClickSoundService();
+    const service = makeService();
     service.start();
     await flush();
     contexts[0].state = 'suspended';
@@ -142,7 +181,7 @@ describe('UiClickSoundService', () => {
       globalThis.document as unknown as { addEventListener: () => void },
       'addEventListener',
     );
-    const service = new UiClickSoundService();
+    const service = makeService();
 
     service.start();
     service.start();
@@ -151,7 +190,7 @@ describe('UiClickSoundService', () => {
   });
 
   it('stop desengancha el listener', async () => {
-    const service = new UiClickSoundService();
+    const service = makeService();
     service.start();
     await flush();
     service.stop();
@@ -175,7 +214,7 @@ describe('UiClickSoundService', () => {
       },
     );
 
-    const service = new UiClickSoundService();
+    const service = makeService();
     service.start();
 
     clickOn(elementClosest(true));
@@ -187,7 +226,7 @@ describe('UiClickSoundService', () => {
   });
 
   it('no propaga errores de start() de un buffer source', async () => {
-    const service = new UiClickSoundService();
+    const service = makeService();
     service.start();
     await flush();
     contexts[0].createBufferSource = vi.fn(() => {

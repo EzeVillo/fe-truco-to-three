@@ -295,6 +295,7 @@ export class SpectateScreenComponent implements OnInit, OnDestroy {
         disableClose: false,
       },
     );
+    this.playSpectatorOutcomeCue();
     ref.afterClosed().subscribe(() => this.eventQueue.resumeAck());
   }
 
@@ -327,6 +328,7 @@ export class SpectateScreenComponent implements OnInit, OnDestroy {
         disableClose: true,
       },
     );
+    this.playSpectatorOutcomeCue();
     ref.afterClosed().subscribe(() => {
       this.eventQueue.resumeAck();
       void this.router.navigate(['/friends']);
@@ -369,7 +371,22 @@ export class SpectateScreenComponent implements OnInit, OnDestroy {
         disableClose: false,
       },
     );
+    this.playSpectatorOutcomeCue();
     ref.afterClosed().subscribe(() => this.eventQueue.resumeAck());
+  }
+
+  /**
+   * Cue sonoro neutro al aparecer un modal de resultado en modo espectador (que,
+   * a diferencia del jugador, no recibe jingle de win/lose). No-bloqueante: el
+   * audio nunca debe romper el flujo. El desbloqueo de iOS ya está anclado al
+   * primer gesto desde `App` vía el canal central, así que suena en WebKit.
+   */
+  private playSpectatorOutcomeCue(): void {
+    try {
+      this.callAudio.playSpectatorOutcomeCue();
+    } catch {
+      // El audio nunca debe romper el flujo visual.
+    }
   }
 
   goBack(): void {

@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { EffectsVolumeService } from './effects-volume.service';
 
 /** SFX de click de UI, compartido por todos los botones. Servido desde `public/`. */
 export const UI_CLICK_AUDIO_PATH = '/audio/mixkit-camera-shutter-click-1133.wav';
@@ -43,6 +44,8 @@ function resolveAudioContextCtor(): AudioContextCtor | null {
  */
 @Injectable({ providedIn: 'root' })
 export class UiClickSoundService {
+  private readonly effectsVolume = inject(EffectsVolumeService);
+
   private clickHandler: ((event: Event) => void) | null = null;
 
   private context: AudioContext | null = null;
@@ -118,8 +121,14 @@ export class UiClickSoundService {
   }
 
   private play(): void {
+    const gainValue = this.effectsVolume.gain();
+    if (gainValue <= 0) {
+      // Efectos muteados: ni reanudamos el contexto ni disparamos el click.
+      return;
+    }
+
     if (this.useFallback || !this.context) {
-      this.playFallback();
+      this.playFallback(gainValue);
       return;
     }
 
@@ -130,26 +139,31 @@ export class UiClickSoundService {
 
     if (!this.buffer) {
       // Todavía decodificando: este click usa el fallback para no perderse.
-      this.playFallback();
+      this.playFallback(gainValue);
       return;
     }
 
     try {
       const source = this.context.createBufferSource();
       source.buffer = this.buffer;
-      source.connect(this.context.destination);
+      // GainNode por click: gobierna el volumen del bus de efectos en iOS.
+      const gain = this.context.createGain();
+      gain.gain.value = gainValue;
+      source.connect(gain);
+      gain.connect(this.context.destination);
       source.start(0);
     } catch {
       // El SFX de click es un realce no-bloqueante de la UI.
     }
   }
 
-  private playFallback(): void {
+  private playFallback(gainValue: number): void {
     const audio = this.getFallbackAudio();
     if (!audio) {
       return;
     }
     try {
+      audio.volume = gainValue;
       audio.currentTime = 0;
       const result = audio.play();
       if (result) {

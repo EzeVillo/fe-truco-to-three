@@ -33,6 +33,13 @@ export const MATCH_CALL_AUDIO_ASSETS: readonly MatchCallAudioAsset[] = [
  */
 export const MATCH_CARD_THROW_AUDIO_PATH = '/audio/freesound_community-card-sounds-35956.mp3';
 
+/**
+ * Cue neutro para el espectador al abrir un modal de resultado (envido/game/match).
+ * El espectador no tiene bando, así que no le corresponde un jingle de win/lose:
+ * suena este "tick" como aviso de "apareció un resultado, mirá". Sólo en spectate.
+ */
+export const SPECTATOR_OUTCOME_CUE_AUDIO_PATH = '/audio/mixkit-select-click-1109.wav';
+
 /** Niveles de resolución con jingle de victoria/derrota, en intensidad creciente. */
 export type MatchOutcomeLevel = 'ENVIDO' | 'GAME' | 'MATCH';
 
@@ -66,6 +73,7 @@ const audioPathByKey = new Map(MATCH_CALL_AUDIO_ASSETS.map((asset) => [asset.key
 const ALL_MATCH_AUDIO_PATHS: readonly string[] = [
   ...MATCH_CALL_AUDIO_ASSETS.map((asset) => asset.path),
   MATCH_CARD_THROW_AUDIO_PATH,
+  SPECTATOR_OUTCOME_CUE_AUDIO_PATH,
   ...Object.values(MATCH_OUTCOME_AUDIO_PATHS).flatMap((outcome) => [outcome.win, outcome.lose]),
 ];
 
@@ -131,5 +139,13 @@ export class MatchCallAudioService {
   playOutcome(level: MatchOutcomeLevel, won: boolean): void {
     const paths = MATCH_OUTCOME_AUDIO_PATHS[level];
     this.playback.play(won ? paths.win : paths.lose);
+  }
+
+  /**
+   * Cue neutro de resultado para el espectador (sin bando, sin win/lose). Se
+   * dispara al abrir cualquier modal de resultado en modo espectador.
+   */
+  playSpectatorOutcomeCue(): void {
+    this.playback.play(SPECTATOR_OUTCOME_CUE_AUDIO_PATH);
   }
 }

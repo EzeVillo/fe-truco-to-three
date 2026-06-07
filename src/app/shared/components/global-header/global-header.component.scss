@@ -201,6 +201,24 @@
       outline: 2px solid var(--t3-gold-400);
       outline-offset: 2px;
     }
+
+    &--muted {
+      color: var(--t3-text-muted);
+
+      span {
+        position: relative;
+        opacity: 0.6;
+
+        &::after {
+          content: '';
+          position: absolute;
+          inset: 50% -2px auto;
+          height: 2px;
+          background: currentColor;
+          transform: rotate(-45deg);
+        }
+      }
+    }
   }
 
   &__music-slider {

@@ -1,5 +1,12 @@
+import { TestBed } from '@angular/core/testing';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { AudioPlaybackService } from './audio-playback.service';
+import { EffectsVolumeService } from './effects-volume.service';
+
+interface GainMock {
+  gain: { value: number };
+  connect: ReturnType<typeof vi.fn>;
+}
 
 interface BufferSourceMock {
   buffer: unknown;
@@ -13,7 +20,13 @@ interface ContextMock {
   resume: ReturnType<typeof vi.fn>;
   decodeAudioData: ReturnType<typeof vi.fn>;
   createBufferSource: ReturnType<typeof vi.fn>;
+  createGain: ReturnType<typeof vi.fn>;
   sources: BufferSourceMock[];
+  gains: GainMock[];
+}
+
+function makeService(): AudioPlaybackService {
+  return TestBed.inject(AudioPlaybackService);
 }
 
 describe('AudioPlaybackService', () => {
@@ -31,6 +44,12 @@ describe('AudioPlaybackService', () => {
   beforeEach(() => {
     contexts = [];
     listeners = new Map();
+    try {
+      localStorage.clear();
+    } catch {
+      // Sin localStorage en el entorno de test: nada que limpiar.
+    }
+    TestBed.configureTestingModule({});
 
     vi.stubGlobal(
       'AudioContext',
@@ -38,12 +57,18 @@ describe('AudioPlaybackService', () => {
         this.state = 'running';
         this.destination = { id: 'destination' };
         this.sources = [];
+        this.gains = [];
         this.resume = vi.fn().mockResolvedValue(undefined);
         this.decodeAudioData = vi.fn().mockResolvedValue(decodedBuffer);
         this.createBufferSource = vi.fn(() => {
           const source: BufferSourceMock = { buffer: null, connect: vi.fn(), start: vi.fn() };
           this.sources.push(source);
           return source;
+        });
+        this.createGain = vi.fn(() => {
+          const gain: GainMock = { gain: { value: 1 }, connect: vi.fn() };
+          this.gains.push(gain);
+          return gain;
         });
         contexts.push(this);
       },
@@ -64,7 +89,7 @@ describe('AudioPlaybackService', () => {
   });
 
   it('preload decodifica cada pista una sola vez', async () => {
-    const service = new AudioPlaybackService();
+    const service = makeService();
     service.preload(['/a.mp3', '/b.mp3']);
     service.preload(['/a.mp3']); // repetida: no re-decodifica
     await flush();
@@ -74,7 +99,7 @@ describe('AudioPlaybackService', () => {
   });
 
   it('play dispara un buffer source con la pista decodificada', async () => {
-    const service = new AudioPlaybackService();
+    const service = makeService();
     service.preload(['/a.mp3']);
     await flush();
 
@@ -83,12 +108,26 @@ describe('AudioPlaybackService', () => {
     const ctx = contexts[0];
     expect(ctx.createBufferSource).toHaveBeenCalledOnce();
     expect(ctx.sources[0].buffer).toBe(decodedBuffer);
-    expect(ctx.sources[0].connect).toHaveBeenCalledWith(ctx.destination);
+    // El source pasa por el GainNode del bus de efectos, y éste a destination.
+    expect(ctx.sources[0].connect).toHaveBeenCalledWith(ctx.gains[0]);
+    expect(ctx.gains[0].connect).toHaveBeenCalledWith(ctx.destination);
+    expect(ctx.gains[0].gain.value).toBe(1);
     expect(ctx.sources[0].start).toHaveBeenCalledWith(0);
   });
 
+  it('no dispara nada cuando los efectos están muteados', async () => {
+    const service = makeService();
+    service.preload(['/a.mp3']);
+    await flush();
+    TestBed.inject(EffectsVolumeService).toggleEnabled(); // mute
+
+    service.play('/a.mp3');
+
+    expect(contexts[0].createBufferSource).not.toHaveBeenCalled();
+  });
+
   it('play decodifica y reproduce al vuelo si la pista no estaba precargada', async () => {
-    const service = new AudioPlaybackService();
+    const service = makeService();
 
     service.play('/late.mp3');
     await flush();
@@ -98,7 +137,7 @@ describe('AudioPlaybackService', () => {
   });
 
   it('crea un buffer source nuevo por disparo (permite solapado)', async () => {
-    const service = new AudioPlaybackService();
+    const service = makeService();
     service.preload(['/a.mp3']);
     await flush();
 
@@ -109,7 +148,7 @@ describe('AudioPlaybackService', () => {
   });
 
   it('reanuda el contexto suspendido (autoplay iOS) al reproducir', async () => {
-    const service = new AudioPlaybackService();
+    const service = makeService();
     service.preload(['/a.mp3']);
     await flush();
     contexts[0].state = 'suspended';
@@ -120,7 +159,7 @@ describe('AudioPlaybackService', () => {
   });
 
   it('start engancha el gesto y al dispararlo reanuda y marca unlocked', async () => {
-    const service = new AudioPlaybackService();
+    const service = makeService();
     service.start();
     contexts[0].state = 'suspended';
 
@@ -139,7 +178,7 @@ describe('AudioPlaybackService', () => {
       globalThis.document as unknown as { addEventListener: () => void },
       'addEventListener',
     );
-    const service = new AudioPlaybackService();
+    const service = makeService();
 
     service.start();
     service.start();
@@ -149,7 +188,7 @@ describe('AudioPlaybackService', () => {
   });
 
   it('no propaga errores de un buffer source roto', async () => {
-    const service = new AudioPlaybackService();
+    const service = makeService();
     service.preload(['/a.mp3']);
     await flush();
     contexts[0].createBufferSource = vi.fn(() => {
@@ -194,7 +233,7 @@ describe('AudioPlaybackService', () => {
     });
 
     it('play cae a HTMLAudioElement desde el inicio', () => {
-      const service = new AudioPlaybackService();
+      const service = makeService();
 
       service.play('/a.mp3');
 
@@ -205,7 +244,7 @@ describe('AudioPlaybackService', () => {
     });
 
     it('en el gesto precalienta muteadas las pistas registradas', () => {
-      const service = new AudioPlaybackService();
+      const service = makeService();
       service.preload(['/a.mp3', '/b.mp3']);
       service.start();
 

@@ -10,6 +10,7 @@ import { SpectatorCountStore } from '../../services/spectator-count.store';
 import { MatchActionsService } from '../../../features/match/services/match-actions.service';
 import { BackgroundMusicService } from '../../../features/match/services/background-music.service';
 import { EffectsVolumeService } from '../../../core/services/effects-volume.service';
+import { MatchesApiService } from '../../../features/lobby/services/matches-api.service';
 import { ConfirmLogoutDialogComponent } from '../confirm-logout-dialog/confirm-logout-dialog.component';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 
@@ -29,6 +30,7 @@ export class GlobalHeaderComponent {
   private readonly router = inject(Router);
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly matchActions = inject(MatchActionsService);
+  private readonly matchesApi = inject(MatchesApiService);
   readonly backgroundMusic = inject(BackgroundMusicService);
   readonly effectsVolume = inject(EffectsVolumeService);
 
@@ -68,10 +70,28 @@ export class GlobalHeaderComponent {
     return match ? match[1] : null;
   });
 
-  readonly showAbandonMatch = computed(() => this.inMatch() && this.currentMatchId() !== null);
+  readonly currentPresenceMatch = computed(() => {
+    const id = this.currentMatchId();
+    const match = this.presenceCoordinator.presence()?.match ?? null;
+    return id !== null && match?.id === id ? match : null;
+  });
+
+  readonly isActiveMatch = computed(
+    () => this.inMatch() && this.currentPresenceMatch()?.status === 'IN_PROGRESS',
+  );
+
+  readonly isWaitingMatch = computed(() => {
+    const status = this.currentPresenceMatch()?.status;
+    return this.inMatch() && (status === 'WAITING_FOR_PLAYERS' || status === 'READY');
+  });
+
+  readonly showAbandonMatch = computed(() => this.currentMatchId() !== null && this.isActiveMatch());
+  readonly showLeaveWaitingRoom = computed(
+    () => this.currentMatchId() !== null && this.isWaitingMatch(),
+  );
 
   /** El control de música sólo aplica donde suena: partida o modo espectador. */
-  readonly showMusicControl = computed(() => this.inMatch() || this.isSpectating());
+  readonly showMusicControl = computed(() => this.isActiveMatch() || this.isSpectating());
 
   /** Porcentaje de volumen (0-100) para el input range del menú. */
   readonly musicVolumePercent = computed(() => Math.round(this.backgroundMusic.volume() * 100));
@@ -150,10 +170,43 @@ export class GlobalHeaderComponent {
       if (confirmed === true) {
         this.matchActions.abandon(matchId).subscribe({
           next: () => {
-            void this.router.navigateByUrl('/lobby');
+            // El evento MATCH_ABANDONED abre el modal de derrota en la pantalla de partida.
           },
           error: () => {
             // Error silencioso; el usuario permanece en la pantalla del match.
+          },
+        });
+      }
+    });
+  }
+
+  onLeaveWaitingRoomClick(): void {
+    this.closeMenu();
+    const matchId = this.currentMatchId();
+    if (!matchId) {
+      return;
+    }
+    const ref = this.dialog.open<ConfirmDialogComponent, unknown, boolean>(ConfirmDialogComponent, {
+      data: {
+        title: '¿Salir de la sala?',
+        message: 'Vas a dejar esta sala antes de que empiece.',
+        variant: 'primary',
+        confirmLabel: 'Salir de la sala',
+        cancelLabel: 'Cancelar',
+      },
+      panelClass: 't3-confirm-dialog',
+      backdropClass: 't3-confirm-backdrop',
+      autoFocus: 'button',
+      restoreFocus: true,
+    });
+    ref.afterClosed().subscribe((confirmed) => {
+      if (confirmed === true) {
+        this.matchesApi.leaveMatch(matchId).subscribe({
+          next: () => {
+            void this.router.navigateByUrl('/lobby');
+          },
+          error: () => {
+            // Error silencioso; el usuario permanece en la sala.
           },
         });
       }

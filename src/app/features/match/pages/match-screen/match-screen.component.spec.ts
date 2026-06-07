@@ -12,6 +12,7 @@ import { MatchStateService } from '../../services/match-state.service';
 import { MatchEventQueueService } from '../../services/match-event-queue.service';
 import { RematchStateService } from '../../services/rematch-state.service';
 import { MatchCallAudioService } from '../../services/match-call-audio.service';
+import { BackgroundMusicService } from '../../services/background-music.service';
 import { GameWonDialogComponent } from '../../components/game-won-dialog/game-won-dialog.component';
 import { EnvidoResultDialogComponent } from '../../components/envido-result-dialog/envido-result-dialog.component';
 import {
@@ -34,12 +35,17 @@ describe('MatchScreenComponent', () => {
   let fixture: ComponentFixture<MatchScreenComponent>;
   let matchStateService: MatchStateService;
   let matchCallAudioService: { playForEvent: ReturnType<typeof vi.fn> };
+  let backgroundMusicService: { start: ReturnType<typeof vi.fn>; stop: ReturnType<typeof vi.fn> };
   let paramMapSubject: BehaviorSubject<ReturnType<typeof makeParamMap>>;
 
   function setupComponent(params: Record<string, string> = {}): void {
     paramMapSubject = new BehaviorSubject(makeParamMap(params));
     matchCallAudioService = {
       playForEvent: vi.fn(),
+    };
+    backgroundMusicService = {
+      start: vi.fn(),
+      stop: vi.fn(),
     };
 
     TestBed.configureTestingModule({
@@ -54,6 +60,7 @@ describe('MatchScreenComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: MatchCallAudioService, useValue: matchCallAudioService },
+        { provide: BackgroundMusicService, useValue: backgroundMusicService },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -113,6 +120,41 @@ describe('MatchScreenComponent', () => {
 
     const gameBoard = fixture.nativeElement.querySelector('app-game-board');
     expect(gameBoard).toBeTruthy();
+  });
+
+  it('no arranca la musica en sala de espera', () => {
+    setupComponent({ matchId: 'test-match' });
+    matchStateService.loading.set(false);
+    matchStateService.state.set({
+      ...mockMatchViewerPlayerOne,
+      status: 'WAITING_FOR_PLAYERS',
+      playerTwoUsername: null,
+      roundGame: null,
+    });
+    matchStateService.error.set(false);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-waiting-room')).toBeTruthy();
+    expect(backgroundMusicService.start).not.toHaveBeenCalled();
+  });
+
+  it('arranca la musica solo cuando la partida pasa a IN_PROGRESS', () => {
+    setupComponent({ matchId: 'test-match' });
+    matchStateService.loading.set(false);
+    matchStateService.state.set({
+      ...mockMatchViewerPlayerOne,
+      status: 'READY',
+      roundGame: null,
+    });
+    matchStateService.error.set(false);
+    fixture.detectChanges();
+
+    expect(backgroundMusicService.start).not.toHaveBeenCalled();
+
+    matchStateService.state.set(mockMatchViewerPlayerOne);
+    fixture.detectChanges();
+
+    expect(backgroundMusicService.start).toHaveBeenCalled();
   });
 
   it('calls init on MatchStateService with matchId', () => {

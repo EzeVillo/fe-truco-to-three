@@ -146,6 +146,15 @@
                 Abandonar partida
               </button>
             }
+            @if (showLeaveWaitingRoom()) {
+              <button
+                type="button"
+                class="global-header__menu-item"
+                (click)="onLeaveWaitingRoomClick()"
+              >
+                Salir de la sala
+              </button>
+            }
             <button type="button" class="global-header__menu-item" (click)="onLogoutClick()">
               Salir
             </button>

@@ -15,6 +15,7 @@ import { PresenceCoordinatorService } from '../../../core/services/presence-coor
 import { SpectatorCountStore } from '../../services/spectator-count.store';
 import { ConfirmLogoutDialogComponent } from '../confirm-logout-dialog/confirm-logout-dialog.component';
 import type { FullAuthResponse } from '../../../core/models/auth.models';
+import type { UserPresenceResponse } from '../../../core/models/presence.models';
 
 const FULL_AUTH: FullAuthResponse = {
   playerId: 'p-1',
@@ -39,6 +40,7 @@ function setupStorageMock(): void {
 function setupTestBed(dialogMock: Partial<MatDialog>, busy = false) {
   setupStorageMock();
   const presenceBusy = signal(busy);
+  const presence = signal<UserPresenceResponse | null>(null);
 
   TestBed.configureTestingModule({
     imports: [GlobalHeaderComponent],
@@ -49,12 +51,12 @@ function setupTestBed(dialogMock: Partial<MatDialog>, busy = false) {
       provideHttpClientTesting(),
       SessionStorageService,
       AuthStore,
-      { provide: PresenceCoordinatorService, useValue: { busy: presenceBusy } },
+      { provide: PresenceCoordinatorService, useValue: { busy: presenceBusy, presence } },
       { provide: MatDialog, useValue: dialogMock },
     ],
   });
 
-  return { presenceBusy };
+  return { presenceBusy, presence };
 }
 
 function openMenu(fixture: ComponentFixture<GlobalHeaderComponent>): void {
@@ -149,7 +151,21 @@ describe('GlobalHeaderComponent', () => {
         provideHttpClientTesting(),
         SessionStorageService,
         AuthStore,
-        { provide: PresenceCoordinatorService, useValue: { busy: signal(false) } },
+        {
+          provide: PresenceCoordinatorService,
+          useValue: {
+            busy: signal(false),
+            presence: signal<UserPresenceResponse | null>({
+              busy: true,
+              match: { id: 'abc-123', status: 'IN_PROGRESS' },
+              league: null,
+              cup: null,
+              rematch: null,
+              quickMatch: null,
+              spectating: null,
+            }),
+          },
+        },
         { provide: MatDialog, useValue: { open: vi.fn() } },
       ],
     });
@@ -217,7 +233,7 @@ describe('GlobalHeaderComponent', () => {
     expect(fixture.nativeElement.querySelector('.global-header__menu-panel')).toBeNull();
   });
 
-  async function setupRoutedHeader(url: string) {
+  async function setupRoutedHeader(url: string, presenceValue: UserPresenceResponse | null = null) {
     @Component({ standalone: true, template: '' })
     class StubComponent {}
 
@@ -235,7 +251,10 @@ describe('GlobalHeaderComponent', () => {
         provideHttpClientTesting(),
         SessionStorageService,
         AuthStore,
-        { provide: PresenceCoordinatorService, useValue: { busy: signal(false) } },
+        {
+          provide: PresenceCoordinatorService,
+          useValue: { busy: signal(presenceValue?.busy === true), presence: signal(presenceValue) },
+        },
         { provide: MatDialog, useValue: { open: vi.fn() } },
       ],
     });
@@ -297,7 +316,15 @@ describe('GlobalHeaderComponent', () => {
   });
 
   it('en /match NO ofrece "Dejar de ver"', async () => {
-    await setupRoutedHeader('/match/abc-123');
+    await setupRoutedHeader('/match/abc-123', {
+      busy: true,
+      match: { id: 'abc-123', status: 'IN_PROGRESS' },
+      league: null,
+      cup: null,
+      rematch: null,
+      quickMatch: null,
+      spectating: null,
+    });
 
     const fixture = TestBed.createComponent(GlobalHeaderComponent);
     fixture.detectChanges();
@@ -308,5 +335,66 @@ describe('GlobalHeaderComponent', () => {
       el.querySelectorAll<HTMLButtonElement>('button.global-header__menu-item'),
     ).some((b) => (b.textContent ?? '').includes('Dejar de ver'));
     expect(hasLeave).toBe(false);
+  });
+
+  it('abandonar partida no navega directo al lobby; espera el modal de resultado', async () => {
+    const router = await setupRoutedHeader('/match/abc-123', {
+      busy: true,
+      match: { id: 'abc-123', status: 'IN_PROGRESS' },
+      league: null,
+      cup: null,
+      rematch: null,
+      quickMatch: null,
+      spectating: null,
+    });
+    const dialog = TestBed.inject(MatDialog) as unknown as {
+      open: ReturnType<typeof vi.fn>;
+    };
+    dialog.open.mockReturnValue({
+      afterClosed: () => of(true),
+    });
+
+    const fixture = TestBed.createComponent(GlobalHeaderComponent);
+    fixture.detectChanges();
+    const abandonSpy = vi
+      .spyOn(fixture.componentInstance['matchActions'], 'abandon')
+      .mockReturnValue(of(undefined));
+    const navSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+    openMenu(fixture);
+
+    const el = fixture.nativeElement as HTMLElement;
+    const abandonBtn = Array.from(
+      el.querySelectorAll<HTMLButtonElement>('button.global-header__menu-item'),
+    ).find((b) => (b.textContent ?? '').includes('Abandonar partida'));
+    expect(abandonBtn).toBeTruthy();
+
+    abandonBtn?.click();
+
+    expect(abandonSpy).toHaveBeenCalledWith('abc-123');
+    expect(navSpy).not.toHaveBeenCalledWith('/lobby');
+  });
+
+  it('en sala de espera ofrece "Salir de la sala" y no "Abandonar partida"', async () => {
+    await setupRoutedHeader('/match/abc-123', {
+      busy: true,
+      match: { id: 'abc-123', status: 'WAITING_FOR_PLAYERS' },
+      league: null,
+      cup: null,
+      rematch: null,
+      quickMatch: null,
+      spectating: null,
+    });
+
+    const fixture = TestBed.createComponent(GlobalHeaderComponent);
+    fixture.detectChanges();
+    openMenu(fixture);
+
+    const el = fixture.nativeElement as HTMLElement;
+    const labels = Array.from(
+      el.querySelectorAll<HTMLButtonElement>('button.global-header__menu-item'),
+    ).map((b) => b.textContent ?? '');
+
+    expect(labels.some((t) => t.includes('Salir de la sala'))).toBe(true);
+    expect(labels.some((t) => t.includes('Abandonar partida'))).toBe(false);
   });
 });

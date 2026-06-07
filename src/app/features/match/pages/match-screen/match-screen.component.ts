@@ -212,6 +212,16 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
       }
     });
 
+    // La sala de espera vive en /match/:id, pero todavia no es juego activo.
+    // La musica de partida arranca solo cuando el tablero esta en curso.
+    effect(() => {
+      if (this.matchView()?.status === 'IN_PROGRESS') {
+        this.backgroundMusic.start();
+      } else {
+        this.backgroundMusic.stop();
+      }
+    });
+
     // Inicia RematchStateService la primera vez que el estado de la partida carga.
     // Se re-activa al navegar a una nueva partida (re-init via paramMap, D4).
     //
@@ -275,7 +285,6 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.cardPreload.preloadDeck();
-    this.backgroundMusic.start();
     // Usar paramMap para detectar cambios de matchId al navegar a la revancha (D4).
     this._paramSub = this.route.paramMap.subscribe((params) => {
       const newId = params.get('matchId') ?? '';

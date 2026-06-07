@@ -42,7 +42,10 @@ import { MatchStateService } from '../../services/match-state.service';
 import { MatchEventQueueService } from '../../services/match-event-queue.service';
 import { RematchStateService } from '../../services/rematch-state.service';
 import { RematchApiService } from '../../services/rematch-api.service';
-import { MatchCallAudioService } from '../../services/match-call-audio.service';
+import {
+  MatchCallAudioService,
+  type MatchOutcomeLevel,
+} from '../../services/match-call-audio.service';
 import { BackgroundMusicService } from '../../services/background-music.service';
 import { CardPreloadService } from '../../services/card-preload.service';
 import { PresenceCoordinatorService } from '../../../../core/services/presence-coordinator.service';
@@ -491,6 +494,14 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     }
   }
 
+  private playOutcomeAudio(level: MatchOutcomeLevel, won: boolean): void {
+    try {
+      this.matchCallAudioService.playOutcome(level, won);
+    } catch {
+      // El audio no debe bloquear ni romper el flujo visual de la partida.
+    }
+  }
+
   private clearAllCallDisplayTimers(): void {
     for (const timeoutId of this.callDisplayTimers.values()) {
       clearTimeout(timeoutId);
@@ -577,6 +588,8 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     }
 
     const data: GameWonDialogData = this.mapMatchEndedToDialogData(event, state);
+
+    this.playOutcomeAudio('MATCH', data.localWonMatch);
 
     const dialogRef = this.dialog.open<GameWonDialogComponent, GameWonDialogData, void>(
       GameWonDialogComponent,
@@ -685,6 +698,8 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
       localWonMatch: event.winnerSeat === viewerSeat,
     };
 
+    this.playOutcomeAudio('GAME', data.localWonMatch);
+
     const dialogRef = this.dialog.open<GameWonDialogComponent, GameWonDialogData, void>(
       GameWonDialogComponent,
       {
@@ -730,6 +745,8 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     // apertura es seguro: deja ver el "¡Quiero!" antes de mostrar el resultado.
     this.envidoModalTimerId = window.setTimeout(() => {
       this.envidoModalTimerId = null;
+
+      this.playOutcomeAudio('ENVIDO', data.won);
 
       const dialogRef = this.dialog.open<EnvidoResultDialogComponent, EnvidoResultDialogData, void>(
         EnvidoResultDialogComponent,

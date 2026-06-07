@@ -32,6 +32,29 @@ export const MATCH_CALL_AUDIO_ASSETS: readonly MatchCallAudioAsset[] = [
  */
 export const MATCH_CARD_THROW_AUDIO_PATH = '/audio/freesound_community-card-sounds-35956.mp3';
 
+/** Niveles de resolución con jingle de victoria/derrota, en intensidad creciente. */
+export type MatchOutcomeLevel = 'ENVIDO' | 'GAME' | 'MATCH';
+
+/**
+ * Jingles de resultado por nivel (envido < game < match), graduados en
+ * contundencia. Se disparan al abrir el modal de resultado correspondiente,
+ * eligiendo win/lose según si el viewer ganó. Ver memoria audio-architecture.
+ */
+export const MATCH_OUTCOME_AUDIO_PATHS: Record<MatchOutcomeLevel, { win: string; lose: string }> = {
+  ENVIDO: {
+    win: '/audio/mixkit-winning-notification-2018.wav',
+    lose: '/audio/mixkit-losing-piano-2024.wav',
+  },
+  GAME: {
+    win: '/audio/mixkit-winning-chimes-2015.wav',
+    lose: '/audio/mixkit-losing-drums-2023.wav',
+  },
+  MATCH: {
+    win: '/audio/mixkit-video-game-win-2016.wav',
+    lose: '/audio/mixkit-player-losing-or-failing-2042.wav',
+  },
+};
+
 const audioPathByKey = new Map(MATCH_CALL_AUDIO_ASSETS.map((asset) => [asset.key, asset.path]));
 
 export function resolveMatchCallAudioPath(event: MatchWsEvent): string | null {
@@ -79,6 +102,12 @@ export class MatchCallAudioService {
   /** Sonido de carta arrojada. Se invoca al aplicar CARD_PLAYED (post-delay). */
   playCardThrow(): void {
     this.playPath(MATCH_CARD_THROW_AUDIO_PATH);
+  }
+
+  /** Jingle de victoria/derrota al resolverse un envido, game o match. */
+  playOutcome(level: MatchOutcomeLevel, won: boolean): void {
+    const paths = MATCH_OUTCOME_AUDIO_PATHS[level];
+    this.playPath(won ? paths.win : paths.lose);
   }
 
   private playPath(path: string): void {

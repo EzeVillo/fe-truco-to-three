@@ -4,6 +4,8 @@
 // El identificador público del otro jugador es SIEMPRE `username`.
 // El backend no expone `friendshipId` por REST ni por WebSocket.
 
+import type { SpectatableMatch } from './spectate.models';
+
 // ─── Disponibilidad de amigos (feature 025) ──────────────────────────────────
 // Fuente: docs/CONTRATOS_API.md §7.4.5 (friendships con disponibilidad) y §9.6.
 
@@ -19,14 +21,10 @@ export type FriendBusyReason =
   | 'IN_QUICK_QUEUE'
   | 'PENDING_INVITATION'
   | 'PENDING_FRIEND_REQUEST'
+  | 'SPECTATING'
   | 'UNKNOWN';
 
-/**
- * GET /api/social/friendships → FriendSummaryResponse[] (§7.4.5 / §8.2).
- *
- * El contrato incluye además `spectatableMatch`, fuera de alcance de la feature
- * 025 (FR-018): no se tipa ni se consume acá.
- */
+/** GET /api/social/friendships → FriendSummaryResponse[] (§7.4.5 / §8.2). */
 export interface FriendSummary {
   friendUsername: string;
   /** Presencia aproximada por sesiones WS; gatea invitar junto con `availability`. */
@@ -35,6 +33,8 @@ export interface FriendSummary {
   availability: FriendAvailability;
   /** Motivo de ocupación; `null` si `AVAILABLE`. */
   busyReason: FriendBusyReason | null;
+  /** Partida espectable activa del amigo; `null` si no hay (§7.4.5, feature 026). */
+  spectatableMatch: SpectatableMatch | null;
 }
 
 // ─── Invitaciones a recurso (feature 025) ────────────────────────────────────

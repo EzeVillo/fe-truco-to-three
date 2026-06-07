@@ -27,6 +27,7 @@ function friend(
     online: overrides.online ?? false,
     availability: overrides.availability ?? 'AVAILABLE',
     busyReason: overrides.busyReason ?? null,
+    spectatableMatch: null,
   };
 }
 
@@ -348,7 +349,7 @@ describe('SocialStore', () => {
       timestamp: 1,
       payload: {
         friends: [
-          { friendUsername: 'ana', online: true, availability: 'BUSY', busyReason: 'IN_MATCH' },
+          { friendUsername: 'ana', online: true, availability: 'BUSY', busyReason: 'IN_MATCH', spectatableMatch: null },
         ],
       },
     });
@@ -366,7 +367,7 @@ describe('SocialStore', () => {
     events$.next({
       eventType: 'FRIEND_AVAILABILITY_CHANGED',
       timestamp: 1,
-      payload: { friendUsername: 'ana', online: true, availability: 'BUSY', busyReason: 'IN_CUP' },
+      payload: { friendUsername: 'ana', online: true, availability: 'BUSY', busyReason: 'IN_CUP', spectatableMatch: null },
     });
     expect(store.friends()).toEqual([
       friend('ana', { online: true, availability: 'BUSY', busyReason: 'IN_CUP' }),
@@ -380,6 +381,7 @@ describe('SocialStore', () => {
         online: true,
         availability: 'AVAILABLE',
         busyReason: null,
+        spectatableMatch: null,
       },
     });
     expect(store.friends()).toHaveLength(1);

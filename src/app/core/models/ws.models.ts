@@ -7,6 +7,7 @@ import type {
   FriendBusyReason,
   ResourceInvitationTargetType,
 } from './social.models';
+import type { SpectatableMatch, SpectateMatchState } from './spectate.models';
 
 interface WsEventBase<TType extends string, TPayload> {
   eventType: TType;
@@ -50,12 +51,13 @@ export type MatchWsEvent =
     > & { matchId: string });
 // Resto de eventTypes se añaden al implementar cada feature (AVAILABLE_ACTIONS_UPDATED, etc.)
 
-/** Item del snapshot FRIEND_AVAILABILITY_STATE (§9.6). spectatableMatch ignorado. */
+/** Item del snapshot FRIEND_AVAILABILITY_STATE (§9.6). */
 export interface FriendAvailabilitySnapshotItem {
   friendUsername: string;
   online: boolean;
   availability: FriendAvailability;
   busyReason: FriendBusyReason | null;
+  spectatableMatch: SpectatableMatch | null;
 }
 
 /** Delta FRIEND_AVAILABILITY_CHANGED — un amigo (§9.6). */
@@ -64,7 +66,30 @@ export interface FriendAvailabilityDelta {
   online: boolean;
   availability: FriendAvailability;
   busyReason: FriendBusyReason | null;
+  spectatableMatch: SpectatableMatch | null;
 }
+
+/** Eventos del canal /user/queue/match-spectate (§9.5g/§9.6). */
+export type SpectateWsEvent =
+  | {
+      eventType: 'SPECTATE_STATE';
+      matchId: string;
+      timestamp: number;
+      stateVersion: number;
+      payload: { matchState: SpectateMatchState };
+    }
+  | {
+      eventType: 'SPECTATE_ERROR';
+      matchId: string;
+      timestamp: number;
+      payload: { error: string };
+    }
+  | {
+      eventType: 'SPECTATOR_COUNT_CHANGED';
+      matchId: string;
+      timestamp: number;
+      payload: { spectatorCount: number };
+    };
 
 /**
  * Eventos sociales (amistades + invitaciones + disponibilidad) — canal

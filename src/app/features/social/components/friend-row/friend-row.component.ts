@@ -3,10 +3,8 @@ import { busyReasonCopy } from '../../../../shared/error-copy/error-copy';
 import type { FriendAvailability, FriendBusyReason } from '../../../../core/models/social.models';
 
 /**
- * Fila de un amigo confirmado. Permite eliminar la amistad (US3 de 024) e
- * invitar a partida (feature 025, US1b). La acción de invitar se habilita sólo
- * si el amigo está `online` y `AVAILABLE`; si está offline se muestra
- * "Desconectado", y si está `BUSY` se muestra el motivo.
+ * Fila de un amigo confirmado. Permite eliminar la amistad (US3 de 024),
+ * invitar a partida (feature 025) y mirar la partida del amigo (feature 026).
  */
 @Component({
   selector: 'app-friend-row',
@@ -26,13 +24,18 @@ export class FriendRowComponent {
   readonly busyReason = input<FriendBusyReason | null>(null);
   /** Bloquea acciones mientras se crea/invita para evitar dobles envíos. */
   readonly inviting = input<boolean>(false);
+  /** matchId de la partida espectable del amigo; null si no hay. */
+  readonly spectatableMatchId = input<string | null>(null);
 
   /** Emite el username a eliminar. */
   readonly remove = output<string>();
   /** Emite el username a invitar a partida. */
   readonly invite = output<string>();
+  /** Emite el matchId a espectar. */
+  readonly spectate = output<string>();
 
   readonly canInvite = computed(() => this.online() && this.availability() === 'AVAILABLE');
+  readonly canSpectate = computed(() => this.spectatableMatchId() !== null);
   readonly reasonLabel = computed(() =>
     !this.online() ? '' : busyReasonCopy(this.busyReason()),
   );
@@ -44,6 +47,13 @@ export class FriendRowComponent {
   onInvite(): void {
     if (this.canInvite() && !this.inviting()) {
       this.invite.emit(this.friendUsername());
+    }
+  }
+
+  onSpectate(): void {
+    const matchId = this.spectatableMatchId();
+    if (matchId !== null) {
+      this.spectate.emit(matchId);
     }
   }
 }

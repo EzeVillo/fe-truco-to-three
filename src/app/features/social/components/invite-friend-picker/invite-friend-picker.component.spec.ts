@@ -13,6 +13,7 @@ function friend(overrides: Partial<FriendSummary> & { friendUsername: string }):
     online: false,
     availability: 'AVAILABLE',
     busyReason: null,
+    spectatableMatch: null,
     ...overrides,
   };
 }

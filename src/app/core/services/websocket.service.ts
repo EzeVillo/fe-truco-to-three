@@ -71,18 +71,22 @@ export class WebSocketService implements OnDestroy {
     }
   }
 
-  subscribe<T>(destination: string): Observable<T> {
+  subscribe<T>(destination: string, headers?: Record<string, string>): Observable<T> {
     return new Observable<T>((observer) => {
       let subscription: StompSubscription;
 
       const doSubscribe = (): void => {
-        subscription = this.client.subscribe(destination, (message: IMessage) => {
-          try {
-            observer.next(JSON.parse(message.body) as T);
-          } catch {
-            console.error('Error parsing STOMP message', message.body);
-          }
-        });
+        subscription = this.client.subscribe(
+          destination,
+          (message: IMessage) => {
+            try {
+              observer.next(JSON.parse(message.body) as T);
+            } catch {
+              console.error('Error parsing STOMP message', message.body);
+            }
+          },
+          headers,
+        );
       };
 
       if (this.client?.connected) {

@@ -71,6 +71,10 @@ export class FriendsPageComponent implements OnInit {
     this.store.cancelRequest(username);
   }
 
+  onSpectateMatch(matchId: string): void {
+    void this.router.navigate(['/spectate', matchId]);
+  }
+
   onInviteToMatch(username: string): void {
     if (this.creatingMatchFor() !== null) {
       return;

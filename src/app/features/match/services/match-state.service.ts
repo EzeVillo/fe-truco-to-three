@@ -45,6 +45,20 @@ function isRematchEvent(event: MatchWsEvent): boolean {
   );
 }
 
+/**
+ * SPECTATOR_COUNT_CHANGED viaja por /user/queue/match hacia ambos jugadores cuando
+ * un espectador entra/sale (§9.5a), pero el contador de espectadores NO es estado
+ * transaccional del juego: no lo necesita la pantalla del jugador. Crucialmente,
+ * llega sin un `stateVersion` que encaje en la secuencia, así que si pasara por la
+ * reconciliación normal caería en la rama de "hueco" y dispararía un re-fetch
+ * espurio: el tablero parpadea (se ve como una recarga) y la cola ack-gated se
+ * limpia, tragándose los modales de envido/game pendientes. Se ignora fuera de
+ * banda, igual que los eventos del temporizador (feature 026).
+ */
+function isSpectatorCountEvent(event: MatchWsEvent): boolean {
+  return event.eventType === 'SPECTATOR_COUNT_CHANGED';
+}
+
 @Injectable()
 export class MatchStateService {
   private readonly http = inject(HttpClient);
@@ -115,6 +129,12 @@ export class MatchStateService {
         // ack-gated y de la reconciliación por stateVersion (research D1, feature 014).
         if (isRematchEvent(event)) {
           this.rematch$.next(event);
+          return;
+        }
+        // El contador de espectadores no es estado de juego: ignorarlo fuera de la
+        // reconciliación por stateVersion evita el re-fetch espurio que parpadea el
+        // tablero y descarta los modales pendientes (feature 026).
+        if (isSpectatorCountEvent(event)) {
           return;
         }
         if (event.eventType === 'PLAYER_JOINED') {

@@ -17,6 +17,7 @@ function busyMatch(id = 'match-1'): UserPresenceResponse {
     cup: null,
     rematch: null,
     quickMatch: null,
+    spectating: null,
   };
 }
 
@@ -28,6 +29,7 @@ function freePresence(): UserPresenceResponse {
     cup: null,
     rematch: null,
     quickMatch: null,
+    spectating: null,
   };
 }
 
@@ -39,6 +41,19 @@ function rematchPresence(originMatchId = 'origin-1'): UserPresenceResponse {
     cup: null,
     rematch: { id: 'session-1', originMatchId },
     quickMatch: null,
+    spectating: null,
+  };
+}
+
+function spectatingPresence(matchId = 'spectate-1'): UserPresenceResponse {
+  return {
+    busy: true,
+    match: null,
+    league: null,
+    cup: null,
+    rematch: null,
+    quickMatch: null,
+    spectating: { matchId },
   };
 }
 
@@ -210,6 +225,27 @@ describe('PresenceCoordinatorService', () => {
     service.start();
 
     expect(service.presence()?.rematch?.originMatchId).toBe('origin-9');
+  });
+
+  it('navega a /spectate/:matchId cuando el usuario está mirando una partida', () => {
+    const { service, store, routerMock } = setup(spectatingPresence('spectate-42'));
+    login(store);
+
+    service.start();
+
+    expect(routerMock.navigateByUrl).toHaveBeenCalledWith('/spectate/spectate-42');
+  });
+
+  it('no navega por spectate si ya está en la ruta de spectate', () => {
+    const { service, store, routerMock } = setup(
+      spectatingPresence('spectate-42'),
+      '/spectate/spectate-42',
+    );
+    login(store);
+
+    service.start();
+
+    expect(routerMock.navigateByUrl).not.toHaveBeenCalled();
   });
 
   it('expone busy segun el snapshot de presencia vigente', () => {

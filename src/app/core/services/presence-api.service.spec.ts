@@ -28,6 +28,7 @@ describe('PresenceApiService', () => {
       cup: null,
       rematch: null,
       quickMatch: null,
+      spectating: null,
     };
     let result: UserPresenceResponse | null = null;
 

@@ -8,8 +8,8 @@
   <h2
     id="game-won-title"
     class="game-won__title"
-    [class.game-won__title--match-won]="isMatchWon"
-    [class.game-won__title--match-lost]="isMatchLost"
+    [class.game-won__title--match-won]="!data.spectatorMode && isMatchWon"
+    [class.game-won__title--match-lost]="!data.spectatorMode && isMatchLost"
   >
     {{ titleText }}
   </h2>

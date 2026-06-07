@@ -8,6 +8,15 @@
     <span class="social-row__name">{{ friendUsername() }}</span>
   </div>
   <div class="social-row__actions">
+    @if (canSpectate()) {
+      <button
+        type="button"
+        class="t3-btn t3-btn--neutral"
+        (click)="onSpectate()"
+      >
+        Mirar
+      </button>
+    }
     @if (canInvite()) {
       <button
         type="button"

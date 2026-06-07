@@ -27,7 +27,13 @@ describe('SocialApiService', () => {
 
   it('listFriends(): GET /social/friendships', () => {
     const friends: FriendSummary[] = [
-      { friendUsername: 'martina', online: true, availability: 'AVAILABLE', busyReason: null },
+      {
+        friendUsername: 'martina',
+        online: true,
+        availability: 'AVAILABLE',
+        busyReason: null,
+        spectatableMatch: null,
+      },
     ];
     let result: FriendSummary[] | null = null;
     service.listFriends().subscribe((r) => (result = r));

@@ -14,6 +14,7 @@ const _presenceCheck = {
   cup: null,
   rematch: null,
   quickMatch: null,
+  spectating: null,
 } satisfies UserPresenceResponse;
 
 const _eventCheck = {
@@ -58,6 +59,7 @@ describe('Contract: presencia / reconexion §7.6', () => {
       cup: null,
       rematch: { id: 'session-1', originMatchId: 'origin-1' },
       quickMatch: null,
+      spectating: null,
     };
 
     expect(derivePresenceDestination(presence)).toEqual({ kind: 'match', matchId: 'match-1' });
@@ -71,12 +73,43 @@ describe('Contract: presencia / reconexion §7.6', () => {
       cup: null,
       rematch: { id: 'session-1', originMatchId: 'origin-1' },
       quickMatch: null,
+      spectating: null,
     };
 
     expect(derivePresenceDestination(presence)).toEqual({
       kind: 'rematch',
       originMatchId: 'origin-1',
     });
+  });
+
+  it('derivePresenceDestination devuelve spectate cuando el usuario está mirando', () => {
+    const presence: UserPresenceResponse = {
+      busy: true,
+      match: null,
+      league: null,
+      cup: null,
+      rematch: null,
+      quickMatch: null,
+      spectating: { matchId: 'spectate-match-abc' },
+    };
+
+    expect(derivePresenceDestination(presence)).toEqual({
+      kind: 'spectate',
+      matchId: 'spectate-match-abc',
+    });
+  });
+
+  it('derivePresenceDestination: match/rematch tienen prioridad sobre spectating', () => {
+    const presence: UserPresenceResponse = {
+      busy: true,
+      match: { id: 'match-1', status: 'IN_PROGRESS' },
+      league: null,
+      cup: null,
+      rematch: null,
+      quickMatch: null,
+      spectating: { matchId: 'spectate-match-abc' },
+    };
+    expect(derivePresenceDestination(presence).kind).toBe('match');
   });
 
   it('derivePresenceDestination ignora usuario libre y torneos en v1', () => {
@@ -87,6 +120,7 @@ describe('Contract: presencia / reconexion §7.6', () => {
       cup: null,
       rematch: null,
       quickMatch: null,
+      spectating: null,
     };
     const tournamentOnly: UserPresenceResponse = {
       busy: true,
@@ -95,6 +129,7 @@ describe('Contract: presencia / reconexion §7.6', () => {
       cup: null,
       rematch: null,
       quickMatch: null,
+      spectating: null,
     };
     const quickMatchOnly: UserPresenceResponse = {
       busy: true,
@@ -103,6 +138,7 @@ describe('Contract: presencia / reconexion §7.6', () => {
       cup: null,
       rematch: null,
       quickMatch: { status: 'SEARCHING', enqueuedAt: '2026-05-20T10:00:00Z' },
+      spectating: null,
     };
 
     expect(derivePresenceDestination(free)).toEqual({ kind: 'none' });

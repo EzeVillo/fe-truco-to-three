@@ -13,6 +13,8 @@ export interface EnvidoResultDialogData {
   pieScore: number | null | undefined;
   /** `true` si el jugador local ganó el envido. */
   won: boolean;
+  /** Modo espectador: oculta el resultado personal ("¡Ganaste!"/"Perdiste..."). */
+  spectatorMode?: boolean;
 }
 
 @Component({

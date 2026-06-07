@@ -91,6 +91,14 @@ export const routes: Routes = [
         (m) => m.FriendsPageComponent,
       ),
   },
+  {
+    path: 'spectate/:matchId',
+    canMatch: [authGuard],
+    loadComponent: () =>
+      import('./features/spectate/pages/spectate-screen/spectate-screen.component').then(
+        (m) => m.SpectateScreenComponent,
+      ),
+  },
   { path: '', pathMatch: 'full', redirectTo: 'login' },
   { path: '**', redirectTo: 'login' },
 ];

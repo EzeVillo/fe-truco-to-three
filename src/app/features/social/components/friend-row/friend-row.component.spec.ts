@@ -71,4 +71,35 @@ describe('FriendRowComponent', () => {
     fixture.detectChanges();
     expect(fixture.debugElement.query(By.css('.social-row__dot--online'))).toBeTruthy();
   });
+
+  // ─── Spectate (feature 026) ───────────────────────────────────────────────
+
+  it('sin spectatableMatchId: no muestra botón "Mirar"', () => {
+    fixture.componentRef.setInput('spectatableMatchId', null);
+    fixture.detectChanges();
+    const btns = (fixture.nativeElement as HTMLElement).querySelectorAll('.t3-btn--neutral');
+    const mirrarBtn = Array.from(btns).find((b) => b.textContent?.includes('Mirar'));
+    expect(mirrarBtn).toBeUndefined();
+  });
+
+  it('con spectatableMatchId: muestra botón "Mirar"', () => {
+    fixture.componentRef.setInput('spectatableMatchId', 'match-abc');
+    fixture.detectChanges();
+    const btns = (fixture.nativeElement as HTMLElement).querySelectorAll('.t3-btn--neutral');
+    const mirrarBtn = Array.from(btns).find((b) => b.textContent?.includes('Mirar'));
+    expect(mirrarBtn).toBeDefined();
+  });
+
+  it('click en "Mirar" emite spectate con el matchId', () => {
+    fixture.componentRef.setInput('spectatableMatchId', 'match-xyz');
+    fixture.detectChanges();
+    let emitted: string | null = null;
+    component.spectate.subscribe((v) => (emitted = v));
+    const btns = (fixture.nativeElement as HTMLElement).querySelectorAll('.t3-btn--neutral');
+    const mirrarBtn = Array.from(btns).find((b) =>
+      b.textContent?.includes('Mirar'),
+    ) as HTMLButtonElement | undefined;
+    mirrarBtn?.click();
+    expect(emitted).toBe('match-xyz');
+  });
 });

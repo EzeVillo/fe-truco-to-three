@@ -21,11 +21,13 @@
       [isProcessingDelay]="isProcessingDelay()"
     />
   </div>
-  <app-available-actions-panel
-    [availableActions]="view().availableActions"
-    [currentTrucoCall]="view().currentTrucoCall"
-    [matchId]="matchId()"
-    [isProcessingDelay]="isProcessingDelay()"
-    [viewerActionTimedOut]="viewerActionTimedOut()"
-  />
+  @if (!spectator()) {
+    <app-available-actions-panel
+      [availableActions]="view().availableActions"
+      [currentTrucoCall]="view().currentTrucoCall"
+      [matchId]="matchId()"
+      [isProcessingDelay]="isProcessingDelay()"
+      [viewerActionTimedOut]="viewerActionTimedOut()"
+    />
+  }
 </div>

@@ -26,6 +26,11 @@ export interface PresenceQuickMatch {
   enqueuedAt: string;
 }
 
+/** Partida que el usuario está mirando como espectador (§7.6, feature 026). */
+export interface PresenceSpectating {
+  matchId: string;
+}
+
 export interface UserPresenceResponse {
   busy: boolean;
   match: PresenceMatch | null;
@@ -33,6 +38,8 @@ export interface UserPresenceResponse {
   cup: PresenceTournament | null;
   rematch: PresenceRematch | null;
   quickMatch: PresenceQuickMatch | null;
+  /** No-nulo mientras el usuario tenga ≥1 suscripción de spectate activa (§7.6). */
+  spectating: PresenceSpectating | null;
 }
 
 export interface PresenceWsEvent {
@@ -44,6 +51,7 @@ export interface PresenceWsEvent {
 export type PresenceDestination =
   | { kind: 'match'; matchId: string }
   | { kind: 'rematch'; originMatchId: string }
+  | { kind: 'spectate'; matchId: string }
   | { kind: 'none' };
 
 export function derivePresenceDestination(presence: UserPresenceResponse): PresenceDestination {
@@ -53,6 +61,10 @@ export function derivePresenceDestination(presence: UserPresenceResponse): Prese
 
   if (presence.rematch) {
     return { kind: 'rematch', originMatchId: presence.rematch.originMatchId };
+  }
+
+  if (presence.spectating) {
+    return { kind: 'spectate', matchId: presence.spectating.matchId };
   }
 
   return { kind: 'none' };

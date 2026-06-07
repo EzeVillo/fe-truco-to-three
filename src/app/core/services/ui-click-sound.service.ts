@@ -3,8 +3,14 @@ import { Injectable } from '@angular/core';
 /** SFX de click de UI, compartido por todos los botones. Servido desde `public/`. */
 export const UI_CLICK_AUDIO_PATH = '/audio/mixkit-camera-shutter-click-1133.wav';
 
-/** Qué elementos cuentan como "botón" para disparar el click. */
-const BUTTON_SELECTOR = 'button, [role="button"]';
+/**
+ * Qué elementos cuentan como "botón" para disparar el click. Sumamos algunos `<a>`
+ * de navegación que se ven y se usan como botones pero, al ser anchors, no matchean
+ * `button`: los items del menú hamburguesa ("Mi perfil", "Amigos") y los tabs de
+ * auth ("Iniciar sesión" / "Crear cuenta", donde el tab inactivo es un enlace).
+ */
+const BUTTON_SELECTOR =
+  'button, [role="button"], a.global-header__menu-item, a.auth-tabs__tab';
 
 type AudioContextCtor = typeof AudioContext;
 

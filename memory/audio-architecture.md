@@ -41,5 +41,14 @@ apareciendo — no hay que manejar delays a mano.
   que pueda dispararse fuera de un gesto (timeout, observable, dialog afterClosed) debe estar en
   `ALL_MATCH_AUDIO_PATHS` o no sonará en iOS.
 
+- **SFX de click de UI**: `UiClickSoundService` (core), listener global en captura sobre
+  `button, [role="button"]`. Usa **Web Audio API** (decodifica el WAV una vez a `AudioBuffer`,
+  dispara un `AudioBufferSourceNode` por click), NO `HTMLAudioElement`. Motivo: en iOS/WebKit
+  `<audio>.play()` arranca una pipeline pesada (buffering+seek) que se sentía con delay
+  perceptible en el iPhone; un buffer source decodificado suena con latencia casi nula y permite
+  solapar clicks. `resume()` del contexto suspendido en el propio click (gesto válido). Fallback a
+  `HTMLAudioElement` si no hay Web Audio o falla el decode. **Regla**: para SFX de feedback
+  inmediato (donde la latencia importa) preferir Web Audio sobre `<audio>`.
+
 Todo el audio es no-bloqueante: siempre envuelto en try/catch, nunca debe romper el flujo
 visual de la partida.

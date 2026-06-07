@@ -12,6 +12,9 @@ export interface AchievementNotification {
   achievement: UnlockedAchievement;
 }
 
+/** SFX que suena al desbloquear un logro. */
+export const ACHIEVEMENT_UNLOCK_AUDIO_PATH = '/audio/mixkit-achievement-bell-600.wav';
+
 @Injectable({ providedIn: 'root' })
 export class ProfileNotificationService {
   private readonly authStore = inject(AuthStore);
@@ -21,6 +24,7 @@ export class ProfileNotificationService {
   private readonly unlockedSubject = new Subject<UnlockedAchievement>();
   private subscription: Subscription | null = null;
   private started = false;
+  private unlockAudio: HTMLAudioElement | null = null;
 
   readonly current = signal<AchievementNotification | null>(null);
   readonly achievementUnlocked$ = this.unlockedSubject.asObservable();
@@ -93,5 +97,21 @@ export class ProfileNotificationService {
     };
     this.current.set(notification);
     this.unlockedSubject.next(event.payload);
+    this.playUnlockSound();
+  }
+
+  private playUnlockSound(): void {
+    try {
+      if (!this.unlockAudio) {
+        this.unlockAudio = new Audio(ACHIEVEMENT_UNLOCK_AUDIO_PATH);
+      }
+      this.unlockAudio.currentTime = 0;
+      const result = this.unlockAudio.play();
+      if (result) {
+        result.catch(() => undefined);
+      }
+    } catch {
+      // El SFX es una mejora no bloqueante; si falla, la notificacion sigue funcionando.
+    }
   }
 }

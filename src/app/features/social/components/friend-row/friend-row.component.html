@@ -2,8 +2,9 @@
   <div class="social-row__info">
     <span
       class="social-row__dot"
-      [class.social-row__dot--online]="online()"
-      [attr.aria-label]="online() ? 'En línea' : 'Desconectado'"
+      [class.social-row__dot--online]="isOnlineAvailable()"
+      [class.social-row__dot--busy]="isBusy()"
+      [attr.aria-label]="dotAriaLabel()"
     ></span>
     <span class="social-row__name">{{ friendUsername() }}</span>
   </div>
@@ -11,26 +12,34 @@
     @if (canSpectate()) {
       <button
         type="button"
-        class="t3-btn t3-btn--neutral"
+        class="t3-btn t3-btn--neutral t3-btn--icon"
+        title="Mirar partida"
+        aria-label="Mirar partida"
         (click)="onSpectate()"
       >
-        Mirar
+        <mat-icon>visibility</mat-icon>
       </button>
     }
     @if (canInvite()) {
       <button
         type="button"
-        class="t3-btn t3-btn--primary"
+        class="t3-btn t3-btn--primary t3-btn--icon"
+        title="Invitar a partida"
+        aria-label="Invitar a partida"
         [disabled]="inviting()"
         (click)="onInvite()"
       >
-        Invitar a partida
+        <mat-icon>sports_esports</mat-icon>
       </button>
-    } @else {
-      @if (reasonLabel()) {
-        <span class="social-row__reason">{{ reasonLabel() }}</span>
-      }
     }
-    <button type="button" class="t3-btn t3-btn--destructive" (click)="onRemove()">Eliminar</button>
+    <button
+      type="button"
+      class="t3-btn t3-btn--destructive t3-btn--icon"
+      title="Eliminar amigo"
+      aria-label="Eliminar amigo"
+      (click)="onRemove()"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
   </div>
 </div>

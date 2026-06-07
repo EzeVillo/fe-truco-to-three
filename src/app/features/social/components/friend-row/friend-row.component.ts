@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { busyReasonCopy } from '../../../../shared/error-copy/error-copy';
+import { MatIconModule } from '@angular/material/icon';
 import type { FriendAvailability, FriendBusyReason } from '../../../../core/models/social.models';
 
 /**
@@ -9,6 +9,7 @@ import type { FriendAvailability, FriendBusyReason } from '../../../../core/mode
 @Component({
   selector: 'app-friend-row',
   standalone: true,
+  imports: [MatIconModule],
   templateUrl: './friend-row.component.html',
   styleUrl: './friend-row.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -36,9 +37,13 @@ export class FriendRowComponent {
 
   readonly canInvite = computed(() => this.online() && this.availability() === 'AVAILABLE');
   readonly canSpectate = computed(() => this.spectatableMatchId() !== null);
-  readonly reasonLabel = computed(() =>
-    !this.online() ? '' : busyReasonCopy(this.busyReason()),
-  );
+  readonly isOnlineAvailable = computed(() => this.online() && this.availability() === 'AVAILABLE');
+  readonly isBusy = computed(() => this.online() && this.availability() === 'BUSY');
+  readonly dotAriaLabel = computed(() => {
+    if (!this.online()) return 'Desconectado';
+    if (this.isBusy()) return 'En partida';
+    return 'En línea';
+  });
 
   onRemove(): void {
     this.remove.emit(this.friendUsername());

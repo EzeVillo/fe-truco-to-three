@@ -28,78 +28,77 @@ describe('FriendRowComponent', () => {
     expect(emitted).toBe('martina');
   });
 
-  it('AVAILABLE + online: muestra "Invitar a partida" y emite invite', () => {
+  it('AVAILABLE + online: muestra botón invitar y emite invite', () => {
     fixture.componentRef.setInput('availability', 'AVAILABLE');
     fixture.componentRef.setInput('online', true);
     fixture.detectChanges();
     let emitted: string | null = null;
     component.invite.subscribe((v) => (emitted = v));
     const inviteBtn = fixture.debugElement.query(By.css('.t3-btn--primary'));
-    expect((inviteBtn.nativeElement as HTMLElement).textContent).toContain('Invitar a partida');
+    expect(inviteBtn).toBeTruthy();
     (inviteBtn.nativeElement as HTMLButtonElement).click();
     expect(emitted).toBe('martina');
   });
 
-  it('AVAILABLE pero offline: oculta el botón y no muestra motivo', () => {
+  it('AVAILABLE pero offline: oculta el botón y el dot es muted', () => {
     fixture.componentRef.setInput('availability', 'AVAILABLE');
     fixture.componentRef.setInput('online', false);
     fixture.detectChanges();
     expect(fixture.debugElement.query(By.css('.t3-btn--primary'))).toBeNull();
-    expect(fixture.debugElement.query(By.css('.social-row__reason'))).toBeNull();
+    expect(fixture.debugElement.query(By.css('.social-row__dot--online'))).toBeNull();
+    expect(fixture.debugElement.query(By.css('.social-row__dot--busy'))).toBeNull();
   });
 
-  it('BUSY + online: oculta el botón invitar y muestra el motivo', () => {
+  it('BUSY + online: oculta el botón invitar y muestra dot rojo', () => {
     fixture.componentRef.setInput('availability', 'BUSY');
     fixture.componentRef.setInput('busyReason', 'IN_MATCH');
     fixture.componentRef.setInput('online', true);
     fixture.detectChanges();
     expect(fixture.debugElement.query(By.css('.t3-btn--primary'))).toBeNull();
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('En partida');
+    expect(fixture.debugElement.query(By.css('.social-row__dot--busy'))).toBeTruthy();
+    expect(fixture.debugElement.query(By.css('.social-row__dot--online'))).toBeNull();
   });
 
-  it('BUSY pero offline: no muestra motivo (prevalece offline)', () => {
+  it('BUSY pero offline: oculta el botón y el dot es muted', () => {
     fixture.componentRef.setInput('availability', 'BUSY');
     fixture.componentRef.setInput('busyReason', 'IN_MATCH');
     fixture.componentRef.setInput('online', false);
     fixture.detectChanges();
     expect(fixture.debugElement.query(By.css('.t3-btn--primary'))).toBeNull();
-    expect(fixture.debugElement.query(By.css('.social-row__reason'))).toBeNull();
+    expect(fixture.debugElement.query(By.css('.social-row__dot--online'))).toBeNull();
+    expect(fixture.debugElement.query(By.css('.social-row__dot--busy'))).toBeNull();
   });
 
-  it('online: refleja el indicador de conexión', () => {
+  it('AVAILABLE + online: refleja el indicador verde', () => {
+    fixture.componentRef.setInput('availability', 'AVAILABLE');
     fixture.componentRef.setInput('online', true);
     fixture.detectChanges();
     expect(fixture.debugElement.query(By.css('.social-row__dot--online'))).toBeTruthy();
+    expect(fixture.debugElement.query(By.css('.social-row__dot--busy'))).toBeNull();
   });
 
   // ─── Spectate (feature 026) ───────────────────────────────────────────────
 
-  it('sin spectatableMatchId: no muestra botón "Mirar"', () => {
+  it('sin spectatableMatchId: no muestra botón mirar', () => {
     fixture.componentRef.setInput('spectatableMatchId', null);
     fixture.detectChanges();
-    const btns = (fixture.nativeElement as HTMLElement).querySelectorAll('.t3-btn--neutral');
-    const mirrarBtn = Array.from(btns).find((b) => b.textContent?.includes('Mirar'));
-    expect(mirrarBtn).toBeUndefined();
+    expect(fixture.debugElement.query(By.css('.t3-btn--neutral'))).toBeNull();
   });
 
-  it('con spectatableMatchId: muestra botón "Mirar"', () => {
+  it('con spectatableMatchId: muestra botón mirar', () => {
     fixture.componentRef.setInput('spectatableMatchId', 'match-abc');
     fixture.detectChanges();
-    const btns = (fixture.nativeElement as HTMLElement).querySelectorAll('.t3-btn--neutral');
-    const mirrarBtn = Array.from(btns).find((b) => b.textContent?.includes('Mirar'));
-    expect(mirrarBtn).toBeDefined();
+    expect(fixture.debugElement.query(By.css('.t3-btn--neutral'))).toBeTruthy();
   });
 
-  it('click en "Mirar" emite spectate con el matchId', () => {
+  it('click en botón mirar emite spectate con el matchId', () => {
     fixture.componentRef.setInput('spectatableMatchId', 'match-xyz');
     fixture.detectChanges();
     let emitted: string | null = null;
     component.spectate.subscribe((v) => (emitted = v));
-    const btns = (fixture.nativeElement as HTMLElement).querySelectorAll('.t3-btn--neutral');
-    const mirrarBtn = Array.from(btns).find((b) =>
-      b.textContent?.includes('Mirar'),
-    ) as HTMLButtonElement | undefined;
-    mirrarBtn?.click();
+    const mirrarBtn = fixture.debugElement.query(By.css('.t3-btn--neutral'));
+    expect(mirrarBtn).toBeTruthy();
+    (mirrarBtn.nativeElement as HTMLButtonElement).click();
     expect(emitted).toBe('match-xyz');
   });
 });

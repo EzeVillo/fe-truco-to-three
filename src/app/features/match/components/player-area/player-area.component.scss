@@ -14,3 +14,28 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+// Cartas propias dadas vuelta en modo espectador: replican la disposición plana
+// de la mano del jugador (.player-hand) para mantener el layout pixel perfect.
+.player-area__cards {
+  display: flex;
+  gap: var(--t3-gap-xs);
+  justify-content: center;
+  align-items: center;
+  padding: var(--t3-gap-xs);
+  min-height: calc(64px * 3 / 2 + var(--t3-gap-xs) * 2);
+}
+
+.player-area__card-wrapper app-card-view {
+  width: 64px;
+}
+
+@media (min-width: 1024px) {
+  .player-area__cards {
+    min-height: calc(88px * 3 / 2 + var(--t3-gap-sm) * 2);
+  }
+
+  .player-area__card-wrapper app-card-view {
+    width: 88px;
+  }
+}

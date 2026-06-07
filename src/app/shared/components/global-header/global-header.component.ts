@@ -6,6 +6,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { AuthStore } from '../../../core/auth/auth.store';
 import { AuthService } from '../../../core/auth/auth.service';
 import { PresenceCoordinatorService } from '../../../core/services/presence-coordinator.service';
+import { SpectatorCountStore } from '../../services/spectator-count.store';
 import { ConfirmLogoutDialogComponent } from '../confirm-logout-dialog/confirm-logout-dialog.component';
 
 @Component({
@@ -19,6 +20,7 @@ export class GlobalHeaderComponent {
   readonly authStore = inject(AuthStore);
   private readonly authService = inject(AuthService);
   private readonly presenceCoordinator = inject(PresenceCoordinatorService);
+  private readonly spectatorCountStore = inject(SpectatorCountStore);
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
   private readonly host = inject(ElementRef<HTMLElement>);
@@ -36,7 +38,16 @@ export class GlobalHeaderComponent {
 
   /** Estando dentro de una partida, la navegación del header se bloquea (salvo "Salir"). */
   readonly inMatch = computed(() => /^\/match\//.test(this.currentUrl()));
+  /** Estando como espectador (`/spectate/:id`), se ofrece "Dejar de ver" en el menú. */
+  readonly isSpectating = computed(() => /^\/spectate\//.test(this.currentUrl()));
   readonly busy = computed(() => this.inMatch() || this.presenceCoordinator.busy());
+
+  /** Conteo de espectadores de la partida en curso (jugador o espectador). */
+  readonly spectatorCount = this.spectatorCountStore.count;
+  /** El badge `👁 N` se muestra dentro de una partida y sólo cuando hay ≥ 1 espectador. */
+  readonly showSpectatorBadge = computed(
+    () => (this.inMatch() || this.isSpectating()) && this.spectatorCount() > 0,
+  );
 
   /** El acceso a Amigos es sólo para usuarios registrados (no guests) y fuera de partida. */
   readonly showFriends = computed(
@@ -54,6 +65,12 @@ export class GlobalHeaderComponent {
 
   toggleMenu(): void {
     this.menuOpen.update((open) => !open);
+  }
+
+  /** Deja de mirar: vuelve a Amigos. SpectateScreenComponent.ngOnDestroy libera la sesión. */
+  leaveSpectate(): void {
+    this.closeMenu();
+    void this.router.navigate(['/friends']);
   }
 
   closeMenu(): void {

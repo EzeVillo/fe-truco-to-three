@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { MatchStateService } from './match-state.service';
 import { MatchEventQueueService } from './match-event-queue.service';
+import { SpectatorCountStore } from '../../../shared/services/spectator-count.store';
 import { WebSocketService } from '../../../core/services/websocket.service';
 import { environment } from '../../../../environments/environment';
 import type { MatchWsEvent, MatchDerivedEvent } from '../models/match-ws-events';
@@ -331,6 +332,9 @@ describe('MatchStateService', () => {
       expect(mockEventQueue.enqueueTransactional).not.toHaveBeenCalled();
       expect(mockEventQueue.enqueueDerived).not.toHaveBeenCalled();
       expect(mockEventQueue.clear.mock.calls.length).toBe(clearCallsBefore);
+
+      // Pero sí publica el conteo al store global que lee el header (feature 026).
+      expect(TestBed.inject(SpectatorCountStore).count()).toBe(1);
     });
 
     it('no rompe la reconciliación: un evento de juego posterior se aplica normal', () => {

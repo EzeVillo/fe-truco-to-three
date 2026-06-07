@@ -1,9 +1,19 @@
 <div class="player-area">
-  <span class="player-area__name">{{ self().username }}</span>
-  <app-player-hand
-    [cards]="self().handCards"
-    [matchId]="matchId()"
-    [playCardsEnabled]="playCardsEnabled()"
-    [isProcessingDelay]="isProcessingDelay()"
-  />
+  @if (spectator()) {
+    <span class="player-area__name">{{ self().username }}</span>
+    <div class="player-area__cards">
+      @for (_ of [].constructor(self().handCount); track $index) {
+        <div class="player-area__card-wrapper">
+          <app-card-view [card]="null" />
+        </div>
+      }
+    </div>
+  } @else {
+    <app-player-hand
+      [cards]="self().handCards"
+      [matchId]="matchId()"
+      [playCardsEnabled]="playCardsEnabled()"
+      [isProcessingDelay]="isProcessingDelay()"
+    />
+  }
 </div>

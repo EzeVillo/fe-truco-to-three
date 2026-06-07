@@ -12,16 +12,6 @@
       </button>
     </div>
   } @else if (matchView()) {
-    <header class="spectate-screen__banner">
-      <span class="spectate-screen__banner-text">Estás mirando</span>
-      <span class="spectate-screen__counter">
-        👁 {{ spectateService.spectatorCount() }}
-      </span>
-      <button type="button" class="t3-btn t3-btn--neutral spectate-screen__leave" (click)="goBack()">
-        Dejar de mirar
-      </button>
-    </header>
-
     <app-game-board
       [view]="matchView()!"
       [matchId]="matchId()"

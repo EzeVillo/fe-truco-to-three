@@ -4,7 +4,8 @@
   position: sticky;
   top: 0;
   z-index: 10;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: var(--t3-gap-sm);
   height: var(--t3-header-height);
@@ -46,8 +47,31 @@
     font-weight: 800;
   }
 
-  &__spacer {
-    flex: 1;
+  &__left {
+    justify-self: start;
+  }
+
+  &__center {
+    justify-self: center;
+  }
+
+  &__right {
+    justify-self: end;
+  }
+
+  &__spectator-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px var(--t3-gap-sm);
+    background: var(--t3-gold-bg-subtle);
+    border: 1px solid var(--t3-card-border);
+    border-radius: var(--t3-radius-md);
+    color: var(--t3-text);
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
   }
 
   &__menu {

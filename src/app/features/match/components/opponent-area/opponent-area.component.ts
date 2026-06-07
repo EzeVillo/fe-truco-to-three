@@ -13,4 +13,6 @@ import { CardViewComponent } from '../card-view/card-view.component';
 })
 export class OpponentAreaComponent {
   readonly opponent = input.required<SeatView>();
+  /** Modo espectador: muestra el nombre del rival sobre sus cartas. */
+  readonly spectator = input<boolean>(false);
 }

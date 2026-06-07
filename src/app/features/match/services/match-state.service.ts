@@ -15,6 +15,7 @@ import type {
 } from '../models/match-ws-events';
 import { applyMatchEvent, applyMatchDerivedEvent } from '../reducers/match-event.reducer';
 import { MatchEventQueueService } from './match-event-queue.service';
+import { SpectatorCountStore } from '../../../shared/services/spectator-count.store';
 
 interface MatchSnapshot extends MatchState {
   stateVersion: number;
@@ -65,6 +66,7 @@ export class MatchStateService {
   private readonly wsService = inject(WebSocketService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly eventQueue = inject(MatchEventQueueService);
+  private readonly spectatorCountStore = inject(SpectatorCountStore);
 
   readonly state = signal<MatchState | null>(null);
   readonly loading = signal<boolean>(false);
@@ -107,6 +109,9 @@ export class MatchStateService {
     this.lastSeenVersion = 0;
     this.buffer = [];
     this.derivedBuffer = [];
+    // El conteo de espectadores arranca en 0 y se alimenta de SPECTATOR_COUNT_CHANGED:
+    // el snapshot REST del jugador (§4.14) no lo incluye (feature 026).
+    this.spectatorCountStore.reset();
 
     this.unsubscribeAll();
     this.eventQueue.clear();
@@ -131,10 +136,14 @@ export class MatchStateService {
           this.rematch$.next(event);
           return;
         }
-        // El contador de espectadores no es estado de juego: ignorarlo fuera de la
-        // reconciliación por stateVersion evita el re-fetch espurio que parpadea el
-        // tablero y descarta los modales pendientes (feature 026).
+        // El contador de espectadores no es estado de juego: se publica al store
+        // global (lo lee el header) pero se procesa fuera de la reconciliación por
+        // stateVersion para evitar el re-fetch espurio que parpadea el tablero y
+        // descarta los modales pendientes (feature 026).
         if (isSpectatorCountEvent(event)) {
+          this.spectatorCountStore.set(
+            (event.payload as { spectatorCount: number }).spectatorCount,
+          );
           return;
         }
         if (event.eventType === 'PLAYER_JOINED') {
@@ -205,6 +214,7 @@ export class MatchStateService {
   destroy(): void {
     this.eventQueue.clear();
     this.unsubscribeAll();
+    this.spectatorCountStore.reset();
     this.matchEvent$.complete();
     this.matchEnded$.complete();
     this.gameWon$.complete();

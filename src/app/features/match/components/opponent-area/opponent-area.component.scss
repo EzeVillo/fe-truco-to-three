@@ -1,9 +1,20 @@
 .opponent-area {
   display: flex;
+  flex-direction: column;
   justify-content: center;
-  align-items: flex-end;
+  align-items: center;
+  gap: var(--t3-gap-xs);
   min-height: 0;
   padding: var(--t3-gap-xs);
+}
+
+.opponent-area__name {
+  font-size: 0.875rem;
+  color: var(--t3-text);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .opponent-area__cards {

@@ -1,63 +1,81 @@
 <header class="global-header">
-  @if (inMatch()) {
-    <span class="global-header__brand global-header__brand--disabled" aria-disabled="true">
-      <img src="icon.png" alt="" class="global-header__brand-logo" />
-      <span class="global-header__brand-text"
-        >Truco<span class="global-header__brand-accent">a 3</span></span
+  <div class="global-header__left">
+    @if (inMatch()) {
+      <span class="global-header__brand global-header__brand--disabled" aria-disabled="true">
+        <img src="icon.png" alt="" class="global-header__brand-logo" />
+        <span class="global-header__brand-text"
+          >Truco<span class="global-header__brand-accent">a 3</span></span
+        >
+      </span>
+    } @else {
+      <a
+        class="global-header__brand"
+        [routerLink]="authStore.isAuthenticated() ? '/lobby' : '/login'"
       >
-    </span>
-  } @else {
-    <a
-      class="global-header__brand"
-      [routerLink]="authStore.isAuthenticated() ? '/lobby' : '/login'"
-    >
-      <img src="icon.png" alt="" class="global-header__brand-logo" />
-      <span class="global-header__brand-text"
-        >Truco<span class="global-header__brand-accent">a 3</span></span
+        <img src="icon.png" alt="" class="global-header__brand-logo" />
+        <span class="global-header__brand-text"
+          >Truco<span class="global-header__brand-accent">a 3</span></span
+        >
+      </a>
+    }
+  </div>
+
+  <div class="global-header__center">
+    @if (showSpectatorBadge()) {
+      <span
+        class="global-header__spectator-badge"
+        aria-label="Espectadores mirando la partida"
       >
-    </a>
-  }
+        <span aria-hidden="true">👁</span> {{ spectatorCount() }}
+      </span>
+    }
+  </div>
 
-  <span class="global-header__spacer"></span>
+  <div class="global-header__right">
+    @if (authStore.isAuthenticated()) {
+      <div class="global-header__menu">
+        <button
+          type="button"
+          class="global-header__menu-button"
+          aria-label="Abrir menú"
+          [attr.aria-expanded]="menuOpen()"
+          aria-controls="global-header-menu"
+          (click)="toggleMenu()"
+        >
+          <span class="global-header__menu-line" aria-hidden="true"></span>
+          <span class="global-header__menu-line" aria-hidden="true"></span>
+          <span class="global-header__menu-line" aria-hidden="true"></span>
+        </button>
 
-  @if (authStore.isAuthenticated()) {
-    <div class="global-header__menu">
-      <button
-        type="button"
-        class="global-header__menu-button"
-        aria-label="Abrir menú"
-        [attr.aria-expanded]="menuOpen()"
-        aria-controls="global-header-menu"
-        (click)="toggleMenu()"
-      >
-        <span class="global-header__menu-line" aria-hidden="true"></span>
-        <span class="global-header__menu-line" aria-hidden="true"></span>
-        <span class="global-header__menu-line" aria-hidden="true"></span>
-      </button>
-
-      @if (menuOpen()) {
-        <nav id="global-header-menu" class="global-header__menu-panel" aria-label="Menú principal">
-          @if (!busy()) {
-            @if (profileLink(); as link) {
-              <a class="global-header__menu-item" [routerLink]="link" (click)="closeMenu()">
-                Mi perfil
-              </a>
-            } @else {
-              <span class="global-header__menu-item global-header__menu-item--readonly">
-                {{ userLabel() }}
-              </span>
+        @if (menuOpen()) {
+          <nav id="global-header-menu" class="global-header__menu-panel" aria-label="Menú principal">
+            @if (!busy()) {
+              @if (profileLink(); as link) {
+                <a class="global-header__menu-item" [routerLink]="link" (click)="closeMenu()">
+                  Mi perfil
+                </a>
+              } @else {
+                <span class="global-header__menu-item global-header__menu-item--readonly">
+                  {{ userLabel() }}
+                </span>
+              }
             }
-          }
-          @if (showFriends()) {
-            <a class="global-header__menu-item" routerLink="/friends" (click)="closeMenu()">
-              Amigos
-            </a>
-          }
-          <button type="button" class="global-header__menu-item" (click)="onLogoutClick()">
-            Salir
-          </button>
-        </nav>
-      }
-    </div>
-  }
+            @if (showFriends()) {
+              <a class="global-header__menu-item" routerLink="/friends" (click)="closeMenu()">
+                Amigos
+              </a>
+            }
+            @if (isSpectating()) {
+              <button type="button" class="global-header__menu-item" (click)="leaveSpectate()">
+                Dejar de ver
+              </button>
+            }
+            <button type="button" class="global-header__menu-item" (click)="onLogoutClick()">
+              Salir
+            </button>
+          </nav>
+        }
+      </div>
+    }
+  </div>
 </header>

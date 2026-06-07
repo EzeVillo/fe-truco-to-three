@@ -124,14 +124,14 @@ describe('SpectateScreenComponent', () => {
     expect(fixture.debugElement.query(By.css('app-game-board'))).toBeTruthy();
   });
 
-  it('muestra el banner "Estás mirando" con contador de espectadores', () => {
+  it('no renderiza el banner de espectadores (vive en el header global)', () => {
     mockService.loading.set(false);
     mockService.matchState.set(makeMatchState());
-    mockService.spectatorCount.set(4);
     fixture.detectChanges();
-    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('Estás mirando');
-    expect(text).toContain('4');
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.spectate-screen__banner')).toBeNull();
+    expect(el.querySelector('.spectate-screen__leave')).toBeNull();
+    expect(el.textContent ?? '').not.toContain('Estás mirando');
   });
 
   it('al terminar el match abre el diálogo y al cerrarlo navega a /friends', () => {
@@ -192,16 +192,5 @@ describe('SpectateScreenComponent', () => {
   it('llama destroy al destruir el componente', () => {
     fixture.destroy();
     expect(mockService.destroy).toHaveBeenCalled();
-  });
-
-  it('"Dejar de mirar" navega a /friends', () => {
-    mockService.loading.set(false);
-    mockService.matchState.set(makeMatchState());
-    fixture.detectChanges();
-    const leaveBtn = (fixture.nativeElement as HTMLElement).querySelector(
-      '.spectate-screen__leave',
-    ) as HTMLButtonElement | null;
-    leaveBtn?.click();
-    expect(routerSpy.navigate).toHaveBeenCalledWith(['/friends']);
   });
 });

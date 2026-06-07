@@ -1,4 +1,7 @@
 <div class="opponent-area">
+  @if (spectator()) {
+    <span class="opponent-area__name">{{ opponent().username }}</span>
+  }
   <div class="opponent-area__cards">
     @for (_ of [].constructor(opponent().handCount); track $index) {
       <div class="opponent-area__card-wrapper">

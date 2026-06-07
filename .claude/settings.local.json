@@ -40,7 +40,9 @@
       "mcp__chrome-devtools__take_screenshot",
       "mcp__chrome-devtools__list_console_messages",
       "mcp__chrome-devtools__emulate",
-      "mcp__chrome-devtools__navigate_page"
+      "mcp__chrome-devtools__navigate_page",
+      "Bash(node scripts/check-themed-templates.mjs)",
+      "Bash(node scripts/check-hover-gating.mjs)"
     ]
   }
 }

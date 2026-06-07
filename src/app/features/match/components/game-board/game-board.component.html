@@ -7,7 +7,7 @@
     [timerIsUrgent]="timerIsUrgent()"
   />
   <div class="game-board__middle">
-    <app-opponent-area [opponent]="view().opponent" />
+    <app-opponent-area [opponent]="view().opponent" [spectator]="spectator()" />
     <app-played-cards-area
       [selfPlayedInCurrentHand]="view().self.playedInCurrentHand"
       [opponentPlayedInCurrentHand]="view().opponent.playedInCurrentHand"
@@ -19,6 +19,7 @@
       [matchId]="matchId()"
       [playCardsEnabled]="playCardsEnabled()"
       [isProcessingDelay]="isProcessingDelay()"
+      [spectator]="spectator()"
     />
   </div>
   @if (!spectator()) {
@@ -29,5 +30,7 @@
       [isProcessingDelay]="isProcessingDelay()"
       [viewerActionTimedOut]="viewerActionTimedOut()"
     />
+  } @else {
+    <div class="game-board__action-placeholder" aria-hidden="true"></div>
   }
 </div>

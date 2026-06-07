@@ -20,6 +20,7 @@ import { WebSocketService } from '../../../core/services/websocket.service';
 import { SpectateApiService } from './spectate-api.service';
 import { spectateErrorCopy, getErrorCopy } from '../../../shared/error-copy/error-copy';
 import { adaptSpectateToMatchState } from '../utils/adapt-spectate-to-match-view';
+import { SpectatorCountStore } from '../../../shared/services/spectator-count.store';
 
 const SPECTATE_QUEUE = '/user/queue/match-spectate';
 
@@ -52,6 +53,7 @@ export class SpectateStateService {
   private readonly wsService = inject(WebSocketService);
   private readonly apiService = inject(SpectateApiService);
   private readonly eventQueue = inject(MatchEventQueueService);
+  private readonly countStore = inject(SpectatorCountStore);
 
   /** Estado adaptado del espectador (usado por deriveMatchView en la pantalla). */
   readonly matchState = signal<MatchState | null>(null);
@@ -138,6 +140,7 @@ export class SpectateStateService {
         this.eventQueue.clear();
         this.matchState.set(adaptSpectateToMatchState(snap));
         this.spectatorCount.set(snap.spectatorCount);
+        this.countStore.set(snap.spectatorCount);
         this.loading.set(false);
         this.error.set(null);
         break;
@@ -157,6 +160,7 @@ export class SpectateStateService {
           this.triggerRefetch();
         } else {
           this.spectatorCount.set(payload.spectatorCount);
+          this.countStore.set(payload.spectatorCount);
           if (hasVersion(event.stateVersion)) {
             this.lastVersion = event.stateVersion;
           }
@@ -270,6 +274,7 @@ export class SpectateStateService {
         this.lastVersion = snap.stateVersion;
         this.matchState.set(adaptSpectateToMatchState(snap));
         this.spectatorCount.set(snap.spectatorCount);
+        this.countStore.set(snap.spectatorCount);
         this.loading.set(false);
         this.error.set(null);
       },
@@ -284,6 +289,7 @@ export class SpectateStateService {
   destroy(): void {
     this.eventQueue.clear();
     this.unsubscribeAll();
+    this.countStore.reset();
     this.currentMatchId = null;
     this.gameWon$.complete();
     this.envidoResolved$.complete();

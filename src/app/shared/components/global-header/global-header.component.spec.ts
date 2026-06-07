@@ -12,6 +12,7 @@ import { GlobalHeaderComponent } from './global-header.component';
 import { AuthStore } from '../../../core/auth/auth.store';
 import { SessionStorageService } from '../../../core/auth/session-storage.service';
 import { PresenceCoordinatorService } from '../../../core/services/presence-coordinator.service';
+import { SpectatorCountStore } from '../../services/spectator-count.store';
 import { ConfirmLogoutDialogComponent } from '../confirm-logout-dialog/confirm-logout-dialog.component';
 import type { FullAuthResponse } from '../../../core/models/auth.models';
 
@@ -209,5 +210,98 @@ describe('GlobalHeaderComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('.global-header__menu-panel')).toBeNull();
+  });
+
+  async function setupRoutedHeader(url: string) {
+    @Component({ standalone: true, template: '' })
+    class StubComponent {}
+
+    setupStorageMock();
+    TestBed.configureTestingModule({
+      imports: [GlobalHeaderComponent],
+      providers: [
+        provideRouter([
+          { path: 'match/:matchId', component: StubComponent },
+          { path: 'spectate/:matchId', component: StubComponent },
+          { path: 'lobby', component: StubComponent },
+        ]),
+        provideAnimationsAsync(),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        SessionStorageService,
+        AuthStore,
+        { provide: PresenceCoordinatorService, useValue: { busy: signal(false) } },
+        { provide: MatDialog, useValue: { open: vi.fn() } },
+      ],
+    });
+
+    const router = TestBed.inject(Router);
+    TestBed.inject(AuthStore).setSession(FULL_AUTH);
+    await router.navigateByUrl(url);
+    return router;
+  }
+
+  it('muestra el badge de espectadores en /match con conteo >= 1', async () => {
+    await setupRoutedHeader('/match/abc-123');
+    TestBed.inject(SpectatorCountStore).set(2);
+
+    const fixture = TestBed.createComponent(GlobalHeaderComponent);
+    fixture.detectChanges();
+
+    const badge = fixture.nativeElement.querySelector('.global-header__spectator-badge');
+    expect(badge).toBeTruthy();
+    expect(badge?.textContent ?? '').toContain('2');
+  });
+
+  it('oculta el badge de espectadores cuando el conteo es 0', async () => {
+    await setupRoutedHeader('/spectate/abc-123');
+    TestBed.inject(SpectatorCountStore).set(0);
+
+    const fixture = TestBed.createComponent(GlobalHeaderComponent);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.global-header__spectator-badge')).toBeNull();
+  });
+
+  it('oculta el badge fuera de una partida aunque el store tenga conteo', async () => {
+    await setupRoutedHeader('/lobby');
+    TestBed.inject(SpectatorCountStore).set(3);
+
+    const fixture = TestBed.createComponent(GlobalHeaderComponent);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.global-header__spectator-badge')).toBeNull();
+  });
+
+  it('en /spectate ofrece "Dejar de ver" en el menu y navega a /friends', async () => {
+    const router = await setupRoutedHeader('/spectate/abc-123');
+    const navSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    const fixture = TestBed.createComponent(GlobalHeaderComponent);
+    fixture.detectChanges();
+    openMenu(fixture);
+
+    const el = fixture.nativeElement as HTMLElement;
+    const leaveBtn = Array.from(
+      el.querySelectorAll<HTMLButtonElement>('button.global-header__menu-item'),
+    ).find((b) => (b.textContent ?? '').includes('Dejar de ver'));
+    expect(leaveBtn).toBeTruthy();
+
+    leaveBtn?.click();
+    expect(navSpy).toHaveBeenCalledWith(['/friends']);
+  });
+
+  it('en /match NO ofrece "Dejar de ver"', async () => {
+    await setupRoutedHeader('/match/abc-123');
+
+    const fixture = TestBed.createComponent(GlobalHeaderComponent);
+    fixture.detectChanges();
+    openMenu(fixture);
+
+    const el = fixture.nativeElement as HTMLElement;
+    const hasLeave = Array.from(
+      el.querySelectorAll<HTMLButtonElement>('button.global-header__menu-item'),
+    ).some((b) => (b.textContent ?? '').includes('Dejar de ver'));
+    expect(hasLeave).toBe(false);
   });
 });

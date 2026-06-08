@@ -5,7 +5,7 @@ This file provides guidance to AI coding agents (Claude Code, Codex, etc.) when 
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/025-invite-friends-match/plan.md`
+`specs/027-chat-online-match/plan.md`
 <!-- SPECKIT END -->
 
 ## Reglas del juego (truco-to-three)

@@ -8,6 +8,7 @@ import type {
   ResourceInvitationTargetType,
 } from './social.models';
 import type { SpectatableMatch, SpectateMatchState } from './spectate.models';
+import type { ChatParentType } from './chat.models';
 
 interface WsEventBase<TType extends string, TPayload> {
   eventType: TType;
@@ -160,8 +161,23 @@ export type SocialWsEvent =
   | WsEventBase<'FRIEND_AVAILABILITY_STATE', { friends: FriendAvailabilitySnapshotItem[] }>
   | WsEventBase<'FRIEND_AVAILABILITY_CHANGED', FriendAvailabilityDelta>;
 
-// Análogamente: LeagueWsEvent, CupWsEvent, ChatWsEvent, SpectateWsEvent, PublicLobbyWsEvent
+/** Eventos del canal /user/queue/chat (§9.5d/§9.6). chatId top-level. */
+export type ChatWsEvent =
+  | {
+      chatId: string;
+      eventType: 'CHAT_CREATED';
+      timestamp: number;
+      payload: { parentType: Exclude<ChatParentType, 'FRIENDSHIP'>; parentId: string };
+    }
+  | {
+      chatId: string;
+      eventType: 'MESSAGE_SENT';
+      timestamp: number;
+      payload: { sender: string; content: string; sentAt: number };
+    };
+
+// Análogamente: LeagueWsEvent, CupWsEvent, SpectateWsEvent, PublicLobbyWsEvent
 // se completan conforme se implementan las features correspondientes.
 
 /** Unión discriminada general de eventos WebSocket. */
-export type WsEvent = MatchWsEvent | SocialWsEvent /* | LeagueWsEvent | ... */;
+export type WsEvent = MatchWsEvent | SocialWsEvent | ChatWsEvent /* | LeagueWsEvent | ... */;

@@ -13,6 +13,7 @@ import { EffectsVolumeService } from '../../../core/services/effects-volume.serv
 import { MatchesApiService } from '../../../features/lobby/services/matches-api.service';
 import { ConfirmLogoutDialogComponent } from '../confirm-logout-dialog/confirm-logout-dialog.component';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
+import { ChatStore } from '../../../features/chat/services/chat.store';
 
 @Component({
   selector: 'app-global-header',
@@ -34,8 +35,13 @@ export class GlobalHeaderComponent {
   readonly backgroundMusic = inject(BackgroundMusicService);
   readonly effectsVolume = inject(EffectsVolumeService);
 
+  readonly chatStore = inject(ChatStore);
+
   readonly menuOpen = signal(false);
   readonly soundOpen = signal(false);
+
+  /** El ítem "Chat" sólo se muestra dentro de una partida online activa. */
+  readonly showChat = computed(() => this.chatStore.available() && this.inMatch());
 
   private readonly currentUrl = toSignal(
     this.router.events.pipe(
@@ -211,6 +217,11 @@ export class GlobalHeaderComponent {
         });
       }
     });
+  }
+
+  openChat(): void {
+    this.closeMenu();
+    this.chatStore.togglePanel();
   }
 
   closeMenu(): void {

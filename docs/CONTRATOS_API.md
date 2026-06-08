@@ -820,7 +820,8 @@ Restricciones de negocio:
 - al terminar el match, si el espectador pasa a ser jugador activo en una liga/copa, o si se elimina
   la amistad que era su unico motivo de elegibilidad, el backend lo desregistra automaticamente
 - estar especteando deja al jugador en estado `busy = true`: no puede crear partidas, ligas, copas,
-  buscar Quick Match ni aceptar invitaciones sociales mientras tenga una suscripcion de spectate activa
+  buscar Quick Match ni aceptar invitaciones sociales mientras tenga una suscripcion de spectate
+  activa
 
 Comportamiento multi-dispositivo:
 
@@ -1508,7 +1509,7 @@ Chat en tiempo real asociado a un match, liga o copa. Se crea automáticamente a
 padre y se elimina al finalizar o cancelarse.
 
 - **Match**: chat creado en `GameStartedEvent` (primer game), eliminado en `MatchFinishedEvent` o
-  `MatchForfeitedEvent`
+  `MatchForfeitedEvent`. **Las partidas contra bots no generan chat.**
 - **Liga**: chat creado en `LeagueStartedEvent`, eliminado en `LeagueFinishedEvent` o
   `LeagueCancelledEvent`
 - **Copa**: chat creado en `CupStartedEvent`, eliminado en `CupFinishedEvent` o
@@ -1520,6 +1521,11 @@ Reglas de negocio:
 - Máximo **500 caracteres** por mensaje
 - **Rate limit**: 2 segundos mínimo entre mensajes del mismo jugador
 - Solo **participantes** del recurso padre pueden enviar y leer mensajes
+- Las lecturas y confirmaciones de envio incluyen `sendState` para el jugador autenticado:
+  `canSendNow` indica si puede enviar ahora y `nextMessageAllowedAt` es epoch millis del proximo
+  envio permitido, o `null` cuando puede enviar.
+- El error por rate limit conserva `errorCode = ChatRateLimitExceededException`, pero no incluye
+  `sendState`, `nextMessageAllowedAt` ni `retryAfterMs`. Para reconciliar cooldown, leer el chat.
 
 ### 7.1 Enviar mensaje
 
@@ -1535,7 +1541,20 @@ Request:
 }
 ```
 
-Response `204` sin body.
+Response `200`:
+
+```json
+{
+  "chatId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "sendState": {
+    "canSendNow": false,
+    "nextMessageAllowedAt": 1772768160123
+  }
+}
+```
+
+`sendState` representa el estado del remitente despues del envio aceptado. El mensaje enviado sigue
+llegando por `/user/queue/chat` como `MESSAGE_SENT`.
 
 Errores:
 
@@ -1556,6 +1575,10 @@ Response `200`:
   "chatId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
   "parentType": "MATCH",
   "parentId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "sendState": {
+    "canSendNow": true,
+    "nextMessageAllowedAt": null
+  },
   "messages": [
     {
       "messageId": "d4e5f6a7-b8c9-0123-4567-89abcdef0123",
@@ -1583,7 +1606,7 @@ Path params:
 - `parentType`: `MATCH`, `LEAGUE`, `CUP` o `FRIENDSHIP`
 - `parentId`: UUID del match, liga, copa o amistad
 
-Response `200`: misma estructura que 7.2.
+Response `200`: misma estructura que 7.2, incluyendo `sendState` para el jugador autenticado.
 
 Errores:
 
@@ -1619,13 +1642,18 @@ Response `201`:
 
 ```json
 {
-  "chatId": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+  "chatId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "sendState": {
+    "canSendNow": false,
+    "nextMessageAllowedAt": 1772768160123
+  }
 }
 ```
 
 El `chatId` retornado permite al cliente navegar directamente al chat sin un GET extra. Para
 `FRIENDSHIP`, el chat se crea lazily en el primer mensaje; para `MATCH`, `LEAGUE` y `CUP`, el chat
-ya existe y se retorna su ID.
+ya existe y se retorna su ID. `sendState` representa el estado del remitente despues del envio
+aceptado.
 
 Errores:
 
@@ -1912,7 +1940,8 @@ propio perfil o para el de otro jugador.
 - La busqueda actual es case-insensitive.
 - Las stats son eventual-consistent: se actualizan después de que el evento
   `MATCH_FINISHED`, `MATCH_ABANDONED` o `MATCH_FORFEITED` es procesado por el backend.
-- Solo se computan partidas PvP humanas (bots excluidos).
+- Solo se computan partidas PvP humanas en las **estadísticas** (bots excluidos de `matchesPlayed`,
+  `matchesWon`, `matchesLost`, `winRate`). Los **logros sí se desbloquean** en partidas contra bots.
 - El abandono cuenta como derrota para el abandoner y victoria para el rival.
 
 ### 7.5.2 Logros disponibles
@@ -2583,8 +2612,9 @@ Nota: los eventos `REMATCH_*` viajan por `/user/queue/match` con el `matchId` to
 
 Reglas:
 
-- solo se evalúa en matches `human vs human`
-- las partidas contra bots no generan tracking ni unlocks
+- los logros **sí se evalúan en partidas contra bots**: el jugador humano puede desbloquear
+  achievements jugando contra un bot
+- el bot no recibe logros (no es usuario registrado)
 - el abandono cuenta como derrota para el abandoner y victoria para el rival
 
 ### 9.5g eventType posibles - Spectate (
@@ -2706,6 +2736,14 @@ No se reenvian al espectador los eventos privados por asiento:
   - `{ invitationId, recipientUsername, targetType, targetId }`
 - `RESOURCE_INVITATION_EXPIRED`:
   - `{ invitationId, senderUsername, recipientUsername, targetType, targetId }`
+- `CHAT_CREATED`:
+  - `{ parentType, parentId }` — `parentType`: `MATCH`, `LEAGUE` o `CUP`; `parentId`: UUID del
+    recurso padre. No se emite para `FRIENDSHIP` (esos chats se crean lazily al consultar)
+- `MESSAGE_SENT`:
+  - `{ sender, content, sentAt }` — `sender`: username/displayName del remitente; `content`:
+    texto del mensaje; `sentAt`: `epochMillis`. No incluye `messageId` (solo disponible en REST
+    vía `GET /api/chats/{chatId}/messages`) ni `sendState` (el cooldown solo va al remitente por
+    REST, no por WebSocket)
 - `ACHIEVEMENT_UNLOCKED`:
   - `{ achievementCode, unlockedAt, matchId, gameNumber }`
 - `LEAGUE_MATCH_ACTIVATED`:

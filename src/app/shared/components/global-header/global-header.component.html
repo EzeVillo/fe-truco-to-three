@@ -136,6 +136,11 @@
                 Amigos
               </a>
             }
+            @if (showChat()) {
+              <button type="button" class="global-header__menu-item" (click)="openChat()">
+                Chat
+              </button>
+            }
             @if (isSpectating()) {
               <button type="button" class="global-header__menu-item" (click)="leaveSpectate()">
                 Dejar de ver

@@ -24,6 +24,8 @@ import {
 import { callDisplayMapper } from '../../utils/call-display-mapper';
 import { GameBoardComponent } from '../../components/game-board/game-board.component';
 import { WaitingRoomComponent } from '../../components/waiting-room/waiting-room.component';
+import { ChatPanelComponent } from '../../../chat/components/chat-panel/chat-panel.component';
+import { ChatStore } from '../../../chat/services/chat.store';
 import { MatchesApiService } from '../../../lobby/services/matches-api.service';
 import { readJoinCode, clearJoinCode } from '../../utils/join-code-store';
 import {
@@ -62,7 +64,7 @@ import type { Subscription } from 'rxjs';
 @Component({
   selector: 'app-match-screen',
   standalone: true,
-  imports: [CommonModule, GameBoardComponent, WaitingRoomComponent, MatProgressSpinnerModule],
+  imports: [CommonModule, GameBoardComponent, WaitingRoomComponent, MatProgressSpinnerModule, ChatPanelComponent],
   providers: [MatchStateService, MatchEventQueueService, RematchStateService],
   templateUrl: './match-screen.component.html',
   styleUrl: './match-screen.component.scss',
@@ -188,6 +190,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   private readonly presenceCoordinator = inject(PresenceCoordinatorService);
   private readonly matchesApiService = inject(MatchesApiService);
   private readonly vcr = inject(ViewContainerRef);
+  readonly chatStore = inject(ChatStore);
   private readonly destroyRef = inject(DestroyRef);
   private _rematchInited = false;
   /** Ref al diálogo de revancha abierto, para cerrarlo si navegamos antes de su propio cierre. */
@@ -314,6 +317,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
       this.rematchDialogRef?.close({ confirmedMatchId: null, skipNavigation: true });
       this.rematchStateService.reset();
       this.matchStateService.init(newId);
+      this.chatStore.enterMatch(newId);
     });
 
     // Cancelación de la sala antes de empezar (rival notificado). Feature 015.
@@ -362,6 +366,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     this.dialog.closeAll();
     this.rematchStateService.reset();
     this.matchStateService.destroy();
+    this.chatStore.leave();
   }
 
   private handleMatchEvent(event: MatchWsEvent): void {

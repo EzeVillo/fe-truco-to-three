@@ -57,5 +57,8 @@
         [viewerActionTimedOut]="viewerActionTimedOut()"
       />
     }
+    @if (chatStore.panelOpen()) {
+      <app-chat-panel />
+    }
   </div>
 }

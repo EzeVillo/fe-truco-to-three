@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, computed, inject, signal } from '@angular/core';
+import { ApplicationRef, Component, ElementRef, HostListener, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
@@ -13,6 +13,7 @@ import { EffectsVolumeService } from '../../../core/services/effects-volume.serv
 import { MatchesApiService } from '../../../features/lobby/services/matches-api.service';
 import { ConfirmLogoutDialogComponent } from '../confirm-logout-dialog/confirm-logout-dialog.component';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
+import { ChatStore } from '../../../features/chat/services/chat.store';
 
 @Component({
   selector: 'app-global-header',
@@ -34,8 +35,17 @@ export class GlobalHeaderComponent {
   readonly backgroundMusic = inject(BackgroundMusicService);
   readonly effectsVolume = inject(EffectsVolumeService);
 
+  readonly chatStore = inject(ChatStore);
+  private readonly appRef = inject(ApplicationRef);
+
   readonly menuOpen = signal(false);
   readonly soundOpen = signal(false);
+
+  /** El ítem "Chat" sólo se muestra dentro de una partida online activa. */
+  readonly showChat = computed(() => this.chatStore.available() && this.inMatch());
+
+  /** Badge "!" en la hamburguesa cuando hay un mensaje de chat sin leer. */
+  readonly showChatBadge = computed(() => this.showChat() && this.chatStore.unread());
 
   private readonly currentUrl = toSignal(
     this.router.events.pipe(
@@ -211,6 +221,19 @@ export class GlobalHeaderComponent {
         });
       }
     });
+  }
+
+  openChat(): void {
+    this.closeMenu();
+    this.chatStore.togglePanel();
+    // Forzar change detection de toda la app para que Angular inserte el panel
+    // en el DOM de forma sincrónica, dentro del mismo gesto del usuario.
+    // Así iOS permite mostrar el teclado al hacer focus programático.
+    this.appRef.tick();
+    const textarea = document.querySelector('.chat-panel__textarea') as HTMLTextAreaElement | null;
+    if (textarea) {
+      textarea.focus();
+    }
   }
 
   closeMenu(): void {

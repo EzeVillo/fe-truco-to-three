@@ -172,6 +172,37 @@ describe('busyReasonCopy — SPECTATING', () => {
   });
 });
 
+describe('getErrorCopy — CHAT', () => {
+  it('401 → string vacío (manejado por interceptor)', () => {
+    expect(getErrorCopy('CHAT', httpErr(401))).toBe('');
+  });
+
+  it('404 → chat no disponible', () => {
+    expect(getErrorCopy('CHAT', httpErr(404))).toBe('El chat ya no está disponible.');
+  });
+
+  it('422 → esperar cooldown', () => {
+    expect(getErrorCopy('CHAT', httpErr(422))).toBe(
+      'Esperá un momento antes de enviar otro mensaje.',
+    );
+  });
+
+  it('0 (red/offline) y 5xx → copy de red', () => {
+    expect(getErrorCopy('CHAT', httpErr(0))).toBe('No pudimos enviar el mensaje. Reintentá.');
+    expect(getErrorCopy('CHAT', httpErr(503))).toBe('No pudimos enviar el mensaje. Reintentá.');
+  });
+
+  it('nunca expone el message crudo del backend', () => {
+    for (const status of [404, 422, 500]) {
+      expect(getErrorCopy('CHAT', httpErr(status))).not.toContain('BE-secret-leak');
+    }
+  });
+
+  it('error no HttpErrorResponse → fallback', () => {
+    expect(getErrorCopy('CHAT', new Error('boom'))).toBe('Ocurrió un error inesperado. Reintentá.');
+  });
+});
+
 describe('getErrorCopy — SOCIAL', () => {
   it('401 → string vacío (manejado por interceptor)', () => {
     expect(getErrorCopy('SOCIAL', httpErr(401))).toBe('');

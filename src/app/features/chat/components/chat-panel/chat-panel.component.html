@@ -1,0 +1,80 @@
+<aside
+  class="chat-panel"
+  role="complementary"
+  aria-label="Chat de la partida"
+>
+  <header class="chat-panel__header">
+    <h2 class="chat-panel__title">Chat</h2>
+    <button
+      type="button"
+      class="chat-panel__close"
+      aria-label="Cerrar chat"
+      (click)="chatStore.closePanel()"
+    >
+      ✕
+    </button>
+  </header>
+
+  <div class="chat-panel__messages" #messageList role="log" aria-live="polite" aria-atomic="false">
+    @if (chatStore.messages().length === 0) {
+      <p class="chat-panel__empty">Todavía no hay mensajes. ¡Sé el primero en escribir!</p>
+    } @else {
+      @for (msg of chatStore.messages(); track msg.sentAt) {
+        <div
+          class="chat-panel__message"
+          [class.chat-panel__message--self]="msg.sender === selfUsername()"
+        >
+          <span class="chat-panel__message-sender">{{ msg.sender }}</span>
+          <span class="chat-panel__message-content">{{ msg.content }}</span>
+          <span class="chat-panel__message-time" aria-label="Enviado a las {{ formatTime(msg.sentAt) }}">
+            {{ formatTime(msg.sentAt) }}
+          </span>
+        </div>
+      }
+    }
+  </div>
+
+  @if (chatStore.available()) {
+    <form class="chat-panel__composer" (submit)="$event.preventDefault(); onSend()">
+      <div class="chat-panel__composer-field">
+        <textarea
+          class="chat-panel__textarea"
+          [class.chat-panel__textarea--over-limit]="overLimit()"
+          placeholder="Escribí un mensaje…"
+          maxlength="520"
+          rows="2"
+          aria-label="Mensaje de chat"
+          [value]="composerValue()"
+          (input)="onComposerInput($event)"
+          (keydown)="onComposerKeydown($event)"
+        ></textarea>
+        @if (nearLimit()) {
+          <span
+            class="chat-panel__char-count"
+            [class.chat-panel__char-count--over]="overLimit()"
+            aria-live="polite"
+          >{{ composerLength() }}/500</span>
+        }
+      </div>
+
+      @if (chatStore.sendError()) {
+        <p class="chat-panel__send-error" role="alert">{{ chatStore.sendError() }}</p>
+      }
+
+      @if (!chatStore.canSend()) {
+        <p class="chat-panel__cooldown" aria-live="polite">
+          Esperá antes de enviar otro mensaje…
+        </p>
+      }
+
+      <button
+        type="submit"
+        class="t3-btn t3-btn--primary chat-panel__send-btn"
+        [disabled]="!canSubmit()"
+        aria-label="Enviar mensaje"
+      >
+        Enviar
+      </button>
+    </form>
+  }
+</aside>

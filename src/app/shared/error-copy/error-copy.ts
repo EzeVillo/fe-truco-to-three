@@ -19,7 +19,8 @@ export type ErrorCopyScope =
   | 'QUICK_MATCH'
   | 'PUBLIC_LOBBY'
   | 'SOCIAL'
-  | 'SPECTATE';
+  | 'SPECTATE'
+  | 'CHAT';
 
 const FALLBACK = 'Ocurrió un error inesperado. Reintentá.';
 
@@ -239,6 +240,24 @@ export function getErrorCopy(scope: ErrorCopyScope, error: unknown): string {
       default:
         if (status >= 500 && status < 600) {
           return 'No pudimos conectarnos. Reintentá en unos segundos.';
+        }
+        return FALLBACK;
+    }
+  }
+
+  if (scope === 'CHAT') {
+    switch (status) {
+      case 401:
+        return '';
+      case 404:
+        return 'El chat ya no está disponible.';
+      case 422:
+        return 'Esperá un momento antes de enviar otro mensaje.';
+      case 0:
+        return 'No pudimos enviar el mensaje. Reintentá.';
+      default:
+        if (status >= 500 && status < 600) {
+          return 'No pudimos enviar el mensaje. Reintentá.';
         }
         return FALLBACK;
     }

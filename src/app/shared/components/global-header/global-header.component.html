@@ -108,7 +108,7 @@
         <button
           type="button"
           class="global-header__menu-button"
-          aria-label="Abrir menú"
+          [attr.aria-label]="showChatBadge() ? 'Abrir menú (mensaje de chat sin leer)' : 'Abrir menú'"
           [attr.aria-expanded]="menuOpen()"
           aria-controls="global-header-menu"
           (click)="toggleMenu()"
@@ -116,6 +116,9 @@
           <span class="global-header__menu-line" aria-hidden="true"></span>
           <span class="global-header__menu-line" aria-hidden="true"></span>
           <span class="global-header__menu-line" aria-hidden="true"></span>
+          @if (showChatBadge()) {
+            <span class="global-header__menu-badge" aria-hidden="true">!</span>
+          }
         </button>
 
         @if (menuOpen()) {
@@ -135,6 +138,14 @@
               <a class="global-header__menu-item" routerLink="/friends" (click)="closeMenu()">
                 Amigos
               </a>
+            }
+            @if (showChat()) {
+              <button type="button" class="global-header__menu-item" (click)="openChat()">
+                Chat
+                @if (chatStore.unread()) {
+                  <span class="global-header__menu-item-badge" aria-hidden="true">!</span>
+                }
+              </button>
             }
             @if (isSpectating()) {
               <button type="button" class="global-header__menu-item" (click)="leaveSpectate()">

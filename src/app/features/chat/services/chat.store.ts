@@ -11,6 +11,8 @@ import { signalStore, withState, withMethods, withComputed, patchState } from '@
 import { HttpErrorResponse } from '@angular/common/http';
 import type { Subscription } from 'rxjs';
 import { WebSocketService } from '../../../core/services/websocket.service';
+import { AuthStore } from '../../../core/auth/auth.store';
+import { AudioPlaybackService } from '../../../core/services/audio-playback.service';
 import { getErrorCopy } from '../../../shared/error-copy/error-copy';
 import { ChatApiService } from './chat-api.service';
 import type { ChatMessage, ChatView, SendState } from '../../../core/models/chat.models';
@@ -22,6 +24,8 @@ interface ChatState {
   messages: ChatMessage[];
   sendState: SendState;
   panelOpen: boolean;
+  /** Hay mensajes recibidos que el usuario aún no vio (panel cerrado). */
+  unread: boolean;
   loading: boolean;
   error: string | null;
   sendError: string | null;
@@ -33,12 +37,16 @@ const INITIAL: ChatState = {
   messages: [],
   sendState: { canSendNow: true, nextMessageAllowedAt: null },
   panelOpen: false,
+  unread: false,
   loading: false,
   error: null,
   sendError: null,
 };
 
 const MAX_MESSAGES = 50;
+
+/** SFX de notificación al recibir un mensaje ajeno. Servido desde `public/`. */
+const MESSAGE_SOUND_PATH = '/audio/537061__imafoley__message-pop-sound.wav';
 
 function maxSentAt(messages: ChatMessage[]): number {
   return messages.reduce((m, msg) => Math.max(m, msg.sentAt), 0);
@@ -64,6 +72,8 @@ export const ChatStore = signalStore(
   withMethods((store) => {
     const api = inject(ChatApiService);
     const ws = inject(WebSocketService);
+    const auth = inject(AuthStore);
+    const audio = inject(AudioPlaybackService);
 
     let wsSub: Subscription | null = null;
     let connectedSub: Subscription | null = null;
@@ -130,10 +140,18 @@ export const ChatStore = signalStore(
           if (sentAt > maxSentAt(existing)) {
             const newMsg: ChatMessage = { messageId: '', sender, content, sentAt };
             const next = [...existing, newMsg].sort((a, b) => a.sentAt - b.sentAt);
+            const isForeign = sender !== auth.username();
+            // Notificar sólo mensajes ajenos cuando el panel está cerrado.
+            const markUnread = !store.panelOpen() && isForeign;
             patchState(store, {
               messages:
                 next.length > MAX_MESSAGES ? next.slice(next.length - MAX_MESSAGES) : next,
+              ...(markUnread ? { unread: true } : {}),
             });
+            // SFX de "pop" al recibir un mensaje ajeno (respeta el volumen de efectos).
+            if (isForeign) {
+              audio.play(MESSAGE_SOUND_PATH);
+            }
           }
         }
       }
@@ -166,6 +184,8 @@ export const ChatStore = signalStore(
         if (store.matchId() === matchId) { return; }
         clearCooldownTimer();
         patchState(store, { ...INITIAL, matchId });
+        // Precargar el SFX para que el primer mensaje suene sin esperar la descarga.
+        audio.preload([MESSAGE_SOUND_PATH]);
         subscribeWs();
         doBootstrap(matchId);
       },
@@ -178,7 +198,9 @@ export const ChatStore = signalStore(
       },
 
       togglePanel(): void {
-        patchState(store, { panelOpen: !store.panelOpen() });
+        const willOpen = !store.panelOpen();
+        // Al abrir, el usuario "ve" el chat: se limpia la notificación.
+        patchState(store, { panelOpen: willOpen, ...(willOpen ? { unread: false } : {}) });
       },
 
       closePanel(): void {

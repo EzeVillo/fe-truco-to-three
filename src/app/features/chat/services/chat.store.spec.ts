@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -6,6 +6,8 @@ import { Subject } from 'rxjs';
 import { ChatStore } from './chat.store';
 import { ChatApiService } from './chat-api.service';
 import { WebSocketService } from '../../../core/services/websocket.service';
+import { AuthStore } from '../../../core/auth/auth.store';
+import { AudioPlaybackService } from '../../../core/services/audio-playback.service';
 import { environment } from '../../../../environments/environment';
 import type { ChatView, SendState } from '../../../core/models/chat.models';
 import type { ChatWsEvent } from '../../../core/models/ws.models';
@@ -50,6 +52,7 @@ describe('ChatStore — US1: leer la conversación', () => {
         provideHttpClientTesting(),
         ChatApiService,
         { provide: WebSocketService, useValue: wsMock },
+        { provide: AudioPlaybackService, useValue: { play: vi.fn(), preload: vi.fn() } },
         ChatStore,
       ],
     });
@@ -136,6 +139,7 @@ describe('ChatStore — US2: recibir mensajes en vivo', () => {
         provideHttpClientTesting(),
         ChatApiService,
         { provide: WebSocketService, useValue: wsMock },
+        { provide: AudioPlaybackService, useValue: { play: vi.fn(), preload: vi.fn() } },
         ChatStore,
       ],
     });
@@ -225,6 +229,96 @@ describe('ChatStore — US2: recibir mensajes en vivo', () => {
 
     httpMock.expectOne(`${BASE}/chats/by-parent/MATCH/${MATCH_ID}`).flush(makeChatView());
   });
+
+  it('MESSAGE_SENT ajeno con panel cerrado marca unread', () => {
+    enterAndBootstrap();
+    expect(store.unread()).toBe(false);
+
+    wsMock._emit({
+      chatId: CHAT_ID,
+      eventType: 'MESSAGE_SENT',
+      timestamp: 2000,
+      payload: { sender: 'juan', content: '¡Truco!', sentAt: 2000 },
+    });
+
+    expect(store.unread()).toBe(true);
+  });
+
+  it('MESSAGE_SENT con panel abierto NO marca unread', () => {
+    enterAndBootstrap();
+    store.togglePanel();
+    expect(store.panelOpen()).toBe(true);
+
+    wsMock._emit({
+      chatId: CHAT_ID,
+      eventType: 'MESSAGE_SENT',
+      timestamp: 2000,
+      payload: { sender: 'juan', content: '¡Truco!', sentAt: 2000 },
+    });
+
+    expect(store.unread()).toBe(false);
+  });
+
+  it('MESSAGE_SENT propio (mismo username) no marca unread', () => {
+    const auth = TestBed.inject(AuthStore);
+    auth.updateIdentity('p1', 'yo', 'user');
+    enterAndBootstrap();
+
+    wsMock._emit({
+      chatId: CHAT_ID,
+      eventType: 'MESSAGE_SENT',
+      timestamp: 2000,
+      payload: { sender: 'yo', content: 'mío', sentAt: 2000 },
+    });
+
+    expect(store.unread()).toBe(false);
+  });
+
+  it('MESSAGE_SENT ajeno reproduce el SFX de mensaje', () => {
+    const audio = TestBed.inject(AudioPlaybackService);
+    enterAndBootstrap();
+
+    wsMock._emit({
+      chatId: CHAT_ID,
+      eventType: 'MESSAGE_SENT',
+      timestamp: 2000,
+      payload: { sender: 'juan', content: 'hola', sentAt: 2000 },
+    });
+
+    expect(audio.play).toHaveBeenCalledTimes(1);
+  });
+
+  it('MESSAGE_SENT propio no reproduce el SFX', () => {
+    const auth = TestBed.inject(AuthStore);
+    auth.updateIdentity('p1', 'yo', 'user');
+    const audio = TestBed.inject(AudioPlaybackService);
+    enterAndBootstrap();
+
+    wsMock._emit({
+      chatId: CHAT_ID,
+      eventType: 'MESSAGE_SENT',
+      timestamp: 2000,
+      payload: { sender: 'yo', content: 'mío', sentAt: 2000 },
+    });
+
+    expect(audio.play).not.toHaveBeenCalled();
+  });
+
+  it('abrir el panel limpia unread', () => {
+    enterAndBootstrap();
+    wsMock._emit({
+      chatId: CHAT_ID,
+      eventType: 'MESSAGE_SENT',
+      timestamp: 2000,
+      payload: { sender: 'juan', content: 'hola', sentAt: 2000 },
+    });
+    expect(store.unread()).toBe(true);
+
+    store.togglePanel();
+
+    expect(store.panelOpen()).toBe(true);
+    expect(store.unread()).toBe(false);
+  });
 });
 
 describe('ChatStore — US3: enviar mensajes con cooldown', () => {
@@ -241,6 +335,7 @@ describe('ChatStore — US3: enviar mensajes con cooldown', () => {
         provideHttpClientTesting(),
         ChatApiService,
         { provide: WebSocketService, useValue: wsMock },
+        { provide: AudioPlaybackService, useValue: { play: vi.fn(), preload: vi.fn() } },
         ChatStore,
       ],
     });

@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, HostListener, viewChild } from '@angular/core';
+import { Component, computed, inject, signal, HostListener, viewChild, afterRenderEffect } from '@angular/core';
 import type { ElementRef } from '@angular/core';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { ChatStore } from '../../services/chat.store';
@@ -35,6 +35,19 @@ export class ChatPanelComponent {
   });
 
   readonly listRef = viewChild<ElementRef<HTMLElement>>('messageList');
+
+  constructor() {
+    // Auto-scroll al fondo: corre tras renderizar al abrir el panel y se
+    // re-dispara cuando llega/envía un mensaje nuevo, dejando siempre el
+    // último mensaje a la vista sin scroll manual.
+    afterRenderEffect(() => {
+      this.chatStore.messages();
+      const list = this.listRef()?.nativeElement;
+      if (list) {
+        list.scrollTop = list.scrollHeight;
+      }
+    });
+  }
 
   onComposerInput(event: Event): void {
     this.composerValue.set((event.target as HTMLTextAreaElement).value);

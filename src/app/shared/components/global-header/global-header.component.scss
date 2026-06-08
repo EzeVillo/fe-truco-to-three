@@ -138,6 +138,7 @@
   }
 
   &__menu-button {
+    position: relative;
     display: inline-flex;
     flex-direction: column;
     justify-content: center;
@@ -173,6 +174,25 @@
     margin: 0 auto;
     background: currentcolor;
     border-radius: var(--t3-radius-sm);
+  }
+
+  &__menu-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    background: var(--t3-gold-500);
+    border: 1px solid var(--t3-green-900);
+    border-radius: 9px;
+    color: var(--t3-green-900);
+    font-size: 0.7rem;
+    font-weight: 800;
+    line-height: 1;
   }
 
   &__menu-panel {
@@ -221,6 +241,22 @@
       color: var(--t3-text-muted);
       cursor: default;
     }
+  }
+
+  &__menu-item-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    margin-left: auto;
+    padding: 0 4px;
+    background: var(--t3-gold-500);
+    border-radius: 9px;
+    color: var(--t3-green-900);
+    font-size: 0.7rem;
+    font-weight: 800;
+    line-height: 1;
   }
 
   &__music {

@@ -1,3 +1,6 @@
 ﻿onlyBuiltDependencies:
   - '@openapitools/openapi-generator-cli'
   - '@nestjs/core'
+  - esbuild
+  - lmdb
+  - msgpackr-extract

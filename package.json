@@ -76,15 +76,5 @@
     "stylelint-config-standard-scss": "^17.0.0",
     "typescript": "~5.9.2",
     "vitest": "^4.0.8"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@openapitools/openapi-generator-cli",
-      "@nestjs/core",
-      "@parcel/watcher",
-      "esbuild",
-      "lmdb",
-      "msgpackr-extract"
-    ]
   }
 }

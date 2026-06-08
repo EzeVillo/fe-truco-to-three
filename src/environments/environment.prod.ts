@@ -1,5 +1,7 @@
+const backendUrl = 'https://api-truco-to-three.onrender.com';
+
 export const environment = {
   production: true,
-  apiUrl: 'https://api.truco.example.com/api',
-  wsUrl: 'https://api.truco.example.com/ws',
+  apiUrl: `${backendUrl}/api`,
+  wsUrl: `${backendUrl}/ws`,
 };

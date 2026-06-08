@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
 import type { OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import { MatDialog } from '@angular/material/dialog';
 import { BackButtonComponent } from '../../../../shared/components/back-button';
 import {
@@ -32,6 +33,7 @@ type FriendsTab = 'friends' | 'incoming' | 'outgoing';
 export class FriendsPageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
+  private readonly titleService = inject(Title);
   readonly store = inject(SocialStore);
 
   readonly activeTab = signal<FriendsTab>('friends');
@@ -40,6 +42,7 @@ export class FriendsPageComponent implements OnInit {
   private readonly addFriendForm = viewChild(AddFriendFormComponent);
 
   ngOnInit(): void {
+    this.titleService.setTitle('Amigos — Truco a 3');
     this.store.start();
     this.store.bootstrap();
   }

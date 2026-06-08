@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import type { FormGroup } from '@angular/forms';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { Title } from '@angular/platform-browser';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { mapApiError } from '../../../../core/auth/map-api-error';
 import { minLettersValidator, passwordStrengthValidator } from '../../../../core/auth/validators';
@@ -29,8 +30,10 @@ export class RegisterPageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
+  private readonly titleService = inject(Title);
 
   ngOnInit(): void {
+    this.titleService.setTitle('Crear cuenta — Truco a 3');
     this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
 
     this.registerForm = this.fb.group({

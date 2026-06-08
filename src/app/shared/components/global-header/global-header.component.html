@@ -8,10 +8,7 @@
         >
       </span>
     } @else {
-      <a
-        class="global-header__brand"
-        [routerLink]="authStore.isAuthenticated() ? '/lobby' : '/login'"
-      >
+      <a class="global-header__brand" [routerLink]="authStore.isAuthenticated() ? '/lobby' : '/'">
         <img src="icon.png" alt="" class="global-header__brand-logo" />
         <span class="global-header__brand-text"
           >Truco<span class="global-header__brand-accent">a 3</span></span
@@ -22,10 +19,7 @@
 
   <div class="global-header__center">
     @if (showSpectatorBadge()) {
-      <span
-        class="global-header__spectator-badge"
-        aria-label="Espectadores mirando la partida"
-      >
+      <span class="global-header__spectator-badge" aria-label="Espectadores mirando la partida">
         <span aria-hidden="true">👁</span> {{ spectatorCount() }}
       </span>
     }
@@ -58,7 +52,9 @@
                 type="button"
                 class="global-header__music-toggle"
                 [attr.aria-pressed]="effectsVolume.enabled()"
-                [attr.aria-label]="effectsVolume.enabled() ? 'Silenciar efectos' : 'Activar efectos'"
+                [attr.aria-label]="
+                  effectsVolume.enabled() ? 'Silenciar efectos' : 'Activar efectos'
+                "
                 (click)="toggleEffects()"
               >
                 <span aria-hidden="true">{{ effectsVolume.enabled() ? '🔊' : '🔇' }}</span>
@@ -81,7 +77,9 @@
                   type="button"
                   class="global-header__music-toggle"
                   [attr.aria-pressed]="backgroundMusic.enabled()"
-                  [attr.aria-label]="backgroundMusic.enabled() ? 'Silenciar música' : 'Activar música'"
+                  [attr.aria-label]="
+                    backgroundMusic.enabled() ? 'Silenciar música' : 'Activar música'
+                  "
                   [class.global-header__music-toggle--muted]="!backgroundMusic.enabled()"
                   (click)="toggleMusic()"
                 >
@@ -108,7 +106,9 @@
         <button
           type="button"
           class="global-header__menu-button"
-          [attr.aria-label]="showChatBadge() ? 'Abrir menú (mensaje de chat sin leer)' : 'Abrir menú'"
+          [attr.aria-label]="
+            showChatBadge() ? 'Abrir menú (mensaje de chat sin leer)' : 'Abrir menú'
+          "
           [attr.aria-expanded]="menuOpen()"
           aria-controls="global-header-menu"
           (click)="toggleMenu()"
@@ -122,7 +122,11 @@
         </button>
 
         @if (menuOpen()) {
-          <nav id="global-header-menu" class="global-header__menu-panel" aria-label="Menú principal">
+          <nav
+            id="global-header-menu"
+            class="global-header__menu-panel"
+            aria-label="Menú principal"
+          >
             @if (!busy()) {
               @if (profileLink(); as link) {
                 <a class="global-header__menu-item" [routerLink]="link" (click)="closeMenu()">

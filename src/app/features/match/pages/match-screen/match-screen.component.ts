@@ -64,7 +64,13 @@ import type { Subscription } from 'rxjs';
 @Component({
   selector: 'app-match-screen',
   standalone: true,
-  imports: [CommonModule, GameBoardComponent, WaitingRoomComponent, MatProgressSpinnerModule, ChatPanelComponent],
+  imports: [
+    CommonModule,
+    GameBoardComponent,
+    WaitingRoomComponent,
+    MatProgressSpinnerModule,
+    ChatPanelComponent,
+  ],
   providers: [MatchStateService, MatchEventQueueService, RematchStateService],
   templateUrl: './match-screen.component.html',
   styleUrl: './match-screen.component.scss',
@@ -535,7 +541,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   }
 
   goToLobby(): void {
-    this.router.navigate(['/']);
+    this.router.navigate(['/lobby']);
   }
 
   /** Marca al jugador listo (§4.5). La transicion al tablero llega por GAME_STARTED. */
@@ -587,7 +593,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     this.matchesApiService.leaveMatch(id).subscribe({
       next: () => {
         clearJoinCode(id);
-        this.router.navigate(['/']);
+        this.router.navigate(['/lobby']);
       },
       error: () => {
         this.leaving.set(false);
@@ -634,7 +640,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     // volvemos directo al lobby. Sin esto, el getSession espurio "buscaba" una revancha
     // inexistente en esos finales.
     if (reason !== 'FINISHED') {
-      this.router.navigate(['/']);
+      this.router.navigate(['/lobby']);
       return;
     }
 
@@ -642,7 +648,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     const matchId = this.matchId();
     const viewerSeat = this.matchStateService.state()?.viewerSeat;
     if (!matchId || !viewerSeat) {
-      this.router.navigate(['/']);
+      this.router.navigate(['/lobby']);
       return;
     }
 
@@ -654,7 +660,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
       },
       error: () => {
         // 404 o error: sin sesión de revancha → lobby.
-        this.router.navigate(['/']);
+        this.router.navigate(['/lobby']);
       },
     });
   }
@@ -681,7 +687,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
       if (result?.confirmedMatchId) {
         this.router.navigate(['/match', result.confirmedMatchId]);
       } else {
-        this.router.navigate(['/']);
+        this.router.navigate(['/lobby']);
       }
     });
   }

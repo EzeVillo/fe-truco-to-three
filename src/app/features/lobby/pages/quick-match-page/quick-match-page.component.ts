@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import {
   DEFAULT_SERIES_FORMAT,
@@ -46,6 +47,7 @@ export class QuickMatchPageComponent {
   });
 
   constructor() {
+    inject(Title).setTitle('Partida rápida — Truco a 3');
     this.webSocket.connect();
     this.webSocket
       .subscribe<MatchWsEvent>('/user/queue/match')

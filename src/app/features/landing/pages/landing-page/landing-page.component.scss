@@ -1,0 +1,240 @@
+// Mobile-first. Único breakpoint: @media (min-width: 1024px) para desktop.
+
+:host {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.landing {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background:
+    radial-gradient(ellipse at top, var(--t3-green-700) 0%, var(--t3-bg-deep) 80%), var(--t3-bg);
+}
+
+// =============================================================================
+// Hero
+// =============================================================================
+
+.landing__hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 40px 24px 32px;
+  gap: 16px;
+
+  @media (min-width: 1024px) {
+    padding: 72px 48px 48px;
+    gap: 20px;
+  }
+}
+
+.landing__logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  border-radius: 50%;
+  box-shadow: var(--t3-shadow-card);
+
+  @media (min-width: 1024px) {
+    width: 108px;
+    height: 108px;
+  }
+}
+
+.landing__headline {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--t3-text);
+  letter-spacing: -0.02em;
+
+  @media (min-width: 1024px) {
+    font-size: 2.8rem;
+  }
+}
+
+.landing__accent {
+  color: var(--t3-gold-400);
+}
+
+.landing__tagline {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--t3-text-muted);
+  max-width: 360px;
+
+  @media (min-width: 1024px) {
+    font-size: 1.05rem;
+    max-width: 480px;
+  }
+}
+
+.landing__ctas {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 320px;
+
+  @media (min-width: 1024px) {
+    flex-direction: row;
+    max-width: none;
+    width: auto;
+  }
+}
+
+.landing__divider {
+  font-size: 0.8rem;
+  color: var(--t3-text-muted);
+  letter-spacing: 0.08em;
+  opacity: 0.6;
+}
+
+.landing__guest-cta {
+  width: 100%;
+  max-width: 320px;
+
+  @media (min-width: 1024px) {
+    max-width: 280px;
+  }
+}
+
+.landing__rules-link {
+  font-size: 0.85rem;
+  color: var(--t3-gold-300);
+  text-decoration: none;
+  margin-top: 4px;
+
+  @media (hover: hover) {
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+// =============================================================================
+// Feature cards
+// =============================================================================
+
+.landing__features {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--t3-card-border);
+  border-top: 1px solid var(--t3-card-border);
+  margin-top: auto;
+
+  @media (min-width: 1024px) {
+    flex-direction: row;
+  }
+}
+
+.landing__feature-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 20px 24px;
+  background: var(--t3-card-bg);
+  flex: 1;
+
+  @media (min-width: 1024px) {
+    padding: 28px 32px;
+    gap: 8px;
+  }
+}
+
+.landing__feature-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.landing__feature-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--t3-text);
+}
+
+.landing__feature-body {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--t3-text-muted);
+}
+
+// =============================================================================
+// Botones tematizados (local — ver bots-config-page para referencia)
+// =============================================================================
+
+.t3-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--t3-gap-xs);
+  min-height: 44px;
+  padding: 0 var(--t3-gap-md);
+  border-radius: var(--t3-radius-md);
+  border: 1px solid transparent;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+.t3-btn--primary {
+  background: var(--t3-cta-bg);
+  border-color: transparent;
+  color: var(--t3-cta-text-on);
+  box-shadow: var(--t3-shadow-gold);
+
+  @media (hover: hover) {
+    &:hover {
+      background: var(--t3-cta-bg-hover);
+    }
+  }
+
+  &:active {
+    background: var(--t3-cta-bg-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--t3-gold-400);
+    outline-offset: 2px;
+  }
+}
+
+.t3-btn--neutral {
+  background: transparent;
+  border-color: var(--t3-btn-neutral-border);
+  color: var(--t3-btn-neutral-text);
+
+  @media (hover: hover) {
+    &:hover {
+      background: var(--t3-btn-neutral-bg-hover);
+      border-color: var(--t3-gold-400);
+    }
+  }
+
+  &:active {
+    background: var(--t3-btn-neutral-bg-hover);
+    border-color: var(--t3-gold-500);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--t3-gold-400);
+    outline-offset: 2px;
+  }
+}

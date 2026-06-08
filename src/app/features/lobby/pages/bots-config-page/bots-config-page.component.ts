@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type { OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { BotCardComponent } from '../../components/bot-card/bot-card.component';
 import { BackButtonComponent } from '../../../../shared/components/back-button';
@@ -31,6 +32,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 export class BotsConfigPageComponent implements OnInit {
   private readonly api = inject(BotsApiService);
   private readonly router = inject(Router);
+  private readonly titleService = inject(Title);
 
   readonly bots = signal<Bot[]>([]);
   readonly loadingCatalog = signal<boolean>(true);
@@ -49,6 +51,7 @@ export class BotsConfigPageComponent implements OnInit {
   );
 
   ngOnInit(): void {
+    this.titleService.setTitle('Partida vs bots — Truco a 3');
     this.loadCatalog();
   }
 

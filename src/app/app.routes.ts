@@ -52,14 +52,6 @@ export const routes: Routes = [
       ),
   },
   {
-    path: 'lobby/reglas',
-    canMatch: [authGuard],
-    loadComponent: () =>
-      import('./features/lobby/pages/rules-page/rules-page.component').then(
-        (m) => m.RulesPageComponent,
-      ),
-  },
-  {
     path: 'join/:joinCode',
     canMatch: [authGuard],
     loadComponent: () =>
@@ -99,6 +91,25 @@ export const routes: Routes = [
         (m) => m.SpectateScreenComponent,
       ),
   },
-  { path: '', pathMatch: 'full', redirectTo: 'login' },
-  { path: '**', redirectTo: 'login' },
+  {
+    path: 'reglas',
+    loadComponent: () =>
+      import('./features/lobby/pages/rules-page/rules-page.component').then(
+        (m) => m.RulesPageComponent,
+      ),
+  },
+  {
+    path: '',
+    pathMatch: 'full',
+    canMatch: [publicOnlyGuard],
+    loadComponent: () =>
+      import('./features/landing/pages/landing-page/landing-page.component').then(
+        (m) => m.LandingPageComponent,
+      ),
+  },
+  {
+    path: '**',
+    loadComponent: () =>
+      import('./features/not-found/not-found-page.component').then((m) => m.NotFoundPageComponent),
+  },
 ];

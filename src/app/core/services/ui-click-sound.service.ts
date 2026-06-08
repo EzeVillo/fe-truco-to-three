@@ -11,7 +11,7 @@ export const UI_CLICK_AUDIO_PATH = '/audio/mixkit-camera-shutter-click-1133.wav'
  * auth ("Iniciar sesión" / "Crear cuenta", donde el tab inactivo es un enlace).
  */
 const BUTTON_SELECTOR =
-  'button, [role="button"], a.global-header__menu-item, a.auth-tabs__tab';
+  'button, [role="button"], a.global-header__menu-item, a.auth-tabs__tab, a.t3-btn, a.landing__rules-link';
 
 type AudioContextCtor = typeof AudioContext;
 

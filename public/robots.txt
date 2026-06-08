@@ -1,0 +1,18 @@
+User-agent: *
+
+# Rutas públicas — indexables
+Allow: /$
+Allow: /reglas$
+Allow: /login$
+Allow: /register$
+
+# Rutas autenticadas — no indexar
+Disallow: /lobby
+Disallow: /match
+Disallow: /profile
+Disallow: /friends
+Disallow: /spectate
+Disallow: /join
+
+# URL del sitemap — actualizar si cambia el dominio
+Sitemap: https://truco-to-three.netlify.app/sitemap.xml

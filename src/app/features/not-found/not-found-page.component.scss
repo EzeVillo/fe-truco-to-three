@@ -1,0 +1,80 @@
+// Mobile-first. Único breakpoint: @media (min-width: 1024px).
+
+:host {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.not-found {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+  padding: 40px 24px;
+  background:
+    radial-gradient(ellipse at top, var(--t3-green-700) 0%, var(--t3-bg-deep) 80%), var(--t3-bg);
+}
+
+.not-found__code {
+  margin: 0;
+  font-size: 5rem;
+  font-weight: 900;
+  color: var(--t3-gold-400);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.not-found__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--t3-text);
+}
+
+.not-found__desc {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+  color: var(--t3-text-muted);
+}
+
+.t3-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 var(--t3-gap-md);
+  border-radius: var(--t3-radius-md);
+  border: 1px solid transparent;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 120ms ease;
+}
+
+.t3-btn--primary {
+  background: var(--t3-cta-bg);
+  color: var(--t3-cta-text-on);
+  box-shadow: var(--t3-shadow-gold);
+
+  @media (hover: hover) {
+    &:hover {
+      background: var(--t3-cta-bg-hover);
+    }
+  }
+
+  &:active {
+    background: var(--t3-cta-bg-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--t3-gold-400);
+    outline-offset: 2px;
+  }
+}

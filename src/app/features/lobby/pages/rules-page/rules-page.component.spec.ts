@@ -1,53 +1,103 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router, provideRouter } from '@angular/router';
+import { signal } from '@angular/core';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { RulesSectionComponent } from '../../components/rules-section/rules-section.component';
 import { BackButtonComponent } from '../../../../shared/components/back-button';
+import { AuthStore } from '../../../../core/auth/auth.store';
 import { RulesPageComponent } from './rules-page.component';
 
 describe('RulesPageComponent', () => {
-  let fixture: ComponentFixture<RulesPageComponent>;
+  describe('sin sesión', () => {
+    let fixture: ComponentFixture<RulesPageComponent>;
 
-  beforeEach(() => {
-    TestBed.configureTestingModule({
-      imports: [RulesPageComponent],
-      providers: [provideRouter([])],
+    beforeEach(() => {
+      TestBed.configureTestingModule({
+        imports: [RulesPageComponent],
+        providers: [
+          provideRouter([]),
+          { provide: AuthStore, useValue: { isAuthenticated: signal(false) } },
+        ],
+      });
+      fixture = TestBed.createComponent(RulesPageComponent);
+      fixture.detectChanges();
     });
 
-    fixture = TestBed.createComponent(RulesPageComponent);
-    fixture.detectChanges();
+    it('renderiza la sección completa de reglas de variante', () => {
+      const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+      expect(fixture.debugElement.query(By.directive(RulesSectionComponent))).toBeTruthy();
+      expect(text).toContain('Truco a 3 puntos');
+      expect(text).toContain('Punto exacto');
+      expect(text).toContain('Falta envido');
+      expect(text).not.toContain('FALTA_ENVIDO');
+    });
+
+    it('usa el topbar con botón de volver y título', () => {
+      const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+      expect(fixture.debugElement.query(By.css('.rules-page__topbar'))).toBeTruthy();
+      const backButton = fixture.debugElement.query(By.directive(BackButtonComponent));
+      expect(backButton).toBeTruthy();
+      expect(backButton.nativeElement.querySelector('button').getAttribute('aria-label')).toBe(
+        'Volver',
+      );
+      expect(text).toContain('Reglas de la variante');
+    });
+
+    it('sin historial previo, volver navega al inicio', () => {
+      const router = TestBed.inject(Router);
+      const navSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+
+      const backButton = fixture.debugElement.query(By.directive(BackButtonComponent));
+      backButton.componentInstance.back.emit();
+
+      expect(navSpy).toHaveBeenCalledWith('/');
+    });
+
+    it('muestra el footer con CTAs de registro e inicio de sesión', () => {
+      const footer = fixture.debugElement.query(By.css('.rules-page__footer'));
+      expect(footer).toBeTruthy();
+      const links = footer.queryAll(By.css('a'));
+      expect(
+        links.some((l) => (l.nativeElement as HTMLElement).textContent?.includes('Crear cuenta')),
+      ).toBe(true);
+      expect(
+        links.some((l) =>
+          (l.nativeElement as HTMLElement).textContent?.includes('Ya tengo cuenta'),
+        ),
+      ).toBe(true);
+    });
   });
 
-  it('renderiza la sección completa de reglas de variante', () => {
-    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+  describe('con sesión', () => {
+    let fixture: ComponentFixture<RulesPageComponent>;
 
-    expect(fixture.debugElement.query(By.directive(RulesSectionComponent))).toBeTruthy();
-    expect(text).toContain('Truco a 3 puntos');
-    expect(text).toContain('Punto exacto');
-    expect(text).toContain('Falta envido');
-    expect(text).not.toContain('FALTA_ENVIDO');
-  });
+    beforeEach(() => {
+      TestBed.configureTestingModule({
+        imports: [RulesPageComponent],
+        providers: [
+          provideRouter([]),
+          { provide: AuthStore, useValue: { isAuthenticated: signal(true) } },
+        ],
+      });
+      fixture = TestBed.createComponent(RulesPageComponent);
+      fixture.detectChanges();
+    });
 
-  it('permite volver al lobby', () => {
-    const router = TestBed.inject(Router);
-    const navSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+    it('sin historial previo, volver navega al lobby', () => {
+      const router = TestBed.inject(Router);
+      const navSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
 
-    const backButton = fixture.debugElement.query(By.directive(BackButtonComponent));
-    backButton.componentInstance.back.emit();
+      const backButton = fixture.debugElement.query(By.directive(BackButtonComponent));
+      backButton.componentInstance.back.emit();
 
-    expect(navSpy).toHaveBeenCalledWith('/lobby');
-  });
+      expect(navSpy).toHaveBeenCalledWith('/lobby');
+    });
 
-  it('usa el topbar consistente con las paginas del lobby', () => {
-    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-
-    expect(fixture.debugElement.query(By.css('.rules-page__topbar'))).toBeTruthy();
-    const backButton = fixture.debugElement.query(By.directive(BackButtonComponent));
-    expect(backButton).toBeTruthy();
-    expect(backButton.nativeElement.querySelector('button').getAttribute('aria-label')).toBe(
-      'Volver al lobby',
-    );
-    expect(text).toContain('Reglas de la variante');
+    it('oculta el footer de CTAs', () => {
+      expect(fixture.debugElement.query(By.css('.rules-page__footer'))).toBeNull();
+    });
   });
 });

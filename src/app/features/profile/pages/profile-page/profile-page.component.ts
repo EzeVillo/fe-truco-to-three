@@ -2,6 +2,7 @@ import { Component, DestroyRef, inject, signal } from '@angular/core';
 import type { OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, ActivatedRoute } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import { MatIconModule } from '@angular/material/icon';
 import { catchError, forkJoin, of } from 'rxjs';
 import { AuthStore } from '../../../../core/auth/auth.store';
@@ -31,6 +32,7 @@ export class ProfilePageComponent implements OnInit {
   private readonly profileApi = inject(ProfileApiService);
   private readonly profileNotifications = inject(ProfileNotificationService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly titleService = inject(Title);
 
   readonly username = signal<string>('');
   readonly profile = signal<PlayerProfile | null>(null);
@@ -42,6 +44,7 @@ export class ProfilePageComponent implements OnInit {
   ngOnInit(): void {
     const username = this.route.snapshot.paramMap.get('username') ?? '';
     this.username.set(username);
+    this.titleService.setTitle(`Perfil de ${username} — Truco a 3`);
     this.loadProfile();
     this.profileNotifications.achievementUnlocked$
       .pipe(takeUntilDestroyed(this.destroyRef))

@@ -7,6 +7,7 @@ import {
   type OnInit,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { SeriesFormatSelectorComponent } from '../../components/series-format-selector/series-format-selector.component';
@@ -50,6 +51,7 @@ export class OnlineMatchPageComponent implements OnInit {
   private readonly snackBar = inject(MatSnackBar);
   private readonly authStore = inject(AuthStore);
   private readonly socialStore = inject(SocialStore);
+  private readonly titleService = inject(Title);
   protected readonly lobby = inject(PublicMatchLobbyStore);
 
   readonly currentUsername = this.authStore.username;
@@ -80,6 +82,7 @@ export class OnlineMatchPageComponent implements OnInit {
   readonly canJoin = computed(() => !this.joining() && this.joinCodeInput().trim().length > 0);
 
   ngOnInit(): void {
+    this.titleService.setTitle('Partida online — Truco a 3');
     const joinCode = this.route.snapshot.paramMap.get('joinCode')?.trim() ?? '';
     if (joinCode) {
       this.inviteJoinCode.set(joinCode);

@@ -99,7 +99,7 @@ describe('LobbyPageComponent', () => {
     expect(text).not.toContain('Punto exacto');
   });
 
-  it('al click del CTA de reglas navega a /lobby/reglas', () => {
+  it('al click del CTA de reglas navega a /reglas', () => {
     const fixture = TestBed.createComponent(LobbyPageComponent);
     const router = TestBed.inject(Router);
     const navSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
@@ -108,14 +108,14 @@ describe('LobbyPageComponent', () => {
     const buttons = fixture.debugElement.queryAll(By.css('.lobby__cta'));
     buttons[3].nativeElement.click();
 
-    expect(navSpy).toHaveBeenCalledWith('/lobby/reglas');
+    expect(navSpy).toHaveBeenCalledWith('/reglas');
   });
 
-  it('define la ruta de reglas solo bajo lobby', () => {
+  it('la ruta de reglas está en /reglas (accesible sin auth)', () => {
     const rulesRoutes = routes.filter(
       (route) => route.path?.includes('reglas') || route.path?.includes('rules'),
     );
 
-    expect(rulesRoutes.map((route) => route.path)).toEqual(['lobby/reglas']);
+    expect(rulesRoutes.map((route) => route.path)).toEqual(['reglas']);
   });
 });

@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-lobby-page',
@@ -10,6 +11,10 @@ import { Router } from '@angular/router';
 })
 export class LobbyPageComponent {
   private readonly router = inject(Router);
+
+  constructor() {
+    inject(Title).setTitle('Lobby — Truco a 3');
+  }
 
   goToBots(): void {
     void this.router.navigateByUrl('/lobby/vs-bots');
@@ -24,6 +29,6 @@ export class LobbyPageComponent {
   }
 
   goToRules(): void {
-    void this.router.navigateByUrl('/lobby/reglas');
+    void this.router.navigateByUrl('/reglas');
   }
 }

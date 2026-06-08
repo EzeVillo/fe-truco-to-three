@@ -1,8 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, EMPTY, tap, map, shareReplay, finalize } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthStore } from './auth.store';
+import { AuthRefreshService } from './auth-refresh.service';
 import { WebSocketService } from '../services/websocket.service';
 import type {
   RegisterRequest,
@@ -16,11 +17,9 @@ import type {
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly authStore = inject(AuthStore);
+  private readonly authRefreshService = inject(AuthRefreshService);
   private readonly webSocketService = inject(WebSocketService);
   private readonly baseUrl = `${environment.apiUrl}/auth`;
-
-  /** Observable de refresh en vuelo (single-flight). null = no hay refresh activo. */
-  private refreshInFlight$: Observable<string> | null = null;
 
   register(req: RegisterRequest): Observable<FullAuthResponse> {
     return this.http
@@ -42,36 +41,11 @@ export class AuthService {
 
   /**
    * Refresca el accessToken usando el refreshToken del store.
-   * Si no hay refreshToken (guest o ANON): emite EMPTY y limpia la sesión.
-   * Single-flight: múltiples llamadas concurrentes comparten la misma request HTTP.
+   * Si no hay refreshToken (guest o ANON): emite EMPTY y limpia la sesion.
+   * Single-flight: multiples llamadas concurrentes comparten la misma request HTTP.
    */
   refresh(): Observable<string> {
-    const currentRefreshToken = this.authStore.refreshToken();
-
-    if (!currentRefreshToken) {
-      this.authStore.clearSession();
-      return EMPTY;
-    }
-
-    if (this.refreshInFlight$) {
-      return this.refreshInFlight$;
-    }
-
-    this.refreshInFlight$ = this.http
-      .post<FullAuthResponse>(`${this.baseUrl}/refresh`, { refreshToken: currentRefreshToken })
-      .pipe(
-        tap((response) => {
-          // Rotar la sesiÃ³n completa antes de reanudar las requests encoladas.
-          this.authStore.replaceSession(response);
-        }),
-        map((response) => response.accessToken),
-        shareReplay({ bufferSize: 1, refCount: true }),
-        finalize(() => {
-          this.refreshInFlight$ = null;
-        }),
-      );
-
-    return this.refreshInFlight$;
+    return this.authRefreshService.refresh();
   }
 
   me(): Observable<CurrentIdentityResponse> {
@@ -98,10 +72,10 @@ export class AuthService {
   }
 
   /**
-   * Cierra sesión:
-   * 1. Si hay refreshToken → llama DELETE best-effort (sin esperar respuesta).
+   * Cierra sesion:
+   * 1. Si hay refreshToken, llama DELETE best-effort (sin esperar respuesta).
    * 2. Llama clearSession() siempre.
-   * 3. Cierra la conexión WebSocket autenticada (evita reconexiones con el token viejo).
+   * 3. Cierra la conexion WebSocket autenticada (evita reconexiones con el token viejo).
    * 4. Emite void siempre (nunca falla desde el punto de vista del caller).
    */
   logout(): Observable<void> {
@@ -110,7 +84,6 @@ export class AuthService {
     this.webSocketService.disconnect();
 
     if (refreshToken) {
-      // Best-effort: no esperamos, no propagamos errores
       this.http.delete<void>(`${this.baseUrl}/logout`, { body: { refreshToken } }).subscribe({
         error: () => {
           /* ignorar errores de red en logout */

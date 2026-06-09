@@ -2,7 +2,7 @@
   <button
     type="button"
     class="guest-cta__button"
-    [disabled]="loading()"
+    [disabled]="loading() || disabled"
     (click)="playAsGuest()"
     aria-label="Jugar como invitado"
   >

@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import type { OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -27,6 +27,10 @@ import type { HttpErrorResponse } from '@angular/common/http';
 })
 export class LoginPageComponent implements OnInit {
   readonly loading = signal(false);
+  /** Carga del CTA de invitado, reportada por el componente hijo. */
+  readonly guestLoading = signal(false);
+  /** Verdadero mientras cualquier acción de auth está en curso: deshabilita todos los controles. */
+  readonly busy = computed(() => this.loading() || this.guestLoading());
   readonly error = signal<UserFacingAuthError | null>(null);
   returnUrl: string | null = null;
 
@@ -50,7 +54,7 @@ export class LoginPageComponent implements OnInit {
   }
 
   submit(): void {
-    if (this.loginForm.invalid || this.loading()) {
+    if (this.loginForm.invalid || this.busy()) {
       this.loginForm.markAllAsTouched();
       return;
     }

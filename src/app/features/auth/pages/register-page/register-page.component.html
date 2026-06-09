@@ -9,8 +9,12 @@
         routerLink="/login"
         [queryParams]="returnUrl ? { returnUrl } : null"
         class="auth-tabs__tab"
+        [class.auth-tabs__tab--disabled]="loading()"
         role="tab"
         aria-selected="false"
+        [attr.aria-disabled]="loading() ? true : null"
+        [attr.tabindex]="loading() ? -1 : null"
+        (click)="loading() && $event.preventDefault()"
         data-ui-click
       >
         Iniciar sesión

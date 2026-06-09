@@ -1,4 +1,4 @@
-import { Component, inject, signal, Input } from '@angular/core';
+import { Component, inject, signal, Input, Output, EventEmitter } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -18,6 +18,12 @@ export class GuestCtaComponent {
   /** URL de retorno opcional (por ejemplo desde un returnUrl de query params). */
   @Input() returnUrl: string | null = null;
 
+  /** Permite que el contenedor deshabilite el botón mientras otra acción de auth está en curso. */
+  @Input() disabled = false;
+
+  /** Notifica al contenedor cuando cambia el estado de carga (para deshabilitar otros botones). */
+  @Output() loadingChange = new EventEmitter<boolean>();
+
   readonly loading = signal(false);
   readonly error = signal<UserFacingAuthError | null>(null);
 
@@ -25,24 +31,29 @@ export class GuestCtaComponent {
   private readonly router = inject(Router);
 
   playAsGuest(): void {
-    if (this.loading()) {
+    if (this.loading() || this.disabled) {
       return;
     }
 
-    this.loading.set(true);
+    this.setLoading(true);
     this.error.set(null);
 
     this.authService.guest().subscribe({
       next: () => {
-        this.loading.set(false);
+        this.setLoading(false);
         const target = this.returnUrl ?? '/lobby';
         void this.router.navigateByUrl(target);
       },
       error: (err: HttpErrorResponse) => {
-        this.loading.set(false);
+        this.setLoading(false);
         this.error.set(mapApiError(err));
       },
     });
+  }
+
+  private setLoading(value: boolean): void {
+    this.loading.set(value);
+    this.loadingChange.emit(value);
   }
 
   errorMessage(): string {

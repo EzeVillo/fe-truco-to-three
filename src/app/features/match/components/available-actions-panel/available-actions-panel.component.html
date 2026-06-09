@@ -5,7 +5,7 @@
     [availableActions]="availableActions()"
     [currentTrucoCall]="currentTrucoCall()"
     [envidoCallOptions]="envidoCallOptions()"
-    [isProcessingDelay]="isProcessingDelay()"
+    [isProcessingDelay]="effectiveProcessingDelay()"
     (actionClicked)="onAction($event)"
     (envidoClicked)="onEnvidoClick()"
   />
@@ -28,7 +28,7 @@
       [availableActions]="availableActions()"
       [currentTrucoCall]="currentTrucoCall()"
       [envidoCallOptions]="envidoCallOptions()"
-      [isProcessingDelay]="isProcessingDelay()"
+      [isProcessingDelay]="effectiveProcessingDelay()"
       (actionClicked)="onAction($event)"
       (envidoClicked)="onEnvidoClick()"
     />
@@ -45,7 +45,7 @@
     [availableActions]="availableActions()"
     [currentTrucoCall]="currentTrucoCall()"
     [envidoCallOptions]="envidoCallOptions()"
-    [isProcessingDelay]="isProcessingDelay()"
+    [isProcessingDelay]="effectiveProcessingDelay()"
     (actionClicked)="onAction($event)"
     (envidoClicked)="onEnvidoClick()"
   />

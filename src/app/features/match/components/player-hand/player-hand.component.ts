@@ -22,9 +22,18 @@ export class PlayerHandComponent {
   private readonly matchActionsService = inject(MatchActionsService);
   readonly isPlayingCard = signal<boolean>(false);
 
+  /** Lock optimista global: una acción del jugador en vuelo deshabilita las cartas. */
+  readonly actionPending = this.matchActionsService.actionPending;
+
   onCardClick(card: Card): void {
     const matchId = this.matchId();
-    if (!matchId || !this.playCardsEnabled() || this.isPlayingCard() || this.isProcessingDelay()) {
+    if (
+      !matchId ||
+      !this.playCardsEnabled() ||
+      this.isPlayingCard() ||
+      this.isProcessingDelay() ||
+      this.actionPending()
+    ) {
       return;
     }
 

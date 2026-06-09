@@ -4,8 +4,12 @@
       <button
         class="player-hand__card-btn"
         type="button"
-        [disabled]="!playCardsEnabled() || isPlayingCard() || isProcessingDelay()"
-        [class.player-hand__card-btn--blocked]="!playCardsEnabled() || isProcessingDelay()"
+        [disabled]="
+          !playCardsEnabled() || isPlayingCard() || isProcessingDelay() || actionPending()
+        "
+        [class.player-hand__card-btn--blocked]="
+          !playCardsEnabled() || isProcessingDelay() || actionPending()
+        "
         (click)="onCardClick(card)"
       >
         <app-card-view [card]="card" />

@@ -76,7 +76,16 @@ export class AvailableActionsPanelComponent {
     this.availableActions().some((a) => a.type === 'RESPOND_ENVIDO'),
   );
 
-  readonly shouldCollapseToActionBar = computed(() => this.isProcessingDelay());
+  /**
+   * `isProcessingDelay` del event-queue (eventos del backend aplicándose con
+   * delay/ACK) **o** el lock optimista local (acción en vuelo esperando el primer
+   * evento de confirmación). Cualquiera de los dos congela el panel entero.
+   */
+  readonly effectiveProcessingDelay = computed(
+    () => this.isProcessingDelay() || this.matchActionsService.actionPending(),
+  );
+
+  readonly shouldCollapseToActionBar = computed(() => this.effectiveProcessingDelay());
 
   readonly envidoResponseOptions = computed(() =>
     deriveEnvidoResponseOptions(this.availableActions()),

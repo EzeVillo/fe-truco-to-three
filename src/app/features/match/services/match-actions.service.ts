@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { catchError, EMPTY, type Observable } from 'rxjs';
 import type {
@@ -23,39 +23,91 @@ export class MatchActionsService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/matches`;
 
+  /**
+   * Lock optimista: al disparar una acción del jugador se prende y la UI
+   * deshabilita TODAS las acciones (cantos, respuestas y cartas) hasta que el
+   * backend confirme con un nuevo estado. Cierra la ventana entre el tap y el
+   * primer evento WS, donde `availableActions` aún refleja el turno anterior y
+   * los flags anti-doble-tap por botón no alcanzan (bloquean solo el mismo botón).
+   *
+   * Reset (en orden de probabilidad):
+   *  - el primer evento transaccional / snapshot que aplica el nuevo estado
+   *    (`MatchStateService.clearActionPending()`),
+   *  - un error HTTP de la propia request,
+   *  - un timeout de seguridad, por si el evento se pierde y no hay re-fetch.
+   */
+  private readonly _actionPending = signal<boolean>(false);
+  readonly actionPending = this._actionPending.asReadonly();
+  private pendingTimerId: ReturnType<typeof setTimeout> | null = null;
+  private static readonly PENDING_SAFETY_MS = 6000;
+
   /** §4.7 POST /api/matches/{matchId}/truco */
   callTruco(matchId: string): Observable<void> {
-    return this.post(`${this.base}/${matchId}/truco`, undefined);
+    return this.mutate(`${this.base}/${matchId}/truco`, undefined);
   }
 
   /** §4.9 POST /api/matches/{matchId}/envido */
   callEnvido(matchId: string, call: EnvidoCall): Observable<void> {
-    return this.post<CallEnvidoRequest>(`${this.base}/${matchId}/envido`, { call });
+    return this.mutate<CallEnvidoRequest>(`${this.base}/${matchId}/envido`, { call });
   }
 
   /** §4.8 POST /api/matches/{matchId}/truco/respond */
   respondTruco(matchId: string, response: TrucoResponse): Observable<void> {
-    return this.post<RespondTrucoRequest>(`${this.base}/${matchId}/truco/respond`, { response });
+    return this.mutate<RespondTrucoRequest>(`${this.base}/${matchId}/truco/respond`, { response });
   }
 
   /** §4.10 POST /api/matches/{matchId}/envido/respond */
   respondEnvido(matchId: string, response: EnvidoResponse): Observable<void> {
-    return this.post<RespondEnvidoRequest>(`${this.base}/${matchId}/envido/respond`, { response });
+    return this.mutate<RespondEnvidoRequest>(`${this.base}/${matchId}/envido/respond`, {
+      response,
+    });
   }
 
   /** §4.11 POST /api/matches/{matchId}/fold */
   fold(matchId: string): Observable<void> {
-    return this.post(`${this.base}/${matchId}/fold`, undefined);
+    return this.mutate(`${this.base}/${matchId}/fold`, undefined);
   }
 
   /** §4.6 POST /api/matches/{matchId}/play-card */
   playCard(matchId: string, request: PlayCardRequest): Observable<void> {
-    return this.post<PlayCardRequest>(`${this.base}/${matchId}/play-card`, request);
+    return this.mutate<PlayCardRequest>(`${this.base}/${matchId}/play-card`, request);
   }
 
   /** §4.12 POST /api/matches/{matchId}/abandon */
   abandon(matchId: string): Observable<void> {
     return this.post(`${this.base}/${matchId}/abandon`, undefined, false);
+  }
+
+  /** Limpia el lock optimista. Lo llama `MatchStateService` al aplicar nuevo estado. */
+  clearActionPending(): void {
+    if (this.pendingTimerId !== null) {
+      clearTimeout(this.pendingTimerId);
+      this.pendingTimerId = null;
+    }
+    this._actionPending.set(false);
+  }
+
+  /**
+   * Dispara una acción mutante del jugador prendiendo el lock optimista. Ante
+   * error HTTP, lo libera (la acción no llegó al backend, no habrá evento que
+   * lo limpie) y silencia el error igual que `post()`.
+   */
+  private mutate<T>(url: string, body: T | undefined): Observable<void> {
+    this._actionPending.set(true);
+    if (this.pendingTimerId !== null) {
+      clearTimeout(this.pendingTimerId);
+    }
+    this.pendingTimerId = setTimeout(
+      () => this.clearActionPending(),
+      MatchActionsService.PENDING_SAFETY_MS,
+    );
+    return this.http.post<void>(url, body).pipe(
+      catchError((err: unknown) => {
+        console.warn('[match-actions] Request failed:', url, err);
+        this.clearActionPending();
+        return EMPTY;
+      }),
+    );
   }
 
   private post<T>(url: string, body: T | undefined, suppressErrors = true): Observable<void> {

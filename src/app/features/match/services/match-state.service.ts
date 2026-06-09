@@ -15,6 +15,7 @@ import type {
 } from '../models/match-ws-events';
 import { applyMatchEvent, applyMatchDerivedEvent } from '../reducers/match-event.reducer';
 import { MatchEventQueueService } from './match-event-queue.service';
+import { MatchActionsService } from './match-actions.service';
 import { SpectatorCountStore } from '../../../shared/services/spectator-count.store';
 
 interface MatchSnapshot extends MatchState {
@@ -66,6 +67,7 @@ export class MatchStateService {
   private readonly wsService = inject(WebSocketService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly eventQueue = inject(MatchEventQueueService);
+  private readonly matchActions = inject(MatchActionsService);
   private readonly spectatorCountStore = inject(SpectatorCountStore);
 
   readonly state = signal<MatchState | null>(null);
@@ -115,6 +117,8 @@ export class MatchStateService {
 
     this.unsubscribeAll();
     this.eventQueue.clear();
+    // Arrancar sin lock optimista heredado de una partida anterior (servicio singleton).
+    this.matchActions.clearActionPending();
 
     this.eventQueue.init({
       getViewerSeat: () => this.state()?.viewerSeat ?? null,
@@ -213,6 +217,7 @@ export class MatchStateService {
 
   destroy(): void {
     this.eventQueue.clear();
+    this.matchActions.clearActionPending();
     this.unsubscribeAll();
     this.spectatorCountStore.reset();
     this.matchEvent$.complete();
@@ -277,6 +282,9 @@ export class MatchStateService {
         this.state.set(snapshot);
         this.lastApplied = snapshot.stateVersion;
         this.lastSeenVersion = snapshot.stateVersion;
+        // Un re-fetch (hueco/reconexión) reemplaza el estado completo: el lock
+        // optimista ya no aplica, lo limpiamos para no dejar la UI trabada.
+        this.matchActions.clearActionPending();
         this.drainBuffers();
         this.loading.set(false);
         this.refreshPreGameRosterIfNeeded();
@@ -355,6 +363,10 @@ export class MatchStateService {
     const next = applyMatchEvent(current, event);
     this.state.set(next);
     this.lastApplied = event.stateVersion;
+    // El backend confirmó: el nuevo estado (con sus availableActions) ya es la
+    // fuente de verdad, así que liberamos el lock optimista. Si quedaran botones
+    // habilitados que no corresponden, los deshabilita availableActions, no el lock.
+    this.matchActions.clearActionPending();
     this.matchEvent$.next(event);
 
     if (

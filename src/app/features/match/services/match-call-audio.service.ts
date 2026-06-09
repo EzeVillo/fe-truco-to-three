@@ -51,16 +51,16 @@ export type MatchOutcomeLevel = 'ENVIDO' | 'GAME' | 'MATCH';
  */
 export const MATCH_OUTCOME_AUDIO_PATHS: Record<MatchOutcomeLevel, { win: string; lose: string }> = {
   ENVIDO: {
-    win: '/audio/mixkit-winning-notification-2018.wav',
-    lose: '/audio/mixkit-losing-piano-2024.wav',
+    win: '/audio/mixkit-winning-notification-2018.mp3',
+    lose: '/audio/mixkit-losing-piano-2024.mp3',
   },
   GAME: {
-    win: '/audio/mixkit-winning-chimes-2015.wav',
-    lose: '/audio/mixkit-losing-drums-2023.wav',
+    win: '/audio/mixkit-winning-chimes-2015.mp3',
+    lose: '/audio/mixkit-losing-drums-2023.mp3',
   },
   MATCH: {
-    win: '/audio/mixkit-video-game-win-2016.wav',
-    lose: '/audio/mixkit-player-losing-or-failing-2042.wav',
+    win: '/audio/mixkit-video-game-win-2016.mp3',
+    lose: '/audio/mixkit-player-losing-or-failing-2042.mp3',
   },
 };
 

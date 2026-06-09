@@ -14,7 +14,7 @@ export interface AchievementNotification {
 }
 
 /** SFX que suena al desbloquear un logro. */
-export const ACHIEVEMENT_UNLOCK_AUDIO_PATH = '/audio/mixkit-achievement-bell-600.wav';
+export const ACHIEVEMENT_UNLOCK_AUDIO_PATH = '/audio/mixkit-achievement-bell-600.mp3';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileNotificationService {

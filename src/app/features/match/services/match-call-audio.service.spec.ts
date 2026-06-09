@@ -104,10 +104,7 @@ describe('MatchCallAudioService', () => {
   function createService(): MatchCallAudioService {
     playback = { preload: vi.fn(), play: vi.fn() };
     TestBed.configureTestingModule({
-      providers: [
-        MatchCallAudioService,
-        { provide: AudioPlaybackService, useValue: playback },
-      ],
+      providers: [MatchCallAudioService, { provide: AudioPlaybackService, useValue: playback }],
     });
     return TestBed.inject(MatchCallAudioService);
   }
@@ -161,10 +158,10 @@ describe('MatchCallAudioService', () => {
     const service = createService();
 
     service.playOutcome('MATCH', true);
-    expect(playback.play).toHaveBeenLastCalledWith('/audio/mixkit-video-game-win-2016.wav');
+    expect(playback.play).toHaveBeenLastCalledWith('/audio/mixkit-video-game-win-2016.mp3');
 
     service.playOutcome('ENVIDO', false);
-    expect(playback.play).toHaveBeenLastCalledWith('/audio/mixkit-losing-piano-2024.wav');
+    expect(playback.play).toHaveBeenLastCalledWith('/audio/mixkit-losing-piano-2024.mp3');
   });
 
   it('playSpectatorOutcomeCue reproduce el cue neutro de espectador', () => {

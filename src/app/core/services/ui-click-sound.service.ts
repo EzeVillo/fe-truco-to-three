@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { EffectsVolumeService } from './effects-volume.service';
 
 /** SFX de click de UI, compartido por todos los botones. Servido desde `public/`. */
-export const UI_CLICK_AUDIO_PATH = '/audio/mixkit-camera-shutter-click-1133.wav';
+export const UI_CLICK_AUDIO_PATH = '/audio/mixkit-camera-shutter-click-1133.mp3';
 
 /**
  * Qué elementos cuentan como "botón" para disparar el click. Sumamos algunos `<a>`

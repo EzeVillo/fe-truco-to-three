@@ -46,7 +46,7 @@ const INITIAL: ChatState = {
 const MAX_MESSAGES = 50;
 
 /** SFX de notificación al recibir un mensaje ajeno. Servido desde `public/`. */
-const MESSAGE_SOUND_PATH = '/audio/537061__imafoley__message-pop-sound.wav';
+const MESSAGE_SOUND_PATH = '/audio/537061__imafoley__message-pop-sound.mp3';
 
 function maxSentAt(messages: ChatMessage[]): number {
   return messages.reduce((m, msg) => Math.max(m, msg.sentAt), 0);
@@ -144,8 +144,7 @@ export const ChatStore = signalStore(
             // Notificar sólo mensajes ajenos cuando el panel está cerrado.
             const markUnread = !store.panelOpen() && isForeign;
             patchState(store, {
-              messages:
-                next.length > MAX_MESSAGES ? next.slice(next.length - MAX_MESSAGES) : next,
+              messages: next.length > MAX_MESSAGES ? next.slice(next.length - MAX_MESSAGES) : next,
               ...(markUnread ? { unread: true } : {}),
             });
             // SFX de "pop" al recibir un mensaje ajeno (respeta el volumen de efectos).
@@ -158,11 +157,11 @@ export const ChatStore = signalStore(
     }
 
     function subscribeWs(): void {
-      if (wsSub) { return; }
+      if (wsSub) {
+        return;
+      }
       ws.connect();
-      wsSub = ws
-        .subscribe<ChatWsEvent>('/user/queue/chat')
-        .subscribe((event) => applyEvent(event));
+      wsSub = ws.subscribe<ChatWsEvent>('/user/queue/chat').subscribe((event) => applyEvent(event));
       connectedSub = ws.connected.subscribe((isConnected) => {
         const matchId = store.matchId();
         if (isConnected && matchId !== null) {
@@ -181,7 +180,9 @@ export const ChatStore = signalStore(
     return {
       /** Entra a una partida: setea matchId, suscribe WS, dispara bootstrap. Idempotente. */
       enterMatch(matchId: string): void {
-        if (store.matchId() === matchId) { return; }
+        if (store.matchId() === matchId) {
+          return;
+        }
         clearCooldownTimer();
         patchState(store, { ...INITIAL, matchId });
         // Precargar el SFX para que el primer mensaje suene sin esperar la descarga.
@@ -210,10 +211,14 @@ export const ChatStore = signalStore(
       /** Envía un mensaje. Valida trim/longitud antes de llamar a la API. */
       send(content: string): void {
         const trimmed = content.trim();
-        if (!trimmed || trimmed.length > 500) { return; }
+        if (!trimmed || trimmed.length > 500) {
+          return;
+        }
 
         const matchId = store.matchId();
-        if (!matchId) { return; }
+        if (!matchId) {
+          return;
+        }
 
         patchState(store, { sendError: null });
 

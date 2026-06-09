@@ -19,10 +19,10 @@ export class CardPreloadService {
     }
     this.preloaded = true;
 
-    const urls = ['/cards/dorso.png'];
+    const urls = ['/cards/dorso.webp'];
     for (const number of CardPreloadService.NUMBERS) {
       for (const suit of CardPreloadService.SUITS) {
-        urls.push(`/cards/${number}_${suit}.png`);
+        urls.push(`/cards/${number}_${suit}.webp`);
       }
     }
 

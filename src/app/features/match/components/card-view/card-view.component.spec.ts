@@ -14,18 +14,18 @@ describe('CardViewComponent', () => {
     component = fixture.componentInstance;
   });
 
-  it('renders dorso.png when card is null', () => {
+  it('renders dorso.webp when card is null', () => {
     component.card = null;
     fixture.detectChanges();
     const img = fixture.nativeElement.querySelector('img') as HTMLImageElement;
-    expect(img.src).toContain('/cards/dorso.png');
+    expect(img.src).toContain('/cards/dorso.webp');
   });
 
   it('renders correct card image URL when card is visible', () => {
     component.card = { suit: 'ESPADA', number: 1 };
     fixture.detectChanges();
     const img = fixture.nativeElement.querySelector('img') as HTMLImageElement;
-    expect(img.src).toContain('/cards/1_espada.png');
+    expect(img.src).toContain('/cards/1_espada.webp');
   });
 
   it('computes alt text correctly', () => {

@@ -10,8 +10,12 @@
 
   @if (!isAuthenticated()) {
     <footer class="rules-page__footer">
-      <a routerLink="/register" class="t3-btn t3-btn--primary">Crear cuenta y jugar</a>
-      <a routerLink="/login" class="t3-btn t3-btn--neutral">Ya tengo cuenta</a>
+      <a routerLink="/register" class="t3-btn t3-btn--primary" data-ui-click appNavPending
+        >Crear cuenta y jugar</a
+      >
+      <a routerLink="/login" class="t3-btn t3-btn--neutral" data-ui-click appNavPending
+        >Ya tengo cuenta</a
+      >
     </footer>
   }
 </section>

@@ -5,11 +5,12 @@ import { Title } from '@angular/platform-browser';
 import { RulesSectionComponent } from '../../components/rules-section/rules-section.component';
 import { BackButtonComponent } from '../../../../shared/components/back-button';
 import { AuthStore } from '../../../../core/auth/auth.store';
+import { NavPendingDirective } from '../../../../shared/directives/nav-pending.directive';
 
 @Component({
   selector: 'app-rules-page',
   standalone: true,
-  imports: [RulesSectionComponent, BackButtonComponent, RouterLink],
+  imports: [RulesSectionComponent, BackButtonComponent, RouterLink, NavPendingDirective],
   templateUrl: './rules-page.component.html',
   styleUrl: './rules-page.component.scss',
 })

@@ -13,8 +13,12 @@
     </p>
 
     <div class="landing__ctas">
-      <a routerLink="/register" class="t3-btn t3-btn--primary">Crear cuenta gratis</a>
-      <a routerLink="/login" class="t3-btn t3-btn--neutral">Iniciar sesión</a>
+      <a routerLink="/register" class="t3-btn t3-btn--primary" data-ui-click appNavPending
+        >Crear cuenta gratis</a
+      >
+      <a routerLink="/login" class="t3-btn t3-btn--neutral" data-ui-click appNavPending
+        >Iniciar sesión</a
+      >
     </div>
 
     <div class="landing__divider" aria-hidden="true">o</div>
@@ -23,7 +27,9 @@
       <app-guest-cta></app-guest-cta>
     </div>
 
-    <a routerLink="/reglas" class="landing__rules-link"> Ver las reglas de la variante → </a>
+    <a routerLink="/reglas" class="landing__rules-link" data-ui-click appNavPending>
+      Ver las reglas de la variante →
+    </a>
   </section>
 
   <section class="landing__features" aria-label="Características del juego">

@@ -129,7 +129,12 @@
           >
             @if (!busy()) {
               @if (profileLink(); as link) {
-                <a class="global-header__menu-item" [routerLink]="link" (click)="closeMenu()">
+                <a
+                  class="global-header__menu-item"
+                  [routerLink]="link"
+                  data-ui-click
+                  (click)="closeMenu()"
+                >
                   Mi perfil
                 </a>
               } @else {
@@ -139,7 +144,12 @@
               }
             }
             @if (showFriends()) {
-              <a class="global-header__menu-item" routerLink="/friends" (click)="closeMenu()">
+              <a
+                class="global-header__menu-item"
+                routerLink="/friends"
+                data-ui-click
+                (click)="closeMenu()"
+              >
                 Amigos
               </a>
             }

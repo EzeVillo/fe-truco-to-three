@@ -290,3 +290,39 @@ router-outlet {
   --mdc-snackbar-supporting-text-color: var(--t3-text);
   --mat-snack-bar-button-color: var(--t3-gold-400);
 }
+
+// =============================================================================
+// Estado "navegación pendiente" (directiva appNavPending)
+// =============================================================================
+// Mientras se baja el chunk lazy de la ruta destino, el link queda bloqueado
+// (no admite más clicks) y muestra un spinner al final. Evita el doble-tap.
+.is-nav-pending {
+  position: relative;
+  pointer-events: none;
+  opacity: 0.85;
+
+  &::after {
+    content: '';
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    margin-left: 0.5em;
+    vertical-align: -0.15em;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: t3-nav-pending-spin 0.6s linear infinite;
+  }
+}
+
+@keyframes t3-nav-pending-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-nav-pending::after {
+    animation-duration: 1.4s;
+  }
+}

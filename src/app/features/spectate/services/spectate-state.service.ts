@@ -11,10 +11,7 @@ import type {
   EnvidoResolvedPayload,
   MatchEndedEvent,
 } from '../../match/models/match-ws-events';
-import {
-  applyMatchEvent,
-  applyMatchDerivedEvent,
-} from '../../match/reducers/match-event.reducer';
+import { applyMatchEvent, applyMatchDerivedEvent } from '../../match/reducers/match-event.reducer';
 import { MatchEventQueueService } from '../../match/services/match-event-queue.service';
 import { WebSocketService } from '../../../core/services/websocket.service';
 import { SpectateApiService } from './spectate-api.service';
@@ -212,7 +209,9 @@ export class SpectateStateService {
   // Callback del queue: aplica un evento derivado (reloj) al estado.
   private applyDerived(event: MatchDerivedEvent): void {
     const current = this.matchState();
-    if (current === null) return;
+    if (current === null) {
+      return;
+    }
     this.matchState.set(applyMatchDerivedEvent(current, event));
   }
 
@@ -220,7 +219,9 @@ export class SpectateStateService {
   // Llamado por MatchEventQueueService tras cumplir el delay.
   private applyAndEmit(event: MatchWsEvent): void {
     const current = this.matchState();
-    if (current === null) return;
+    if (current === null) {
+      return;
+    }
 
     this.matchState.set(applyMatchEvent(current, event));
     this.matchEvent$.next(event);

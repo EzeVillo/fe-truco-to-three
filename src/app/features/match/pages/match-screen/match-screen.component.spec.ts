@@ -166,7 +166,7 @@ describe('MatchScreenComponent', () => {
     setupComponent({ matchId: 'test-match' });
     const routerSpy = vi.spyOn(fixture.componentInstance['router'], 'navigate');
     fixture.componentInstance.goToLobby();
-    expect(routerSpy).toHaveBeenCalledWith(['/']);
+    expect(routerSpy).toHaveBeenCalledWith(['/lobby']);
   });
 
   it('selfCallText y opponentCallText inician en null', () => {
@@ -951,7 +951,7 @@ describe('MatchScreenComponent', () => {
       fixture.detectChanges();
 
       // Sin sesion disponible por REST: el componente vuelve al lobby.
-      expect(routerSpy).toHaveBeenCalledWith(['/']);
+      expect(routerSpy).toHaveBeenCalledWith(['/lobby']);
     });
 
     it('abre RematchDialogComponent si session() ya está seteada al cerrar el resultado', () => {

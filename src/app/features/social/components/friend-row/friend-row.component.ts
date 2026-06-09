@@ -40,8 +40,12 @@ export class FriendRowComponent {
   readonly isOnlineAvailable = computed(() => this.online() && this.availability() === 'AVAILABLE');
   readonly isBusy = computed(() => this.online() && this.availability() === 'BUSY');
   readonly dotAriaLabel = computed(() => {
-    if (!this.online()) return 'Desconectado';
-    if (this.isBusy()) return 'En partida';
+    if (!this.online()) {
+      return 'Desconectado';
+    }
+    if (this.isBusy()) {
+      return 'En partida';
+    }
     return 'En línea';
   });
 

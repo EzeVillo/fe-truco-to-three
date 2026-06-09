@@ -15,6 +15,7 @@ describe('PlayerHandComponent', () => {
           provide: MatchActionsService,
           useValue: {
             playCard: vi.fn().mockReturnValue(of(undefined)),
+            actionPending: vi.fn().mockReturnValue(false),
           },
         },
       ],

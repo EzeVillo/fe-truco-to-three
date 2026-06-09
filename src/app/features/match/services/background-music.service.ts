@@ -44,13 +44,23 @@ export class BackgroundMusicService {
   /** Volumen actual en [0, 1]. */
   readonly volume = this._volume.asReadonly();
 
-  /** Arranca la música al entrar a una partida. Idempotente. */
+  /**
+   * Arranca la música al entrar a una partida. Idempotente: el componente la
+   * llama en un effect que se re-dispara en cada acción mientras la partida está
+   * IN_PROGRESS, así que sólo rebobina en la transición inactivo→activo (primera
+   * entrada o reentrada). El servicio es singleton y reutiliza el mismo
+   * `HTMLAudioElement` entre partidas, por eso hay que rebobinar a mano.
+   */
   start(): void {
+    const wasActive = this.active;
     this.active = true;
     if (!this._enabled()) {
       return;
     }
     this.ensureAudio();
+    if (!wasActive) {
+      this.rewind();
+    }
     this.tryPlay();
   }
 
@@ -95,6 +105,22 @@ export class BackgroundMusicService {
     this._volume.set(clamped);
     this.persistVolume(clamped);
     this.applyVolume();
+  }
+
+  /**
+   * Rebobina la pista al inicio. En iOS/WebKit asignar `currentTime` puede
+   * lanzar si el audio todavía no cargó metadata; va envuelto para no romper el
+   * arranque (el audio es enhancement).
+   */
+  private rewind(): void {
+    if (!this.audio) {
+      return;
+    }
+    try {
+      this.audio.currentTime = 0;
+    } catch {
+      // Sin metadata aún: arrancará desde la posición actual, no es crítico.
+    }
   }
 
   private ensureAudio(): void {

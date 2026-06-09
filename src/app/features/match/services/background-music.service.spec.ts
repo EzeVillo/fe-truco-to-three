@@ -1,13 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  BACKGROUND_MUSIC_PATH,
-  BackgroundMusicService,
-} from './background-music.service';
+import { BACKGROUND_MUSIC_PATH, BackgroundMusicService } from './background-music.service';
 
 interface AudioMock {
   src: string;
   loop: boolean;
   volume: number;
+  currentTime: number;
   play: ReturnType<typeof vi.fn>;
   pause: ReturnType<typeof vi.fn>;
 }
@@ -19,17 +17,15 @@ describe('BackgroundMusicService', () => {
     createdAudios = [];
     localStorage.clear();
 
-    vi.stubGlobal(
-      'Audio',
-      function AudioMock(this: AudioMock, src: string) {
-        this.src = src;
-        this.loop = false;
-        this.volume = 1;
-        this.play = vi.fn().mockResolvedValue(undefined);
-        this.pause = vi.fn();
-        createdAudios.push(this);
-      },
-    );
+    vi.stubGlobal('Audio', function AudioMock(this: AudioMock, src: string) {
+      this.src = src;
+      this.loop = false;
+      this.volume = 1;
+      this.currentTime = 0;
+      this.play = vi.fn().mockResolvedValue(undefined);
+      this.pause = vi.fn();
+      createdAudios.push(this);
+    });
   });
 
   afterEach(() => {
@@ -54,6 +50,32 @@ describe('BackgroundMusicService', () => {
     expect(createdAudios[0].loop).toBe(true);
     expect(createdAudios[0].volume).toBeCloseTo(0.15);
     expect(createdAudios[0].play).toHaveBeenCalledOnce();
+  });
+
+  it('al reentrar a un match rebobina la pista al inicio', () => {
+    const service = new BackgroundMusicService();
+    service.start();
+
+    // Simula que la pista avanzó durante la primera partida.
+    createdAudios[0].currentTime = 42;
+    service.stop();
+
+    service.start();
+
+    // Reutiliza el mismo elemento (singleton) pero suena desde el principio.
+    expect(createdAudios).toHaveLength(1);
+    expect(createdAudios[0].currentTime).toBe(0);
+  });
+
+  it('start() repetido durante la partida no rebobina (es idempotente)', () => {
+    const service = new BackgroundMusicService();
+    service.start();
+
+    // El componente re-dispara start() en cada acción mientras IN_PROGRESS.
+    createdAudios[0].currentTime = 42;
+    service.start();
+
+    expect(createdAudios[0].currentTime).toBe(42);
   });
 
   it('stop() pausa la pista', () => {
@@ -124,18 +146,15 @@ describe('BackgroundMusicService', () => {
         createGain: () => { gain: { value: number }; connect: ReturnType<typeof vi.fn> };
       }
 
-      vi.stubGlobal(
-        'AudioContext',
-        function AudioContextMock(this: AudioContextMockShape) {
-          this.destination = {};
-          this.resume = vi.fn().mockResolvedValue(undefined);
-          this.createMediaElementSource = (el: HTMLAudioElement) => {
-            mediaElementVolume = el;
-            return { connect: vi.fn() };
-          };
-          this.createGain = () => ({ ...gain, connect: vi.fn() });
-        },
-      );
+      vi.stubGlobal('AudioContext', function AudioContextMock(this: AudioContextMockShape) {
+        this.destination = {};
+        this.resume = vi.fn().mockResolvedValue(undefined);
+        this.createMediaElementSource = (el: HTMLAudioElement) => {
+          mediaElementVolume = el;
+          return { connect: vi.fn() };
+        };
+        this.createGain = () => ({ ...gain, connect: vi.fn() });
+      });
     });
 
     it('el volumen se gobierna por el GainNode, no por audio.volume', () => {

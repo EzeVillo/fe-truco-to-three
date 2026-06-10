@@ -1,0 +1,66 @@
+# Mirror en GitHub Pages (https://ezevillo.github.io/fe-truco-to-three/).
+# Existe porque LinkedIn rechaza enlaces al dominio pages.dev (filtrado por abuso
+# de phishing en subdominios gratuitos de Cloudflare); github.io sí lo acepta.
+# El deploy principal sigue siendo Cloudflare Pages — esto es una copia espejo.
+name: Deploy GitHub Pages mirror
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # enablement: true activa GitHub Pages en el repo si todavía no está habilitado.
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm exec ng build --base-href /fe-truco-to-three/
+
+      # El mirror debe identificarse como github.io: si og:url/canonical apuntaran
+      # a pages.dev, LinkedIn canonicaliza al dominio bloqueado y rechaza el enlace.
+      - name: Reapuntar metadatos al dominio del mirror
+        run: |
+          sed -i 's|https://fe-truco-to-three\.pages\.dev/|https://ezevillo.github.io/fe-truco-to-three/|g' \
+            dist/fe-truco-to-three/browser/index.html
+
+      # Fallback SPA: GitHub Pages sirve 404.html para rutas que no existen como archivo.
+      - name: Crear fallback SPA
+        run: cp dist/fe-truco-to-three/browser/index.html dist/fe-truco-to-three/browser/404.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/fe-truco-to-three/browser
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

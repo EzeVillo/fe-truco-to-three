@@ -1,8 +1,32 @@
 <!-- Shell de la aplicación -->
+@if (serverWake.overlayVisible()) {
+  <div class="server-wake" role="alertdialog" aria-live="assertive" aria-busy="true">
+    <div class="server-wake__card">
+      @if (serverWake.status() === 'error') {
+        <h2 class="server-wake__title">No pudimos contactar al servidor</h2>
+        <p class="server-wake__text">
+          Puede estar tardando más de lo normal en arrancar. Probá de nuevo en un momento.
+        </p>
+        <button type="button" class="server-wake__btn" (click)="serverWake.retry()">
+          Reintentar
+        </button>
+      } @else {
+        <div class="server-wake__spinner" aria-hidden="true"></div>
+        <h2 class="server-wake__title">Levantando el servidor…</h2>
+        <p class="server-wake__text">
+          Esto puede tardar unos minutos la primera vez. Lo hacemos solo cuando estuvo inactivo.
+        </p>
+      }
+    </div>
+  </div>
+}
+
 <app-global-header />
 
 <main class="app-main">
-  <router-outlet />
+  @if (serverWake.isReady()) {
+    <router-outlet />
+  }
 </main>
 
 @if (profileNotifications.current(); as notification) {

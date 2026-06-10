@@ -46,7 +46,7 @@ const INITIAL: ChatState = {
 const MAX_MESSAGES = 50;
 
 /** SFX de notificación al recibir un mensaje ajeno. Servido desde `public/`. */
-const MESSAGE_SOUND_PATH = '/audio/537061__imafoley__message-pop-sound.mp3';
+const MESSAGE_SOUND_PATH = 'audio/537061__imafoley__message-pop-sound.mp3';
 
 function maxSentAt(messages: ChatMessage[]): number {
   return messages.reduce((m, msg) => Math.max(m, msg.sentAt), 0);

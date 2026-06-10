@@ -10,20 +10,20 @@ export interface MatchCallAudioAsset {
 }
 
 export const MATCH_CALL_AUDIO_ASSETS: readonly MatchCallAudioAsset[] = [
-  { key: 'ENVIDO', fileName: 'envido.mp3', path: '/audio/calls/envido.mp3' },
-  { key: 'FALTA_ENVIDO', fileName: 'falta-envido.mp3', path: '/audio/calls/falta-envido.mp3' },
-  { key: 'FOLD', fileName: 'me-voy-al-mazo.mp3', path: '/audio/calls/me-voy-al-mazo.mp3' },
-  { key: 'NO_QUIERO', fileName: 'no-quiero.mp3', path: '/audio/calls/no-quiero.mp3' },
-  { key: 'QUIERO', fileName: 'quiero.mp3', path: '/audio/calls/quiero.mp3' },
+  { key: 'ENVIDO', fileName: 'envido.mp3', path: 'audio/calls/envido.mp3' },
+  { key: 'FALTA_ENVIDO', fileName: 'falta-envido.mp3', path: 'audio/calls/falta-envido.mp3' },
+  { key: 'FOLD', fileName: 'me-voy-al-mazo.mp3', path: 'audio/calls/me-voy-al-mazo.mp3' },
+  { key: 'NO_QUIERO', fileName: 'no-quiero.mp3', path: 'audio/calls/no-quiero.mp3' },
+  { key: 'QUIERO', fileName: 'quiero.mp3', path: 'audio/calls/quiero.mp3' },
   {
     key: 'QUIERO_Y_ME_VOY_AL_MAZO',
     fileName: 'quiero-y-me-voy-al-mazo.mp3',
-    path: '/audio/calls/quiero-y-me-voy-al-mazo.mp3',
+    path: 'audio/calls/quiero-y-me-voy-al-mazo.mp3',
   },
-  { key: 'REAL_ENVIDO', fileName: 'real-envido.mp3', path: '/audio/calls/real-envido.mp3' },
-  { key: 'RETRUCO', fileName: 'retruco.mp3', path: '/audio/calls/retruco.mp3' },
-  { key: 'TRUCO', fileName: 'truco.mp3', path: '/audio/calls/truco.mp3' },
-  { key: 'VALE_CUATRO', fileName: 'vale-cuatro.mp3', path: '/audio/calls/vale-cuatro.mp3' },
+  { key: 'REAL_ENVIDO', fileName: 'real-envido.mp3', path: 'audio/calls/real-envido.mp3' },
+  { key: 'RETRUCO', fileName: 'retruco.mp3', path: 'audio/calls/retruco.mp3' },
+  { key: 'TRUCO', fileName: 'truco.mp3', path: 'audio/calls/truco.mp3' },
+  { key: 'VALE_CUATRO', fileName: 'vale-cuatro.mp3', path: 'audio/calls/vale-cuatro.mp3' },
 ];
 
 /**
@@ -32,7 +32,7 @@ export const MATCH_CALL_AUDIO_ASSETS: readonly MatchCallAudioAsset[] = [
  * playCardThrow() cuando se aplica un CARD_PLAYED, ya sincronizado con el
  * delay por rol que resuelve MatchEventQueueService.
  */
-export const MATCH_CARD_THROW_AUDIO_PATH = '/audio/freesound_community-card-sounds-35956.mp3';
+export const MATCH_CARD_THROW_AUDIO_PATH = 'audio/freesound_community-card-sounds-35956.mp3';
 
 /**
  * Cue neutro para el espectador al abrir un modal de resultado (envido/game/match).
@@ -51,16 +51,16 @@ export type MatchOutcomeLevel = 'ENVIDO' | 'GAME' | 'MATCH';
  */
 export const MATCH_OUTCOME_AUDIO_PATHS: Record<MatchOutcomeLevel, { win: string; lose: string }> = {
   ENVIDO: {
-    win: '/audio/mixkit-winning-notification-2018.mp3',
-    lose: '/audio/mixkit-losing-piano-2024.mp3',
+    win: 'audio/mixkit-winning-notification-2018.mp3',
+    lose: 'audio/mixkit-losing-piano-2024.mp3',
   },
   GAME: {
-    win: '/audio/mixkit-winning-chimes-2015.mp3',
-    lose: '/audio/mixkit-losing-drums-2023.mp3',
+    win: 'audio/mixkit-winning-chimes-2015.mp3',
+    lose: 'audio/mixkit-losing-drums-2023.mp3',
   },
   MATCH: {
-    win: '/audio/mixkit-video-game-win-2016.mp3',
-    lose: '/audio/mixkit-player-losing-or-failing-2042.mp3',
+    win: 'audio/mixkit-video-game-win-2016.mp3',
+    lose: 'audio/mixkit-player-losing-or-failing-2042.mp3',
   },
 };
 

@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 
 /** Pista de fondo (guitarra criolla). Servida desde `public/`. */
-export const BACKGROUND_MUSIC_PATH = '/audio/bp6zflyzky4-spanish-guitar-acoustic-538756.mp3';
+export const BACKGROUND_MUSIC_PATH = 'audio/bp6zflyzky4-spanish-guitar-acoustic-538756.mp3';
 
 const ENABLED_STORAGE_KEY = 't3.bgMusic.enabled';
 const VOLUME_STORAGE_KEY = 't3.bgMusic.volume';

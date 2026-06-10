@@ -22,50 +22,46 @@ function makeEvent(eventType: MatchWsEvent['eventType'], payload: unknown): Matc
 
 describe('resolveMatchCallAudioPath', () => {
   it.each([
-    ['TRUCO_CALLED', { callerSeat: 'PLAYER_ONE', call: 'TRUCO' }, '/audio/calls/truco.mp3'],
-    ['TRUCO_CALLED', { callerSeat: 'PLAYER_ONE', call: 'RETRUCO' }, '/audio/calls/retruco.mp3'],
+    ['TRUCO_CALLED', { callerSeat: 'PLAYER_ONE', call: 'TRUCO' }, 'audio/calls/truco.mp3'],
+    ['TRUCO_CALLED', { callerSeat: 'PLAYER_ONE', call: 'RETRUCO' }, 'audio/calls/retruco.mp3'],
     [
       'TRUCO_CALLED',
       { callerSeat: 'PLAYER_ONE', call: 'VALE_CUATRO' },
-      '/audio/calls/vale-cuatro.mp3',
+      'audio/calls/vale-cuatro.mp3',
     ],
-    ['ENVIDO_CALLED', { callerSeat: 'PLAYER_ONE', call: 'ENVIDO' }, '/audio/calls/envido.mp3'],
+    ['ENVIDO_CALLED', { callerSeat: 'PLAYER_ONE', call: 'ENVIDO' }, 'audio/calls/envido.mp3'],
     [
       'ENVIDO_CALLED',
       { callerSeat: 'PLAYER_ONE', call: 'REAL_ENVIDO' },
-      '/audio/calls/real-envido.mp3',
+      'audio/calls/real-envido.mp3',
     ],
     [
       'ENVIDO_CALLED',
       { callerSeat: 'PLAYER_ONE', call: 'FALTA_ENVIDO' },
-      '/audio/calls/falta-envido.mp3',
+      'audio/calls/falta-envido.mp3',
     ],
     [
       'TRUCO_RESPONDED',
       { responderSeat: 'PLAYER_TWO', response: 'QUIERO', call: 'TRUCO' },
-      '/audio/calls/quiero.mp3',
+      'audio/calls/quiero.mp3',
     ],
     [
       'TRUCO_RESPONDED',
       { responderSeat: 'PLAYER_TWO', response: 'NO_QUIERO', call: 'TRUCO' },
-      '/audio/calls/no-quiero.mp3',
+      'audio/calls/no-quiero.mp3',
     ],
     [
       'TRUCO_RESPONDED',
       { responderSeat: 'PLAYER_TWO', response: 'QUIERO_Y_ME_VOY_AL_MAZO', call: 'TRUCO' },
-      '/audio/calls/quiero-y-me-voy-al-mazo.mp3',
+      'audio/calls/quiero-y-me-voy-al-mazo.mp3',
     ],
-    [
-      'ENVIDO_RESOLVED',
-      { response: 'QUIERO', winnerSeat: 'PLAYER_ONE' },
-      '/audio/calls/quiero.mp3',
-    ],
+    ['ENVIDO_RESOLVED', { response: 'QUIERO', winnerSeat: 'PLAYER_ONE' }, 'audio/calls/quiero.mp3'],
     [
       'ENVIDO_RESOLVED',
       { response: 'NO_QUIERO', winnerSeat: 'PLAYER_ONE' },
-      '/audio/calls/no-quiero.mp3',
+      'audio/calls/no-quiero.mp3',
     ],
-    ['FOLDED', { seat: 'PLAYER_ONE' }, '/audio/calls/me-voy-al-mazo.mp3'],
+    ['FOLDED', { seat: 'PLAYER_ONE' }, 'audio/calls/me-voy-al-mazo.mp3'],
   ] as const)('mapea %s a %s', (eventType, payload, expectedPath) => {
     expect(resolveMatchCallAudioPath(makeEvent(eventType, payload))).toBe(expectedPath);
   });
@@ -143,7 +139,7 @@ describe('MatchCallAudioService', () => {
 
     service.playForEvent(makeEvent('TRUCO_CALLED', { callerSeat: 'PLAYER_ONE', call: 'TRUCO' }));
 
-    expect(playback.play).toHaveBeenCalledWith('/audio/calls/truco.mp3');
+    expect(playback.play).toHaveBeenCalledWith('audio/calls/truco.mp3');
   });
 
   it('playCardThrow reproduce el SFX de carta vía el canal central', () => {
@@ -158,10 +154,10 @@ describe('MatchCallAudioService', () => {
     const service = createService();
 
     service.playOutcome('MATCH', true);
-    expect(playback.play).toHaveBeenLastCalledWith('/audio/mixkit-video-game-win-2016.mp3');
+    expect(playback.play).toHaveBeenLastCalledWith('audio/mixkit-video-game-win-2016.mp3');
 
     service.playOutcome('ENVIDO', false);
-    expect(playback.play).toHaveBeenLastCalledWith('/audio/mixkit-losing-piano-2024.mp3');
+    expect(playback.play).toHaveBeenLastCalledWith('audio/mixkit-losing-piano-2024.mp3');
   });
 
   it('playSpectatorOutcomeCue reproduce el cue neutro de espectador', () => {

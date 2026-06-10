@@ -18,7 +18,7 @@ import type { Card } from '../../../../core/models/match.models';
     } @else {
       <img
         class="card-view__image card-view__image--hidden"
-        src="/cards/dorso.webp"
+        src="cards/dorso.webp"
         alt="Carta boca abajo"
         decoding="sync"
       />
@@ -31,10 +31,10 @@ export class CardViewComponent {
 
   get cardImageUrl(): string {
     if (!this.card) {
-      return '/cards/dorso.webp';
+      return 'cards/dorso.webp';
     }
     const suitLower = this.card.suit.toLowerCase();
-    return `/cards/${this.card.number}_${suitLower}.webp`;
+    return `cards/${this.card.number}_${suitLower}.webp`;
   }
 
   get cardAltText(): string {

@@ -1,8 +1,7 @@
-# Mirror en GitHub Pages (https://ezevillo.github.io/fe-truco-to-three/).
-# Existe porque LinkedIn rechaza enlaces al dominio pages.dev (filtrado por abuso
-# de phishing en subdominios gratuitos de Cloudflare); github.io sí lo acepta.
-# El deploy principal sigue siendo Cloudflare Pages — esto es una copia espejo.
-name: Deploy GitHub Pages mirror
+# Deploy de producción a GitHub Pages (https://ezevillo.github.io/fe-truco-to-three/).
+# Se eligió github.io sobre pages.dev/netlify.app porque LinkedIn (y otros filtros)
+# rechazan enlaces a subdominios gratuitos de hosting por abuso de phishing.
+name: Deploy GitHub Pages
 
 on:
   push:
@@ -24,10 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # enablement: true activa GitHub Pages en el repo si todavía no está habilitado.
       - uses: actions/configure-pages@v5
-        with:
-          enablement: true
 
       - uses: pnpm/action-setup@v4
 
@@ -39,13 +35,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm exec ng build --base-href /fe-truco-to-three/
-
-      # El mirror debe identificarse como github.io: si og:url/canonical apuntaran
-      # a pages.dev, LinkedIn canonicaliza al dominio bloqueado y rechaza el enlace.
-      - name: Reapuntar metadatos al dominio del mirror
-        run: |
-          sed -i 's|https://fe-truco-to-three\.pages\.dev/|https://ezevillo.github.io/fe-truco-to-three/|g' \
-            dist/fe-truco-to-three/browser/index.html
 
       # Fallback SPA: GitHub Pages sirve 404.html para rutas que no existen como archivo.
       - name: Crear fallback SPA

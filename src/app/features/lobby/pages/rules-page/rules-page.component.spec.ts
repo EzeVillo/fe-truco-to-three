@@ -56,16 +56,20 @@ describe('RulesPageComponent', () => {
       expect(navSpy).toHaveBeenCalledWith('/');
     });
 
-    it('muestra el footer con CTAs de registro e inicio de sesión', () => {
+    it('muestra el footer con CTA de invitado y de cuenta', () => {
       const footer = fixture.debugElement.query(By.css('.rules-page__footer'));
       expect(footer).toBeTruthy();
+
+      const guestButton = footer.query(By.css('.guest-cta__button'));
+      expect(guestButton).toBeTruthy();
+      expect((guestButton.nativeElement as HTMLElement).textContent).toContain(
+        'Jugar como invitado',
+      );
+
       const links = footer.queryAll(By.css('a'));
       expect(
-        links.some((l) => (l.nativeElement as HTMLElement).textContent?.includes('Crear cuenta')),
-      ).toBe(true);
-      expect(
         links.some((l) =>
-          (l.nativeElement as HTMLElement).textContent?.includes('Ya tengo cuenta'),
+          (l.nativeElement as HTMLElement).textContent?.includes('Creá una cuenta o iniciá sesión'),
         ),
       ).toBe(true);
     });

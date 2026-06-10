@@ -22,6 +22,12 @@ export class GuestCtaComponent {
   /** Permite que el contenedor deshabilite el botón mientras otra acción de auth está en curso. */
   @Input() disabled = false;
 
+  /**
+   * Estilo visual del botón. `outline` (default) es el dorado sobre fondo transparente usado
+   * como acción secundaria; `primary` lo pinta lleno (amarillo) para destacarlo como CTA principal.
+   */
+  @Input() variant: 'outline' | 'primary' = 'outline';
+
   /** Notifica al contenedor cuando cambia el estado de carga (para deshabilitar otros botones). */
   @Output() loadingChange = new EventEmitter<boolean>();
 

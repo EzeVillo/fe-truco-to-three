@@ -2,6 +2,7 @@
   <button
     type="button"
     class="guest-cta__button"
+    [class.guest-cta__button--primary]="variant === 'primary'"
     [disabled]="loading() || disabled || navigationLock.locked()"
     (click)="playAsGuest()"
     aria-label="Jugar como invitado"

@@ -37,6 +37,25 @@
       opacity: 0.55;
       cursor: not-allowed;
     }
+
+    // Variante destacada: CTA principal pintado (amarillo lleno).
+    &--primary {
+      border-color: transparent;
+      background: var(--t3-cta-bg);
+      color: var(--t3-cta-text-on);
+      box-shadow: var(--t3-shadow-gold);
+
+      @media (hover: hover) {
+        &:hover:not(:disabled) {
+          background: var(--t3-cta-bg-hover);
+          border-color: transparent;
+        }
+      }
+
+      .loading-spinner ::ng-deep circle {
+        stroke: var(--t3-cta-text-on) !important;
+      }
+    }
   }
 
   &__icon {

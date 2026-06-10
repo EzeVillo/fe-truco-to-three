@@ -12,7 +12,7 @@
   <button
     type="button"
     class="t3-btn t3-btn--primary public-match-card__action"
-    [disabled]="busy() || !canAct()"
+    [disabled]="busy() || disabled() || !canAct()"
     [attr.aria-busy]="busy() ? 'true' : null"
     (click)="onAct()"
   >

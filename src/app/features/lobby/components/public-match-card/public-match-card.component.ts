@@ -21,6 +21,8 @@ export class PublicMatchCardComponent {
   readonly own = input<boolean>(false);
   /** Esta card está ejecutando la acción de unirse. */
   readonly busy = input<boolean>(false);
+  /** Bloqueo externo: otra operación de la página está en curso (sin cambiar el label). */
+  readonly disabled = input<boolean>(false);
 
   /** Emite cuando el usuario toca la acción (unirse o ir a su partida). */
   readonly act = output<PublicMatchLobbyItem>();
@@ -32,7 +34,7 @@ export class PublicMatchCardComponent {
   readonly actionLabel = computed(() => (this.own() ? 'Ir a tu partida' : 'Unirse'));
 
   onAct(): void {
-    if (this.busy() || !this.canAct()) {
+    if (this.busy() || this.disabled() || !this.canAct()) {
       return;
     }
     this.act.emit(this.item());

@@ -23,11 +23,16 @@ const OPTIONS: VisibilityOption[] = [
 })
 export class VisibilitySelectorComponent {
   readonly visibility = input<Visibility>(VISIBILITY.PRIVATE);
+  /** Bloquea el cambio de visibilidad mientras hay una operación en curso. */
+  readonly disabled = input<boolean>(false);
   readonly visibilityChange = output<Visibility>();
 
   readonly options = OPTIONS;
 
   select(value: Visibility): void {
+    if (this.disabled()) {
+      return;
+    }
     this.visibilityChange.emit(value);
   }
 }

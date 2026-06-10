@@ -1,4 +1,12 @@
-import { ApplicationRef, Component, ElementRef, HostListener, computed, inject, signal } from '@angular/core';
+import {
+  ApplicationRef,
+  Component,
+  ElementRef,
+  HostListener,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
@@ -6,6 +14,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { AuthStore } from '../../../core/auth/auth.store';
 import { AuthService } from '../../../core/auth/auth.service';
 import { PresenceCoordinatorService } from '../../../core/services/presence-coordinator.service';
+import { NavigationLockService } from '../../../core/services/navigation-lock.service';
 import { SpectatorCountStore } from '../../services/spectator-count.store';
 import { MatchActionsService } from '../../../features/match/services/match-actions.service';
 import { BackgroundMusicService } from '../../../features/match/services/background-music.service';
@@ -26,6 +35,7 @@ export class GlobalHeaderComponent {
   readonly authStore = inject(AuthStore);
   private readonly authService = inject(AuthService);
   private readonly presenceCoordinator = inject(PresenceCoordinatorService);
+  private readonly navigationLock = inject(NavigationLockService);
   private readonly spectatorCountStore = inject(SpectatorCountStore);
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
@@ -60,7 +70,9 @@ export class GlobalHeaderComponent {
   readonly inMatch = computed(() => /^\/match\//.test(this.currentUrl()));
   /** Estando como espectador (`/spectate/:id`), se ofrece "Dejar de ver" en el menú. */
   readonly isSpectating = computed(() => /^\/spectate\//.test(this.currentUrl()));
-  readonly busy = computed(() => this.inMatch() || this.presenceCoordinator.busy());
+  readonly busy = computed(
+    () => this.inMatch() || this.presenceCoordinator.busy() || this.navigationLock.locked(),
+  );
 
   /** Conteo de espectadores de la partida en curso (jugador o espectador). */
   readonly spectatorCount = this.spectatorCountStore.count;
@@ -95,7 +107,9 @@ export class GlobalHeaderComponent {
     return this.inMatch() && (status === 'WAITING_FOR_PLAYERS' || status === 'READY');
   });
 
-  readonly showAbandonMatch = computed(() => this.currentMatchId() !== null && this.isActiveMatch());
+  readonly showAbandonMatch = computed(
+    () => this.currentMatchId() !== null && this.isActiveMatch(),
+  );
   readonly showLeaveWaitingRoom = computed(
     () => this.currentMatchId() !== null && this.isWaitingMatch(),
   );

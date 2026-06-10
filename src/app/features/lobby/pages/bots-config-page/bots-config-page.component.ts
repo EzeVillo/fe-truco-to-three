@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import type { OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Title } from '@angular/platform-browser';
@@ -7,6 +15,7 @@ import { BotCardComponent } from '../../components/bot-card/bot-card.component';
 import { BackButtonComponent } from '../../../../shared/components/back-button';
 import { SeriesFormatSelectorComponent } from '../../components/series-format-selector/series-format-selector.component';
 import { BotsApiService } from '../../services/bots-api.service';
+import { NavigationLockService } from '../../../../core/services/navigation-lock.service';
 import type { Bot } from '../../../../core/models/bot.models';
 import {
   DEFAULT_SERIES_FORMAT,
@@ -33,6 +42,13 @@ export class BotsConfigPageComponent implements OnInit {
   private readonly api = inject(BotsApiService);
   private readonly router = inject(Router);
   private readonly titleService = inject(Title);
+  private readonly navigationLock = inject(NavigationLockService);
+
+  constructor() {
+    // Bloquea el logo del header mientras se crea la partida (POST en vuelo).
+    effect(() => this.navigationLock.set(this.creatingMatch()));
+    inject(DestroyRef).onDestroy(() => this.navigationLock.set(false));
+  }
 
   readonly bots = signal<Bot[]>([]);
   readonly loadingCatalog = signal<boolean>(true);

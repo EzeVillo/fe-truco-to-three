@@ -1,7 +1,9 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
+  effect,
   inject,
   signal,
   type OnInit,
@@ -28,6 +30,7 @@ import type { PublicMatchLobbyItem } from '../../models/public-match-lobby.model
 import { saveJoinCode } from '../../../match/utils/join-code-store';
 import { getErrorCopy } from '../../../../shared/error-copy/error-copy';
 import { SocialStore } from '../../../social/services/social.store';
+import { NavigationLockService } from '../../../../core/services/navigation-lock.service';
 
 @Component({
   selector: 'app-online-match-page',
@@ -52,7 +55,14 @@ export class OnlineMatchPageComponent implements OnInit {
   private readonly authStore = inject(AuthStore);
   private readonly socialStore = inject(SocialStore);
   private readonly titleService = inject(Title);
+  private readonly navigationLock = inject(NavigationLockService);
   protected readonly lobby = inject(PublicMatchLobbyStore);
+
+  constructor() {
+    // Bloquea el logo del header mientras hay un POST en vuelo (crear/unirse).
+    effect(() => this.navigationLock.set(this.busy()));
+    inject(DestroyRef).onDestroy(() => this.navigationLock.set(false));
+  }
 
   readonly currentUsername = this.authStore.username;
   readonly joiningId = signal<string | null>(null);
@@ -79,7 +89,16 @@ export class OnlineMatchPageComponent implements OnInit {
   readonly inviteJoinCode = signal<string | null>(null);
 
   readonly isInviteLink = computed(() => this.inviteJoinCode() !== null);
-  readonly canJoin = computed(() => !this.joining() && this.joinCodeInput().trim().length > 0);
+
+  /**
+   * Cualquier operación de la página en vuelo (crear, unirse por código o unirse a
+   * una pública) bloquea TODOS los controles: selectores, ambos CTAs, las cards
+   * públicas y el botón de volver. Evita disparar flujos en paralelo o navegar a
+   * mitad de una creación/unión.
+   */
+  readonly busy = computed(() => this.creating() || this.joining() || this.joiningId() !== null);
+
+  readonly canJoin = computed(() => !this.busy() && this.joinCodeInput().trim().length > 0);
 
   ngOnInit(): void {
     this.titleService.setTitle('Partida online — Truco a 3');
@@ -110,7 +129,7 @@ export class OnlineMatchPageComponent implements OnInit {
   }
 
   onJoinPublic(item: PublicMatchLobbyItem): void {
-    if (this.joiningId() !== null) {
+    if (this.busy()) {
       return;
     }
 
@@ -166,11 +185,14 @@ export class OnlineMatchPageComponent implements OnInit {
   }
 
   goBack(): void {
+    if (this.busy()) {
+      return;
+    }
     void this.router.navigateByUrl(this.isFriendInviteFlow() ? '/friends' : '/lobby');
   }
 
   onCreate(): void {
-    if (this.creating()) {
+    if (this.busy()) {
       return;
     }
     this.creating.set(true);

@@ -7,6 +7,7 @@
       [class.visibility__option--active]="visibility() === opt.value"
       [attr.aria-checked]="visibility() === opt.value"
       [attr.aria-label]="opt.ariaLabel"
+      [disabled]="disabled()"
       (click)="select(opt.value)"
     >
       {{ opt.label }}

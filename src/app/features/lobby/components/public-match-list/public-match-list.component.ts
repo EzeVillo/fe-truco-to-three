@@ -18,6 +18,8 @@ export class PublicMatchListComponent {
   readonly hasMore = input<boolean>(false);
   /** matchId de la partida a la que se está uniendo (deshabilita esa card). */
   readonly joiningId = input<string | null>(null);
+  /** Bloqueo externo: otra operación de la página está en curso (deshabilita todas las cards). */
+  readonly disabled = input<boolean>(false);
   /** Username actual, para marcar las partidas propias. */
   readonly currentUsername = input<string | null>(null);
   /** Copy de error controlado del front (cuando status === 'error'). */

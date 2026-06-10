@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { Title } from '@angular/platform-browser';
@@ -15,6 +23,7 @@ import { getErrorCopy } from '../../../../shared/error-copy/error-copy';
 import type { MatchWsEvent } from '../../../match/models/match-ws-events';
 import { SeriesFormatSelectorComponent } from '../../components/series-format-selector/series-format-selector.component';
 import { MatchesApiService } from '../../services/matches-api.service';
+import { NavigationLockService } from '../../../../core/services/navigation-lock.service';
 
 type QuickMatchUiState = 'idle' | 'submitting' | 'searching' | 'cancelling' | 'matched' | 'error';
 
@@ -30,6 +39,7 @@ export class QuickMatchPageComponent {
   private readonly api = inject(MatchesApiService);
   private readonly router = inject(Router);
   private readonly webSocket = inject(WebSocketService);
+  private readonly navigationLock = inject(NavigationLockService);
 
   readonly seriesFormat = signal<SeriesFormat>(DEFAULT_SERIES_FORMAT);
   readonly state = signal<QuickMatchUiState>('idle');
@@ -53,6 +63,11 @@ export class QuickMatchPageComponent {
       .subscribe<MatchWsEvent>('/user/queue/match')
       .pipe(takeUntilDestroyed())
       .subscribe((event) => this.onMatchEvent(event));
+
+    // Bloquea el logo del header durante el envío/cancelación (POST en vuelo).
+    // La espera larga ('searching') ya la cubre la presencia del backend.
+    effect(() => this.navigationLock.set(this.isBusy()));
+    inject(DestroyRef).onDestroy(() => this.navigationLock.set(false));
   }
 
   onChangeFormat(format: SeriesFormat): void {

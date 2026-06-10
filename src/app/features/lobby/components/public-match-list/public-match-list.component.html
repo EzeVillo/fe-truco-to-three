@@ -24,6 +24,7 @@
           [item]="item"
           [own]="isOwn(item)"
           [busy]="joiningId() === item.matchId"
+          [disabled]="disabled() && joiningId() !== item.matchId"
           (act)="act.emit($event)"
         />
       }
@@ -33,7 +34,7 @@
       <button
         type="button"
         class="t3-btn t3-btn--neutral public-match-list__more"
-        [disabled]="isLoadingMore()"
+        [disabled]="isLoadingMore() || disabled()"
         (click)="loadMore.emit()"
       >
         {{ isLoadingMore() ? 'Cargando…' : 'Cargar más' }}

@@ -1,6 +1,6 @@
 <section class="online-match">
   <div class="online-match__topbar">
-    <app-back-button label="Volver al lobby" (back)="goBack()" />
+    <app-back-button label="Volver al lobby" [disabled]="busy()" (back)="goBack()" />
     <h1 class="online-match__title">
       {{ isFriendInviteFlow() ? 'Invitar a partida' : 'Jugar online' }}
     </h1>
@@ -19,6 +19,7 @@
           [status]="lobby.status()"
           [hasMore]="lobby.hasMore()"
           [joiningId]="joiningId()"
+          [disabled]="busy()"
           [currentUsername]="currentUsername()"
           (act)="onJoinPublic($event)"
           (loadMore)="onLoadMorePublic()"
@@ -43,12 +44,14 @@
         @if (!isFriendInviteFlow()) {
           <app-visibility-selector
             [visibility]="visibility()"
+            [disabled]="busy()"
             (visibilityChange)="onChangeVisibility($event)"
           />
         }
 
         <app-series-format-selector
           [format]="seriesFormat()"
+          [disabled]="busy()"
           (formatChange)="onChangeFormat($event)"
         />
 
@@ -59,7 +62,7 @@
         <button
           type="button"
           class="t3-btn t3-btn--primary online-match__cta"
-          [disabled]="creating()"
+          [disabled]="busy()"
           [attr.aria-busy]="creating() ? 'true' : null"
           (click)="onCreate()"
         >
@@ -94,6 +97,7 @@
           autocapitalize="characters"
           aria-label="Código de partida"
           [value]="joinCodeInput()"
+          [disabled]="busy()"
           (input)="onJoinCodeInput($any($event.target).value)"
         />
 

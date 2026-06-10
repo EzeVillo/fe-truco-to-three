@@ -1,3 +1,9 @@
-<button type="button" class="back-button" [attr.aria-label]="label()" (click)="back.emit()">
+<button
+  type="button"
+  class="back-button"
+  [attr.aria-label]="label()"
+  [disabled]="disabled()"
+  (click)="back.emit()"
+>
   <mat-icon aria-hidden="true">arrow_back</mat-icon>
 </button>

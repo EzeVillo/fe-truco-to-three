@@ -33,6 +33,11 @@
       font-weight: 600;
     }
 
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
     @media (hover: hover) {
       &:not(&--active):hover {
         color: var(--t3-btn-neutral-text);

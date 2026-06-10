@@ -20,6 +20,8 @@ const ORDER: SeriesFormat[] = ['BEST_OF_1', 'BEST_OF_3', 'BEST_OF_5'];
 })
 export class SeriesFormatSelectorComponent {
   readonly format = input<SeriesFormat>(DEFAULT_SERIES_FORMAT);
+  /** Bloquea el cambio de formato mientras hay una operación en curso (crear partida, buscar rival). */
+  readonly disabled = input<boolean>(false);
   readonly formatChange = output<SeriesFormat>();
 
   readonly options = ORDER.map((value) => ({
@@ -29,6 +31,9 @@ export class SeriesFormatSelectorComponent {
   }));
 
   select(value: SeriesFormat): void {
+    if (this.disabled()) {
+      return;
+    }
     this.formatChange.emit(value);
   }
 }

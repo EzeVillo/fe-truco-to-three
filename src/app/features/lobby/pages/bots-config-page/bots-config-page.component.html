@@ -1,6 +1,6 @@
 <section class="bots-config">
   <div class="bots-config__topbar">
-    <app-back-button label="Volver al lobby" (back)="goBack()" />
+    <app-back-button label="Volver al lobby" [disabled]="creatingMatch()" (back)="goBack()" />
     <h1 class="bots-config__title">Elegí tu oponente</h1>
   </div>
 
@@ -38,7 +38,11 @@
   </div>
 
   <footer class="bots-config__bottom-bar" role="region" aria-label="Acciones de partida">
-    <app-series-format-selector [format]="seriesFormat()" (formatChange)="onChangeFormat($event)" />
+    <app-series-format-selector
+      [format]="seriesFormat()"
+      [disabled]="creatingMatch()"
+      (formatChange)="onChangeFormat($event)"
+    />
 
     <button
       type="button"

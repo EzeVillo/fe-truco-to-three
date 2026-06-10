@@ -13,6 +13,7 @@ import {
   canAccept,
   waitingForOpponent,
   opponentWants,
+  bothWantRematch,
   opponentLeft,
   expired,
   confirmedMatchId,
@@ -53,6 +54,8 @@ export class RematchDialogComponent implements OnDestroy {
   readonly canAccept = computed(() => canAccept(this.session()));
   readonly waitingForOpponent = computed(() => waitingForOpponent(this.session()));
   readonly opponentWants = computed(() => opponentWants(this.session()));
+  /** Ambos aceptaron: revancha inminente, se bloquea "Salir" hasta REMATCH_CONFIRMED. */
+  readonly bothWantRematch = computed(() => bothWantRematch(this.session()));
   readonly opponentLeft = computed(() => opponentLeft(this.session()));
   readonly expired = computed(() => expired(this.session()));
   readonly confirmedId = computed(() => confirmedMatchId(this.session()));

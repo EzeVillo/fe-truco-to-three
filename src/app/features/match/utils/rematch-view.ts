@@ -21,6 +21,18 @@ export function opponentWants(session: RematchSession | null): boolean {
   return session?.opponentChoice === 'WANTS_REMATCH' && session?.status === 'OPEN';
 }
 
+/**
+ * Ambos aceptaron la revancha y todavía no llegó el REMATCH_CONFIRMED.
+ * En esta ventana la nueva partida es inminente: no se puede salir.
+ */
+export function bothWantRematch(session: RematchSession | null): boolean {
+  return (
+    session?.status === 'OPEN' &&
+    session.selfChoice === 'WANTS_REMATCH' &&
+    session.opponentChoice === 'WANTS_REMATCH'
+  );
+}
+
 /** El rival rechazó o abandonó la sesión. */
 export function opponentLeft(session: RematchSession | null): boolean {
   return session?.status === 'CLOSED_BY_LEAVE';

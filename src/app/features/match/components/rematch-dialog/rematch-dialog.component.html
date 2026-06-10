@@ -40,7 +40,14 @@
           Revancha
         </button>
       }
-      <button type="button" class="t3-btn t3-btn--neutral" (click)="onLeave()">Salir</button>
+      <button
+        type="button"
+        class="t3-btn t3-btn--neutral"
+        [disabled]="bothWantRematch()"
+        (click)="onLeave()"
+      >
+        Salir
+      </button>
     </div>
   }
 </div>

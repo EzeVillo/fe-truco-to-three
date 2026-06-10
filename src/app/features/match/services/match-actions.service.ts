@@ -73,9 +73,35 @@ export class MatchActionsService {
     return this.mutate<PlayCardRequest>(`${this.base}/${matchId}/play-card`, request);
   }
 
-  /** §4.12 POST /api/matches/{matchId}/abandon */
+  /**
+   * §4.12 POST /api/matches/{matchId}/abandon
+   *
+   * Prende el lock optimista igual que una acción de juego: abandonar congela
+   * el tablero (cartas + cantos + respuestas) en el acto, cerrando la ventana
+   * entre el tap de "Abandonar" y el evento MATCH_ABANDONED que abre el modal
+   * de derrota. Ante error HTTP se libera el lock (no llegó al backend).
+   */
   abandon(matchId: string): Observable<void> {
-    return this.post(`${this.base}/${matchId}/abandon`, undefined, false);
+    this.setActionPending();
+    return this.http.post<void>(`${this.base}/${matchId}/abandon`, undefined).pipe(
+      catchError((err: unknown) => {
+        console.warn('[match-actions] Request failed:', `${this.base}/${matchId}/abandon`, err);
+        this.clearActionPending();
+        return EMPTY;
+      }),
+    );
+  }
+
+  /** Prende el lock optimista y arma el timeout de seguridad que lo libera. */
+  private setActionPending(): void {
+    this._actionPending.set(true);
+    if (this.pendingTimerId !== null) {
+      clearTimeout(this.pendingTimerId);
+    }
+    this.pendingTimerId = setTimeout(
+      () => this.clearActionPending(),
+      MatchActionsService.PENDING_SAFETY_MS,
+    );
   }
 
   /** Limpia el lock optimista. Lo llama `MatchStateService` al aplicar nuevo estado. */
@@ -93,31 +119,11 @@ export class MatchActionsService {
    * lo limpie) y silencia el error igual que `post()`.
    */
   private mutate<T>(url: string, body: T | undefined): Observable<void> {
-    this._actionPending.set(true);
-    if (this.pendingTimerId !== null) {
-      clearTimeout(this.pendingTimerId);
-    }
-    this.pendingTimerId = setTimeout(
-      () => this.clearActionPending(),
-      MatchActionsService.PENDING_SAFETY_MS,
-    );
+    this.setActionPending();
     return this.http.post<void>(url, body).pipe(
       catchError((err: unknown) => {
         console.warn('[match-actions] Request failed:', url, err);
         this.clearActionPending();
-        return EMPTY;
-      }),
-    );
-  }
-
-  private post<T>(url: string, body: T | undefined, suppressErrors = true): Observable<void> {
-    const req$ = this.http.post<void>(url, body);
-    if (!suppressErrors) {
-      return req$;
-    }
-    return req$.pipe(
-      catchError((err: unknown) => {
-        console.warn('[match-actions] Request failed:', url, err);
         return EMPTY;
       }),
     );

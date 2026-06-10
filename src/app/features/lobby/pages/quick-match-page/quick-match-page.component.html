@@ -1,6 +1,6 @@
 <section class="quick-match">
   <div class="quick-match__topbar">
-    <app-back-button label="Volver al lobby" (back)="goBack()" />
+    <app-back-button label="Volver al lobby" [disabled]="isBusy()" (back)="goBack()" />
     <h1 class="quick-match__title">Partida rápida</h1>
   </div>
 
@@ -51,6 +51,7 @@
 
         <app-series-format-selector
           [format]="seriesFormat()"
+          [disabled]="!canSearch()"
           (formatChange)="onChangeFormat($event)"
         />
 

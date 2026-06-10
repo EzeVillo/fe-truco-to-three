@@ -176,6 +176,40 @@ describe('RematchDialogComponent', () => {
     },
   );
 
+  it('"Salir" sigue habilitado si solo aceptó el jugador (el rival no decidió)', () => {
+    mockRematchState.session.set(
+      makeSession({ status: 'OPEN', selfChoice: 'WANTS_REMATCH', opponentChoice: 'UNDECIDED' }),
+    );
+    fixture.detectChanges();
+
+    const btns: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll('button'));
+    const salirBtn = btns.find((b) => b.textContent?.trim() === 'Salir');
+    expect(salirBtn?.disabled).toBe(false);
+
+    salirBtn?.click();
+    expect(mockRematchState.leave).toHaveBeenCalledTimes(1);
+    expect(mockDialogRef.close).toHaveBeenCalledWith({ confirmedMatchId: null });
+  });
+
+  it('"Salir" queda deshabilitado cuando ambos aceptaron (revancha inminente)', () => {
+    mockRematchState.session.set(
+      makeSession({
+        status: 'OPEN',
+        selfChoice: 'WANTS_REMATCH',
+        opponentChoice: 'WANTS_REMATCH',
+      }),
+    );
+    fixture.detectChanges();
+
+    const btns: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll('button'));
+    const salirBtn = btns.find((b) => b.textContent?.trim() === 'Salir');
+    expect(salirBtn?.disabled).toBe(true);
+
+    salirBtn?.click();
+    expect(mockRematchState.leave).not.toHaveBeenCalled();
+    expect(mockDialogRef.close).not.toHaveBeenCalled();
+  });
+
   // --- navegación en CONFIRMED ---
 
   it('cierra el diálogo con confirmedMatchId cuando session pasa a CONFIRMED', async () => {

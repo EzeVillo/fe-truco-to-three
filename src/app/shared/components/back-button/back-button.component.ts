@@ -19,6 +19,9 @@ export class BackButtonComponent {
   /** Texto accesible del botón. Default: 'Volver'. */
   readonly label = input<string>('Volver');
 
+  /** Deshabilita el botón mientras una operación está en curso (evita navegar a mitad de un flujo). */
+  readonly disabled = input<boolean>(false);
+
   /** Se emite al activar el botón. */
   readonly back = output<void>();
 }

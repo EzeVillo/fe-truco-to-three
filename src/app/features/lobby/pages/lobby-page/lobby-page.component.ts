@@ -1,11 +1,12 @@
 import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Title } from '@angular/platform-browser';
+import { NavPendingDirective } from '../../../../shared/directives/nav-pending.directive';
 
 @Component({
   selector: 'app-lobby-page',
   standalone: true,
-  imports: [],
+  imports: [NavPendingDirective],
   templateUrl: './lobby-page.component.html',
   styleUrl: './lobby-page.component.scss',
 })

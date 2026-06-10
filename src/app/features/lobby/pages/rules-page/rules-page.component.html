@@ -1,6 +1,6 @@
 <section class="rules-page">
   <div class="rules-page__topbar">
-    <app-back-button label="Volver" (back)="goBack()" />
+    <app-back-button label="Volver" [disabled]="navLocked()" (back)="goBack()" />
     <h1 class="rules-page__title">Reglas de la variante</h1>
   </div>
 
@@ -10,11 +10,9 @@
 
   @if (!isAuthenticated()) {
     <footer class="rules-page__footer">
-      <a routerLink="/register" class="t3-btn t3-btn--primary" data-ui-click appNavPending
-        >Crear cuenta y jugar</a
-      >
-      <a routerLink="/login" class="t3-btn t3-btn--neutral" data-ui-click appNavPending
-        >Ya tengo cuenta</a
+      <app-guest-cta />
+      <a routerLink="/register" class="t3-btn t3-btn--neutral" data-ui-click appNavPending
+        >Creá una cuenta o iniciá sesión</a
       >
     </footer>
   }

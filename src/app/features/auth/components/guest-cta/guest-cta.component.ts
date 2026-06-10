@@ -1,9 +1,10 @@
-import { Component, inject, signal, Input, Output, EventEmitter } from '@angular/core';
+import { Component, DestroyRef, inject, signal, Input, Output, EventEmitter } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { mapApiError } from '../../../../core/auth/map-api-error';
+import { NavigationLockService } from '../../../../core/services/navigation-lock.service';
 import type { UserFacingAuthError } from '../../../../core/models/auth.models';
 import type { HttpErrorResponse } from '@angular/common/http';
 
@@ -29,9 +30,15 @@ export class GuestCtaComponent {
 
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  /** Lock de navegación compartido: bloquea/refleja transiciones en curso en el header y otros CTAs. */
+  readonly navigationLock = inject(NavigationLockService);
+
+  constructor() {
+    inject(DestroyRef).onDestroy(() => this.navigationLock.set(false));
+  }
 
   playAsGuest(): void {
-    if (this.loading() || this.disabled) {
+    if (this.loading() || this.disabled || this.navigationLock.locked()) {
       return;
     }
 
@@ -54,6 +61,7 @@ export class GuestCtaComponent {
   private setLoading(value: boolean): void {
     this.loading.set(value);
     this.loadingChange.emit(value);
+    this.navigationLock.set(value);
   }
 
   errorMessage(): string {

@@ -2,22 +2,22 @@
   <div class="lobby__inner">
     <h1 class="lobby__title">Modos de juego</h1>
 
-    <button type="button" class="lobby__cta" (click)="goToBots()">
+    <button type="button" class="lobby__cta" appNavPending (click)="goToBots()">
       <span class="lobby__cta-title">Jugar contra bots</span>
       <span class="lobby__cta-subtitle">Elegí tu oponente y configurá la serie</span>
     </button>
 
-    <button type="button" class="lobby__cta" (click)="goToQuickMatch()">
+    <button type="button" class="lobby__cta" appNavPending (click)="goToQuickMatch()">
       <span class="lobby__cta-title">Partida rápida</span>
       <span class="lobby__cta-subtitle">Buscá rival automáticamente y jugá online</span>
     </button>
 
-    <button type="button" class="lobby__cta" (click)="goToOnline()">
+    <button type="button" class="lobby__cta" appNavPending (click)="goToOnline()">
       <span class="lobby__cta-title">Jugar online</span>
       <span class="lobby__cta-subtitle">Creá una partida privada o unite con un código</span>
     </button>
 
-    <button type="button" class="lobby__cta" (click)="goToRules()">
+    <button type="button" class="lobby__cta" appNavPending (click)="goToRules()">
       <span class="lobby__cta-title">Reglas de la variante</span>
       <span class="lobby__cta-subtitle">Consultá qué cambia en Truco a 3 puntos</span>
     </button>

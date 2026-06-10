@@ -315,6 +315,13 @@ router-outlet {
   }
 }
 
+// Resto de links/botones appNavPending mientras otra navegación está en vuelo:
+// se bloquean (no admiten clicks) pero sin spinner — el loader es sólo del origen.
+.is-nav-blocked {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
 @keyframes t3-nav-pending-spin {
   to {
     transform: rotate(360deg);

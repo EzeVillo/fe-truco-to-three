@@ -203,6 +203,12 @@ Nunca mostrar al usuario el campo `message` (ni equivalente) que venga del backe
 - El mensaje crudo del BE puede ir a `console.error`/logs/telemetría, **nunca** a snackbars, toasts, banners o diálogos.
 - Aplica también a errores de red (timeouts, offline): copy controlado del front.
 
+### 6. No usar navegador, preview ni pruebas manuales en runtime
+
+El agente **no** debe levantar el dev server, abrir el navegador, usar las herramientas de preview/`Claude in Chrome`/`chrome-devtools` ni hacer pruebas manuales en runtime. El entorno del dev no lo permite (p. ej. el puerto 4200 suele estar ocupado por su propio server).
+
+**En su lugar**: verificar los cambios con `pnpm lint` (y subscripts) y `pnpm test` cuando corresponda. La validación visual la hace el usuario por su cuenta.
+
 ## Memoria del agente — aprendizajes acumulados
 
 > **Esta sección es la fuente única de memoria del proyecto.** Cuando el usuario pida "recordá X", se escribe acá (no en el sistema de memoria separado del harness). Mantener cada ítem conciso y verificar contra el código actual antes de afirmarlo como hecho.

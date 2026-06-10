@@ -15,4 +15,4 @@ Disallow: /spectate
 Disallow: /join
 
 # URL del sitemap — actualizar si cambia el dominio
-Sitemap: https://truco-to-three.netlify.app/sitemap.xml
+Sitemap: https://fe-truco-to-three.pages.dev/sitemap.xml

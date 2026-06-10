@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Actualizar el dominio base si cambia (actualmente: https://truco-to-three.netlify.app) -->
+<!-- Actualizar el dominio base si cambia (actualmente: https://fe-truco-to-three.pages.dev) -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://truco-to-three.netlify.app/</loc>
+    <loc>https://fe-truco-to-three.pages.dev/</loc>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://truco-to-three.netlify.app/reglas</loc>
+    <loc>https://fe-truco-to-three.pages.dev/reglas</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://truco-to-three.netlify.app/register</loc>
+    <loc>https://fe-truco-to-three.pages.dev/register</loc>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://truco-to-three.netlify.app/login</loc>
+    <loc>https://fe-truco-to-three.pages.dev/login</loc>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>

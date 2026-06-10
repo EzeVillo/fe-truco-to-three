@@ -5,20 +5,20 @@ import { environment } from '../../../environments/environment';
  * Estado del despertar del backend.
  *
  * - `idle`    : todavía no se intentó despertar.
- * - `waking`  : hay un poll en curso contra el readiness probe.
- * - `ready`   : el readiness devolvió 200 (proceso + DB arriba).
+ * - `waking`  : hay un poll en curso contra el endpoint de wake.
+ * - `ready`   : el wake devolvió 200 (el proceso ya acepta requests).
  * - `error`   : se agotó el tope de tiempo sin obtener 200.
  */
 export type ServerWakeStatus = 'idle' | 'waking' | 'ready' | 'error';
 
 /**
- * Despierta el backend (Render free tier + Neon) al entrar/refrescar la app.
+ * Despierta el backend (Render free tier) al entrar/refrescar la app.
  *
- * El backend se duerme dos veces: Render apaga el proceso por inactividad y Neon
- * suspende la base. Pegarle a `/actuator/health/readiness` resuelve ambos de un
- * saque: fuerza el cold-start del proceso y, como el grupo readiness incluye el
- * check `db`, abre una conexión que despierta Neon. El probe devuelve 200 recién
- * cuando la DB responde, así que es la señal exacta de "ya se puede entrar".
+ * Render apaga el proceso por inactividad. Pegarle al endpoint propio
+ * `/api/public/wake` fuerza el cold-start: en cuanto el proceso vuelve a aceptar
+ * requests responde 200, así que es la señal de "ya se puede entrar". (Flyway
+ * corre al boot tocando la DB, así que si el wake responde la base ya estuvo
+ * arriba en el arranque.)
  *
  * Se usa `fetch` (no `HttpClient`) a propósito: evita los interceptors de auth
  * (no agrega `Authorization`, no dispara el refresh proactivo contra un server
@@ -102,13 +102,13 @@ export class ServerWakeService {
   }
 
   /**
-   * Un intento contra el readiness probe. `true` solo si devolvió el JSON de
-   * actuator con `status: "UP"`.
+   * Un intento contra el endpoint de wake. `true` solo si devolvió el JSON
+   * con `status: "ready"`.
    *
-   * No alcanza con chequear el 200: en dev, si el proxy no rutea `/actuator`,
-   * el dev server de Angular sirve el `index.html` (SPA fallback) con `200` y
+   * No alcanza con chequear el 200: en dev, si el proxy no rutea `/api`, el dev
+   * server de Angular sirve el `index.html` (SPA fallback) con `200` y
    * `Content-Type: text/html`. Lo mismo puede pasar en prod con páginas de error
-   * de un CDN. Por eso exigimos cuerpo JSON y `status === 'UP'`.
+   * de un CDN. Por eso exigimos cuerpo JSON y `status === 'ready'`.
    */
   private async pingReadiness(): Promise<boolean> {
     const controller = new AbortController();
@@ -132,8 +132,8 @@ export class ServerWakeService {
       }
 
       const body = (await response.json()) as { status?: string };
-      // Spring Boot Actuator retorna "ACCEPTING_TRAFFIC" en /health/readiness (no "UP").
-      return body.status === 'UP' || body.status === 'ACCEPTING_TRAFFIC';
+      // El endpoint propio /api/public/wake devuelve { status: "ready" } cuando el proceso acepta requests.
+      return body.status === 'ready';
     } catch {
       // Red caída / connection hang del cold-start / body no-JSON / abort → reintentar.
       return false;

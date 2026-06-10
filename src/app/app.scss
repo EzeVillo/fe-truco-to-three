@@ -33,6 +33,15 @@
     box-shadow: var(--t3-shadow-card);
   }
 
+  &__spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--t3-card-border);
+    border-top-color: var(--t3-gold-500);
+    border-radius: 50%;
+    animation: server-wake-spin 0.8s linear infinite;
+  }
+
   &__title {
     margin: 0;
     color: var(--t3-text);
@@ -72,6 +81,18 @@
       outline: 2px solid var(--t3-gold-400);
       outline-offset: 2px;
     }
+  }
+}
+
+@keyframes server-wake-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .server-wake__spinner {
+    animation: none;
   }
 }
 

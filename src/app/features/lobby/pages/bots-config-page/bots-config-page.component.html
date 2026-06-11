@@ -26,6 +26,7 @@
           <app-bot-card
             [bot]="bot"
             [selected]="selectedBotId() === bot.botId"
+            [disabled]="creatingMatch()"
             (select)="onSelectBot($event)"
           />
         }

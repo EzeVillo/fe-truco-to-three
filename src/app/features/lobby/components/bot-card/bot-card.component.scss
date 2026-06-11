@@ -29,6 +29,11 @@
     outline-offset: 2px;
   }
 
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
   &--selected {
     border-color: var(--t3-gold-500);
     box-shadow: var(--t3-shadow-gold);

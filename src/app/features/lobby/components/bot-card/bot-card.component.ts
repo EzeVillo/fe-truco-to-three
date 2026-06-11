@@ -41,6 +41,7 @@ function initials(name: string): string {
 export class BotCardComponent {
   readonly bot = input.required<Bot>();
   readonly selected = input<boolean>(false);
+  readonly disabled = input<boolean>(false);
   readonly select = output<string>();
 
   readonly displayName = computed(() => {

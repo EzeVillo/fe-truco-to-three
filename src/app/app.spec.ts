@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
@@ -9,6 +10,7 @@ import { App } from './app';
 import { AuthStore } from './core/auth/auth.store';
 import { SessionStorageService } from './core/auth/session-storage.service';
 import { ProfileNotificationService } from './features/profile/services/profile-notification.service';
+import { ServerWakeService } from './core/services/server-wake.service';
 
 describe('App', () => {
   beforeEach(async () => {
@@ -51,10 +53,24 @@ describe('App', () => {
   });
 
   it('inicializa las notificaciones de perfil', () => {
+    // ServerWakeService usa fetch real y nunca llega a 'ready' en tests.
+    // Mockeamos la señal isReady a true para que el effect dispare bootBackendServices().
+    TestBed.overrideProvider(ServerWakeService, {
+      useValue: {
+        isReady: signal(true),
+        overlayVisible: signal(false),
+        status: signal('ready'),
+        start: vi.fn(),
+        notifyActivity: vi.fn(),
+        retry: vi.fn(),
+      },
+    });
+
     const service = TestBed.inject(ProfileNotificationService);
     const startSpy = vi.spyOn(service, 'start');
 
-    TestBed.createComponent(App);
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
 
     expect(startSpy).toHaveBeenCalledTimes(1);
   });

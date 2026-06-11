@@ -1,5 +1,6 @@
 import type { ApplicationConfig } from '@angular/core';
-import { provideBrowserGlobalErrorListeners } from '@angular/core';
+import { isDevMode, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { provideServiceWorker } from '@angular/service-worker';
 import {
   PreloadAllModules,
   provideRouter,
@@ -28,5 +29,13 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     provideStore(),
     provideEffects(),
+    // PWA: el service worker (ngsw) habilita el prompt de instalación del navegador
+    // y cachea los assets. Sólo en producción; en dev no existe ngsw-worker.js.
+    // `registerWhenStable`: espera a que la app esté estable para no competir con
+    // el boot (WS/STOMP incluido); a los 30 s registra igual.
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000',
+    }),
   ],
 };

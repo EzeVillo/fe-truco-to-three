@@ -34,12 +34,24 @@ export class ServerWakeService {
   private static readonly POLL_INTERVAL_MS = 2_000;
   /** Tope total antes de rendirse y pasar a `error`. */
   private static readonly MAX_TOTAL_MS = 180_000;
+  /** Inactividad máxima sin tráfico al backend antes de re-verificar readiness. */
+  private static readonly IDLE_RECHECK_MS = 10 * 60_000;
+  /** Cada cuánto se evalúa la inactividad mientras la pestaña está visible. */
+  private static readonly IDLE_CHECK_INTERVAL_MS = 60_000;
 
   private readonly _status = signal<ServerWakeStatus>('idle');
   readonly status = this._status.asReadonly();
 
-  /** El backend respondió 200: ya se pueden arrancar los servicios que lo usan. */
-  readonly isReady = computed(() => this._status() === 'ready');
+  /**
+   * Latcheado: una vez `true`, queda `true` aunque un re-chequeo posterior vuelva
+   * el status a `waking`. El `<router-outlet>` se monta con esta señal; si se
+   * apagara durante un re-chequeo se destruiría toda la app (partida incluida).
+   * El bloqueo visual del re-chequeo lo da la overlay, no el desmonte.
+   */
+  private readonly _everReady = signal(false);
+
+  /** El backend respondió 200 al menos una vez: ya se pueden arrancar los servicios que lo usan. */
+  readonly isReady = computed(() => this._everReady());
 
   /** La gracia ya pasó: habilita mostrar la overlay si todavía estamos `waking`. */
   private readonly graceElapsed = signal(false);
@@ -55,6 +67,9 @@ export class ServerWakeService {
 
   private started = false;
   private graceTimer: ReturnType<typeof setTimeout> | null = null;
+  private idleMonitorsAttached = false;
+  /** Último momento en que el backend respondió una request (HTTP o wake). */
+  private lastBackendActivity = Date.now();
 
   /** Idempotente: arranca el poll una sola vez por ciclo de vida. */
   start(): void {
@@ -63,7 +78,16 @@ export class ServerWakeService {
     }
 
     this.started = true;
+    this.attachIdleMonitors();
     void this.runWakeLoop();
+  }
+
+  /**
+   * Registra tráfico exitoso contra el backend (lo llama el interceptor HTTP).
+   * Mientras haya actividad reciente no hace falta re-verificar el wake.
+   */
+  notifyActivity(): void {
+    this.lastBackendActivity = Date.now();
   }
 
   /** Reintento manual desde la overlay tras un `error`. */
@@ -87,6 +111,8 @@ export class ServerWakeService {
       while (Date.now() < deadline) {
         if (await this.pingReadiness()) {
           this._status.set('ready');
+          this._everReady.set(true);
+          this.notifyActivity();
           return;
         }
         // Primer fallo: ya sabemos que hay que esperar. Mostrar overlay de inmediato
@@ -140,6 +166,45 @@ export class ServerWakeService {
     } finally {
       clearTimeout(timeout);
     }
+  }
+
+  /**
+   * Vigila la inactividad para detectar un backend que Render volvió a dormir.
+   *
+   * Disparadores: la pestaña vuelve a estar visible (`visibilitychange`) o se
+   * restaura desde el bfcache de iOS (`pageshow`), más un tick periódico para la
+   * pestaña que quedó abierta y ociosa. Si hace más de `IDLE_RECHECK_MS` que el
+   * backend no responde nada, se re-corre el wake loop: si el server sigue
+   * despierto el ping responde en ~200ms y la overlay nunca aparece (gracia de
+   * `GRACE_MS`); si se durmió, la overlay tapa la app hasta que vuelva.
+   *
+   * Servicio root: vive lo que la app, no hace falta limpiar listeners/interval.
+   */
+  private attachIdleMonitors(): void {
+    if (this.idleMonitorsAttached || typeof document === 'undefined') {
+      return;
+    }
+    this.idleMonitorsAttached = true;
+
+    const checkIfVisible = () => {
+      if (document.visibilityState === 'visible') {
+        this.recheckIfIdle();
+      }
+    };
+    document.addEventListener('visibilitychange', checkIfVisible);
+    window.addEventListener('pageshow', checkIfVisible);
+    setInterval(checkIfVisible, ServerWakeService.IDLE_CHECK_INTERVAL_MS);
+  }
+
+  /** Re-corre el wake loop sólo si está `ready` y el backend lleva idle el umbral. */
+  private recheckIfIdle(): void {
+    if (this._status() !== 'ready') {
+      return;
+    }
+    if (Date.now() - this.lastBackendActivity < ServerWakeService.IDLE_RECHECK_MS) {
+      return;
+    }
+    void this.runWakeLoop();
   }
 
   private clearGraceTimer(): void {

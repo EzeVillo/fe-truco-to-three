@@ -54,6 +54,7 @@ export class BackgroundMusicService {
   start(): void {
     const wasActive = this.active;
     this.active = true;
+    this.attachVisibilityResume();
     if (!this._enabled()) {
       return;
     }
@@ -184,7 +185,10 @@ export class BackgroundMusicService {
     this.ensureGraph();
     this.applyVolume();
     // El AudioContext arranca suspended hasta un gesto del usuario (iOS/Chrome).
-    void this.audioContext?.resume().catch(() => undefined);
+    // Si el resume es rechazado (WebKit exigiendo gesto), el `<audio>` sonaría
+    // mudo a través del grafo suspendido sin que `play()` rechace: re-armamos
+    // el unlock para reintentar todo al próximo toque.
+    void this.audioContext?.resume().catch(() => this.attachUnlock());
     try {
       const result = this.audio.play();
       if (result) {
@@ -193,6 +197,35 @@ export class BackgroundMusicService {
     } catch {
       this.attachUnlock();
     }
+  }
+
+  private visibilityHandler: (() => void) | null = null;
+
+  /**
+   * Retoma la música al volver del background en iOS/WebKit: al salir de la app
+   * el sistema pausa el `<audio>` y deja el AudioContext `interrupted` (estado
+   * WebKit, distinto de `suspended`), y nada de eso se revierte solo al volver.
+   * Al pasar a visible (o restaurar desde el bfcache vía `pageshow`), si la
+   * partida sigue activa y la música encendida, se reintenta el play completo
+   * (resume del contexto incluido). Si WebKit exige un gesto nuevo, `tryPlay`
+   * ya re-arma el unlock. El handler queda anclado de por vida (servicio root)
+   * y se autoexcluye con `active`/`enabled`.
+   */
+  private attachVisibilityResume(): void {
+    if (this.visibilityHandler || typeof document === 'undefined') {
+      return;
+    }
+    const handler = () => {
+      if (document.visibilityState !== 'visible') {
+        return;
+      }
+      if (this.active && this._enabled()) {
+        this.tryPlay();
+      }
+    };
+    this.visibilityHandler = handler;
+    document.addEventListener('visibilitychange', handler);
+    window.addEventListener('pageshow', handler);
   }
 
   /** Reintenta el play al primer gesto del usuario (autoplay bloqueado). */

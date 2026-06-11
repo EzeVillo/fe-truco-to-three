@@ -134,7 +134,9 @@ export class UiClickSoundService {
     }
 
     // El click es un gesto válido: reanudamos el contexto si iOS lo suspendió.
-    if (this.context.state === 'suspended') {
+    // `!== 'running'` y no `=== 'suspended'`: al volver del background iOS deja
+    // el contexto en `interrupted` (estado WebKit) y también hay que reanudarlo.
+    if (this.context.state !== 'running') {
       this.context.resume().catch(() => undefined);
     }
 

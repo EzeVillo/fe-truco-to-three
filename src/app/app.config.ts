@@ -15,6 +15,7 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { routes } from './app.routes';
 import { jwtInterceptor } from './core/auth/jwt.interceptor';
 import { refreshInterceptor } from './core/auth/refresh.interceptor';
+import { serverActivityInterceptor } from './core/services/server-activity.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -24,8 +25,11 @@ export const appConfig: ApplicationConfig = {
     // estar cacheado y la navegación es instantánea aun con red mala (evita el
     // doble-tap por falta de feedback la primera vez que se entra a una ruta).
     provideRouter(routes, withComponentInputBinding(), withPreloading(PreloadAllModules)),
-    // Orden importante: jwt primero (añade el token), refresh segundo (maneja 401)
-    provideHttpClient(withInterceptors([jwtInterceptor, refreshInterceptor])),
+    // Orden importante: jwt primero (añade el token), refresh segundo (maneja 401),
+    // actividad al final (marca tráfico exitoso para el re-chequeo de wake).
+    provideHttpClient(
+      withInterceptors([jwtInterceptor, refreshInterceptor, serverActivityInterceptor]),
+    ),
     provideAnimationsAsync(),
     provideStore(),
     provideEffects(),

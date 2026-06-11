@@ -51,34 +51,37 @@ describe('AudioPlaybackService', () => {
     }
     TestBed.configureTestingModule({});
 
-    vi.stubGlobal(
-      'AudioContext',
-      function AudioContextMockCtor(this: ContextMock) {
-        this.state = 'running';
-        this.destination = { id: 'destination' };
-        this.sources = [];
-        this.gains = [];
-        this.resume = vi.fn().mockResolvedValue(undefined);
-        this.decodeAudioData = vi.fn().mockResolvedValue(decodedBuffer);
-        this.createBufferSource = vi.fn(() => {
-          const source: BufferSourceMock = { buffer: null, connect: vi.fn(), start: vi.fn() };
-          this.sources.push(source);
-          return source;
-        });
-        this.createGain = vi.fn(() => {
-          const gain: GainMock = { gain: { value: 1 }, connect: vi.fn() };
-          this.gains.push(gain);
-          return gain;
-        });
-        contexts.push(this);
-      },
-    );
-    vi.stubGlobal('window', { AudioContext: globalThis.AudioContext });
+    vi.stubGlobal('AudioContext', function AudioContextMockCtor(this: ContextMock) {
+      this.state = 'running';
+      this.destination = { id: 'destination' };
+      this.sources = [];
+      this.gains = [];
+      this.resume = vi.fn().mockResolvedValue(undefined);
+      this.decodeAudioData = vi.fn().mockResolvedValue(decodedBuffer);
+      this.createBufferSource = vi.fn(() => {
+        const source: BufferSourceMock = { buffer: null, connect: vi.fn(), start: vi.fn() };
+        this.sources.push(source);
+        return source;
+      });
+      this.createGain = vi.fn(() => {
+        const gain: GainMock = { gain: { value: 1 }, connect: vi.fn() };
+        this.gains.push(gain);
+        return gain;
+      });
+      contexts.push(this);
+    });
+    vi.stubGlobal('window', {
+      AudioContext: globalThis.AudioContext,
+      // `pageshow` (recuperación al volver del background) se ancla en window.
+      addEventListener: (type: string, handler: () => void) => listeners.set(type, handler),
+      removeEventListener: (type: string) => listeners.delete(type),
+    });
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({ arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)) }),
     );
     vi.stubGlobal('document', {
+      visibilityState: 'visible',
       addEventListener: (type: string, handler: () => void) => listeners.set(type, handler),
       removeEventListener: (type: string) => listeners.delete(type),
     });
@@ -183,8 +186,40 @@ describe('AudioPlaybackService', () => {
     service.start();
     service.start();
 
-    // 3 tipos de evento (pointerdown/touchend/keydown), una sola vez cada uno.
-    expect(addSpy).toHaveBeenCalledTimes(3);
+    // 4 tipos de evento en document (pointerdown/touchend/keydown del gesto +
+    // visibilitychange de la recuperación), una sola vez cada uno.
+    expect(addSpy).toHaveBeenCalledTimes(4);
+  });
+
+  it('al volver a visible reanuda un contexto interrumpido por iOS', async () => {
+    const service = makeService();
+    service.start();
+    listeners.get('pointerdown')?.(); // unlock inicial
+    await flush();
+    // iOS deja el contexto fuera de `running` al ir a background.
+    contexts[0].state = 'suspended';
+
+    listeners.get('visibilitychange')?.();
+    await flush();
+
+    expect(contexts[0].resume).toHaveBeenCalled();
+  });
+
+  it('re-arma el unlock por gesto si el resume al volver a visible falla', async () => {
+    const service = makeService();
+    service.start();
+    listeners.get('pointerdown')?.(); // unlock inicial: desengancha el gesto
+    await flush();
+    expect(listeners.has('pointerdown')).toBe(false);
+
+    contexts[0].state = 'suspended';
+    contexts[0].resume = vi.fn().mockRejectedValue(new Error('needs gesture'));
+    listeners.get('visibilitychange')?.();
+    await flush();
+
+    // Sin resume posible, vuelve a esperar un gesto del usuario.
+    expect(service.unlocked()).toBe(false);
+    expect(listeners.has('pointerdown')).toBe(true);
   });
 
   it('no propaga errores de un buffer source roto', async () => {
@@ -209,7 +244,11 @@ describe('AudioPlaybackService', () => {
 
     beforeEach(() => {
       createdAudios = [];
-      vi.stubGlobal('window', {}); // sin AudioContext → fallback
+      // Sin AudioContext → fallback. Los listeners de recuperación igual se anclan.
+      vi.stubGlobal('window', {
+        addEventListener: (type: string, handler: () => void) => listeners.set(type, handler),
+        removeEventListener: (type: string) => listeners.delete(type),
+      });
       vi.stubGlobal(
         'Audio',
         function AudioMock(

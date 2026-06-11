@@ -61,21 +61,75 @@ export class AudioPlaybackService {
   /** ¿Ya hubo un gesto que desbloqueó la reproducción? */
   readonly unlocked = this._unlocked.asReadonly();
 
+  private visibilityHandler: (() => void) | null = null;
+
   /**
-   * Ancla el desbloqueo al primer gesto del usuario. Idempotente. Llamar una vez
-   * al bootstrap (`App`) para que los listeners existan antes de cualquier
-   * navegación.
+   * Ancla el desbloqueo al primer gesto del usuario y la recuperación al volver
+   * del background. Idempotente. Llamar una vez al bootstrap (`App`) para que
+   * los listeners existan antes de cualquier navegación.
    */
   start(): void {
-    if (this.gestureHandler || typeof document === 'undefined') {
+    if (typeof document === 'undefined') {
       return;
     }
     this.ensureContext();
+    this.attachGesture();
+    this.attachVisibilityRecovery();
+  }
+
+  private attachGesture(): void {
+    if (this.gestureHandler || typeof document === 'undefined') {
+      return;
+    }
     const handler = () => this.unlock();
     this.gestureHandler = handler;
     document.addEventListener('pointerdown', handler);
     document.addEventListener('touchend', handler);
     document.addEventListener('keydown', handler);
+  }
+
+  /**
+   * Recuperación tras salir y volver a la app en iOS/WebKit: al ir a background
+   * (o al ceder el audio a otra app) el contexto queda `interrupted` —estado
+   * propio de WebKit, distinto de `suspended`— y no vuelve solo a `running`. Sin
+   * esto, al regresar a la pestaña los SFX quedan mudos. Al volver a visible (o
+   * restaurar desde el bfcache vía `pageshow`) reanudamos; si WebKit exige un
+   * gesto nuevo para reanudar, re-armamos el unlock para que el próximo toque
+   * lo haga.
+   */
+  private attachVisibilityRecovery(): void {
+    if (this.visibilityHandler || typeof document === 'undefined') {
+      return;
+    }
+    const handler = () => {
+      if (document.visibilityState === 'visible') {
+        this.recoverFromInterruption();
+      }
+    };
+    this.visibilityHandler = handler;
+    document.addEventListener('visibilitychange', handler);
+    window.addEventListener('pageshow', handler);
+  }
+
+  private recoverFromInterruption(): void {
+    const context = this.context;
+    if (!context || context.state === 'running') {
+      return;
+    }
+    context
+      .resume()
+      .then(() => {
+        if (context.state !== 'running') {
+          this.rearmGestureUnlock();
+        }
+      })
+      .catch(() => this.rearmGestureUnlock());
+  }
+
+  /** El resume sin gesto falló: volvemos al modo "esperando el primer toque". */
+  private rearmGestureUnlock(): void {
+    this._unlocked.set(false);
+    this.attachGesture();
   }
 
   /**
@@ -101,7 +155,9 @@ export class AudioPlaybackService {
     }
 
     // Gesto o no, reanudamos por las dudas: tras el primer unlock es no-op.
-    if (this.context.state === 'suspended') {
+    // `!== 'running'` y no `=== 'suspended'`: al volver del background iOS deja
+    // el contexto en `interrupted` (estado WebKit) y también hay que reanudarlo.
+    if (this.context.state !== 'running') {
       this.context.resume().catch(() => undefined);
     }
 
@@ -205,7 +261,7 @@ export class AudioPlaybackService {
       this.finishUnlock();
       return;
     }
-    if (context.state === 'suspended') {
+    if (context.state !== 'running') {
       context
         .resume()
         .then(() => this.finishUnlock())

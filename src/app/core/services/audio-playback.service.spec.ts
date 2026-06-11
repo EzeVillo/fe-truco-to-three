@@ -161,6 +161,37 @@ describe('AudioPlaybackService', () => {
     expect(contexts[0].resume).toHaveBeenCalled();
   });
 
+  it('no encola sources sobre un contexto que no quedó corriendo', async () => {
+    const service = makeService();
+    service.preload(['/a.mp3']);
+    await flush();
+    // El resume resuelve pero el contexto sigue parado (iOS exigiendo gesto):
+    // el SFX debe descartarse, no quedar agendado para un resume futuro.
+    contexts[0].state = 'suspended';
+
+    service.play('/a.mp3');
+    await flush();
+
+    expect(contexts[0].createBufferSource).not.toHaveBeenCalled();
+  });
+
+  it('reproduce el SFX si el resume deja el contexto corriendo enseguida', async () => {
+    const service = makeService();
+    service.preload(['/a.mp3']);
+    await flush();
+    contexts[0].state = 'suspended';
+    contexts[0].resume = vi.fn(() => {
+      contexts[0].state = 'running';
+      return Promise.resolve(undefined);
+    });
+
+    service.play('/a.mp3');
+    await flush();
+
+    expect(contexts[0].createBufferSource).toHaveBeenCalledOnce();
+    expect(contexts[0].sources[0].start).toHaveBeenCalledWith(0);
+  });
+
   it('start engancha el gesto y al dispararlo reanuda y marca unlocked', async () => {
     const service = makeService();
     service.start();

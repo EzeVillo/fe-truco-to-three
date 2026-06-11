@@ -138,6 +138,11 @@ export class UiClickSoundService {
     // el contexto en `interrupted` (estado WebKit) y también hay que reanudarlo.
     if (this.context.state !== 'running') {
       this.context.resume().catch(() => undefined);
+      // No agendar el source sobre un contexto parado: WebKit lo encolaría y
+      // sonaría a destiempo al próximo resume. Este click sale por el fallback
+      // `<audio>`, que sí puede sonar dentro del gesto.
+      this.playFallback(gainValue);
+      return;
     }
 
     if (!this.buffer) {

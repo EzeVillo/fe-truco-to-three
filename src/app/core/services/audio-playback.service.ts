@@ -144,6 +144,14 @@ export class AudioPlaybackService {
     }
   }
 
+  /**
+   * Tras pedir un `resume()` por un SFX, sólo se reproduce si el contexto quedó
+   * corriendo dentro de esta ventana. Si tardó más (p. ej. el resume quedó
+   * colgado en background y recién resolvió al volver a la app), el SFX ya es
+   * viejo y se descarta.
+   */
+  private static readonly RESUME_GRACE_MS = 250;
+
   /** Reproduce una pista. Si todavía se está decodificando, suena al terminar. */
   play(path: string): void {
     this.registered.add(path);
@@ -154,11 +162,27 @@ export class AudioPlaybackService {
       return;
     }
 
-    // Gesto o no, reanudamos por las dudas: tras el primer unlock es no-op.
     // `!== 'running'` y no `=== 'suspended'`: al volver del background iOS deja
     // el contexto en `interrupted` (estado WebKit) y también hay que reanudarlo.
     if (this.context.state !== 'running') {
-      this.context.resume().catch(() => undefined);
+      // Nunca agendar un source sobre un contexto parado: WebKit lo encola y lo
+      // dispara cuando el contexto se reanuda, aunque sea minutos después (p. ej.
+      // el jingle del final de la partida sonando más tarde en el lobby). Se
+      // intenta reanudar y, sólo si quedó corriendo enseguida, se reproduce;
+      // si no, este SFX se pierde (es un realce, no puede sonar a destiempo).
+      const context = this.context;
+      const requestedAt = Date.now();
+      this.loadBuffer(path); // que decodifique igual, para los próximos disparos
+      context
+        .resume()
+        .then(() => {
+          const fresh = Date.now() - requestedAt <= AudioPlaybackService.RESUME_GRACE_MS;
+          if (fresh && context.state === 'running') {
+            this.play(path);
+          }
+        })
+        .catch(() => undefined);
+      return;
     }
 
     const buffer = this.buffers.get(path);
@@ -231,6 +255,12 @@ export class AudioPlaybackService {
   private playBuffer(buffer: AudioBuffer): void {
     const context = this.context;
     if (!context) {
+      return;
+    }
+    // Cinturón para los caminos diferidos (decode al vuelo): si el contexto se
+    // paró mientras tanto, descartar — un source agendado acá quedaría encolado
+    // y sonaría a destiempo al próximo resume.
+    if (context.state !== 'running') {
       return;
     }
     const gainValue = this.effectsVolume.gain();

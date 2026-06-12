@@ -8,11 +8,13 @@ import { AuthStore } from '../../../../core/auth/auth.store';
 import { SessionStorageService } from '../../../../core/auth/session-storage.service';
 import { ProfileApiService } from '../../services/profile-api.service';
 import { ProfileNotificationService } from '../../services/profile-notification.service';
+import { CampaignApiService } from '../../../campaign/services/campaign-api.service';
 import type {
   AchievementsCatalogResponse,
   PlayerProfile,
   UnlockedAchievement,
 } from '../../../../core/models/profile.models';
+import type { CampaignResponse } from '../../../../core/models/campaign.models';
 
 const RETRUCO = 'WIN_GAME_THREE_ZERO_VIA_ACCEPTED_RETRUCO';
 const FOLD = 'FOLD_BEFORE_ANY_CARD_IS_PLAYED';
@@ -38,10 +40,51 @@ const PROFILE_WITH_ACHIEVEMENTS: PlayerProfile = {
   stats: { matchesPlayed: 3, matchesWon: 2, matchesLost: 1, winRate: 67 },
 };
 
+const CAMPAIGN_RESPONSE: CampaignResponse = {
+  playerPosition: 42,
+  playerPoints: 14230,
+  totalBots: 100,
+  defeatedRivals: 2,
+  topOneReached: false,
+  allRivalsDefeated: false,
+  pointsToNextPosition: 370,
+  activeChallengeMatchId: null,
+  ranking: [
+    {
+      position: 41,
+      participantId: 'bot-41',
+      displayName: 'Cacho Toledo',
+      points: 14600,
+      player: false,
+      challengeable: true,
+      record: { wins: 2, losses: 1 },
+    },
+    {
+      position: 42,
+      participantId: 'me',
+      displayName: null,
+      points: 14230,
+      player: true,
+      challengeable: false,
+      record: null,
+    },
+    {
+      position: 43,
+      participantId: 'bot-43',
+      displayName: 'Pepe Argento',
+      points: 14000,
+      player: false,
+      challengeable: false,
+      record: { wins: 1, losses: 0 },
+    },
+  ],
+};
+
 interface SetupOptions {
   catalog?: AchievementsCatalogResponse | HttpErrorResponse;
   unlockedSubject?: Subject<UnlockedAchievement>;
   username?: string;
+  campaign?: CampaignResponse | HttpErrorResponse;
 }
 
 function setup(profileOrError: PlayerProfile | HttpErrorResponse, options: SetupOptions = {}) {
@@ -88,6 +131,18 @@ function setup(profileOrError: PlayerProfile | HttpErrorResponse, options: Setup
         provide: ProfileNotificationService,
         useValue: { achievementUnlocked$: achievementUnlocked$ },
       },
+      {
+        provide: CampaignApiService,
+        useValue: {
+          getCampaign: vi
+            .fn()
+            .mockReturnValue(
+              options.campaign instanceof HttpErrorResponse
+                ? throwError(() => options.campaign)
+                : of(options.campaign ?? null),
+            ),
+        },
+      },
     ],
   });
 }
@@ -110,6 +165,75 @@ describe('ProfilePageComponent', () => {
     expect(text).toContain('One Shot I');
     expect(text).not.toContain('Partida match-1');
     expect(text).not.toContain('Game 1');
+  });
+
+  it('en el perfil propio muestra la seccion de campaña con puntos, ranking y agregados', () => {
+    setup(PROFILE_WITH_ACHIEVEMENTS, { campaign: CAMPAIGN_RESPONSE });
+    TestBed.inject(AuthStore).setSession({
+      playerId: 'me',
+      username: 'juancho',
+      accessToken: 'jwt',
+      refreshToken: 'refresh',
+      accessTokenExpiresIn: 900,
+      refreshTokenExpiresIn: 2592000,
+    });
+
+    const fixture = TestBed.createComponent(ProfilePageComponent);
+    fixture.detectChanges();
+
+    const summary = fixture.componentInstance.campaignStats();
+    // jugadas = (2+1) + (1+0) = 4; ganadas = 2 + 1 = 3; winRate = round(3/4) = 75
+    expect(summary).toEqual({
+      points: 14230,
+      position: 42,
+      totalParticipants: 101,
+      played: 4,
+      won: 3,
+      winRate: 75,
+    });
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Campaña');
+    expect(text).toContain('14230');
+    expect(text).toContain('#42');
+    expect(text).toContain('75%');
+  });
+
+  it('no muestra la seccion de campaña en un perfil ajeno', () => {
+    setup(PROFILE_WITH_ACHIEVEMENTS, { campaign: CAMPAIGN_RESPONSE, username: 'otro' });
+    TestBed.inject(AuthStore).setSession({
+      playerId: 'me',
+      username: 'juancho',
+      accessToken: 'jwt',
+      refreshToken: 'refresh',
+      accessTokenExpiresIn: 900,
+      refreshTokenExpiresIn: 2592000,
+    });
+
+    const fixture = TestBed.createComponent(ProfilePageComponent);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.campaignStats()).toBeNull();
+    expect(TestBed.inject(CampaignApiService).getCampaign).not.toHaveBeenCalled();
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Campaña');
+  });
+
+  it('degrada sin seccion de campaña cuando el endpoint falla', () => {
+    setup(PROFILE_WITH_ACHIEVEMENTS, { campaign: new HttpErrorResponse({ status: 500 }) });
+    TestBed.inject(AuthStore).setSession({
+      playerId: 'me',
+      username: 'juancho',
+      accessToken: 'jwt',
+      refreshToken: 'refresh',
+      accessTokenExpiresIn: 900,
+      refreshTokenExpiresIn: 2592000,
+    });
+
+    const fixture = TestBed.createComponent(ProfilePageComponent);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.campaignStats()).toBeNull();
+    expect(fixture.componentInstance.error()).toBeNull();
   });
 
   it('muestra todos los logros del catálogo: desbloqueados y bloqueados', () => {

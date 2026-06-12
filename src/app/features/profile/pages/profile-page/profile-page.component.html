@@ -18,6 +18,37 @@
         </button>
       </div>
     } @else if (profile(); as currentProfile) {
+      @if (campaignStats(); as campaignSummary) {
+        <section class="profile-page__stats-section" aria-labelledby="campaign-stats-title">
+          <div class="profile-page__stats-header">
+            <h2 id="campaign-stats-title" class="profile-page__stats-title">Campaña</h2>
+            <p class="profile-page__stats-note">Tu progreso en el modo campaña contra los bots.</p>
+          </div>
+          <dl class="profile-page__stats">
+            <div class="profile-page__stat">
+              <dt>Puntos</dt>
+              <dd>{{ campaignSummary.points }}</dd>
+            </div>
+            <div class="profile-page__stat">
+              <dt>Ranking</dt>
+              <dd>#{{ campaignSummary.position }}</dd>
+            </div>
+            <div class="profile-page__stat">
+              <dt>Jugadas</dt>
+              <dd>{{ campaignSummary.played }}</dd>
+            </div>
+            <div class="profile-page__stat">
+              <dt>Ganadas</dt>
+              <dd>{{ campaignSummary.won }}</dd>
+            </div>
+            <div class="profile-page__stat">
+              <dt>Victorias</dt>
+              <dd>{{ campaignSummary.winRate }}%</dd>
+            </div>
+          </dl>
+        </section>
+      }
+
       <section class="profile-page__stats-section" aria-labelledby="stats-title">
         <div class="profile-page__stats-header">
           <h2 id="stats-title" class="profile-page__stats-title">Estadisticas</h2>

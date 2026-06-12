@@ -137,6 +137,14 @@
                 >
                   Mi perfil
                 </a>
+              } @else if (authStore.isGuest()) {
+                <button
+                  type="button"
+                  class="global-header__menu-item"
+                  (click)="onGuestProfileClick()"
+                >
+                  Mi perfil
+                </button>
               } @else {
                 <span class="global-header__menu-item global-header__menu-item--readonly">
                   {{ userLabel() }}
@@ -144,14 +152,24 @@
               }
             }
             @if (showFriends()) {
-              <a
-                class="global-header__menu-item"
-                routerLink="/friends"
-                data-ui-click
-                (click)="closeMenu()"
-              >
-                Amigos
-              </a>
+              @if (authStore.isGuest()) {
+                <button
+                  type="button"
+                  class="global-header__menu-item"
+                  (click)="onGuestFriendsClick()"
+                >
+                  Amigos
+                </button>
+              } @else {
+                <a
+                  class="global-header__menu-item"
+                  routerLink="/friends"
+                  data-ui-click
+                  (click)="closeMenu()"
+                >
+                  Amigos
+                </a>
+              }
             }
             @if (showChat()) {
               <button type="button" class="global-header__menu-item" (click)="openChat()">

@@ -13,6 +13,7 @@ import { filter, map, startWith } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { AuthStore } from '../../../core/auth/auth.store';
 import { AuthService } from '../../../core/auth/auth.service';
+import { GuestRegisterPromptService } from '../../../core/auth/guest-register-prompt.service';
 import { PresenceCoordinatorService } from '../../../core/services/presence-coordinator.service';
 import { NavigationLockService } from '../../../core/services/navigation-lock.service';
 import { SpectatorCountStore } from '../../services/spectator-count.store';
@@ -34,6 +35,7 @@ import { ChatStore } from '../../../features/chat/services/chat.store';
 export class GlobalHeaderComponent {
   readonly authStore = inject(AuthStore);
   private readonly authService = inject(AuthService);
+  private readonly guestRegisterPrompt = inject(GuestRegisterPromptService);
   private readonly presenceCoordinator = inject(PresenceCoordinatorService);
   private readonly navigationLock = inject(NavigationLockService);
   private readonly spectatorCountStore = inject(SpectatorCountStore);
@@ -81,10 +83,12 @@ export class GlobalHeaderComponent {
     () => (this.inMatch() || this.isSpectating()) && this.spectatorCount() > 0,
   );
 
-  /** El acceso a Amigos es sólo para usuarios registrados (no guests) y fuera de partida. */
-  readonly showFriends = computed(
-    () => this.authStore.isAuthenticated() && !this.authStore.isGuest() && !this.busy(),
-  );
+  /**
+   * "Amigos" se muestra a cualquier usuario logueado (incluidos invitados) fuera
+   * de partida. Los invitados ven el ítem pero al tocarlo reciben el modal de
+   * registro en vez de navegar (ver onGuestFriendsClick).
+   */
+  readonly showFriends = computed(() => this.authStore.isAuthenticated() && !this.busy());
 
   readonly currentMatchId = computed(() => {
     const url = this.currentUrl();
@@ -148,6 +152,24 @@ export class GlobalHeaderComponent {
   profileLink(): string | null {
     const username = this.authStore.username();
     return this.authStore.isGuest() || !username ? null : `/profile/${username}`;
+  }
+
+  /**
+   * Invitado tocando "Mi perfil": el perfil exige cuenta. Abre el modal de
+   * registro (mismo que campaña) en vez de navegar.
+   */
+  onGuestProfileClick(): void {
+    this.closeMenu();
+    this.guestRegisterPrompt.prompt({ returnUrl: '/lobby' });
+  }
+
+  /**
+   * Invitado tocando "Amigos": la sección de amigos exige cuenta. Abre el modal
+   * de registro y, al confirmar, vuelve a /friends ya registrado.
+   */
+  onGuestFriendsClick(): void {
+    this.closeMenu();
+    this.guestRegisterPrompt.prompt({ returnUrl: '/friends' });
   }
 
   toggleMenu(): void {

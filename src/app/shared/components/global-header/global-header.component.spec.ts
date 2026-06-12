@@ -117,8 +117,9 @@ describe('GlobalHeaderComponent', () => {
     );
   });
 
-  it('con sesion invitada muestra Invitado sin link de perfil dentro del menu', () => {
-    setupTestBed({ open: vi.fn() });
+  it('con sesion invitada muestra "Mi perfil" y "Amigos" como botones que abren el modal de registro', () => {
+    const openSpy = vi.fn().mockReturnValue({ afterClosed: () => of(false) });
+    setupTestBed({ open: openSpy });
     const fixture = TestBed.createComponent(GlobalHeaderComponent);
     const store = TestBed.inject(AuthStore);
     store.setSession({
@@ -131,10 +132,22 @@ describe('GlobalHeaderComponent', () => {
     const el = fixture.nativeElement as HTMLElement;
     openMenu(fixture);
 
+    // El invitado no tiene links navegables de perfil/amigos ni el label "Invitado".
     expect(el.querySelector('.global-header__menu-item[href]')).toBeNull();
-    expect(el.querySelector('.global-header__menu-item--readonly')?.textContent ?? '').toContain(
-      'Invitado',
+    expect(el.querySelector('.global-header__menu-item--readonly')).toBeNull();
+
+    const buttons = Array.from(
+      el.querySelectorAll<HTMLButtonElement>('button.global-header__menu-item'),
     );
+    const profileBtn = buttons.find((b) => (b.textContent ?? '').includes('Mi perfil'));
+    const friendsBtn = buttons.find((b) => (b.textContent ?? '').includes('Amigos'));
+    expect(profileBtn).toBeTruthy();
+    expect(friendsBtn).toBeTruthy();
+
+    // Tocar cualquiera abre el modal de registro (mismo que campaña), sin navegar.
+    profileBtn?.click();
+    friendsBtn?.click();
+    expect(openSpy).toHaveBeenCalledTimes(2);
   });
 
   it('dentro de una partida deshabilita la marca y oculta navegacion del menu, pero mantiene Salir', async () => {

@@ -14,16 +14,11 @@ import { Title } from '@angular/platform-browser';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
-import { MatDialog } from '@angular/material/dialog';
 import { BackButtonComponent } from '../../../../shared/components/back-button';
 import { CampaignApiService } from '../../services/campaign-api.service';
 import { NavigationLockService } from '../../../../core/services/navigation-lock.service';
 import { AuthStore } from '../../../../core/auth/auth.store';
-import { AuthService } from '../../../../core/auth/auth.service';
-import {
-  ConfirmDialogComponent,
-  type ConfirmDialogData,
-} from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { GuestRegisterPromptService } from '../../../../core/auth/guest-register-prompt.service';
 import type {
   CampaignRankingEntry,
   CampaignRecord,
@@ -46,8 +41,7 @@ export class CampaignPageComponent implements OnInit {
   private readonly titleService = inject(Title);
   private readonly navigationLock = inject(NavigationLockService);
   private readonly authStore = inject(AuthStore);
-  private readonly authService = inject(AuthService);
-  private readonly dialog = inject(MatDialog);
+  private readonly guestRegisterPrompt = inject(GuestRegisterPromptService);
   private readonly host = inject(ElementRef<HTMLElement>);
 
   /** Nombre del jugador para el ranking; los invitados no tienen username, caen a "Vos". */
@@ -192,35 +186,10 @@ export class CampaignPageComponent implements OnInit {
    * returnUrl para volver a la campaña ya registrado.
    */
   private promptRegister(): void {
-    const ref = this.dialog.open<ConfirmDialogComponent, ConfirmDialogData, boolean>(
-      ConfirmDialogComponent,
-      {
-        data: {
-          title: 'Solo para jugadores registrados',
-          message:
-            'El modo campaña se mira como invitado, pero para desafiar a un rival necesitás una cuenta. ¿Querés crear una?',
-          confirmLabel: 'Crear cuenta',
-          cancelLabel: 'Ahora no',
-          variant: 'primary',
-        },
-        panelClass: 't3-confirm-dialog',
-        backdropClass: 't3-confirm-backdrop',
-        autoFocus: 'button',
-        restoreFocus: true,
-      },
-    );
-
-    ref.afterClosed().subscribe((confirmed) => {
-      if (confirmed !== true) {
-        return;
-      }
-      // logout() limpia la sesión de forma sincrónica antes de emitir, así que al
-      // navegar el publicOnlyGuard de /register ya ve al usuario como anónimo.
-      this.authService.logout().subscribe(() => {
-        void this.router.navigate(['/register'], {
-          queryParams: { returnUrl: '/lobby/campaign' },
-        });
-      });
+    this.guestRegisterPrompt.prompt({
+      returnUrl: '/lobby/campaign',
+      message:
+        'El modo campaña se mira como invitado, pero para desafiar a un rival necesitás una cuenta. ¿Querés crear una?',
     });
   }
 

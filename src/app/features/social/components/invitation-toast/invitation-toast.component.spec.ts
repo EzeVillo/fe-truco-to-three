@@ -80,7 +80,7 @@ describe('InvitationToastComponent', () => {
     expect(storeMock.declineInvitation).toHaveBeenCalledWith('inv-1');
   });
 
-  it('no muestra cierre manual: la invitaciÃ³n se resuelve aceptando o rechazando', () => {
+  it('no muestra cierre manual: la invitación se resuelve aceptando o rechazando', () => {
     incomingInvitationToast.set(invitation());
     const el = render().nativeElement as HTMLElement;
     expect(el.querySelector('.invitation-toast__close')).toBeNull();

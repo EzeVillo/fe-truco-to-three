@@ -20,7 +20,9 @@ export type ErrorCopyScope =
   | 'PUBLIC_LOBBY'
   | 'SOCIAL'
   | 'SPECTATE'
-  | 'CHAT';
+  | 'CHAT'
+  | 'CAMPAIGN_LOAD'
+  | 'CAMPAIGN_CHALLENGE';
 
 const FALLBACK = 'Ocurrió un error inesperado. Reintentá.';
 
@@ -127,10 +129,10 @@ export function getErrorCopy(scope: ErrorCopyScope, error: unknown): string {
         return 'No encontramos ese perfil.';
       case 0:
       case -1:
-        return 'No pudimos cargar el perfil. ReintentÃ¡.';
+        return 'No pudimos cargar el perfil. Reintentá.';
       default:
         if (status >= 500 && status < 600) {
-          return 'No pudimos cargar el perfil. ReintentÃ¡.';
+          return 'No pudimos cargar el perfil. Reintentá.';
         }
         return FALLBACK;
     }
@@ -258,6 +260,40 @@ export function getErrorCopy(scope: ErrorCopyScope, error: unknown): string {
       default:
         if (status >= 500 && status < 600) {
           return 'No pudimos enviar el mensaje. Reintentá.';
+        }
+        return FALLBACK;
+    }
+  }
+
+  if (scope === 'CAMPAIGN_LOAD') {
+    switch (status) {
+      case 401:
+        return '';
+      case 0:
+        return 'No pudimos cargar la campaña. Reintentá.';
+      default:
+        if (status >= 500 && status < 600) {
+          return 'No pudimos cargar la campaña. Reintentá.';
+        }
+        return FALLBACK;
+    }
+  }
+
+  if (scope === 'CAMPAIGN_CHALLENGE') {
+    switch (status) {
+      case 401:
+        return '';
+      case 400:
+        return 'No hay un rival para desafiar. Actualizá el ranking.';
+      case 404:
+        return 'Ese rival ya no está disponible. Actualizá el ranking.';
+      case 422:
+        return 'El desafío no está permitido: puede que ya tengas uno en curso o que ese rival no sea desafiable.';
+      case 0:
+        return 'No pudimos crear el desafío. Reintentá en unos segundos.';
+      default:
+        if (status >= 500 && status < 600) {
+          return 'No pudimos crear el desafío. Reintentá en unos segundos.';
         }
         return FALLBACK;
     }

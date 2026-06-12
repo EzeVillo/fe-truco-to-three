@@ -2,6 +2,11 @@
   <div class="lobby__inner">
     <h1 class="lobby__title">Modos de juego</h1>
 
+    <button type="button" class="lobby__cta" appNavPending (click)="goToCampaign()">
+      <span class="lobby__cta-title">Modo campaña</span>
+      <span class="lobby__cta-subtitle">Escalá el ranking de 100 bots hasta el puesto #1</span>
+    </button>
+
     <button type="button" class="lobby__cta" appNavPending (click)="goToBots()">
       <span class="lobby__cta-title">Jugar contra bots</span>
       <span class="lobby__cta-subtitle">Elegí tu oponente y configurá la serie</span>

@@ -27,8 +27,8 @@ describe('LobbyPageComponent', () => {
     const navSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
 
     fixture.detectChanges();
-    const btn = fixture.debugElement.query(By.css('.lobby__cta'));
-    btn.nativeElement.click();
+    const buttons = fixture.debugElement.queryAll(By.css('.lobby__cta'));
+    buttons[1].nativeElement.click();
 
     expect(navSpy).toHaveBeenCalledWith('/lobby/vs-bots');
   });
@@ -45,9 +45,26 @@ describe('LobbyPageComponent', () => {
     expect(text).toContain('Buscá rival automáticamente y jugá online');
 
     const buttons = fixture.debugElement.queryAll(By.css('.lobby__cta'));
-    buttons[1].nativeElement.click();
+    buttons[2].nativeElement.click();
 
     expect(navSpy).toHaveBeenCalledWith('/lobby/quick-match');
+  });
+
+  it('renderiza el CTA "Modo campaña" y navega a /lobby/campaign', () => {
+    const fixture = TestBed.createComponent(LobbyPageComponent);
+    const router = TestBed.inject(Router);
+    const navSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Modo campaña');
+    expect(text).toContain('Escalá el ranking de 100 bots hasta el puesto #1');
+
+    const buttons = fixture.debugElement.queryAll(By.css('.lobby__cta'));
+    buttons[0].nativeElement.click();
+
+    expect(navSpy).toHaveBeenCalledWith('/lobby/campaign');
   });
 
   // T005 — US1: tests de layout y tokens
@@ -65,7 +82,7 @@ describe('LobbyPageComponent', () => {
     const subtitle = fixture.debugElement.query(By.css('.lobby__cta-subtitle'));
     expect(title).toBeTruthy();
     expect(subtitle).toBeTruthy();
-    expect(title.nativeElement.textContent.trim()).toBe('Jugar contra bots');
+    expect(title.nativeElement.textContent.trim()).toBe('Modo campaña');
     expect(subtitle.nativeElement.textContent.trim()).toBeTruthy();
   });
 
@@ -106,7 +123,7 @@ describe('LobbyPageComponent', () => {
 
     fixture.detectChanges();
     const buttons = fixture.debugElement.queryAll(By.css('.lobby__cta'));
-    buttons[3].nativeElement.click();
+    buttons[4].nativeElement.click();
 
     expect(navSpy).toHaveBeenCalledWith('/reglas');
   });

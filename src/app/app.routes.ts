@@ -36,6 +36,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'lobby/campaign',
+    canMatch: [authGuard],
+    loadComponent: () =>
+      import('./features/campaign/pages/campaign-page/campaign-page.component').then(
+        (m) => m.CampaignPageComponent,
+      ),
+  },
+  {
     path: 'lobby/online',
     canMatch: [authGuard],
     loadComponent: () =>

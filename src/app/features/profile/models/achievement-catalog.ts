@@ -58,4 +58,14 @@ export const ACHIEVEMENT_CATALOG: Record<string, AchievementDefinition> = {
     description:
       'Cantaste truco con el rival sin cartas, lo aceptó, te fuiste al mazo dándole los puntos y lo hiciste pasar de 3.',
   },
+  REACH_CAMPAIGN_TOP_ONE: {
+    code: 'REACH_CAMPAIGN_TOP_ONE',
+    name: 'La cima',
+    description: 'Alcanzaste el puesto #1 del ranking del modo campaña.',
+  },
+  DEFEAT_ALL_CAMPAIGN_RIVALS: {
+    code: 'DEFEAT_ALL_CAMPAIGN_RIVALS',
+    name: 'Cien de cien',
+    description: 'Le ganaste al menos una vez a cada uno de los 100 bots del modo campaña.',
+  },
 };

@@ -18,24 +18,30 @@
         </button>
       </div>
     } @else if (profile(); as currentProfile) {
-      <dl class="profile-page__stats" aria-label="Estadisticas del jugador">
-        <div class="profile-page__stat">
-          <dt>Jugadas</dt>
-          <dd>{{ currentProfile.stats.matchesPlayed }}</dd>
+      <section class="profile-page__stats-section" aria-labelledby="stats-title">
+        <div class="profile-page__stats-header">
+          <h2 id="stats-title" class="profile-page__stats-title">Estadisticas</h2>
+          <p class="profile-page__stats-note">Corresponden solo a partidas online.</p>
         </div>
-        <div class="profile-page__stat">
-          <dt>Ganadas</dt>
-          <dd>{{ currentProfile.stats.matchesWon }}</dd>
-        </div>
-        <div class="profile-page__stat">
-          <dt>Perdidas</dt>
-          <dd>{{ currentProfile.stats.matchesLost }}</dd>
-        </div>
-        <div class="profile-page__stat">
-          <dt>Victorias</dt>
-          <dd>{{ currentProfile.stats.winRate }}%</dd>
-        </div>
-      </dl>
+        <dl class="profile-page__stats">
+          <div class="profile-page__stat">
+            <dt>Jugadas</dt>
+            <dd>{{ currentProfile.stats.matchesPlayed }}</dd>
+          </div>
+          <div class="profile-page__stat">
+            <dt>Ganadas</dt>
+            <dd>{{ currentProfile.stats.matchesWon }}</dd>
+          </div>
+          <div class="profile-page__stat">
+            <dt>Perdidas</dt>
+            <dd>{{ currentProfile.stats.matchesLost }}</dd>
+          </div>
+          <div class="profile-page__stat">
+            <dt>Victorias</dt>
+            <dd>{{ currentProfile.stats.winRate }}%</dd>
+          </div>
+        </dl>
+      </section>
 
       <section class="profile-page__achievements" aria-labelledby="achievements-title">
         <h2 id="achievements-title">Logros</h2>

@@ -8,7 +8,7 @@
     <h1 class="campaign__title">Modo campaña</h1>
   </div>
 
-  <div class="campaign__scroll">
+  <div class="campaign__scroll" [class.campaign__scroll--locked]="challengingId() !== null">
     @if (loading()) {
       <div class="campaign__state" role="status" aria-live="polite">
         <mat-spinner diameter="36" />
@@ -79,25 +79,26 @@
 
       <ol class="campaign__ranking" aria-label="Ranking de campaña">
         @for (entry of c.ranking; track entry.participantId) {
-          <li
-            class="campaign__row"
-            [class.campaign__row--player]="entry.player"
-            [class.campaign__row--beaten]="(entry.record?.wins ?? 0) > 0"
-          >
+          <li class="campaign__row" [class.campaign__row--player]="entry.player">
             <span class="campaign__row-position">#{{ entry.position }}</span>
 
             <span class="campaign__row-info">
               <span class="campaign__row-name">
                 {{ entry.player ? playerName() : entry.displayName || 'Bot anónimo' }}
               </span>
-              @if (entry.record; as record) {
+              @if (!entry.player) {
                 <span
                   class="campaign__row-record"
+                  [class.campaign__row-record--ahead]="recordTone(entry) === 'ahead'"
+                  [class.campaign__row-record--behind]="recordTone(entry) === 'behind'"
                   [attr.aria-label]="
-                    'Le ganaste ' + record.wins + ' veces y perdiste ' + record.losses
+                    'Le ganaste ' +
+                    (entry.record?.wins ?? 0) +
+                    ' veces y perdiste ' +
+                    (entry.record?.losses ?? 0)
                   "
                 >
-                  G {{ record.wins }} · P {{ record.losses }}
+                  G {{ entry.record?.wins ?? 0 }} · P {{ entry.record?.losses ?? 0 }}
                 </span>
               }
             </span>

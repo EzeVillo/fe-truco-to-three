@@ -26,6 +26,7 @@ import {
 } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import type {
   CampaignRankingEntry,
+  CampaignRecord,
   CampaignResponse,
 } from '../../../../core/models/campaign.models';
 import { getErrorCopy } from '../../../../shared/error-copy/error-copy';
@@ -103,6 +104,25 @@ export class CampaignPageComponent implements OnInit {
 
   retry(): void {
     this.loadCampaign();
+  }
+
+  /**
+   * Clasifica el head-to-head contra un rival para colorear el historial. El BE
+   * manda `record: null` cuando nunca se enfrentaron: lo tratamos como 0-0
+   * ("even", gris) para mostrar la fila igual y que el jugador vea contra quién
+   * todavía no jugó. `ahead` (verde) si le ganó más, `behind` (rojo) si perdió más.
+   */
+  recordTone(entry: CampaignRankingEntry): 'ahead' | 'behind' | 'even' {
+    const record: CampaignRecord | null = entry.record;
+    const wins = record?.wins ?? 0;
+    const losses = record?.losses ?? 0;
+    if (wins > losses) {
+      return 'ahead';
+    }
+    if (wins < losses) {
+      return 'behind';
+    }
+    return 'even';
   }
 
   goBack(): void {

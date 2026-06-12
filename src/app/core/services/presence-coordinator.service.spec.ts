@@ -151,6 +151,66 @@ describe('PresenceCoordinatorService', () => {
     expect(routerMock.navigateByUrl).not.toHaveBeenCalled();
   });
 
+  it('arranca en idle y no bloquea la app sin sesion', () => {
+    const { service } = setup();
+
+    expect(service.bootstrapStatus()).toBe('idle');
+    expect(service.bootstrapOverlayVisible()).toBe(false);
+    expect(service.appReady()).toBe(true);
+  });
+
+  it('muestra la overlay de carga mientras el fetch inicial esta en curso', () => {
+    const presence$ = new Subject<UserPresenceResponse>();
+    const { service, store, apiMock } = setup();
+    apiMock.getPresence.mockReturnValue(presence$.asObservable());
+    login(store);
+
+    service.start();
+
+    expect(service.bootstrapStatus()).toBe('loading');
+    expect(service.bootstrapOverlayVisible()).toBe(true);
+    expect(service.appReady()).toBe(false);
+
+    presence$.next(freePresence());
+
+    expect(service.bootstrapStatus()).toBe('ready');
+    expect(service.bootstrapOverlayVisible()).toBe(false);
+    expect(service.appReady()).toBe(true);
+  });
+
+  it('pasa a error y permite reintentar el bootstrap', () => {
+    const { service, store, apiMock } = setup();
+    apiMock.getPresence.mockReturnValue(throwError(() => ({ status: 500 })));
+    login(store);
+
+    service.start();
+
+    expect(service.bootstrapStatus()).toBe('error');
+    expect(service.bootstrapOverlayVisible()).toBe(true);
+    expect(service.appReady()).toBe(false);
+
+    apiMock.getPresence.mockReturnValue(of(busyMatch('match-retry')));
+    service.retryBootstrap();
+
+    expect(service.bootstrapStatus()).toBe('ready');
+    expect(service.appReady()).toBe(true);
+  });
+
+  it('latchea everReady: un re-fetch fallido no desmonta la app ya montada', () => {
+    const { service, store, apiMock } = setup(freePresence());
+    login(store);
+    service.start();
+    expect(service.appReady()).toBe(true);
+
+    // Un reintento posterior que falla muestra la overlay pero NO baja appReady.
+    apiMock.getPresence.mockReturnValue(throwError(() => ({ status: 500 })));
+    service.retryBootstrap();
+
+    expect(service.bootstrapStatus()).toBe('error');
+    expect(service.bootstrapOverlayVisible()).toBe(true);
+    expect(service.appReady()).toBe(true);
+  });
+
   it('se suscribe a /user/queue/presence y procesa PRESENCE_UPDATED', () => {
     const { service, store, wsMock, routerMock, presenceEvents$ } = setup(freePresence());
     login(store);

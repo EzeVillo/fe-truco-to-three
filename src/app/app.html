@@ -26,10 +26,35 @@
   </div>
 }
 
+<!-- Carga de presencia: tapa la app hasta que el primer GET /me/presence responda. -->
+@if (serverWake.isReady() && presenceCoordinator.bootstrapOverlayVisible()) {
+  <div class="server-wake" role="alertdialog" aria-live="assertive" aria-busy="true">
+    <div class="server-wake__card">
+      @if (presenceCoordinator.bootstrapStatus() === 'error') {
+        <h2 class="server-wake__title">No pudimos cargar tu sesión</h2>
+        <p class="server-wake__text">
+          Hubo un problema al recuperar tu estado de juego. Probá de nuevo en un momento.
+        </p>
+        <button
+          type="button"
+          class="server-wake__btn"
+          (click)="presenceCoordinator.retryBootstrap()"
+        >
+          Reintentar
+        </button>
+      } @else {
+        <h2 class="server-wake__title">Cargando tu sesión…</h2>
+        <p class="server-wake__text">Estamos recuperando tu estado de juego.</p>
+        <div class="server-wake__spinner" aria-hidden="true"></div>
+      }
+    </div>
+  </div>
+}
+
 <app-global-header />
 
 <main class="app-main">
-  @if (serverWake.isReady()) {
+  @if (serverWake.isReady() && presenceCoordinator.appReady()) {
     <router-outlet />
   }
 </main>

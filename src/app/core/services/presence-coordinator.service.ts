@@ -14,6 +14,16 @@ import { PresenceApiService } from './presence-api.service';
 
 const PRESENCE_QUEUE = '/user/queue/presence';
 
+/**
+ * Estado del bootstrap REST de presencia (`GET /me/presence`).
+ *
+ * - `idle`    : no aplica (todavía no arrancó o no hay sesión autenticada).
+ * - `loading` : el fetch inicial está en curso.
+ * - `ready`   : ya llegó la primera presencia (REST o PRESENCE_UPDATED).
+ * - `error`   : el fetch inicial falló.
+ */
+export type PresenceBootstrapStatus = 'idle' | 'loading' | 'ready' | 'error';
+
 @Injectable({ providedIn: 'root' })
 export class PresenceCoordinatorService {
   private readonly authStore = inject(AuthStore);
@@ -32,6 +42,28 @@ export class PresenceCoordinatorService {
   private readonly _presence = signal<UserPresenceResponse | null>(null);
   readonly presence = this._presence.asReadonly();
   readonly busy = computed(() => this._presence()?.busy === true);
+
+  /** Estado del fetch inicial de presencia. */
+  private readonly _bootstrapStatus = signal<PresenceBootstrapStatus>('idle');
+  readonly bootstrapStatus = this._bootstrapStatus.asReadonly();
+
+  /**
+   * Latcheado: una vez que el bootstrap respondió OK queda `true` para siempre
+   * (dentro del ciclo de vida de la app). El `<router-outlet>` se monta con esto;
+   * si se apagara durante un re-fetch se destruiría toda la app (partida incluida).
+   */
+  private readonly _everReady = signal(false);
+
+  /**
+   * La app puede mostrarse cuando la presencia no está bloqueando: o no aplica
+   * (sin sesión) o ya cargó al menos una vez.
+   */
+  readonly appReady = computed(() => this._bootstrapStatus() === 'idle' || this._everReady());
+
+  /** La overlay de carga tapa la app mientras el fetch inicial corre o falló. */
+  readonly bootstrapOverlayVisible = computed(
+    () => this._bootstrapStatus() === 'loading' || this._bootstrapStatus() === 'error',
+  );
 
   constructor() {
     effect(() => {
@@ -78,14 +110,34 @@ export class PresenceCoordinatorService {
     this.active = false;
     this.lastDestinationKey = null;
     this._presence.set(null);
+    this._bootstrapStatus.set('idle');
+  }
+
+  /** Reintento manual desde la overlay tras un `error` en el fetch inicial. */
+  retryBootstrap(): void {
+    if (this._bootstrapStatus() === 'loading') {
+      return;
+    }
+
+    this.bootstrapPresence();
   }
 
   private bootstrapPresence(): void {
     this.bootstrapSub?.unsubscribe();
+    this._bootstrapStatus.set('loading');
     this.bootstrapSub = this.api
       .getPresence()
-      .pipe(catchError(() => EMPTY))
-      .subscribe((presence) => this.handlePresence(presence));
+      .pipe(
+        catchError(() => {
+          this._bootstrapStatus.set('error');
+          return EMPTY;
+        }),
+      )
+      .subscribe((presence) => {
+        this._bootstrapStatus.set('ready');
+        this._everReady.set(true);
+        this.handlePresence(presence);
+      });
   }
 
   private subscribeToPresence(): void {

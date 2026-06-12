@@ -35,6 +35,13 @@
     width: 100%;
     max-width: 720px;
     margin: 0 auto;
+
+    // Mientras se crea el desafío (POST en vuelo) se congela el scroll para que
+    // la lista no se mueva justo antes de navegar al match.
+    &--locked {
+      overflow-y: hidden;
+      touch-action: none;
+    }
   }
 
   &__state {
@@ -225,11 +232,19 @@
   }
 
   &__row-record {
+    // Empate / 0-0 → gris tenue (estado neutro por defecto).
     font-size: 0.75rem;
     color: var(--t3-text-dim);
 
-    .campaign__row--beaten & {
-      color: var(--t3-gold-300);
+    // Vas arriba en el head-to-head → verde.
+    &--ahead {
+      color: var(--t3-success);
+      font-weight: 600;
+    }
+
+    // Vas abajo en el head-to-head → rojo.
+    &--behind {
+      color: var(--t3-danger);
     }
   }
 

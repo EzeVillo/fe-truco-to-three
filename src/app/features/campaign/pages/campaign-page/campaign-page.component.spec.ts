@@ -400,5 +400,67 @@ describe('CampaignPageComponent', () => {
     const record = fixture.debugElement.query(By.css('.campaign__row-record'));
     expect(record).toBeTruthy();
     expect((record.nativeElement as HTMLElement).textContent).toContain('G 0 · P 1');
+    // wins(0) < losses(1) → rojo.
+    expect((record.nativeElement as HTMLElement).classList).toContain(
+      'campaign__row-record--behind',
+    );
+  });
+
+  it('muestra 0-0 neutro para un rival que el BE devuelve sin record (record: null)', () => {
+    const response = campaignResponse({
+      ranking: [
+        rankingEntry({
+          position: 41,
+          participantId: 'c41',
+          displayName: 'Cacho Toledo',
+          challengeable: true,
+          record: null,
+        }),
+        rankingEntry({ position: 42, participantId: 'p1', displayName: null, player: true }),
+      ],
+    });
+    setup({ getCampaign: () => of(response), createChallenge: () => of(CHALLENGE) });
+    const fixture = TestBed.createComponent(CampaignPageComponent);
+    fixture.detectChanges();
+
+    const record = fixture.debugElement.query(By.css('.campaign__row-record'));
+    expect(record).toBeTruthy();
+    expect((record.nativeElement as HTMLElement).textContent).toContain('G 0 · P 0');
+    // Empate / nunca jugado → sin clase de tono (gris por defecto).
+    const classes = (record.nativeElement as HTMLElement).classList;
+    expect(classes).not.toContain('campaign__row-record--ahead');
+    expect(classes).not.toContain('campaign__row-record--behind');
+  });
+
+  it('pinta de verde el head-to-head cuando el jugador va arriba', () => {
+    const response = campaignResponse({
+      ranking: [
+        rankingEntry({
+          position: 41,
+          participantId: 'c41',
+          displayName: 'Cacho Toledo',
+          challengeable: true,
+          record: { wins: 3, losses: 1 },
+        }),
+        rankingEntry({ position: 42, participantId: 'p1', displayName: null, player: true }),
+      ],
+    });
+    setup({ getCampaign: () => of(response), createChallenge: () => of(CHALLENGE) });
+    const fixture = TestBed.createComponent(CampaignPageComponent);
+    fixture.detectChanges();
+
+    const record = fixture.debugElement.query(By.css('.campaign__row-record'));
+    expect((record.nativeElement as HTMLElement).classList).toContain(
+      'campaign__row-record--ahead',
+    );
+  });
+
+  it('no muestra historial en la fila del propio jugador', () => {
+    setup({ getCampaign: () => of(campaignResponse()), createChallenge: () => of(CHALLENGE) });
+    const fixture = TestBed.createComponent(CampaignPageComponent);
+    fixture.detectChanges();
+
+    const playerRow = fixture.debugElement.query(By.css('.campaign__row--player'));
+    expect(playerRow.query(By.css('.campaign__row-record'))).toBeNull();
   });
 });

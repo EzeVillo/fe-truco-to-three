@@ -6,6 +6,7 @@ import { PresenceCoordinatorService } from './core/services/presence-coordinator
 import { ServerWakeService } from './core/services/server-wake.service';
 import { UiClickSoundService } from './core/services/ui-click-sound.service';
 import { ProfileNotificationService } from './features/profile/services/profile-notification.service';
+import { CampaignPointsService } from './features/campaign/services/campaign-points.service';
 import { SocialStore } from './features/social/services/social.store';
 import { InvitationToastComponent } from './features/social/components/invitation-toast/invitation-toast.component';
 import { GlobalHeaderComponent } from './shared/components/global-header/global-header.component';
@@ -21,6 +22,7 @@ export class App {
   private readonly authService = inject(AuthService);
   readonly presenceCoordinator = inject(PresenceCoordinatorService);
   readonly profileNotifications = inject(ProfileNotificationService);
+  readonly campaignPoints = inject(CampaignPointsService);
   readonly social = inject(SocialStore);
   private readonly uiClickSound = inject(UiClickSoundService);
   private readonly audioPlayback = inject(AudioPlaybackService);
@@ -56,6 +58,7 @@ export class App {
     this.authService.rehydrateIdentityIfNeeded().subscribe();
     this.presenceCoordinator.start();
     this.profileNotifications.start();
+    this.campaignPoints.start();
     this.social.start();
   }
 }

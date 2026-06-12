@@ -1,0 +1,40 @@
+<div
+  class="campaign-points"
+  role="dialog"
+  aria-modal="true"
+  [attr.aria-labelledby]="'campaign-points-title'"
+  mat-dialog-content
+>
+  <h2
+    id="campaign-points-title"
+    class="campaign-points__title"
+    [class.campaign-points__title--won]="data.won"
+    [class.campaign-points__title--lost]="!data.won"
+  >
+    {{ titleText }}
+  </h2>
+
+  <div class="campaign-points__amount" [class.campaign-points__amount--lost]="!data.won">
+    <span class="campaign-points__amount-value">+{{ data.pointsAwarded }}</span>
+    <span class="campaign-points__amount-label">puntos</span>
+  </div>
+
+  <p class="campaign-points__position" [class.campaign-points__position--climbed]="climbed">
+    {{ positionText }}
+  </p>
+
+  <p class="campaign-points__total">
+    Total acumulado: <strong>{{ data.totalPoints }}</strong> pts
+  </p>
+
+  <p class="campaign-points__context">{{ contextMessage }}</p>
+
+  <button
+    type="button"
+    class="t3-btn t3-btn--primary campaign-points__accept"
+    cdkFocusInitial
+    (click)="close()"
+  >
+    Continuar
+  </button>
+</div>

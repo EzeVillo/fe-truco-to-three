@@ -161,6 +161,28 @@ export type SocialWsEvent =
   | WsEventBase<'FRIEND_AVAILABILITY_STATE', { friends: FriendAvailabilitySnapshotItem[] }>
   | WsEventBase<'FRIEND_AVAILABILITY_CHANGED', FriendAvailabilityDelta>;
 
+/**
+ * Eventos del canal /user/queue/campaign (§9.6). Se emite al terminar cada match
+ * de campaña (victoria o derrota), post-commit y solo al jugador, con los puntos
+ * conseguidos en ese match, el total acumulado y el movimiento de posición. En una
+ * derrota `pointsAwarded` es `0` y `previousPosition`/`newPosition` no cambian.
+ */
+export type CampaignWsEvent = WsEventBase<
+  'CAMPAIGN_MATCH_POINTS',
+  {
+    matchId: string;
+    rivalId: string;
+    won: boolean;
+    pointsAwarded: number;
+    totalPoints: number;
+    previousPosition: number;
+    newPosition: number;
+  }
+>;
+
+/** Payload de `CAMPAIGN_MATCH_POINTS`. */
+export type CampaignMatchPointsPayload = CampaignWsEvent['payload'];
+
 /** Eventos del canal /user/queue/chat (§9.5d/§9.6). chatId top-level. */
 export type ChatWsEvent =
   | {
@@ -180,4 +202,8 @@ export type ChatWsEvent =
 // se completan conforme se implementan las features correspondientes.
 
 /** Unión discriminada general de eventos WebSocket. */
-export type WsEvent = MatchWsEvent | SocialWsEvent | ChatWsEvent /* | LeagueWsEvent | ... */;
+export type WsEvent =
+  | MatchWsEvent
+  | SocialWsEvent
+  | ChatWsEvent
+  | CampaignWsEvent /* | LeagueWsEvent | ... */;

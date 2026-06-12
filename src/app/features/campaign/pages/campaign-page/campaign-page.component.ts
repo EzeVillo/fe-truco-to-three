@@ -29,6 +29,7 @@ import type {
   CampaignResponse,
 } from '../../../../core/models/campaign.models';
 import { getErrorCopy } from '../../../../shared/error-copy/error-copy';
+import { markCampaignMatch } from '../../utils/campaign-match-store';
 
 @Component({
   selector: 'app-campaign-page',
@@ -111,6 +112,7 @@ export class CampaignPageComponent implements OnInit {
   continueChallenge(): void {
     const matchId = this.campaign()?.activeChallengeMatchId;
     if (matchId) {
+      markCampaignMatch(matchId);
       void this.router.navigate(['/match', matchId]);
     }
   }
@@ -136,6 +138,9 @@ export class CampaignPageComponent implements OnInit {
 
     this.api.createChallenge(botId).subscribe({
       next: ({ matchId }) => {
+        // Marca el match como de campaña para que, al terminar, el match-screen
+        // espere el push CAMPAIGN_MATCH_POINTS y muestre el modal de puntos.
+        markCampaignMatch(matchId);
         // No apagamos challengingId acá: el componente se destruye al navegar.
         // Si la navegación se cancela (p. ej. un guard), re-habilitamos los CTAs.
         void this.router.navigate(['/match', matchId]).then((ok) => {

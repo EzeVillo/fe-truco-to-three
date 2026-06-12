@@ -2304,15 +2304,16 @@ revancha). El body es **opcional**:
 ```
 
 El `matchId` se juega por el flujo de match existente (`/api/matches/...` y la cola
-`/user/queue/match`). Al terminar, el backend acredita los puntos y emite los pushes de perfil si se
-desbloquea algún logro.
+`/user/queue/match`). Al terminar, el backend acredita los puntos, emite un push
+`CAMPAIGN_MATCH_POINTS` por `/user/queue/campaign` con los puntos conseguidos (ver sección 9), y
+emite los pushes de perfil si se desbloquea algún logro.
 
 **Errores:**
 
 | Codigo | Descripcion                                                                                          |
 |--------|------------------------------------------------------------------------------------------------------|
 | 400    | `botId` requerido (el jugador ya está `#1` y no hay rival inmediato) o body inválido                 |
-| 401    | Token ausente o inválido, o el token pertenece a un invitado (solo usuarios registrados)            |
+| 401    | Token ausente o inválido, o el token pertenece a un invitado (solo usuarios registrados)             |
 | 404    | `botId` no corresponde a un bot del ranking de campaña                                               |
 | 422    | Desafío no permitido: el bot no es el inmediato superior (antes del `#1`) o ya hay un desafío activo |
 
@@ -2420,6 +2421,8 @@ Suscripciones permitidas por interceptor:
 - `/user/queue/chat` - eventos de chat en tiempo real
 - `/user/queue/social` - eventos de amistades e invitaciones
 - `/user/queue/profile` - eventos de logros del perfil
+- `/user/queue/campaign` - resultado de puntos al terminar un match de campaña (
+  `CAMPAIGN_MATCH_POINTS`)
 - `/user/queue/presence` - cambios de presencia/ocupación del usuario (`PRESENCE_UPDATED`)
 
 - `/topic/public-match-lobby` - stream compartido del lobby publico de matches
@@ -2591,6 +2594,28 @@ Disponibilidad de amigos, delta:
     "unlockedAt": 1772768158123,
     "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
     "gameNumber": 1
+  }
+}
+```
+
+**Campaign** (`/user/queue/campaign`):
+
+Se emite **al terminar** cada match de campaña (victoria o derrota), post-commit, solo al jugador.
+Informa los puntos conseguidos en ese match, el total acumulado y el movimiento de posición en el
+ranking. En una derrota, `pointsAwarded` es `0` y `previousPosition`/`newPosition` no cambian.
+
+```json
+{
+  "eventType": "CAMPAIGN_MATCH_POINTS",
+  "timestamp": 1772768158123,
+  "payload": {
+    "matchId": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
+    "rivalId": "c0000000-0000-0000-0000-000000000041",
+    "won": true,
+    "pointsAwarded": 300,
+    "totalPoints": 14230,
+    "previousPosition": 42,
+    "newPosition": 39
   }
 }
 ```

@@ -40,6 +40,12 @@ import {
   RematchDialogComponent,
   type RematchDialogResult,
 } from '../../components/rematch-dialog/rematch-dialog.component';
+import {
+  CampaignPointsDialogComponent,
+  type CampaignPointsDialogData,
+} from '../../components/campaign-points-dialog/campaign-points-dialog.component';
+import { CampaignPointsService } from '../../../campaign/services/campaign-points.service';
+import { isCampaignMatch, clearCampaignMatch } from '../../../campaign/utils/campaign-match-store';
 import { MatchStateService } from '../../services/match-state.service';
 import { MatchEventQueueService } from '../../services/match-event-queue.service';
 import { RematchStateService } from '../../services/rematch-state.service';
@@ -59,6 +65,7 @@ import type {
   EnvidoResolvedPayload,
   PlayerReadyPayload,
 } from '../../models/match-ws-events';
+import type { CampaignMatchPointsPayload } from '../../../../core/models/ws.models';
 import type { Subscription } from 'rxjs';
 
 @Component({
@@ -190,6 +197,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   readonly eventQueue = inject(MatchEventQueueService);
   private readonly rematchStateService = inject(RematchStateService);
   private readonly rematchApiService = inject(RematchApiService);
+  private readonly campaignPoints = inject(CampaignPointsService);
   private readonly matchCallAudioService = inject(MatchCallAudioService);
   private readonly backgroundMusic = inject(BackgroundMusicService);
   private readonly cardPreload = inject(CardPreloadService);
@@ -623,7 +631,56 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
 
     dialogRef.afterClosed().subscribe(() => {
       this.eventQueue.resumeAck();
-      this.decideAfterResultDialog(event.reason);
+      this.afterResultDialogClosed(event.reason);
+    });
+  }
+
+  /**
+   * Tras cerrar el modal de "ganaste/perdiste": en un match de campaña espera el
+   * push `CAMPAIGN_MATCH_POINTS` y muestra el modal de puntos antes de continuar;
+   * en cualquier otro match sigue el flujo normal (revancha / lobby).
+   */
+  private afterResultDialogClosed(reason: MatchEndedEvent['reason']): void {
+    const matchId = this.matchId();
+    if (!matchId || !isCampaignMatch(matchId)) {
+      this.decideAfterResultDialog(reason);
+      return;
+    }
+
+    this.campaignPoints.awaitForMatch(matchId).subscribe((payload) => {
+      clearCampaignMatch(matchId);
+      if (!payload) {
+        // El push no llegó a tiempo: no bloqueamos al jugador, volvemos a la campaña.
+        void this.router.navigate(['/lobby/campaign']);
+        return;
+      }
+      this.openCampaignPointsDialog(payload);
+    });
+  }
+
+  private openCampaignPointsDialog(payload: CampaignMatchPointsPayload): void {
+    const data: CampaignPointsDialogData = {
+      won: payload.won,
+      pointsAwarded: payload.pointsAwarded,
+      totalPoints: payload.totalPoints,
+      previousPosition: payload.previousPosition,
+      newPosition: payload.newPosition,
+    };
+
+    const dialogRef = this.dialog.open<
+      CampaignPointsDialogComponent,
+      CampaignPointsDialogData,
+      void
+    >(CampaignPointsDialogComponent, {
+      data,
+      panelClass: 't3-game-won-dialog',
+      backdropClass: 't3-game-won-backdrop',
+      disableClose: true,
+    });
+
+    dialogRef.afterClosed().subscribe(() => {
+      // Tras los puntos volvemos a la campaña para ver el ranking actualizado.
+      void this.router.navigate(['/lobby/campaign']);
     });
   }
 

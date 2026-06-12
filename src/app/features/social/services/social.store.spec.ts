@@ -332,6 +332,22 @@ describe('SocialStore', () => {
     expect(store.outgoing()).toEqual([]);
   });
 
+  it('sendRequest(): FriendshipRequestAlreadyPendingException → copy coherente', () => {
+    const { store, api } = setup();
+    api.sendRequest.mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 409,
+            error: { errorCode: 'FriendshipRequestAlreadyPendingException', message: 'BE-secret' },
+          }),
+      ),
+    );
+    store.sendRequest('martina');
+    expect(store.actionError()).toBe('Ya hay una solicitud de amistad pendiente con este usuario.');
+    expect(store.outgoing()).toEqual([]);
+  });
+
   it('acceptRequest(): éxito → incoming remove + friends upsert', () => {
     const { store, events$ } = setup();
     store.start();
@@ -383,7 +399,13 @@ describe('SocialStore', () => {
       timestamp: 1,
       payload: {
         friends: [
-          { friendUsername: 'ana', online: true, availability: 'BUSY', busyReason: 'IN_MATCH', spectatableMatch: null },
+          {
+            friendUsername: 'ana',
+            online: true,
+            availability: 'BUSY',
+            busyReason: 'IN_MATCH',
+            spectatableMatch: null,
+          },
         ],
       },
     });
@@ -401,7 +423,13 @@ describe('SocialStore', () => {
     events$.next({
       eventType: 'FRIEND_AVAILABILITY_CHANGED',
       timestamp: 1,
-      payload: { friendUsername: 'ana', online: true, availability: 'BUSY', busyReason: 'IN_CUP', spectatableMatch: null },
+      payload: {
+        friendUsername: 'ana',
+        online: true,
+        availability: 'BUSY',
+        busyReason: 'IN_CUP',
+        spectatableMatch: null,
+      },
     });
     expect(store.friends()).toEqual([
       friend('ana', { online: true, availability: 'BUSY', busyReason: 'IN_CUP' }),

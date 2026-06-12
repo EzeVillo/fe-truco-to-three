@@ -6,6 +6,10 @@ function httpErr(status: number): HttpErrorResponse {
   return new HttpErrorResponse({ status, error: { message: 'BE-secret-leak' } });
 }
 
+function httpErrWithCode(status: number, errorCode: string): HttpErrorResponse {
+  return new HttpErrorResponse({ status, error: { errorCode, message: 'BE-secret-leak' } });
+}
+
 describe('getErrorCopy — BOT_CATALOG', () => {
   it('401 → string vacío (manejado por interceptor)', () => {
     expect(getErrorCopy('BOT_CATALOG', httpErr(401))).toBe('');
@@ -216,6 +220,25 @@ describe('getErrorCopy — SOCIAL', () => {
     const expected = 'No se pudo completar la acción: revisá el estado de la solicitud.';
     expect(getErrorCopy('SOCIAL', httpErr(409))).toBe(expected);
     expect(getErrorCopy('SOCIAL', httpErr(422))).toBe(expected);
+  });
+
+  it('FriendshipAlreadyExistsException → copy de amistad ya existente', () => {
+    expect(getErrorCopy('SOCIAL', httpErrWithCode(409, 'FriendshipAlreadyExistsException'))).toBe(
+      'Ya son amigos.',
+    );
+    expect(getErrorCopy('SOCIAL', httpErrWithCode(422, 'FriendshipAlreadyExistsException'))).toBe(
+      'Ya son amigos.',
+    );
+  });
+
+  it('FriendshipRequestAlreadyPendingException → copy de solicitud pendiente', () => {
+    const expected = 'Ya hay una solicitud de amistad pendiente con este usuario.';
+    expect(
+      getErrorCopy('SOCIAL', httpErrWithCode(409, 'FriendshipRequestAlreadyPendingException')),
+    ).toBe(expected);
+    expect(
+      getErrorCopy('SOCIAL', httpErrWithCode(422, 'FriendshipRequestAlreadyPendingException')),
+    ).toBe(expected);
   });
 
   it('0 (red/offline) y 5xx → copy de red', () => {

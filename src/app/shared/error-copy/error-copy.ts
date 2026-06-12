@@ -26,6 +26,15 @@ export type ErrorCopyScope =
 
 const FALLBACK = 'Ocurrió un error inesperado. Reintentá.';
 
+/** Extrae el `errorCode` del body de un `ApiError` sin exponer nunca su `message` crudo. */
+function errorCodeOf(error: unknown): string {
+  if (!(error instanceof HttpErrorResponse)) {
+    return '';
+  }
+  const body = error.error as { errorCode?: string } | null | undefined;
+  return body?.errorCode ?? '';
+}
+
 /**
  * Copy genérico para errores del canal de spectate (SPECTATE_ERROR WS o REST).
  * Ignora el string crudo del backend — nunca se expone al usuario.
@@ -209,6 +218,14 @@ export function getErrorCopy(scope: ErrorCopyScope, error: unknown): string {
   }
 
   if (scope === 'SOCIAL') {
+    // El BE distingue dos estados al enviar una solicitud (409/422):
+    // ya son amigos, o ya hay una solicitud pendiente entre ambos.
+    switch (errorCodeOf(error)) {
+      case 'FriendshipAlreadyExistsException':
+        return 'Ya son amigos.';
+      case 'FriendshipRequestAlreadyPendingException':
+        return 'Ya hay una solicitud de amistad pendiente con este usuario.';
+    }
     switch (status) {
       case 401:
         return '';

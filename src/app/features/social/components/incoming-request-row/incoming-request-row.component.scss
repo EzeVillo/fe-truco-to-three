@@ -52,21 +52,25 @@
     background-color 120ms ease,
     border-color 120ms ease,
     color 120ms ease;
+
+  &--icon {
+    padding: 0 var(--t3-gap-sm);
+  }
 }
 
 .t3-btn--primary {
-  background: var(--t3-cta-bg);
+  background: transparent;
   border-color: transparent;
-  color: var(--t3-cta-text-on);
+  color: var(--t3-gold-500);
 
   @media (hover: hover) {
     &:hover {
-      background: var(--t3-cta-bg-hover);
+      opacity: 0.85;
     }
   }
 
   &:active {
-    background: var(--t3-cta-bg-hover);
+    opacity: 0.7;
   }
 
   &:focus-visible {
@@ -76,20 +80,18 @@
 }
 
 .t3-btn--destructive {
-  background: var(--t3-danger-bg);
-  border-color: var(--t3-danger-border);
+  background: transparent;
+  border-color: transparent;
   color: var(--t3-danger);
 
   @media (hover: hover) {
     &:hover {
-      background: var(--t3-danger-bg);
-      border-color: var(--t3-danger);
+      opacity: 0.85;
     }
   }
 
   &:active {
-    background: var(--t3-danger-bg);
-    border-color: var(--t3-danger);
+    opacity: 0.7;
   }
 
   &:focus-visible {

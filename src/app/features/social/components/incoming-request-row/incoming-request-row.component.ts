@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
 
 /**
  * Fila de una solicitud de amistad recibida (pendiente) — US2.
@@ -7,6 +8,7 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 @Component({
   selector: 'app-incoming-request-row',
   standalone: true,
+  imports: [MatIconModule],
   templateUrl: './incoming-request-row.component.html',
   styleUrl: './incoming-request-row.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

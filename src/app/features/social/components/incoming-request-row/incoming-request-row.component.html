@@ -4,7 +4,23 @@
     <span class="social-row__hint">Quiere ser tu amigo</span>
   </div>
   <div class="social-row__actions">
-    <button type="button" class="t3-btn t3-btn--primary" (click)="onAccept()">Aceptar</button>
-    <button type="button" class="t3-btn t3-btn--destructive" (click)="onDecline()">Rechazar</button>
+    <button
+      type="button"
+      class="t3-btn t3-btn--primary t3-btn--icon"
+      title="Aceptar solicitud"
+      aria-label="Aceptar solicitud"
+      (click)="onAccept()"
+    >
+      <mat-icon>check</mat-icon>
+    </button>
+    <button
+      type="button"
+      class="t3-btn t3-btn--destructive t3-btn--icon"
+      title="Rechazar solicitud"
+      aria-label="Rechazar solicitud"
+      (click)="onDecline()"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
   </div>
 </div>

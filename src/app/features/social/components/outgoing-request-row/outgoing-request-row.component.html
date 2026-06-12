@@ -4,6 +4,14 @@
     <span class="social-row__hint">Pendiente</span>
   </div>
   <div class="social-row__actions">
-    <button type="button" class="t3-btn t3-btn--neutral" (click)="onCancel()">Cancelar</button>
+    <button
+      type="button"
+      class="t3-btn t3-btn--destructive t3-btn--icon"
+      title="Cancelar solicitud"
+      aria-label="Cancelar solicitud"
+      (click)="onCancel()"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
   </div>
 </div>

@@ -67,7 +67,13 @@ describe('FriendsPageComponent', () => {
   });
 
   function friend(over: Partial<FriendSummary> & { friendUsername: string }): FriendSummary {
-    return { online: false, availability: 'AVAILABLE', busyReason: null, spectatableMatch: null, ...over };
+    return {
+      online: false,
+      availability: 'AVAILABLE',
+      busyReason: null,
+      spectatableMatch: null,
+      ...over,
+    };
   }
 
   function text(): string {
@@ -114,6 +120,27 @@ describe('FriendsPageComponent', () => {
     component.onRemove('martina');
     expect(dialogMock.open).toHaveBeenCalled();
     expect(storeMock.removeFriend).toHaveBeenCalledWith('martina');
+  });
+
+  it('aceptar solicitud abre el diálogo y, si se confirma, llama acceptRequest', () => {
+    fixture.detectChanges();
+    component.onAccept('leo');
+    expect(dialogMock.open).toHaveBeenCalled();
+    expect(storeMock.acceptRequest).toHaveBeenCalledWith('leo');
+  });
+
+  it('rechazar solicitud abre el diálogo y, si se confirma, llama declineRequest', () => {
+    fixture.detectChanges();
+    component.onDecline('leo');
+    expect(dialogMock.open).toHaveBeenCalled();
+    expect(storeMock.declineRequest).toHaveBeenCalledWith('leo');
+  });
+
+  it('cancelar solicitud enviada abre el diálogo y, si se confirma, llama cancelRequest', () => {
+    fixture.detectChanges();
+    component.onCancel('martina');
+    expect(dialogMock.open).toHaveBeenCalled();
+    expect(storeMock.cancelRequest).toHaveBeenCalledWith('martina');
   });
 
   it('onInviteToMatch(): navega a crear partida con el amigo preseleccionado', () => {

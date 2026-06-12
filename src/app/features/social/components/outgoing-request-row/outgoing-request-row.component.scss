@@ -52,23 +52,25 @@
     background-color 120ms ease,
     border-color 120ms ease,
     color 120ms ease;
+
+  &--icon {
+    padding: 0 var(--t3-gap-sm);
+  }
 }
 
-.t3-btn--neutral {
+.t3-btn--destructive {
   background: transparent;
-  border-color: var(--t3-btn-neutral-border);
-  color: var(--t3-btn-neutral-text);
+  border-color: transparent;
+  color: var(--t3-danger);
 
   @media (hover: hover) {
     &:hover {
-      background: var(--t3-btn-neutral-bg-hover);
-      border-color: var(--t3-gold-400);
+      opacity: 0.85;
     }
   }
 
   &:active {
-    background: var(--t3-btn-neutral-bg-hover);
-    border-color: var(--t3-gold-500);
+    opacity: 0.7;
   }
 
   &:focus-visible {

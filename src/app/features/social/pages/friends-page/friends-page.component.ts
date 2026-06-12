@@ -63,15 +63,42 @@ export class FriendsPageComponent implements OnInit {
   }
 
   onAccept(username: string): void {
-    this.store.acceptRequest(username);
+    this.confirm(
+      {
+        title: `¿Aceptar a ${username}?`,
+        message: 'Pasarán a ser amigos y podrán invitarse a partidas.',
+        confirmLabel: 'Aceptar',
+        cancelLabel: 'Cancelar',
+        variant: 'primary',
+      },
+      () => this.store.acceptRequest(username),
+    );
   }
 
   onDecline(username: string): void {
-    this.store.declineRequest(username);
+    this.confirm(
+      {
+        title: `¿Rechazar la solicitud de ${username}?`,
+        message: 'Se descartará la solicitud. Podrán volver a enviarte una más adelante.',
+        confirmLabel: 'Rechazar',
+        cancelLabel: 'Cancelar',
+        variant: 'destructive',
+      },
+      () => this.store.declineRequest(username),
+    );
   }
 
   onCancel(username: string): void {
-    this.store.cancelRequest(username);
+    this.confirm(
+      {
+        title: `¿Cancelar la solicitud a ${username}?`,
+        message: 'Se retirará la solicitud enviada. Podés volver a enviarla más adelante.',
+        confirmLabel: 'Cancelar solicitud',
+        cancelLabel: 'Volver',
+        variant: 'destructive',
+      },
+      () => this.store.cancelRequest(username),
+    );
   }
 
   onSpectateMatch(matchId: string): void {
@@ -90,20 +117,27 @@ export class FriendsPageComponent implements OnInit {
   }
 
   onRemove(username: string): void {
-    const data: ConfirmDialogData = {
-      title: `¿Eliminar a ${username}?`,
-      message: 'Dejarán de ser amigos. Podés volver a enviar una solicitud más adelante.',
-      confirmLabel: 'Eliminar',
-      cancelLabel: 'Cancelar',
-      variant: 'destructive',
-    };
+    this.confirm(
+      {
+        title: `¿Eliminar a ${username}?`,
+        message: 'Dejarán de ser amigos. Podés volver a enviar una solicitud más adelante.',
+        confirmLabel: 'Eliminar',
+        cancelLabel: 'Cancelar',
+        variant: 'destructive',
+      },
+      () => this.store.removeFriend(username),
+    );
+  }
+
+  /** Abre el diálogo de confirmación y ejecuta `onConfirmed` sólo si el usuario confirma. */
+  private confirm(data: ConfirmDialogData, onConfirmed: () => void): void {
     const ref = this.dialog.open<ConfirmDialogComponent, ConfirmDialogData, boolean>(
       ConfirmDialogComponent,
       { data, autoFocus: false, restoreFocus: true },
     );
     ref.afterClosed().subscribe((confirmed) => {
       if (confirmed === true) {
-        this.store.removeFriend(username);
+        onConfirmed();
       }
     });
   }

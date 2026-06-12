@@ -1960,6 +1960,8 @@ La siguiente tabla lista todos los `achievementCode` que pueden desbloquearse:
 | `WIN_GAME_FROM_2_2_WITHOUT_CALLS_IN_ROUND`                        | Ganar un game desde score 2-2 en un round donde no se cantó ni envido ni truco                                                                                                                     |
 | `WIN_GAME_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0`              | Ganar un game porque el oponente pierde el round con vale cuatro aceptado (recibe 4 puntos, se pasa de 3), con score 0-0 en el game                                                                |
 | `WIN_GAME_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS` | Ganar un game haciendo que el rival se pase de 3: cantaste truco cuando el rival no tenía cartas, el rival aceptó, y vos te fuiste al mazo dándole los puntos del truco, causando que se pase de 3 |
+| `REACH_CAMPAIGN_TOP_ONE`                                          | Alcanzar el puesto `#1` del ranking del modo campaña                                                                                                                                               |
+| `DEFEAT_ALL_CAMPAIGN_RIVALS`                                      | Ganarle al menos una vez a cada uno de los `100` bots del modo campaña (requiere llegar al `#1` y volver por los rivales salteados al subir)                                                       |
 
 ### 7.5.3 Catálogo de logros
 
@@ -2181,6 +2183,139 @@ Mensaje empujado:
 - **Bots** quedan fuera. Quick Match genera push mientras existe un ticket de cola; al matchear, la
   partida creada genera el push de `match`.
 
+## 7.7 Modo Campaña
+
+Modo single-player de progresión contra un ranking fijo de `100` bots ordenados por puntos. El
+objetivo es alcanzar el puesto `#1`. El jugador arranca con `0` puntos en el fondo del ranking.
+
+Reglas de negocio:
+
+- Solo **usuarios registrados** pueden jugar el modo campaña: iniciar un desafío con un token de
+  invitado (`guest`) se rechaza con `401`.
+- Solo puede desafiarse al bot **inmediatamente superior** en el ranking. Alcanzado el `#1`, se
+  desbloquea desafiar a **cualquier** bot.
+- Todos los enfrentamientos son al **mejor de 5** games. Las partidas de campaña **no** ofrecen
+  revancha.
+- Puntos por victoria: `100 x (games_ganador - games_perdedor)` → 3-0 = `300`, 3-1 = `200`,
+  3-2 = `100`. La **derrota no descuenta** puntos y los puntos nunca son negativos.
+- La posición se deriva de los puntos: para superar a un bot hay que tener **estrictamente más**
+  puntos que él (empatar no alcanza).
+- Cada cruce queda registrado en un head-to-head por rival (`wins`/`losses`).
+- Llegar al `#1` desbloquea `REACH_CAMPAIGN_TOP_ONE`; ganarle al menos una vez a cada uno de los
+  `100` bots desbloquea `DEFEAT_ALL_CAMPAIGN_RIVALS`.
+
+Los bots de campaña **no** aparecen en `GET /api/bots` (catálogo de bots casuales).
+
+### 7.7.1 Obtener la campaña
+
+`GET /api/campaign` — requiere Bearer token.
+
+Devuelve el ranking completo (los `100` bots más el jugador intercalado en su posición real), el
+progreso del jugador y qué rival es desafiable. Si el jugador nunca jugó campaña, se devuelve el
+estado inicial (posición `101`, `0` puntos) sin necesidad de inicializarla.
+
+**Respuesta 200:**
+
+```json
+{
+  "playerPosition": 42,
+  "playerPoints": 14230,
+  "totalBots": 100,
+  "defeatedRivals": 58,
+  "topOneReached": false,
+  "allRivalsDefeated": false,
+  "pointsToNextPosition": 370,
+  "activeChallengeMatchId": null,
+  "ranking": [
+    {
+      "position": 41,
+      "participantId": "c0000000-0000-0000-0000-000000000041",
+      "displayName": "Cacho Toledo",
+      "points": 14600,
+      "player": false,
+      "challengeable": true,
+      "record": {
+        "wins": 0,
+        "losses": 1
+      }
+    },
+    {
+      "position": 42,
+      "participantId": "0c9f...e1",
+      "displayName": null,
+      "points": 14230,
+      "player": true,
+      "challengeable": false,
+      "record": null
+    }
+  ]
+}
+```
+
+| Campo                     | Tipo           | Descripción                                                                   |
+|---------------------------|----------------|-------------------------------------------------------------------------------|
+| `playerPosition`          | int            | Posición del jugador en el ranking (1 = cima)                                 |
+| `playerPoints`            | int            | Puntos acumulados del jugador (nunca negativos)                               |
+| `totalBots`               | int            | Cantidad de bots del ranking (`100`)                                          |
+| `defeatedRivals`          | int            | Cantidad de bots distintos a los que el jugador le ganó al menos una vez      |
+| `topOneReached`           | boolean        | `true` si el jugador alcanzó alguna vez el `#1`                               |
+| `allRivalsDefeated`       | boolean        | `true` si le ganó al menos una vez a cada uno de los `100` bots               |
+| `pointsToNextPosition`    | int \| null    | Puntos faltantes para superar al rival inmediato; `null` si ya está `#1`      |
+| `activeChallengeMatchId`  | string \| null | `matchId` del desafío en curso, o `null` si no hay ninguno                    |
+| `ranking`                 | array          | Ranking ordenado por posición ascendente, con el jugador intercalado          |
+| `ranking[].player`        | boolean        | `true` en la fila del propio jugador (`displayName` y `record` van `null`)    |
+| `ranking[].challengeable` | boolean        | `true` si ese bot puede desafiarse ahora                                      |
+| `ranking[].record`        | object \| null | Head-to-head contra ese bot (`wins`/`losses`); `null` si nunca se enfrentaron |
+
+**Errores:**
+
+| Codigo | Descripcion              |
+|--------|--------------------------|
+| 401    | Token ausente o inválido |
+
+### 7.7.2 Desafiar a un rival
+
+`POST /api/campaign/challenges` — requiere Bearer token de **usuario registrado** (los invitados no
+pueden jugar el modo campaña; ver errores).
+
+Crea una partida al mejor de `5` contra el rival desafiable y la marca como partida de campaña (sin
+revancha). El body es **opcional**:
+
+- Sin body (o `botId` ausente): se desafía al bot inmediatamente superior.
+- Con `botId`: solo se acepta cuando el jugador ya alcanzó el `#1`; permite elegir cualquier rival.
+
+**Request (opcional):**
+
+```json
+{
+  "botId": "c0000000-0000-0000-0000-000000000041"
+}
+```
+
+**Respuesta 200:**
+
+```json
+{
+  "matchId": "550e8400-e29b-41d4-a716-446655440099",
+  "rivalId": "c0000000-0000-0000-0000-000000000041",
+  "rivalName": "Cacho Toledo",
+  "rivalPosition": 41
+}
+```
+
+El `matchId` se juega por el flujo de match existente (`/api/matches/...` y la cola
+`/user/queue/match`). Al terminar, el backend acredita los puntos y emite los pushes de perfil si se
+desbloquea algún logro.
+
+**Errores:**
+
+| Codigo | Descripcion                                                                                          |
+|--------|------------------------------------------------------------------------------------------------------|
+| 400    | `botId` requerido (el jugador ya está `#1` y no hay rival inmediato) o body inválido                 |
+| 401    | Token ausente o inválido, o el token pertenece a un invitado (solo usuarios registrados)            |
+| 404    | `botId` no corresponde a un bot del ranking de campaña                                               |
+| 422    | Desafío no permitido: el bot no es el inmediato superior (antes del `#1`) o ya hay un desafío activo |
+
 ## 8. Enums y valores permitidos
 
 Estos valores son case-sensitive y deben enviarse exactamente igual, en mayusculas y con guiones
@@ -2247,6 +2382,8 @@ bajos cuando aplique. Si el valor no coincide, la API responde `400` con
 - `WIN_GAME_FROM_2_2_WITHOUT_CALLS_IN_ROUND`
 - `WIN_GAME_BUST_OPPONENT_VIA_VALE_CUATRO_LOSS_AT_0_0`
 - `WIN_GAME_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS`
+- `REACH_CAMPAIGN_TOP_ONE`
+- `DEFEAT_ALL_CAMPAIGN_RIVALS`
 
 ## 9. WebSocket / STOMP
 

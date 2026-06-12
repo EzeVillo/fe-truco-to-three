@@ -11,6 +11,10 @@
 npm-debug.log
 yarn-error.log
 
+# Compiled Angular files
+android/
+ios/
+
 # IDEs and editors
 .idea/
 .project

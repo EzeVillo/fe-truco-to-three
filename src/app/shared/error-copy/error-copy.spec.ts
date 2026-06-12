@@ -63,8 +63,8 @@ describe('getErrorCopy - PROFILE', () => {
   });
 
   it('red y servidor devuelven copy de reintento', () => {
-    expect(getErrorCopy('PROFILE', httpErr(0))).toBe('No pudimos cargar el perfil. ReintentÃ¡.');
-    expect(getErrorCopy('PROFILE', httpErr(500))).toBe('No pudimos cargar el perfil. ReintentÃ¡.');
+    expect(getErrorCopy('PROFILE', httpErr(0))).toBe('No pudimos cargar el perfil. Reintentá.');
+    expect(getErrorCopy('PROFILE', httpErr(500))).toBe('No pudimos cargar el perfil. Reintentá.');
   });
 
   it('no filtra el mensaje del backend', () => {
@@ -146,9 +146,7 @@ describe('getErrorCopy — SPECTATE', () => {
   });
 
   it('422 → copy de no autorizado', () => {
-    expect(getErrorCopy('SPECTATE', httpErr(422))).toBe(
-      'No podés entrar a mirar esta partida.',
-    );
+    expect(getErrorCopy('SPECTATE', httpErr(422))).toBe('No podés entrar a mirar esta partida.');
   });
 
   it('0 y 5xx → copy de red', () => {

@@ -1,0 +1,129 @@
+<section class="campaign">
+  <div class="campaign__topbar">
+    <app-back-button
+      label="Volver al lobby"
+      [disabled]="challengingId() !== null"
+      (back)="goBack()"
+    />
+    <h1 class="campaign__title">Modo campaña</h1>
+  </div>
+
+  <div class="campaign__scroll">
+    @if (loading()) {
+      <div class="campaign__state" role="status" aria-live="polite">
+        <mat-spinner diameter="36" />
+        <span>Cargando campaña…</span>
+      </div>
+    } @else if (loadError()) {
+      <div class="campaign__state campaign__state--error" role="alert">
+        <p>{{ loadError() }}</p>
+        <button type="button" class="t3-btn t3-btn--neutral" (click)="retry()">Reintentar</button>
+      </div>
+    } @else if (campaign(); as c) {
+      <header class="campaign__summary">
+        <div class="campaign__summary-main">
+          <span class="campaign__position">#{{ c.playerPosition }}</span>
+          <span class="campaign__points">{{ c.playerPoints }} pts</span>
+        </div>
+
+        <div class="campaign__summary-stats">
+          <span class="campaign__stat">
+            Rivales vencidos: {{ c.defeatedRivals }}/{{ c.totalBots }}
+          </span>
+          @if (c.pointsToNextPosition !== null) {
+            <span class="campaign__stat">
+              Te faltan {{ c.pointsToNextPosition }} pts para superar al siguiente rival
+            </span>
+          }
+        </div>
+
+        @if (c.topOneReached || c.allRivalsDefeated) {
+          <div class="campaign__badges">
+            @if (c.topOneReached) {
+              <span class="campaign__badge">Llegaste al #1</span>
+            }
+            @if (c.allRivalsDefeated) {
+              <span class="campaign__badge">Venciste a los 100</span>
+            }
+          </div>
+        }
+
+        <p class="campaign__hint">
+          Cada desafío se juega al mejor de 5 partidas: 3-0 suma 300 pts, 3-1 suma 200 y 3-2 suma
+          100. Perder no descuenta puntos.
+        </p>
+      </header>
+
+      @if (isGuest()) {
+        <p class="campaign__guest-note" role="note">
+          <mat-icon aria-hidden="true">lock</mat-icon>
+          <span
+            >El modo campaña es solo para jugadores registrados. Podés mirar el ranking, pero para
+            desafiar a un rival necesitás una cuenta.</span
+          >
+        </p>
+      }
+
+      @if (hasActiveChallenge()) {
+        <div class="campaign__active" role="status">
+          <span>Tenés un desafío en curso.</span>
+          <button type="button" class="t3-btn t3-btn--primary" (click)="continueChallenge()">
+            Continuar desafío
+          </button>
+        </div>
+      }
+
+      @if (challengeError()) {
+        <p class="campaign__challenge-error" role="alert">{{ challengeError() }}</p>
+      }
+
+      <ol class="campaign__ranking" aria-label="Ranking de campaña">
+        @for (entry of c.ranking; track entry.participantId) {
+          <li
+            class="campaign__row"
+            [class.campaign__row--player]="entry.player"
+            [class.campaign__row--beaten]="(entry.record?.wins ?? 0) > 0"
+          >
+            <span class="campaign__row-position">#{{ entry.position }}</span>
+
+            <span class="campaign__row-info">
+              <span class="campaign__row-name">
+                {{ entry.player ? playerName() : entry.displayName || 'Bot anónimo' }}
+              </span>
+              @if (entry.record; as record) {
+                <span
+                  class="campaign__row-record"
+                  [attr.aria-label]="
+                    'Le ganaste ' + record.wins + ' veces y perdiste ' + record.losses
+                  "
+                >
+                  G {{ record.wins }} · P {{ record.losses }}
+                </span>
+              }
+            </span>
+
+            @if (entry.challengeable) {
+              <button
+                type="button"
+                class="t3-btn campaign__row-cta"
+                title="Desafiar"
+                aria-label="Desafiar"
+                [disabled]="challengeBlocked()"
+                [attr.aria-busy]="challengingId() === entry.participantId ? 'true' : null"
+                (click)="onChallenge(entry)"
+              >
+                @if (challengingId() === entry.participantId) {
+                  <mat-spinner diameter="16" class="campaign__row-spinner" />
+                } @else {
+                  <mat-icon>sports_esports</mat-icon>
+                }
+              </button>
+            }
+
+            <span class="campaign__row-points">{{ entry.points }} pts</span>
+          </li>
+        }
+      </ol>
+    }
+  </div>
+</section>

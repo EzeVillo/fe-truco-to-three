@@ -79,7 +79,12 @@
 
       <ol class="campaign__ranking" aria-label="Ranking de campaña">
         @for (entry of c.ranking; track entry.participantId) {
-          <li class="campaign__row" [class.campaign__row--player]="entry.player">
+          <li
+            class="campaign__row"
+            [class.campaign__row--player]="entry.player"
+            [class.campaign__row--locked]="!entry.player && !entry.challengeable"
+            (click)="onRowClick(entry)"
+          >
             <span class="campaign__row-position">#{{ entry.position }}</span>
 
             <span class="campaign__row-info">
@@ -111,7 +116,7 @@
                 aria-label="Desafiar"
                 [disabled]="challengeBlocked()"
                 [attr.aria-busy]="challengingId() === entry.participantId ? 'true' : null"
-                (click)="onChallenge(entry)"
+                (click)="onChallenge(entry); $event.stopPropagation()"
               >
                 @if (challengingId() === entry.participantId) {
                   <mat-spinner diameter="16" class="campaign__row-spinner" />
@@ -119,6 +124,10 @@
                   <mat-icon>sports_esports</mat-icon>
                 }
               </button>
+            } @else if (!entry.player) {
+              <span class="campaign__row-lock" aria-hidden="true">
+                <mat-icon>lock</mat-icon>
+              </span>
             }
 
             <span class="campaign__row-points">{{ entry.points }} pts</span>

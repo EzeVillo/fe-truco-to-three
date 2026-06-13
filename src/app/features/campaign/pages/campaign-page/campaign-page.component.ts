@@ -14,6 +14,7 @@ import { Title } from '@angular/platform-browser';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
 import { BackButtonComponent } from '../../../../shared/components/back-button';
 import { CampaignApiService } from '../../services/campaign-api.service';
 import { NavigationLockService } from '../../../../core/services/navigation-lock.service';
@@ -26,6 +27,7 @@ import type {
 } from '../../../../core/models/campaign.models';
 import { getErrorCopy } from '../../../../shared/error-copy/error-copy';
 import { markCampaignMatch } from '../../utils/campaign-match-store';
+import { CampaignBotLockedDialogComponent } from '../../components/campaign-bot-locked-dialog/campaign-bot-locked-dialog.component';
 
 @Component({
   selector: 'app-campaign-page',
@@ -42,6 +44,7 @@ export class CampaignPageComponent implements OnInit {
   private readonly navigationLock = inject(NavigationLockService);
   private readonly authStore = inject(AuthStore);
   private readonly guestRegisterPrompt = inject(GuestRegisterPromptService);
+  private readonly dialog = inject(MatDialog);
   private readonly host = inject(ElementRef<HTMLElement>);
 
   /** Nombre del jugador para el ranking; los invitados no tienen username, caen a "Vos". */
@@ -128,6 +131,14 @@ export class CampaignPageComponent implements OnInit {
     if (matchId) {
       markCampaignMatch(matchId);
       void this.router.navigate(['/match', matchId]);
+    }
+  }
+
+  onRowClick(entry: CampaignRankingEntry): void {
+    if (!entry.player && !entry.challengeable) {
+      this.dialog.open(CampaignBotLockedDialogComponent, {
+        panelClass: 'campaign-bot-locked-dialog',
+      });
     }
   }
 

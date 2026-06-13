@@ -1,0 +1,30 @@
+<div
+  class="bot-locked"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="bot-locked-title"
+  mat-dialog-content
+>
+  <div class="bot-locked__icon-wrap" aria-hidden="true">
+    <mat-icon class="bot-locked__icon">lock</mat-icon>
+  </div>
+
+  <h2 id="bot-locked-title" class="bot-locked__title">Rival bloqueado</h2>
+
+  <p class="bot-locked__body">
+    Solo podés jugar contra el bot que está inmediatamente adelante tuyo en el ranking.
+  </p>
+
+  <p class="bot-locked__body">
+    Para elegir contra cuál querés jugar, tenés que ser el <strong>#1</strong> del ranking.
+  </p>
+
+  <button
+    type="button"
+    class="t3-btn t3-btn--neutral bot-locked__close"
+    cdkFocusInitial
+    (click)="close()"
+  >
+    Entendido
+  </button>
+</div>

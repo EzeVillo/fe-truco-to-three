@@ -202,6 +202,21 @@
       box-shadow: var(--t3-shadow-gold);
       background: var(--t3-gold-bg-subtle);
     }
+
+    &--locked {
+      cursor: pointer;
+
+      @media (hover: hover) {
+        &:hover {
+          background: var(--t3-card-bg-hover, var(--t3-card-bg));
+          border-color: var(--t3-card-border-hover, var(--t3-card-border));
+        }
+      }
+
+      &:active {
+        opacity: 0.85;
+      }
+    }
   }
 
   &__row-position {
@@ -286,6 +301,23 @@
     &:disabled,
     &[disabled] {
       opacity: 0.45;
+    }
+  }
+
+  &__row-lock {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    padding: 0 var(--t3-gap-sm);
+    color: var(--t3-text-dim);
+    opacity: 0.4;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
     }
   }
 

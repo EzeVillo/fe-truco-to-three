@@ -12,6 +12,7 @@ import {
 import { buildJoinUrl } from '../../utils/join-link';
 import { InviteFriendPickerComponent } from '../../../social/components/invite-friend-picker/invite-friend-picker.component';
 import { SocialStore } from '../../../social/services/social.store';
+import { VISIBILITY, type Visibility } from '../../../../core/models/enums';
 
 /**
  * Sala de espera de una partida privada (estados previos a IN_PROGRESS).
@@ -32,8 +33,15 @@ export class WaitingRoomComponent implements OnDestroy {
   readonly isHost = input<boolean>(false);
   /** Id de la partida (target de las invitaciones a amigos). */
   readonly matchId = input<string | null>(null);
-  /** Codigo privado recibido al crear la partida. */
+  /** Codigo recibido al crear la partida (privada o pública). */
   readonly joinCode = input<string | null>(null);
+  /** Visibilidad de la partida; determina el título de la sala. */
+  readonly visibility = input<Visibility>(VISIBILITY.PRIVATE);
+
+  /** Título de la sala según la visibilidad. */
+  readonly title = computed(() =>
+    this.visibility() === VISIBILITY.PUBLIC ? 'Partida pública' : 'Partida privada',
+  );
   /** Nombre del anfitrión. */
   readonly hostUsername = input<string>('');
   /** Nombre del rival; null mientras no se haya unido. */
@@ -221,7 +229,7 @@ export class WaitingRoomLinkSharer {
 
       await navigator.share({
         title: 'Truco a 3',
-        text: 'Unite a mi partida privada',
+        text: 'Unite a mi partida',
         url,
       });
       return true;

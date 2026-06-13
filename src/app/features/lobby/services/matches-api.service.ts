@@ -62,7 +62,7 @@ export class MatchesApiService {
 
   /** §4.2 POST /api/join/{joinCode} — une al jugador a la partida del código. */
   joinByCode(joinCode: string): Observable<JoinResponse> {
-    return this.http.post<JoinResponse>(`${this.baseUrl}/join/${joinCode}`, {});
+    return this.http.post<JoinResponse>(`${this.baseUrl}/join/${joinCode.toUpperCase()}`, {});
   }
 
   /**

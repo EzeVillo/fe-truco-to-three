@@ -140,6 +140,14 @@ export class MatchStateService {
           this.rematch$.next(event);
           return;
         }
+        // `/user/queue/match` es una cola POR USUARIO, no por partida: tras crear y
+        // abandonar varias salas pueden llegar eventos rezagados de una partida
+        // anterior (típico: un `MATCH_CANCELLED` de la sala que acabás de dejar). Si
+        // no filtramos por matchId, ese evento cancela la sala recién creada y se
+        // pierde la pantalla de espera (y su código). Descartamos lo ajeno.
+        if (this.isStaleMatchEvent(event.matchId)) {
+          return;
+        }
         // El contador de espectadores no es estado de juego: se publica al store
         // global (lo lee el header) pero se procesa fuera de la reconciliación por
         // stateVersion para evitar el re-fetch espurio que parpadea el tablero y
@@ -180,6 +188,11 @@ export class MatchStateService {
         // Ambos canales los redirigen al canal dedicado (research D1, feature 014).
         if (isRematchEvent(event as unknown as MatchWsEvent)) {
           this.rematch$.next(event as unknown as MatchWsEvent);
+          return;
+        }
+        // Mismo motivo que en `/user/queue/match`: descartar derivados rezagados de
+        // una partida anterior (la cola es por usuario).
+        if (this.isStaleMatchEvent(event.matchId)) {
           return;
         }
         if (this.loading()) {
@@ -273,6 +286,14 @@ export class MatchStateService {
       },
     });
     this.subscriptions.push(sub);
+  }
+
+  /**
+   * `true` si el evento pertenece a una partida distinta de la actual. Permisivo:
+   * si el evento no trae matchId o todavía no hay partida activa, no se descarta.
+   */
+  private isStaleMatchEvent(matchId: string | undefined): boolean {
+    return !!matchId && !!this.currentMatchId && matchId !== this.currentMatchId;
   }
 
   private fetchSnapshot(matchId: string): void {

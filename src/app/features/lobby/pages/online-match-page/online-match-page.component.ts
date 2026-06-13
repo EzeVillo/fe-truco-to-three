@@ -27,7 +27,7 @@ import type { SeriesFormat } from '../../../../core/models/match.models';
 import { VISIBILITY } from '../../../../core/models/enums';
 import type { Visibility } from '../../../../core/models/enums';
 import type { PublicMatchLobbyItem } from '../../models/public-match-lobby.models';
-import { saveJoinCode } from '../../../match/utils/join-code-store';
+import { saveMatchHandoff } from '../../../match/utils/join-code-store';
 import { getErrorCopy } from '../../../../shared/error-copy/error-copy';
 import { SocialStore } from '../../../social/services/social.store';
 import { NavigationLockService } from '../../../../core/services/navigation-lock.service';
@@ -134,7 +134,21 @@ export class OnlineMatchPageComponent implements OnInit {
     }
 
     if (this.currentUsername() !== null && item.host === this.currentUsername()) {
-      void this.router.navigate(['/match', item.matchId]);
+      // El anfitrión vuelve a su propia partida pública (p. ej. tras salir y volver
+      // a tocar la card). El snapshot REST no trae visibilidad ni joinCode, así que
+      // los arrastramos desde el item del lobby para no caer al default PRIVATE/sin
+      // código. La card pública siempre es PUBLIC y trae su joinCode.
+      if (item.joinCode) {
+        saveMatchHandoff(item.matchId, {
+          joinCode: item.joinCode,
+          visibility: VISIBILITY.PUBLIC,
+        });
+      }
+      void this.router.navigate(['/match', item.matchId], {
+        state: item.joinCode
+          ? { joinCode: item.joinCode, visibility: VISIBILITY.PUBLIC }
+          : { visibility: VISIBILITY.PUBLIC },
+      });
       return;
     }
 
@@ -205,13 +219,13 @@ export class OnlineMatchPageComponent implements OnInit {
         visibility: inviteFriend ? VISIBILITY.PRIVATE : this.visibility(),
       })
       .subscribe({
-        next: ({ matchId, joinCode }) => {
+        next: ({ matchId, joinCode, visibility }) => {
           this.creating.set(false);
-          saveJoinCode(matchId, joinCode);
+          saveMatchHandoff(matchId, { joinCode, visibility });
           if (inviteFriend) {
             this.socialStore.inviteFriend(inviteFriend, matchId);
           }
-          void this.router.navigate(['/match', matchId], { state: { joinCode } });
+          void this.router.navigate(['/match', matchId], { state: { joinCode, visibility } });
         },
         error: (err: unknown) => {
           console.error('[OnlineMatchPage] error creando partida', err);

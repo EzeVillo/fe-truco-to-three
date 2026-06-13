@@ -72,7 +72,9 @@ describe('OnlineMatchPageComponent', () => {
     fixture.componentInstance.onCreate();
 
     expect(createSpy).toHaveBeenCalledWith({ gamesToPlay: 5, visibility: 'PRIVATE' });
-    expect(navSpy).toHaveBeenCalledWith(['/match', 'm1'], { state: { joinCode: 'ABC123' } });
+    expect(navSpy).toHaveBeenCalledWith(['/match', 'm1'], {
+      state: { joinCode: 'ABC123', visibility: 'PRIVATE' },
+    });
   });
 
   it('crea una partida pública cuando se elige visibilidad PUBLIC', () => {
@@ -124,7 +126,9 @@ describe('OnlineMatchPageComponent', () => {
 
     expect(createSpy).toHaveBeenCalledWith({ gamesToPlay: 3, visibility: 'PRIVATE' });
     expect(social.inviteFriend).toHaveBeenCalledWith('martina', 'mf');
-    expect(navSpy).toHaveBeenCalledWith(['/match', 'mf'], { state: { joinCode: 'FRIEND1' } });
+    expect(navSpy).toHaveBeenCalledWith(['/match', 'mf'], {
+      state: { joinCode: 'FRIEND1', visibility: 'PRIVATE' },
+    });
   });
 
   it('por defecto la visibilidad es PRIVATE', () => {
@@ -134,7 +138,7 @@ describe('OnlineMatchPageComponent', () => {
     expect(fixture.componentInstance.visibility()).toBe('PRIVATE');
   });
 
-  it('persiste el joinCode en sessionStorage al crear (recuperable tras recarga)', () => {
+  it('persiste joinCode + visibilidad en sessionStorage al crear (recuperable tras recarga)', () => {
     setup({ createMatch: () => of({ matchId: 'm2', joinCode: 'XYZ789', visibility: 'PRIVATE' }) });
     const fixture = TestBed.createComponent(OnlineMatchPageComponent);
     vi.spyOn(fixture.componentInstance['router'], 'navigate').mockResolvedValue(true);
@@ -142,7 +146,9 @@ describe('OnlineMatchPageComponent', () => {
 
     fixture.componentInstance.onCreate();
 
-    expect(sessionStorage.getItem('t3.joinCode.m2')).toBe('XYZ789');
+    expect(sessionStorage.getItem('t3.matchHandoff.m2')).toBe(
+      JSON.stringify({ joinCode: 'XYZ789', visibility: 'PRIVATE' }),
+    );
   });
 
   it('muestra copy de error de creación sin exponer el mensaje del backend (422)', () => {

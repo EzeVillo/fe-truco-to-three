@@ -20,6 +20,7 @@ import {
   type RematchDialogResult,
 } from '../../components/rematch-dialog/rematch-dialog.component';
 import { mockMatchViewerPlayerOne } from '../../mocks/match-state.mocks';
+import { saveMatchHandoff } from '../../utils/join-code-store';
 import type { RematchSession } from '../../models/rematch.models';
 
 function makeParamMap(params: Record<string, string>) {
@@ -81,11 +82,29 @@ describe('MatchScreenComponent', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionStorage.clear();
   });
 
   it('sets matchId from route params', () => {
     setupComponent({ matchId: 'test-match-123' });
     expect(fixture.componentInstance.matchId()).toBe('test-match-123');
+  });
+
+  it('backfillea joinCode + visibilidad si el handoff se guardó tras montar (carrera con presencia)', () => {
+    // La pantalla se montó sin nav state ni handoff (perdió la carrera con la
+    // auto-navegación por presencia, que llega sin state).
+    setupComponent({ matchId: 'race-match' });
+    expect(fixture.componentInstance.joinCode()).toBeNull();
+
+    // onCreate guarda el handoff DESPUÉS del montaje (callback del POST).
+    saveMatchHandoff('race-match', { joinCode: 'CODE99', visibility: 'PUBLIC' });
+
+    // Al cargar el snapshot, el effect de backfill releé sessionStorage.
+    matchStateService.state.set({ ...mockMatchViewerPlayerOne, matchId: 'race-match' });
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.joinCode()).toBe('CODE99');
+    expect(fixture.componentInstance.visibility()).toBe('PUBLIC');
   });
 
   it('shows spinner while loading', () => {

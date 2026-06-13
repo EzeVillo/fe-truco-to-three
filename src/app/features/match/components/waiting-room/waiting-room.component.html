@@ -1,6 +1,6 @@
 <section class="waiting-room">
   <div class="waiting-room__card">
-    <h1 class="waiting-room__title">Partida privada</h1>
+    <h1 class="waiting-room__title">{{ title() }}</h1>
 
     @if (isHost() && joinCode()) {
       <div class="waiting-room__code-block">

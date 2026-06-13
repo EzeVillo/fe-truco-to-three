@@ -1,31 +1,49 @@
 /**
- * Persistencia efímera del joinCode de una partida privada, por matchId.
+ * Persistencia efímera del "handoff" de una partida recién creada, por matchId:
+ * el joinCode compartible y la visibilidad (PUBLIC | PRIVATE).
  *
- * El snapshot REST (`GET /api/matches/{id}`, §4.14) no devuelve el joinCode, así
- * que el anfitrión lo recibe al crear y lo necesita visible en la sala de espera
- * incluso tras recargar. Se usa sessionStorage (acotado a la pestaña/sesión) como
- * mitigación; el código es efímero y se limpia al iniciar/cancelar/salir.
- * Feature 015 (research D5).
+ * El snapshot REST (`GET /api/matches/{id}`, §4.14) no devuelve ni el joinCode ni
+ * la visibilidad, así que el anfitrión los recibe al crear y los necesita en la
+ * sala de espera incluso tras recargar (título correcto + código a compartir). Se
+ * usa sessionStorage (acotado a la pestaña/sesión) como mitigación; es efímero y
+ * se limpia al iniciar/cancelar/salir. Feature 015 (research D5).
  */
-const PREFIX = 't3.joinCode.';
+import { VISIBILITY, type Visibility } from '../../../core/models/enums';
 
-export function saveJoinCode(matchId: string, joinCode: string): void {
+const PREFIX = 't3.matchHandoff.';
+
+export interface MatchHandoff {
+  joinCode: string;
+  visibility: Visibility;
+}
+
+export function saveMatchHandoff(matchId: string, handoff: MatchHandoff): void {
   try {
-    sessionStorage.setItem(PREFIX + matchId, joinCode);
+    sessionStorage.setItem(PREFIX + matchId, JSON.stringify(handoff));
   } catch {
     // sessionStorage no disponible (modo privado estricto): degradar a no-op.
   }
 }
 
-export function readJoinCode(matchId: string): string | null {
+export function readMatchHandoff(matchId: string): MatchHandoff | null {
   try {
-    return sessionStorage.getItem(PREFIX + matchId);
+    const raw = sessionStorage.getItem(PREFIX + matchId);
+    if (!raw) {
+      return null;
+    }
+    const parsed = JSON.parse(raw) as Partial<MatchHandoff> | null;
+    if (!parsed || typeof parsed.joinCode !== 'string') {
+      return null;
+    }
+    const visibility =
+      parsed.visibility === VISIBILITY.PUBLIC ? VISIBILITY.PUBLIC : VISIBILITY.PRIVATE;
+    return { joinCode: parsed.joinCode, visibility };
   } catch {
     return null;
   }
 }
 
-export function clearJoinCode(matchId: string): void {
+export function clearMatchHandoff(matchId: string): void {
   try {
     sessionStorage.removeItem(PREFIX + matchId);
   } catch {

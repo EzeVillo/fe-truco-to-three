@@ -181,6 +181,36 @@ describe('MatchStateService', () => {
       expect(mockEventQueue.enqueueTransactional).toHaveBeenLastCalledWith(wsEvent);
     });
 
+    it('descarta eventos de OTRA partida (la cola /user/queue/match es por usuario)', () => {
+      const eventSubject = mockWsService.getEventSubject();
+
+      service.init('test-match');
+      flushSnapshot();
+
+      // Evento rezagado de una sala anterior (típico tras crear/abandonar varias):
+      // sin filtro por matchId, un MATCH_CANCELLED ajeno cancelaría la sala actual.
+      const stale: MatchWsEvent = {
+        matchId: 'otra-partida',
+        eventType: 'MATCH_CANCELLED',
+        timestamp: Date.now(),
+        payload: {},
+        stateVersion: 2,
+      };
+      eventSubject.next(stale);
+      expect(mockEventQueue.enqueueTransactional).not.toHaveBeenCalled();
+
+      // Un evento de la partida actual sí se procesa.
+      const own: MatchWsEvent = {
+        matchId: 'test-match',
+        eventType: 'TRUCO_CALLED',
+        timestamp: Date.now(),
+        payload: { callerSeat: 'PLAYER_TWO', call: 'TRUCO' },
+        stateVersion: 2,
+      };
+      eventSubject.next(own);
+      expect(mockEventQueue.enqueueTransactional).toHaveBeenCalledTimes(1);
+    });
+
     it('PLAYER_JOINED refresca el roster inmediatamente para mostrar el nombre del rival', () => {
       const eventSubject = mockWsService.getEventSubject();
 

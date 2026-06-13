@@ -69,6 +69,23 @@ describe('WaitingRoomComponent', () => {
     expect((startBtn.nativeElement as HTMLButtonElement).disabled).toBe(true);
   });
 
+  it('titula segun la visibilidad de la partida', () => {
+    setup();
+    const fixture = TestBed.createComponent(WaitingRoomComponent);
+    fixture.componentRef.setInput('hostUsername', 'juancho');
+    fixture.detectChanges();
+    // Por defecto (PRIVATE).
+    expect(
+      fixture.debugElement.query(By.css('.waiting-room__title')).nativeElement.textContent,
+    ).toContain('Partida privada');
+
+    fixture.componentRef.setInput('visibility', 'PUBLIC');
+    fixture.detectChanges();
+    expect(
+      fixture.debugElement.query(By.css('.waiting-room__title')).nativeElement.textContent,
+    ).toContain('Partida pública');
+  });
+
   it('anfitrion: muestra codigo aunque el flujo haya pedido ocultar controles', () => {
     setup();
     const fixture = TestBed.createComponent(WaitingRoomComponent);

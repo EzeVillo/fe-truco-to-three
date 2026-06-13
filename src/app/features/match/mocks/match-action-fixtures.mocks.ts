@@ -43,6 +43,7 @@ const BASE_MATCH: MatchState = {
     turnDurationMillis: null,
     actionDeadlineSeat: null,
   },
+  lobby: null,
 };
 
 // 1. Acciones comunes disponibles (todas habilitadas)

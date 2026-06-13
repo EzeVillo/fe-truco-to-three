@@ -45,6 +45,7 @@ export const mockMatchViewerPlayerOne: MatchState = {
     turnDurationMillis: null,
     actionDeadlineSeat: null,
   },
+  lobby: null,
 } as const satisfies MatchState;
 
 export const mockMatchViewerPlayerTwo: MatchState = {
@@ -87,6 +88,7 @@ export const mockMatchViewerPlayerTwo: MatchState = {
     turnDurationMillis: null,
     actionDeadlineSeat: null,
   },
+  lobby: null,
 } as const satisfies MatchState;
 
 export const mockMatchEmptyTable: MatchState = {
@@ -124,6 +126,7 @@ export const mockMatchEmptyTable: MatchState = {
     turnDurationMillis: null,
     actionDeadlineSeat: null,
   },
+  lobby: null,
 } as const satisfies MatchState;
 
 export const mockMatchAsymmetricHand: MatchState = {
@@ -163,4 +166,5 @@ export const mockMatchAsymmetricHand: MatchState = {
     turnDurationMillis: null,
     actionDeadlineSeat: null,
   },
+  lobby: null,
 } as const satisfies MatchState;

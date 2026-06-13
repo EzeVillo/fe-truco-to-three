@@ -27,7 +27,6 @@ import { WaitingRoomComponent } from '../../components/waiting-room/waiting-room
 import { ChatPanelComponent } from '../../../chat/components/chat-panel/chat-panel.component';
 import { ChatStore } from '../../../chat/services/chat.store';
 import { MatchesApiService } from '../../../lobby/services/matches-api.service';
-import { readMatchHandoff, clearMatchHandoff } from '../../utils/join-code-store';
 import { VISIBILITY, type Visibility } from '../../../../core/models/enums';
 import {
   GameWonDialogComponent,
@@ -100,10 +99,17 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   readonly opponentCallText = signal<string | null>(null);
 
   // ---- Sala de espera (feature 015-private-match-code) ----
+  // joinCode y visibilidad salen directo del snapshot REST (`lobby`, §4.14): el
+  // backend los devuelve a quien ya está sentado en la sala, así que son fuente de
+  // verdad estable ante creación/recarga/reconexión, sin router state ni storage.
   /** Código compartible de la partida (solo relevante para el anfitrión). */
-  readonly joinCode = signal<string | null>(null);
+  readonly joinCode = computed<string | null>(
+    () => this.matchStateService.state()?.lobby?.joinCode ?? null,
+  );
   /** Visibilidad de la partida (para el título de la sala de espera). */
-  readonly visibility = signal<Visibility>(VISIBILITY.PRIVATE);
+  readonly visibility = computed<Visibility>(
+    () => this.matchStateService.state()?.lobby?.visibility ?? VISIBILITY.PRIVATE,
+  );
   /** Acción de inicio en curso. */
   readonly starting = signal<boolean>(false);
   /** El visor ya confirmo que esta listo para comenzar. */
@@ -211,8 +217,6 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   readonly chatStore = inject(ChatStore);
   private readonly destroyRef = inject(DestroyRef);
   private _rematchInited = false;
-  /** matchId para el que ya se intentó el backfill del handoff (joinCode/visibilidad). */
-  private _handoffBackfilledFor: string | null = null;
   /** Ref al diálogo de revancha abierto, para cerrarlo si navegamos antes de su propio cierre. */
   private rematchDialogRef: MatDialogRef<RematchDialogComponent, RematchDialogResult> | null = null;
   /** matchId para el que ya se hidrató el bubble de canto desde el snapshot. */
@@ -259,29 +263,6 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
         this._rematchInited = true;
         const hasActiveRematch = this.presenceCoordinator.presence()?.rematch?.originMatchId === id;
         this.rematchStateService.init(id, state.viewerSeat, hasActiveRematch);
-      }
-    });
-
-    // Backfill del handoff (joinCode + visibilidad) recién creado. La auto-navegación
-    // por presencia puede montar esta pantalla ANTES de que `onCreate` guarde el
-    // handoff (carrera evento WS de presencia vs respuesta HTTP del POST). Como esa
-    // navegación va sin `state` y la 2da navegación con `state` se descarta
-    // (`onSameUrlNavigation: 'ignore'`), el código quedaría perdido. Cuando el
-    // snapshot ya cargó, `saveMatchHandoff` seguro corrió: releemos sessionStorage
-    // una vez por partida. Solo backfillea si todavía no hay código; nunca pisa.
-    effect(() => {
-      const loaded = this.matchStateService.state() !== null;
-      const id = this.matchId();
-      if (!loaded || !id || this._handoffBackfilledFor === id) {
-        return;
-      }
-      this._handoffBackfilledFor = id;
-      if (this.joinCode() === null) {
-        const stored = readMatchHandoff(id);
-        if (stored) {
-          this.joinCode.set(stored.joinCode);
-          this.visibility.set(stored.visibility);
-        }
       }
     });
 
@@ -339,7 +320,6 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
       }
       this.matchId.set(newId);
       this._rematchInited = false;
-      this._handoffBackfilledFor = null;
       this._callHydratedMatchId = null;
       this.selfCallText.set(null);
       this.opponentCallText.set(null);
@@ -348,18 +328,8 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
       this.starting.set(false);
       this.selfReady.set(false);
       this.opponentReady.set(false);
-      // Recuperar joinCode + visibilidad: primero del navigation state (recién
-      // creada), luego de sessionStorage (sobrevive a recarga). El snapshot REST
-      // no trae ninguno de los dos. Si esta navegación perdió la carrera con la
-      // auto-navegación por presencia (sin state y aún sin handoff guardado), el
-      // effect de backfill los completa cuando carga el snapshot. Feature 015 (D5).
-      const navState = (history.state ?? {}) as {
-        joinCode?: string;
-        visibility?: Visibility;
-      };
-      const stored = readMatchHandoff(newId);
-      this.joinCode.set(navState.joinCode ?? stored?.joinCode ?? null);
-      this.visibility.set(navState.visibility ?? stored?.visibility ?? VISIBILITY.PRIVATE);
+      // joinCode + visibilidad ya no se arrastran por navegación: el snapshot REST
+      // (`lobby`, §4.14) los trae y `joinCode()`/`visibility()` los derivan de él.
       // Si navegamos a otra partida (típico: revancha confirmada cuya navegación llegó
       // por presence antes de procesar REMATCH_CONFIRMED), el reset() de abajo deja la
       // sesión en null y el diálogo de revancha quedaría colgado mostrando "Salir" con la
@@ -372,7 +342,6 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
 
     // Cancelación de la sala antes de empezar (rival notificado). Feature 015.
     this._preGameClosedSub = this.matchStateService.preGameClosed$.subscribe(() => {
-      clearMatchHandoff(this.matchId());
       this.cancelledNotice.set('La partida fue cancelada.');
     });
 
@@ -602,7 +571,6 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
       next: () => {
         this.selfReady.set(true);
         this.starting.set(false);
-        clearMatchHandoff(id);
         // El status pasa a IN_PROGRESS al llegar GAME_STARTED (reducer).
       },
       error: () => {
@@ -636,7 +604,6 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     this.leaving.set(true);
     this.matchesApiService.leaveMatch(id).subscribe({
       next: () => {
-        clearMatchHandoff(id);
         this.router.navigate(['/lobby']);
       },
       error: () => {

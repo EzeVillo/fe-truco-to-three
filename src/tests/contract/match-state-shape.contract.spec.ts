@@ -20,6 +20,7 @@ const REQUIRED_TOP_LEVEL_KEYS: (keyof MatchState)[] = [
   'gamesWonPlayerTwo',
   'matchWinner',
   'roundGame',
+  'lobby',
 ];
 
 const REQUIRED_ROUND_STATE_KEYS = [

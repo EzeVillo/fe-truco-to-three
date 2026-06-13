@@ -176,6 +176,34 @@ Ejemplo:
 }
 ```
 
+### 2.1 Errores de social y amistad
+
+La capa social (`/api/social/**`) usa los siguientes `errorCode` adicionales. Todos los endpoints
+sociales requieren un usuario registrado; un token de guest devuelve `401`
+(`SocialFeatureRequiresRegisteredUserException`).
+
+| errorCode                                            | HTTP  | Significado                                                                          |
+|------------------------------------------------------|-------|--------------------------------------------------------------------------------------|
+| `SocialFeatureRequiresRegisteredUserException`       | `401` | La funcionalidad social requiere un usuario registrado (no guest).                   |
+| `SocialUserNotFoundException`                        | `404` | El `username` indicado no corresponde a un usuario registrado.                       |
+| `FriendshipNotFoundException`                        | `404` | No existe la amistad/solicitud buscada para el par de jugadores.                     |
+| `InvitableResourceNotFoundException`                 | `404` | El recurso destino de una invitacion social (`MATCH`, `LEAGUE`, `CUP`) no existe.    |
+| `ResourceInvitationNotFoundException`                | `404` | La invitacion social no existe.                                                      |
+| `FriendshipRequestAlreadyPendingException`           | `409` | Ya existe una solicitud de amistad pendiente entre ambos usuarios.                   |
+| `FriendshipAlreadyExistsException`                   | `409` | Ya existe una amistad aceptada entre ambos usuarios.                                 |
+| `ResourceInvitationAlreadyExistsException`           | `409` | Ya existe una invitacion social pendiente para ese amigo y recurso.                  |
+| `ResourceInvitationTargetUnavailableException`       | `409` | El recurso destino ya no admite joins.                                               |
+| `FriendshipRequiredException`                        | `409` | Se requiere una amistad aceptada para realizar la accion.                            |
+| `CannotFriendYourselfException`                      | `422` | Un jugador intento enviarse una solicitud de amistad a si mismo.                     |
+| `FriendshipNotPendingException`                      | `422` | La solicitud de amistad no esta en estado `PENDING` cuando la operacion lo requiere. |
+| `FriendshipNotAcceptedException`                     | `422` | La amistad no esta en estado `ACCEPTED` cuando la operacion lo requiere.             |
+| `OnlyAddresseeCanRespondFriendRequestException`      | `422` | Solo el destinatario puede aceptar/rechazar una solicitud de amistad.                |
+| `OnlyRequesterCanCancelFriendRequestException`       | `422` | Solo el solicitante puede cancelar una solicitud de amistad.                         |
+| `PlayerNotPartOfFriendshipException`                 | `422` | El jugador autenticado no participa de la amistad.                                   |
+| `OnlyRecipientCanRespondResourceInvitationException` | `422` | Solo el destinatario puede aceptar/rechazar una invitacion social.                   |
+| `OnlySenderCanCancelResourceInvitationException`     | `422` | Solo el remitente puede cancelar una invitacion social.                              |
+| `ResourceInvitationNotPendingException`              | `422` | La invitacion social no esta en estado `PENDING` cuando la operacion lo requiere.    |
+
 ## 3. API REST - Auth
 
 ### 3.1 Registrar usuario
@@ -655,6 +683,7 @@ Response `200`:
   "gamesWonPlayerTwo": 0,
   "matchWinner": null,
   "stateVersion": 5,
+  "lobby": null,
   "roundGame": {
     "status": "IN_PROGRESS",
     "currentTurn": "juancho",
@@ -713,6 +742,26 @@ Response `200`:
 - `scorePlayerOne` y `scorePlayerTwo` representan el puntaje del game actual y viven a nivel
   `match`
 - `roundGame` es `null` si la partida no está `IN_PROGRESS`
+- `lobby` es la **vista de sala de espera**: `null` salvo que la partida esté en
+  `WAITING_FOR_PLAYERS` o `READY`. Es mutuamente excluyente con `roundGame` (nunca ambos no-null).
+  Permite reconstruir la sala al reconectar sin haber guardado el `joinCode` de la respuesta de
+  creación. Shape cuando la partida está esperando:
+
+  ```json
+  "lobby": {
+    "visibility": "PRIVATE",
+    "joinCode": "ABCD2345",
+    "lobbyTimeoutDeadline": 1772768488123,
+    "readyPlayerOne": true,
+    "readyPlayerTwo": false
+  }
+  ```
+
+  - `joinCode` solo se devuelve a quien ya está sentado en la partida (el endpoint valida
+    pertenencia), por lo que no expone el código de un match privado a terceros.
+  - `lobbyTimeoutDeadline` (`epochMillis`, absoluto) es el instante en que la sala se cancela por
+    inactividad (`lastActivityAt + lobby-timeout`, 5 min por defecto). `null` si no corre reloj.
+    Es independiente del temporizador de turno (§4.18), que solo aplica en juego.
 - `myCards` contiene solo las cartas del jugador autenticado
 - `availableActions` refleja las acciones disponibles para el jugador autenticado
 - `actionDeadline`, `turnDurationMillis` y `actionDeadlineSeat` describen el temporizador de
@@ -897,6 +946,13 @@ Errores:
 - `422` si el jugador no es participante de la sesion
 
 ### 4.18 Temporizador de turno (timeout por inactividad)
+
+El timeout de una partida tiene **dos relojes según la fase**, configurables por separado:
+
+| Fase                                           | Propiedad                           | Default     | Acción al vencer                                                                                 |
+|------------------------------------------------|-------------------------------------|-------------|--------------------------------------------------------------------------------------------------|
+| Sala de espera (`WAITING_FOR_PLAYERS`/`READY`) | `truco.match.lobby-timeout-seconds` | 300 (5 min) | La sala se **cancela** (`MATCH_CANCELLED`). Se expone como `lobby.lobbyTimeoutDeadline` (§4.14). |
+| En juego (`IN_PROGRESS`)                       | `truco.match.play-timeout-seconds`  | 30          | Forfeit del que debe actuar (`MATCH_FORFEITED`). Es el reloj de turno descrito abajo.            |
 
 Mientras la partida está `IN_PROGRESS`, el jugador que debe actuar (jugar carta o responder un
 canto) dispone de un plazo limitado. Si lo agota, el backend declara forfeit administrativo y emite
@@ -1152,24 +1208,30 @@ Response `200`:
         }
       ]
     }
-  ]
+  ],
+  "visibility": "PRIVATE",
+  "joinCode": "ABCD2345",
+  "lobbyTimeoutDeadline": null
 }
 ```
 
 Campos de nivel raíz:
 
-| Campo           | Tipo            | Descripción                                                            |
-|-----------------|-----------------|------------------------------------------------------------------------|
-| `leagueId`      | `string`        | ID de la liga.                                                         |
-| `status`        | `string` (enum) | Estado de la liga. Ver tabla de estados abajo.                         |
-| `host`          | `string`        | Nombre visible del creador de la sala.                                 |
-| `totalSlots`    | `int`           | Cupo total de jugadores configurado para la liga.                      |
-| `occupiedSlots` | `int`           | Cantidad actual de participantes en la sala.                           |
-| `canStart`      | `boolean`       | `true` si el usuario autenticado puede iniciar la liga en este estado. |
-| `participants`  | `array`         | Participantes actuales de la sala, en orden de ingreso.                |
-| `standings`     | `array`         | Tabla de posiciones, ordenada por `wins` descendente.                  |
-| `winners`       | `array<string>` | Nombre(s) visible(s) del/los líder(es). Ver nota abajo.                |
-| `matchdays`     | `array`         | Calendario completo, una entrada por jornada.                          |
+| Campo                  | Tipo            | Descripción                                                                                                             |
+|------------------------|-----------------|-------------------------------------------------------------------------------------------------------------------------|
+| `leagueId`             | `string`        | ID de la liga.                                                                                                          |
+| `status`               | `string` (enum) | Estado de la liga. Ver tabla de estados abajo.                                                                          |
+| `host`                 | `string`        | Nombre visible del creador de la sala.                                                                                  |
+| `totalSlots`           | `int`           | Cupo total de jugadores configurado para la liga.                                                                       |
+| `occupiedSlots`        | `int`           | Cantidad actual de participantes en la sala.                                                                            |
+| `canStart`             | `boolean`       | `true` si el usuario autenticado puede iniciar la liga en este estado.                                                  |
+| `participants`         | `array`         | Participantes actuales de la sala, en orden de ingreso.                                                                 |
+| `standings`            | `array`         | Tabla de posiciones, ordenada por `wins` descendente.                                                                   |
+| `winners`              | `array<string>` | Nombre(s) visible(s) del/los líder(es). Ver nota abajo.                                                                 |
+| `matchdays`            | `array`         | Calendario completo, una entrada por jornada.                                                                           |
+| `visibility`           | `string` (enum) | `PUBLIC` o `PRIVATE`. Para reconstruir la sala al reconectar.                                                           |
+| `joinCode`             | `string`        | Código para invitar/unirse. Solo visible para participantes.                                                            |
+| `lobbyTimeoutDeadline` | `epochMillis`   | Instante en que la sala expira por inactividad (`lobby-timeout`, 600 s por defecto). `null` fuera de la fase de espera. |
 
 Nota para sala de espera: `participants`, `totalSlots`, `occupiedSlots`, `host`
 y `canStart` son la fuente para renderizar la sala antes de iniciar. No inferir
@@ -1444,12 +1506,23 @@ Response `200`:
       ]
     }
   ],
-  "champion": null
+  "champion": null,
+  "visibility": "PRIVATE",
+  "joinCode": "ABCD2345",
+  "lobbyTimeoutDeadline": null
 }
 ```
 
 Cuando la copa finaliza, `status` es `FINISHED` y `champion` contiene el `displayName` del
 campeón.
+
+Campos de sala de espera (para reconstruir el lobby al reconectar):
+
+- `visibility` (`PUBLIC`/`PRIVATE`) y `joinCode` (solo visible para participantes) permiten
+  re-mostrar y compartir la sala sin haber guardado el código de la respuesta de creación.
+- `lobbyTimeoutDeadline` (`epochMillis`) es el instante en que la sala expira por inactividad
+  (`lobby-timeout`, 600 s por defecto); `null` fuera de la fase de espera. El torneo en curso no
+  tiene timeout propio: el tiempo lo controlan los matches internos.
 
 Errores:
 
@@ -1685,17 +1758,44 @@ Request:
 
 Response `204`: sin body.
 
+Errores:
+
+- `401` si el token es invalido, esta ausente o pertenece a un guest
+  (`SocialFeatureRequiresRegisteredUserException`)
+- `404` si el `username` no existe (`SocialUserNotFoundException`)
+- `409` si ya existe una solicitud pendiente (`FriendshipRequestAlreadyPendingException`) o una
+  amistad aceptada (`FriendshipAlreadyExistsException`) entre ambos usuarios
+- `422` si se envia una solicitud a si mismo (`CannotFriendYourselfException`)
+
 ### 7.4.2 Aceptar amistad
 
 `POST /api/social/friendship-requests/{username}/accept`
 
 Response `204`: sin body.
 
+Errores:
+
+- `401` si el token es invalido, esta ausente o pertenece a un guest
+  (`SocialFeatureRequiresRegisteredUserException`)
+- `404` si el `username` no existe (`SocialUserNotFoundException`) o no hay una solicitud pendiente
+  de ese usuario (`FriendshipNotFoundException`)
+- `422` si la solicitud no esta `PENDING` (`FriendshipNotPendingException`) o el usuario
+  autenticado no es el destinatario (`OnlyAddresseeCanRespondFriendRequestException`)
+
 ### 7.4.3 Rechazar amistad
 
 `POST /api/social/friendship-requests/{username}/decline`
 
 Response `204`: sin body.
+
+Errores:
+
+- `401` si el token es invalido, esta ausente o pertenece a un guest
+  (`SocialFeatureRequiresRegisteredUserException`)
+- `404` si el `username` no existe (`SocialUserNotFoundException`) o no hay una solicitud pendiente
+  de ese usuario (`FriendshipNotFoundException`)
+- `422` si la solicitud no esta `PENDING` (`FriendshipNotPendingException`) o el usuario
+  autenticado no es el destinatario (`OnlyAddresseeCanRespondFriendRequestException`)
 
 ### 7.4.4 Cancelar solicitud de amistad
 
@@ -1705,6 +1805,15 @@ Response `204`: sin body.
 
 Solo puede llamarlo el requester (quien envió la solicitud). El addressee recibe una notificación
 WebSocket `FRIEND_REQUEST_CANCELLED`.
+
+Errores:
+
+- `401` si el token es invalido, esta ausente o pertenece a un guest
+  (`SocialFeatureRequiresRegisteredUserException`)
+- `404` si el `username` no existe (`SocialUserNotFoundException`) o no hay una solicitud pendiente
+  hacia ese usuario (`FriendshipNotFoundException`)
+- `422` si la solicitud no esta `PENDING` (`FriendshipNotPendingException`) o el usuario
+  autenticado no es el solicitante (`OnlyRequesterCanCancelFriendRequestException`)
 
 ### 7.4.4b Eliminar amigo
 
@@ -1718,8 +1827,12 @@ de amistad al mismo usuario.
 
 Errores:
 
-- `404` si la amistad no existe
-- `422` si la amistad no en estado `ACCEPTED`
+- `401` si el token es invalido, esta ausente o pertenece a un guest
+  (`SocialFeatureRequiresRegisteredUserException`)
+- `404` si el `username` no existe (`SocialUserNotFoundException`) o no hay una amistad aceptada
+  con ese usuario (`FriendshipNotFoundException`)
+- `422` si la amistad no esta `ACCEPTED` (`FriendshipNotAcceptedException`) o el usuario
+  autenticado no participa de ella (`PlayerNotPartOfFriendshipException`)
 
 ### 7.4.5 Listar amigos
 
@@ -1812,6 +1925,21 @@ Response `200`:
 }
 ```
 
+Errores:
+
+- `401` si el token es invalido, esta ausente o pertenece a un guest
+  (`SocialFeatureRequiresRegisteredUserException`)
+- `404` si el `recipientUsername` no existe (`SocialUserNotFoundException`)
+- `409` si no hay amistad aceptada con el destinatario (`FriendshipRequiredException`), el
+  destinatario no esta disponible (`PlayerAlreadyInActiveMatchException`,
+  `PlayerHasOpenRematchSessionException`, `PlayerAlreadyInQueueException`,
+  `PlayerIsSpectatingException`, `PlayerBusyInLeagueException`,
+  `PlayerAlreadyInWaitingLeagueException`, `PlayerBusyInCupException`,
+  `PlayerAlreadyInWaitingCupException`), ya existe una invitacion pendiente para ese amigo y
+  recurso (`ResourceInvitationAlreadyExistsException`), el recurso no existe
+  (`InvitableResourceNotFoundException`) o el recurso ya no admite joins
+  (`ResourceInvitationTargetUnavailableException`)
+
 ### 7.4.7 Aceptar invitacion social
 
 `POST /api/social/invitations/{id}/accept`
@@ -1823,11 +1951,28 @@ Semantica:
 - el backend hace `join` directo sobre el recurso destino
 - si el recurso ya no admite join, la invitacion pasa a `EXPIRED` y responde error
 
+Errores:
+
+- `401` si el token es invalido, esta ausente o pertenece a un guest
+  (`SocialFeatureRequiresRegisteredUserException`)
+- `404` si la invitacion no existe (`ResourceInvitationNotFoundException`)
+- `409` si el recurso ya no admite joins (`ResourceInvitationTargetUnavailableException`)
+- `422` si la invitacion no esta `PENDING` (`ResourceInvitationNotPendingException`) o el usuario
+  autenticado no es el destinatario (`OnlyRecipientCanRespondResourceInvitationException`)
+
 ### 7.4.8 Rechazar invitacion social
 
 `POST /api/social/invitations/{id}/decline`
 
 Response `204`: sin body.
+
+Errores:
+
+- `401` si el token es invalido, esta ausente o pertenece a un guest
+  (`SocialFeatureRequiresRegisteredUserException`)
+- `404` si la invitacion no existe (`ResourceInvitationNotFoundException`)
+- `422` si la invitacion no esta `PENDING` (`ResourceInvitationNotPendingException`) o el usuario
+  autenticado no es el destinatario (`OnlyRecipientCanRespondResourceInvitationException`)
 
 ### 7.4.9 Listar invitaciones recibidas
 
@@ -1867,10 +2012,14 @@ Response `200`: arreglo de `OutgoingResourceInvitationResponse`.
 
 Cancela una invitacion pendiente enviada por el jugador autenticado.
 
+Errores:
+
 - `204` si se cancela correctamente
-- `401` si el token es invalido o esta ausente
-- `404` si la invitacion no existe
-- `422` si no se puede cancelar (ya fue aceptada, rechazada o expirada)
+- `401` si el token es invalido, esta ausente o pertenece a un guest
+  (`SocialFeatureRequiresRegisteredUserException`)
+- `404` si la invitacion no existe (`ResourceInvitationNotFoundException`)
+- `422` si la invitacion no esta `PENDING` (`ResourceInvitationNotPendingException`) o el usuario
+  autenticado no es el remitente (`OnlySenderCanCancelResourceInvitationException`)
 
 ### 7.4.13 Expiracion configurable de invitaciones
 

@@ -88,6 +88,26 @@ export interface RoundState {
 
 export type ViewerSeat = 'PLAYER_ONE' | 'PLAYER_TWO';
 
+/**
+ * Vista de sala de espera del snapshot (§4.14, campo `lobby`). El backend la
+ * devuelve sólo a quien ya está sentado en la partida y únicamente mientras está
+ * en `WAITING_FOR_PLAYERS` o `READY` (es `null` en cualquier otro estado, mutuamente
+ * excluyente con `roundGame`). Es la fuente de verdad para reconstruir la sala al
+ * crear/recargar/reconectar sin depender del router state ni de sessionStorage.
+ */
+export interface MatchLobby {
+  /** Visibilidad de la sala, para el título de la sala de espera. */
+  visibility: Visibility;
+  /** Código compartible para que un segundo jugador se una (§4.2). */
+  joinCode: string;
+  /** epochMillis en que la sala se cancela por inactividad; `null` si no corre reloj. */
+  lobbyTimeoutDeadline: number | null;
+  /** El asiento PLAYER_ONE ya confirmó que está listo (`/start`). */
+  readyPlayerOne: boolean;
+  /** El asiento PLAYER_TWO ya confirmó que está listo (`/start`). */
+  readyPlayerTwo: boolean;
+}
+
 export interface MatchState {
   matchId: string;
   status: MatchStatus;
@@ -104,6 +124,9 @@ export interface MatchState {
   gamesWonPlayerTwo: number;
   matchWinner: string | null;
   roundGame: RoundState | null; // null si status !== 'IN_PROGRESS'
+  // Vista de sala de espera (§4.14). Sólo no-null en WAITING_FOR_PLAYERS/READY y
+  // mutuamente excluyente con roundGame. Trae joinCode + visibilidad para el host.
+  lobby: MatchLobby | null;
 }
 
 // ---------- Feature 007-match-rest-actions: request DTOs para acciones ----------

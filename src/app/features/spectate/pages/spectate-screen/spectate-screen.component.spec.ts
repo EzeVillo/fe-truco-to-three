@@ -8,7 +8,12 @@ import { SpectateStateService } from '../../services/spectate-state.service';
 import { signal } from '@angular/core';
 import { Subject } from 'rxjs';
 import type { MatchState } from '../../../../core/models/match.models';
-import type { GameWonPayload, EnvidoResolvedPayload, MatchEndedEvent, MatchWsEvent } from '../../../../features/match/models/match-ws-events';
+import type {
+  GameWonPayload,
+  EnvidoResolvedPayload,
+  MatchEndedEvent,
+  MatchWsEvent,
+} from '../../../../features/match/models/match-ws-events';
 import { MatchEventQueueService } from '../../../../features/match/services/match-event-queue.service';
 
 function makeMatchState(overrides: Partial<MatchState> = {}): MatchState {
@@ -25,6 +30,7 @@ function makeMatchState(overrides: Partial<MatchState> = {}): MatchState {
     gamesWonPlayerTwo: 0,
     matchWinner: null,
     roundGame: null,
+    lobby: null,
     ...overrides,
   };
 }
@@ -89,7 +95,15 @@ describe('SpectateScreenComponent', () => {
       set: {
         providers: [
           { provide: SpectateStateService, useValue: mockService },
-          { provide: MatchEventQueueService, useValue: { resumeAck: vi.fn(), isProcessingDelay: signal(false), clear: vi.fn(), init: vi.fn() } },
+          {
+            provide: MatchEventQueueService,
+            useValue: {
+              resumeAck: vi.fn(),
+              isProcessingDelay: signal(false),
+              clear: vi.fn(),
+              init: vi.fn(),
+            },
+          },
         ],
       },
     });

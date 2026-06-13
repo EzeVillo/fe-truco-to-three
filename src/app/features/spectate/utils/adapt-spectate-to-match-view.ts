@@ -37,5 +37,7 @@ export function adaptSpectateToMatchState(state: SpectateMatchState): MatchState
     gamesWonPlayerTwo: state.gamesWonPlayerTwo,
     matchWinner: state.matchWinner,
     roundGame: state.currentRound ? adaptRound(state.currentRound) : null,
+    // El espectador nunca ve la sala de espera (solo matches IN_PROGRESS): sin lobby.
+    lobby: null,
   };
 }

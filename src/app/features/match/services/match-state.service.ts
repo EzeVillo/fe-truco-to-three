@@ -279,6 +279,9 @@ export class MatchStateService {
           status: snap.status,
           playerOneUsername: snap.playerOneUsername,
           playerTwoUsername: snap.playerTwoUsername,
+          // Mantener fresca la vista de sala (joinCode/visibilidad/ready) al pasar
+          // de WAITING_FOR_PLAYERS a READY cuando entra el segundo jugador (§4.14).
+          lobby: snap.lobby,
         });
       },
       error: () => {

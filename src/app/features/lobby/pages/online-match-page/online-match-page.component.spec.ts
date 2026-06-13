@@ -72,9 +72,8 @@ describe('OnlineMatchPageComponent', () => {
     fixture.componentInstance.onCreate();
 
     expect(createSpy).toHaveBeenCalledWith({ gamesToPlay: 5, visibility: 'PRIVATE' });
-    expect(navSpy).toHaveBeenCalledWith(['/match', 'm1'], {
-      state: { joinCode: 'ABC123', visibility: 'PRIVATE' },
-    });
+    // joinCode + visibilidad ya no viajan por router state: los trae el snapshot (§4.14).
+    expect(navSpy).toHaveBeenCalledWith(['/match', 'm1']);
   });
 
   it('crea una partida pública cuando se elige visibilidad PUBLIC', () => {
@@ -109,7 +108,7 @@ describe('OnlineMatchPageComponent', () => {
     expect(fixture.nativeElement.querySelector('app-visibility-selector')).toBeNull();
   });
 
-  it('desde Amigos crea privada, invita al amigo y navega con joinCode visible en sala', () => {
+  it('desde Amigos crea privada, invita al amigo y navega a la sala', () => {
     const createSpy = vi
       .fn()
       .mockReturnValue(of({ matchId: 'mf', joinCode: 'FRIEND1', visibility: 'PRIVATE' }));
@@ -126,9 +125,7 @@ describe('OnlineMatchPageComponent', () => {
 
     expect(createSpy).toHaveBeenCalledWith({ gamesToPlay: 3, visibility: 'PRIVATE' });
     expect(social.inviteFriend).toHaveBeenCalledWith('martina', 'mf');
-    expect(navSpy).toHaveBeenCalledWith(['/match', 'mf'], {
-      state: { joinCode: 'FRIEND1', visibility: 'PRIVATE' },
-    });
+    expect(navSpy).toHaveBeenCalledWith(['/match', 'mf']);
   });
 
   it('por defecto la visibilidad es PRIVATE', () => {
@@ -136,19 +133,6 @@ describe('OnlineMatchPageComponent', () => {
     const fixture = TestBed.createComponent(OnlineMatchPageComponent);
     fixture.detectChanges();
     expect(fixture.componentInstance.visibility()).toBe('PRIVATE');
-  });
-
-  it('persiste joinCode + visibilidad en sessionStorage al crear (recuperable tras recarga)', () => {
-    setup({ createMatch: () => of({ matchId: 'm2', joinCode: 'XYZ789', visibility: 'PRIVATE' }) });
-    const fixture = TestBed.createComponent(OnlineMatchPageComponent);
-    vi.spyOn(fixture.componentInstance['router'], 'navigate').mockResolvedValue(true);
-    fixture.detectChanges();
-
-    fixture.componentInstance.onCreate();
-
-    expect(sessionStorage.getItem('t3.matchHandoff.m2')).toBe(
-      JSON.stringify({ joinCode: 'XYZ789', visibility: 'PRIVATE' }),
-    );
   });
 
   it('muestra copy de error de creación sin exponer el mensaje del backend (422)', () => {

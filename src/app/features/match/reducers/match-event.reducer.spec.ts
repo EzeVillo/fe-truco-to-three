@@ -39,6 +39,7 @@ function makeState(overrides: Partial<MatchState> = {}): MatchState {
       turnDurationMillis: null,
       actionDeadlineSeat: null,
     },
+    lobby: null,
     ...overrides,
   };
 }

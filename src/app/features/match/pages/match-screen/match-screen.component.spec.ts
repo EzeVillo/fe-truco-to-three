@@ -20,7 +20,6 @@ import {
   type RematchDialogResult,
 } from '../../components/rematch-dialog/rematch-dialog.component';
 import { mockMatchViewerPlayerOne } from '../../mocks/match-state.mocks';
-import { saveMatchHandoff } from '../../utils/join-code-store';
 import type { RematchSession } from '../../models/rematch.models';
 
 function makeParamMap(params: Record<string, string>) {
@@ -90,17 +89,27 @@ describe('MatchScreenComponent', () => {
     expect(fixture.componentInstance.matchId()).toBe('test-match-123');
   });
 
-  it('backfillea joinCode + visibilidad si el handoff se guardó tras montar (carrera con presencia)', () => {
-    // La pantalla se montó sin nav state ni handoff (perdió la carrera con la
-    // auto-navegación por presencia, que llega sin state).
-    setupComponent({ matchId: 'race-match' });
+  it('joinCode + visibilidad se derivan del snapshot (`lobby`, §4.14)', () => {
+    setupComponent({ matchId: 'lobby-match' });
+    // Sin snapshot aún: defaults seguros (sin código, privada).
     expect(fixture.componentInstance.joinCode()).toBeNull();
+    expect(fixture.componentInstance.visibility()).toBe('PRIVATE');
 
-    // onCreate guarda el handoff DESPUÉS del montaje (callback del POST).
-    saveMatchHandoff('race-match', { joinCode: 'CODE99', visibility: 'PUBLIC' });
-
-    // Al cargar el snapshot, el effect de backfill releé sessionStorage.
-    matchStateService.state.set({ ...mockMatchViewerPlayerOne, matchId: 'race-match' });
+    // El snapshot REST de la sala de espera trae `lobby` con joinCode + visibilidad.
+    matchStateService.state.set({
+      ...mockMatchViewerPlayerOne,
+      matchId: 'lobby-match',
+      status: 'WAITING_FOR_PLAYERS',
+      playerTwoUsername: null,
+      roundGame: null,
+      lobby: {
+        visibility: 'PUBLIC',
+        joinCode: 'CODE99',
+        lobbyTimeoutDeadline: null,
+        readyPlayerOne: false,
+        readyPlayerTwo: false,
+      },
+    });
     fixture.detectChanges();
 
     expect(fixture.componentInstance.joinCode()).toBe('CODE99');

@@ -305,14 +305,10 @@
   }
 
   &__row-lock {
-    // Mismas dimensiones y padding que __row-cta para que queden exactamente alineados.
-    flex: 0 0 auto;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 36px;
-    padding: 0 var(--t3-gap-sm);
-    border: 1px solid transparent;
+    // Hereda todas las dimensiones de .t3-btn + .campaign__row-cta (misma cascada que el botón).
+    // Solo sobreescribe lo necesario para el look de "bloqueado".
+    pointer-events: none;
+    cursor: default;
     color: var(--t3-text-dim);
     opacity: 0.4;
   }

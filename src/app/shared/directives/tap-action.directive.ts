@@ -74,10 +74,25 @@ export class TapActionDirective {
    * ignora para los botones `appTapAction`, ver UiClickSoundService) y emite el
    * `tap`. Así el sonido acompaña a la acción ejecutada y no al `click` nativo,
    * que en táctil con pointer capture es inconsistente.
+   *
+   * Si el elemento está deshabilitado no se reproduce el sonido ni se emite el
+   * evento: los pointer events llegan igual sobre botones `disabled`, y sin este
+   * guarda el usuario escucharía el click de acciones bloqueadas.
    */
   private emitTap(event: Event): void {
+    if (this.isHostDisabled()) {
+      return;
+    }
     this.clickSound.play();
     this.tap.emit(event);
+  }
+
+  private isHostDisabled(): boolean {
+    const el = this.host.nativeElement;
+    if (el instanceof HTMLButtonElement || el instanceof HTMLInputElement) {
+      return el.disabled;
+    }
+    return el.hasAttribute('disabled') || el.getAttribute('aria-disabled') === 'true';
   }
 
   private isWithinBounds(event: PointerEvent): boolean {

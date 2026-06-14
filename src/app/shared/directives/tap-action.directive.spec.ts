@@ -78,4 +78,23 @@ describe('TapActionDirective', () => {
 
     expect(fixture.componentInstance.taps).toBe(0);
   });
+
+  it('NO emite tap ni suena si el botón está deshabilitado', () => {
+    button.disabled = true;
+
+    button.dispatchEvent(pointer('pointerdown', { clientX: 150, clientY: 125 }));
+    button.dispatchEvent(pointer('pointerup', { clientX: 150, clientY: 125 }));
+
+    expect(fixture.componentInstance.taps).toBe(0);
+    expect(play).not.toHaveBeenCalled();
+  });
+
+  it('NO emite tap ni suena por teclado si el botón está deshabilitado', () => {
+    button.disabled = true;
+
+    button.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }));
+
+    expect(fixture.componentInstance.taps).toBe(0);
+    expect(play).not.toHaveBeenCalled();
+  });
 });

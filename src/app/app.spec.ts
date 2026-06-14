@@ -6,6 +6,8 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { provideHttpClient } from '@angular/common/http';
 import { provideStore } from '@ngrx/store';
 import { provideEffects } from '@ngrx/effects';
+import { SwUpdate } from '@angular/service-worker';
+import { of } from 'rxjs';
 import { App } from './app';
 import { AuthStore } from './core/auth/auth.store';
 import { SessionStorageService } from './core/auth/session-storage.service';
@@ -33,6 +35,16 @@ describe('App', () => {
         provideEffects(),
         SessionStorageService,
         AuthStore,
+        {
+          provide: SwUpdate,
+          useValue: {
+            isEnabled: false,
+            versionUpdates: of(),
+            unrecoverable: of(),
+            checkForUpdate: vi.fn().mockResolvedValue(false),
+            activateUpdate: vi.fn().mockResolvedValue(undefined),
+          },
+        },
       ],
     }).compileComponents();
   });

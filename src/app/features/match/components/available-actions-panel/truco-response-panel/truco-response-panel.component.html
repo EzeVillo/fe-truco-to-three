@@ -3,7 +3,8 @@
     @if (options().quiero) {
       <button
         class="truco-response-panel__tab-btn truco-response-panel__tab-btn--quiero"
-        (click)="onQuiero()"
+        appTapAction
+        (tap)="onQuiero()"
         type="button"
       >
         Quiero
@@ -12,7 +13,8 @@
     @if (options().noQuiero) {
       <button
         class="truco-response-panel__tab-btn truco-response-panel__tab-btn--no-quiero"
-        (click)="onNoQuiero()"
+        appTapAction
+        (tap)="onNoQuiero()"
         type="button"
       >
         No Quiero
@@ -21,7 +23,8 @@
     @if (options().quieroYMazo) {
       <button
         class="truco-response-panel__tab-btn truco-response-panel__tab-btn--mazo"
-        (click)="onQuieroYMazo()"
+        appTapAction
+        (tap)="onQuieroYMazo()"
         type="button"
       >
         <span class="truco-response-panel__label--stacked">

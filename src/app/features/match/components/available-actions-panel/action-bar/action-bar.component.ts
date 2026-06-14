@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TapActionDirective } from '../../../../../shared/directives/tap-action.directive';
 import type { AvailableActionType } from '../../../../../core/models/enums';
 import type { TrucoCall } from '../../../../../core/models/enums';
 import {
@@ -36,7 +37,7 @@ function actionEnabled(
 @Component({
   selector: 'app-action-bar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TapActionDirective],
   templateUrl: './action-bar.component.html',
   styleUrl: './action-bar.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

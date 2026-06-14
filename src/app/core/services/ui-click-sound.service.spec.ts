@@ -38,9 +38,19 @@ describe('UiClickSoundService', () => {
     listeners.get('click')?.({ target } as unknown as Event);
   }
 
-  /** Element-like stub: `closest` matches cuando hay un botón ancestro. */
-  function elementClosest(matches: boolean) {
-    return { closest: vi.fn().mockReturnValue(matches ? {} : null) };
+  /**
+   * Element-like stub: `closest` matchea un botón ancestro según `isButton`, y un
+   * ancestro `[appTapAction]` según `hasTapAction` (default false).
+   */
+  function elementClosest(isButton: boolean, hasTapAction = false) {
+    return {
+      closest: vi.fn((selector: string) => {
+        if (selector === '[appTapAction]') {
+          return hasTapAction ? {} : null;
+        }
+        return isButton ? {} : null;
+      }),
+    };
   }
 
   /** Espera a que se resuelva el fetch/decode encolado por `start()`. */
@@ -60,32 +70,29 @@ describe('UiClickSoundService', () => {
     }
     TestBed.configureTestingModule({});
 
-    vi.stubGlobal(
-      'AudioContext',
-      function AudioContextMockCtor(this: ContextMock) {
-        this.state = 'running';
-        this.destination = { id: 'destination' };
-        this.sources = [];
-        this.gains = [];
-        this.resume = vi.fn().mockResolvedValue(undefined);
-        this.decodeAudioData = vi.fn().mockResolvedValue(decodedBuffer);
-        this.createBufferSource = vi.fn(() => {
-          const source: BufferSourceMock = {
-            buffer: null,
-            connect: vi.fn(),
-            start: vi.fn(),
-          };
-          this.sources.push(source);
-          return source;
-        });
-        this.createGain = vi.fn(() => {
-          const gain: GainMock = { gain: { value: 1 }, connect: vi.fn() };
-          this.gains.push(gain);
-          return gain;
-        });
-        contexts.push(this);
-      },
-    );
+    vi.stubGlobal('AudioContext', function AudioContextMockCtor(this: ContextMock) {
+      this.state = 'running';
+      this.destination = { id: 'destination' };
+      this.sources = [];
+      this.gains = [];
+      this.resume = vi.fn().mockResolvedValue(undefined);
+      this.decodeAudioData = vi.fn().mockResolvedValue(decodedBuffer);
+      this.createBufferSource = vi.fn(() => {
+        const source: BufferSourceMock = {
+          buffer: null,
+          connect: vi.fn(),
+          start: vi.fn(),
+        };
+        this.sources.push(source);
+        return source;
+      });
+      this.createGain = vi.fn(() => {
+        const gain: GainMock = { gain: { value: 1 }, connect: vi.fn() };
+        this.gains.push(gain);
+        return gain;
+      });
+      contexts.push(this);
+    });
 
     vi.stubGlobal(
       'fetch',
@@ -153,6 +160,26 @@ describe('UiClickSoundService', () => {
     expect(contexts[0].createBufferSource).not.toHaveBeenCalled();
   });
 
+  it('ignora el click nativo de botones appTapAction (los maneja la directiva)', async () => {
+    const service = makeService();
+    service.start();
+    await flush();
+
+    clickOn(elementClosest(true, true));
+
+    expect(contexts[0].createBufferSource).not.toHaveBeenCalled();
+  });
+
+  it('play() reproduce el SFX directamente (lo usa appTapAction en el tap)', async () => {
+    const service = makeService();
+    service.start();
+    await flush();
+
+    service.play();
+
+    expect(contexts[0].createBufferSource).toHaveBeenCalledOnce();
+  });
+
   it('crea un buffer source nuevo por cada click (permite solapado)', async () => {
     const service = makeService();
     service.start();
@@ -206,7 +233,10 @@ describe('UiClickSoundService', () => {
     vi.stubGlobal('window', {});
     vi.stubGlobal(
       'Audio',
-      function AudioMockCtor(this: { src: string; currentTime: number; play: () => void }, src: string) {
+      function AudioMockCtor(
+        this: { src: string; currentTime: number; play: () => void },
+        src: string,
+      ) {
         this.src = src;
         this.currentTime = 9;
         this.play = vi.fn().mockResolvedValue(undefined);

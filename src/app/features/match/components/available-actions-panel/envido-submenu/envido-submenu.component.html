@@ -4,7 +4,8 @@
       class="envido-submenu__btn"
       [class.envido-submenu__btn--enabled]="item.enabled"
       [disabled]="!item.enabled"
-      (click)="onOptionClick(item)"
+      appTapAction
+      (tap)="onOptionClick(item)"
       type="button"
     >
       <span class="envido-submenu__btn-label--stacked">
@@ -23,7 +24,8 @@
     class="envido-submenu__btn envido-submenu__btn--back"
     [class.envido-submenu__btn--enabled]="backEnabled()"
     [disabled]="!backEnabled()"
-    (click)="onBackClick()"
+    appTapAction
+    (tap)="onBackClick()"
     type="button"
   >
     Volver

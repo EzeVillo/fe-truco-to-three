@@ -5,7 +5,8 @@
       @if (options().quiero) {
         <button
           class="envido-response-panel__tab-btn envido-response-panel__tab-btn--quiero"
-          (click)="quieroClicked.emit()"
+          appTapAction
+          (tap)="quieroClicked.emit()"
           type="button"
         >
           Quiero
@@ -14,7 +15,8 @@
       @if (options().noQuiero) {
         <button
           class="envido-response-panel__tab-btn envido-response-panel__tab-btn--no-quiero"
-          (click)="noQuieroClicked.emit()"
+          appTapAction
+          (tap)="noQuieroClicked.emit()"
           type="button"
         >
           No Quiero
@@ -29,7 +31,8 @@
       class="envido-response-panel__sub-btn"
       [class.envido-response-panel__sub-btn--enabled]="options().envido"
       [disabled]="!options().envido"
-      (click)="envidoOptionClicked.emit('ENVIDO')"
+      appTapAction
+      (tap)="envidoOptionClicked.emit('ENVIDO')"
       type="button"
     >
       Envido
@@ -39,7 +42,8 @@
       class="envido-response-panel__sub-btn"
       [class.envido-response-panel__sub-btn--enabled]="options().realEnvido"
       [disabled]="!options().realEnvido"
-      (click)="envidoOptionClicked.emit('REAL_ENVIDO')"
+      appTapAction
+      (tap)="envidoOptionClicked.emit('REAL_ENVIDO')"
       type="button"
     >
       <span class="envido-response-panel__label--stacked">
@@ -53,7 +57,8 @@
       class="envido-response-panel__sub-btn"
       [class.envido-response-panel__sub-btn--enabled]="options().faltaEnvido"
       [disabled]="!options().faltaEnvido"
-      (click)="envidoOptionClicked.emit('FALTA_ENVIDO')"
+      appTapAction
+      (tap)="envidoOptionClicked.emit('FALTA_ENVIDO')"
       type="button"
     >
       <span class="envido-response-panel__label--stacked">

@@ -4,7 +4,8 @@
       class="action-bar__btn"
       [class.action-bar__btn--enabled]="item.enabled"
       [disabled]="!item.enabled"
-      (click)="onClick(item)"
+      appTapAction
+      (tap)="onClick(item)"
       type="button"
     >
       {{ item.label }}

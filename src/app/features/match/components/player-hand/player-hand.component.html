@@ -10,7 +10,8 @@
         [class.player-hand__card-btn--blocked]="
           !playCardsEnabled() || isProcessingDelay() || actionPending()
         "
-        (click)="onCardClick(card)"
+        appTapAction
+        (tap)="onCardClick(card)"
       >
         <app-card-view [card]="card" />
       </button>

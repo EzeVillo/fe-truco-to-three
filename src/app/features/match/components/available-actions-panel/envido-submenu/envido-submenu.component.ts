@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TapActionDirective } from '../../../../../shared/directives/tap-action.directive';
 import type { EnvidoCallOptions } from '../../../utils/derive-envido-call-options';
 
 export interface EnvidoOption {
@@ -19,7 +20,7 @@ const ALL_ENABLED: EnvidoCallOptions = {
 @Component({
   selector: 'app-envido-submenu',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TapActionDirective],
   templateUrl: './envido-submenu.component.html',
   styleUrl: './envido-submenu.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -69,9 +69,17 @@ export class UiClickSoundService {
 
     const handler = (event: Event) => {
       const target = event.target as Element | null;
-      if (target?.closest?.(BUTTON_SELECTOR)) {
-        this.play();
+      if (!target?.closest?.(BUTTON_SELECTOR)) {
+        return;
       }
+      // Los botones con `appTapAction` disparan el SFX desde la directiva (en el
+      // tap válido). En táctil, con `setPointerCapture`, el `click` nativo deja
+      // de dispararse de forma fiable, así que acá los ignoramos para que no
+      // queden mudos ni suenen dos veces cuando el click sí llega.
+      if (target.closest('[appTapAction]')) {
+        return;
+      }
+      this.play();
     };
     this.clickHandler = handler;
     document.addEventListener('click', handler, true);
@@ -121,7 +129,12 @@ export class UiClickSoundService {
     })();
   }
 
-  private play(): void {
+  /**
+   * Reproduce el SFX de click. Pensado para llamarse dentro de un gesto del
+   * usuario (click nativo o el `tap` de `appTapAction`): así el resume del
+   * contexto no choca con el bloqueo de autoplay de iOS.
+   */
+  play(): void {
     const gainValue = this.effectsVolume.gain();
     if (gainValue <= 0) {
       // Efectos muteados: ni reanudamos el contexto ni disparamos el click.

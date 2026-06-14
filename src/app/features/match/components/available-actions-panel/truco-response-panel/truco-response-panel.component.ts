@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TapActionDirective } from '../../../../../shared/directives/tap-action.directive';
 import type { TrucoResponseOptions } from '../../../utils/derive-truco-response-options';
 
 const ALL_ENABLED: TrucoResponseOptions = {
@@ -11,7 +12,7 @@ const ALL_ENABLED: TrucoResponseOptions = {
 @Component({
   selector: 'app-truco-response-panel',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TapActionDirective],
   templateUrl: './truco-response-panel.component.html',
   styleUrl: './truco-response-panel.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

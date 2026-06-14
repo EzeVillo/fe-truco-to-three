@@ -4,11 +4,12 @@ import { finalize } from 'rxjs';
 import type { Card } from '../../../../core/models/match.models';
 import { CardViewComponent } from '../card-view/card-view.component';
 import { MatchActionsService } from '../../services/match-actions.service';
+import { TapActionDirective } from '../../../../shared/directives/tap-action.directive';
 
 @Component({
   selector: 'app-player-hand',
   standalone: true,
-  imports: [CommonModule, CardViewComponent],
+  imports: [CommonModule, CardViewComponent, TapActionDirective],
   templateUrl: './player-hand.component.html',
   styleUrl: './player-hand.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

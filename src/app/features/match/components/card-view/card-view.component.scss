@@ -9,6 +9,12 @@
   aspect-ratio: 2 / 3;
   border-radius: var(--t3-radius-sm);
   box-shadow: var(--t3-card-shadow);
+  /* stylelint-disable-next-line property-no-vendor-prefix */
+  -webkit-touch-callout: none;
+  /* stylelint-disable-next-line property-no-vendor-prefix */
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
 }
 
 .card-view__image--hidden {

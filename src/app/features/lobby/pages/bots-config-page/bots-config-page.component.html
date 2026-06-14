@@ -32,7 +32,7 @@
         }
       </div>
 
-      @if (campaignBots().length > 0) {
+      @if (campaignBots().length > 0 || lockedCampaignBots().length > 0) {
         <section class="bots-config__section" aria-labelledby="campaign-bots-title">
           <div class="bots-config__section-head">
             <h2 id="campaign-bots-title" class="bots-config__section-title">Rivales de campaña</h2>
@@ -41,11 +41,7 @@
               más victorias por encima de las derrotas, pasa a estar disponible acá para siempre.
             </p>
           </div>
-          <div
-            class="bots-config__grid"
-            role="radiogroup"
-            aria-label="Bots de campaña desbloqueados"
-          >
+          <div class="bots-config__grid" role="radiogroup" aria-label="Bots de campaña">
             @for (bot of campaignBots(); track bot.botId) {
               <app-bot-card
                 [bot]="bot"
@@ -53,6 +49,9 @@
                 [disabled]="creatingMatch()"
                 (select)="onSelectBot($event)"
               />
+            }
+            @for (bot of lockedCampaignBots(); track bot.botId) {
+              <app-bot-card [bot]="bot" [locked]="true" />
             }
           </div>
         </section>

@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
 import type { Bot } from '../../../../core/models/bot.models';
 
 const AVATAR_COLORS = [
@@ -34,6 +35,7 @@ function initials(name: string): string {
 @Component({
   selector: 'app-bot-card',
   standalone: true,
+  imports: [MatIconModule],
   templateUrl: './bot-card.component.html',
   styleUrl: './bot-card.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -42,7 +44,12 @@ export class BotCardComponent {
   readonly bot = input.required<Bot>();
   readonly selected = input<boolean>(false);
   readonly disabled = input<boolean>(false);
+  /** Bot de campaña aún no desbloqueado: se muestra pero no se puede elegir. */
+  readonly locked = input<boolean>(false);
   readonly select = output<string>();
+
+  /** No seleccionable si está deshabilitado por la página o bloqueado por campaña. */
+  readonly isDisabled = computed(() => this.disabled() || this.locked());
 
   readonly displayName = computed(() => {
     const name = this.bot().name?.trim();
@@ -57,6 +64,9 @@ export class BotCardComponent {
   });
 
   onClick(): void {
+    if (this.isDisabled()) {
+      return;
+    }
     this.select.emit(this.bot().botId);
   }
 }

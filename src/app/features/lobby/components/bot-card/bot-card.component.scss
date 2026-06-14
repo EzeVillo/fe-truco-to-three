@@ -39,6 +39,31 @@
     box-shadow: var(--t3-shadow-gold);
   }
 
+  &--locked {
+    position: relative;
+    cursor: not-allowed;
+
+    .bot-card__avatar {
+      filter: grayscale(1);
+    }
+  }
+
+  &__lock {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--t3-text-muted, var(--t3-text));
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+
   &__avatar {
     display: inline-flex;
     align-items: center;

@@ -2,13 +2,19 @@
   type="button"
   class="bot-card"
   [class.bot-card--selected]="selected()"
-  [attr.aria-pressed]="selected()"
-  [attr.aria-label]="'Seleccionar ' + displayName()"
-  [disabled]="disabled()"
+  [class.bot-card--locked]="locked()"
+  [attr.aria-pressed]="locked() ? null : selected()"
+  [attr.aria-label]="(locked() ? 'Bot bloqueado: ' : 'Seleccionar ') + displayName()"
+  [disabled]="isDisabled()"
   (click)="onClick()"
 >
   <span class="bot-card__avatar" aria-hidden="true" [style.background-color]="avatarColor()">{{
     initials()
   }}</span>
   <span class="bot-card__name">{{ displayName() }}</span>
+  @if (locked()) {
+    <span class="bot-card__lock" aria-hidden="true">
+      <mat-icon>lock</mat-icon>
+    </span>
+  }
 </button>

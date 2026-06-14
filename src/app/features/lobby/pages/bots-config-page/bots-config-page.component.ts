@@ -15,6 +15,7 @@ import { BotCardComponent } from '../../components/bot-card/bot-card.component';
 import { BackButtonComponent } from '../../../../shared/components/back-button';
 import { SeriesFormatSelectorComponent } from '../../components/series-format-selector/series-format-selector.component';
 import { BotsApiService } from '../../services/bots-api.service';
+import { CampaignApiService } from '../../../campaign/services/campaign-api.service';
 import { NavigationLockService } from '../../../../core/services/navigation-lock.service';
 import type { Bot } from '../../../../core/models/bot.models';
 import {
@@ -40,6 +41,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 })
 export class BotsConfigPageComponent implements OnInit {
   private readonly api = inject(BotsApiService);
+  private readonly campaignApi = inject(CampaignApiService);
   private readonly router = inject(Router);
   private readonly titleService = inject(Title);
   private readonly navigationLock = inject(NavigationLockService);
@@ -52,6 +54,12 @@ export class BotsConfigPageComponent implements OnInit {
 
   readonly casualBots = signal<Bot[]>([]);
   readonly campaignBots = signal<Bot[]>([]);
+  /**
+   * Bots de campaña que el jugador todavía no desbloqueó. Se muestran en la
+   * sección de campaña pero deshabilitados (no se pueden elegir). Salen de cruzar
+   * el ranking de `GET /api/campaign` con los desbloqueados de `GET /api/bots`.
+   */
+  readonly lockedCampaignBots = signal<Bot[]>([]);
   readonly loadingCatalog = signal<boolean>(true);
   readonly catalogError = signal<string | null>(null);
   readonly selectedBotId = signal<string | null>(null);
@@ -78,19 +86,50 @@ export class BotsConfigPageComponent implements OnInit {
   loadCatalog(): void {
     this.loadingCatalog.set(true);
     this.catalogError.set(null);
+    this.lockedCampaignBots.set([]);
 
     this.api.getBots().subscribe({
       next: (catalog) => {
-        this.casualBots.set(catalog.casual ?? []);
-        this.campaignBots.set(catalog.campaignUnlocked ?? []);
+        const casual = catalog.casual ?? [];
+        const unlocked = catalog.campaignUnlocked ?? [];
+        this.casualBots.set(casual);
+        this.campaignBots.set(unlocked);
         this.loadingCatalog.set(false);
+        this.loadLockedCampaignBots([...casual, ...unlocked]);
       },
       error: (err: unknown) => {
         console.error('[BotsConfigPage] error cargando catálogo', err);
         this.catalogError.set(getErrorCopy('BOT_CATALOG', err));
         this.casualBots.set([]);
         this.campaignBots.set([]);
+        this.lockedCampaignBots.set([]);
         this.loadingCatalog.set(false);
+      },
+    });
+  }
+
+  /**
+   * Trae el ranking de campaña para listar los bots aún bloqueados. Los bloqueados
+   * son las filas que no son del jugador y cuyo bot no está entre los disponibles.
+   * Si la campaña falla no es crítico: el modo casual funciona igual, solo no se
+   * muestran los bots bloqueados.
+   */
+  private loadLockedCampaignBots(available: Bot[]): void {
+    const availableIds = new Set(available.map((bot) => bot.botId));
+
+    this.campaignApi.getCampaign().subscribe({
+      next: (campaign) => {
+        const locked = (campaign.ranking ?? [])
+          .filter((entry) => !entry.player && !availableIds.has(entry.participantId))
+          .map<Bot>((entry) => ({
+            botId: entry.participantId,
+            name: entry.displayName ?? 'Bot anónimo',
+          }));
+        this.lockedCampaignBots.set(locked);
+      },
+      error: (err: unknown) => {
+        console.warn('[BotsConfigPage] no se pudo cargar la campaña para bots bloqueados', err);
+        this.lockedCampaignBots.set([]);
       },
     });
   }

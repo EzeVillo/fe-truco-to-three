@@ -7,7 +7,9 @@ import { Subject, of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { BotsConfigPageComponent } from './bots-config-page.component';
 import { BotsApiService } from '../../services/bots-api.service';
+import { CampaignApiService } from '../../../campaign/services/campaign-api.service';
 import type { Bot, BotCatalog } from '../../../../core/models/bot.models';
+import type { CampaignResponse } from '../../../../core/models/campaign.models';
 import type { CreateBotMatchResponse } from '../../../../core/models/match.models';
 
 const BOTS: Bot[] = [
@@ -28,13 +30,32 @@ function makeBots(n: number): Bot[] {
   }));
 }
 
-function setup(apiMock: Partial<BotsApiService>) {
+/** Respuesta mínima de campaña con el ranking dado (sin progreso relevante). */
+function campaignResponse(ranking: CampaignResponse['ranking'] = []): CampaignResponse {
+  return {
+    playerPosition: 1,
+    playerPoints: 0,
+    totalBots: ranking.length,
+    defeatedRivals: 0,
+    topOneReached: false,
+    allRivalsDefeated: false,
+    pointsToNextPosition: null,
+    activeChallengeMatchId: null,
+    ranking,
+  };
+}
+
+function setup(apiMock: Partial<BotsApiService>, campaignMock?: Partial<CampaignApiService>) {
   TestBed.configureTestingModule({
     imports: [BotsConfigPageComponent],
     providers: [
       provideRouter([]),
       provideAnimationsAsync(),
       { provide: BotsApiService, useValue: apiMock },
+      {
+        provide: CampaignApiService,
+        useValue: campaignMock ?? { getCampaign: () => of(campaignResponse()) },
+      },
     ],
   });
 }
@@ -81,6 +102,88 @@ describe('BotsConfigPageComponent', () => {
     expect(section).toBeTruthy();
     const allCards = fixture.debugElement.queryAll(By.css('app-bot-card'));
     expect(allCards.length).toBe(BOTS.length + 1);
+  });
+
+  it('(b4) los bots de campaña bloqueados aparecen deshabilitados y no son seleccionables', () => {
+    const ranking: CampaignResponse['ranking'] = [
+      {
+        position: 1,
+        participantId: 'locked-1',
+        displayName: 'Cacho Bloqueado',
+        points: 0,
+        player: false,
+        challengeable: false,
+        record: null,
+      },
+      {
+        position: 2,
+        participantId: 'me',
+        displayName: null,
+        points: 0,
+        player: true,
+        challengeable: false,
+        record: null,
+      },
+    ];
+    setup(
+      { getBots: () => of(catalog(BOTS)), createBotMatch: () => of({ matchId: 'x' }) },
+      { getCampaign: () => of(campaignResponse(ranking)) },
+    );
+    const fixture = TestBed.createComponent(BotsConfigPageComponent);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.lockedCampaignBots().length).toBe(1);
+    // El bot bloqueado no cuenta como elegible.
+    expect(fixture.componentInstance.totalBots()).toBe(BOTS.length);
+
+    const section = fixture.debugElement.query(By.css('.bots-config__section'));
+    expect(section).toBeTruthy();
+
+    const lockedCard = fixture.debugElement.query(By.css('.bot-card--locked'));
+    expect(lockedCard).toBeTruthy();
+    expect((lockedCard.nativeElement as HTMLButtonElement).disabled).toBe(true);
+
+    // Tap en el bloqueado no cambia la selección.
+    (lockedCard.nativeElement as HTMLButtonElement).click();
+    expect(fixture.componentInstance.selectedBotId()).toBeNull();
+  });
+
+  it('(b5) los bots ya desbloqueados no se duplican como bloqueados', () => {
+    const campaignBots: Bot[] = [{ botId: 'c42', name: 'Cacho Medina' }];
+    const ranking: CampaignResponse['ranking'] = [
+      {
+        position: 1,
+        participantId: 'c42',
+        displayName: 'Cacho Medina',
+        points: 0,
+        player: false,
+        challengeable: true,
+        record: { wins: 3, losses: 0 },
+      },
+    ];
+    setup(
+      {
+        getBots: () => of(catalog(BOTS, campaignBots)),
+        createBotMatch: () => of({ matchId: 'x' }),
+      },
+      { getCampaign: () => of(campaignResponse(ranking)) },
+    );
+    const fixture = TestBed.createComponent(BotsConfigPageComponent);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.lockedCampaignBots().length).toBe(0);
+  });
+
+  it('(b6) si falla la campaña el modo casual sigue funcionando sin bloqueados', () => {
+    setup(
+      { getBots: () => of(catalog(BOTS)), createBotMatch: () => of({ matchId: 'x' }) },
+      { getCampaign: () => throwError(() => new HttpErrorResponse({ status: 500 })) },
+    );
+    const fixture = TestBed.createComponent(BotsConfigPageComponent);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.lockedCampaignBots().length).toBe(0);
+    expect(fixture.componentInstance.totalBots()).toBe(BOTS.length);
   });
 
   it('(b3) sin bots de campaña no renderiza la sección', () => {

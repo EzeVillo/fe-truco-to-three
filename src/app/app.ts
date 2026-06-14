@@ -1,9 +1,12 @@
 import { Component, computed, effect, inject, untracked } from '@angular/core';
-import { Router, RouterOutlet } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { filter, map } from 'rxjs/operators';
 import { AuthService } from './core/auth/auth.service';
 import { AudioPlaybackService } from './core/services/audio-playback.service';
 import { PresenceCoordinatorService } from './core/services/presence-coordinator.service';
 import { ServerWakeService } from './core/services/server-wake.service';
+import { SwUpdateService } from './core/services/sw-update.service';
 import { UiClickSoundService } from './core/services/ui-click-sound.service';
 import { ProfileNotificationService } from './features/profile/services/profile-notification.service';
 import { CampaignPointsService } from './features/campaign/services/campaign-points.service';
@@ -29,8 +32,28 @@ export class App {
   private readonly uiClickSound = inject(UiClickSoundService);
   private readonly audioPlayback = inject(AudioPlaybackService);
   readonly serverWake = inject(ServerWakeService);
+  private readonly swUpdate = inject(SwUpdateService);
 
   private backendBooted = false;
+
+  /** URL actual, reactiva. Permite distinguir rutas "seguras" de la partida. */
+  private readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map((e) => e.urlAfterRedirects),
+    ),
+    { initialValue: this.router.url },
+  );
+
+  /**
+   * El usuario está en una pantalla donde recargar lo interrumpiría: una partida
+   * en curso o una transmisión como espectador. Fuera de eso (menú, lobby, auth)
+   * recargar es un parpadeo inocuo.
+   */
+  private readonly isInMatch = computed(() => {
+    const url = this.currentUrl();
+    return url.startsWith('/match/') || url.startsWith('/spectate/');
+  });
 
   /**
    * Cola unificada de toasts. Las cuatro fuentes (invitaciones, solicitudes de
@@ -116,6 +139,24 @@ export class App {
       });
     }
 
+    // Versión nueva lista mientras el usuario está en partida: no recargamos solos
+    // (le cortaríamos el juego), le ofrecemos hacerlo cuando quiera. En rutas
+    // seguras este toast no aparece porque el effect recarga automáticamente.
+    if (this.swUpdate.updateReady() && this.isInMatch()) {
+      queue.push({
+        key: 'app-update',
+        title: 'Hay una versión nueva',
+        body: 'Actualizá cuando termines esta partida para evitar errores.',
+        actions: [
+          {
+            label: 'Actualizar ahora',
+            variant: 'primary',
+            run: () => void this.swUpdate.applyUpdate(),
+          },
+        ],
+      });
+    }
+
     return queue;
   });
 
@@ -142,6 +183,19 @@ export class App {
     // gesto desde el bootstrap, así que arranca de inmediato.
     this.uiClickSound.start();
     this.audioPlayback.start();
+
+    // Service Worker: empieza a vigilar actualizaciones del FE.
+    this.swUpdate.start();
+
+    // Cuando hay versión nueva lista y el usuario NO está en partida, activamos y
+    // recargamos solos: es un parpadeo y garantiza que el FE quede alineado con el
+    // contrato del BE. En partida, el toast de arriba deja la decisión al usuario;
+    // al salir a una ruta segura, este effect dispara la recarga.
+    effect(() => {
+      if (this.swUpdate.updateReady() && !this.isInMatch()) {
+        untracked(() => void this.swUpdate.applyUpdate());
+      }
+    });
   }
 
   private bootBackendServices(): void {

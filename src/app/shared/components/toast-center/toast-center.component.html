@@ -1,0 +1,39 @@
+@if (toast(); as t) {
+  <div class="toast-center" [class.toast-center--stacked]="pendingCount() > 0">
+    <aside class="toast-center__card" role="status" aria-live="polite">
+      @if (t.onClose; as close) {
+        <button type="button" class="toast-center__close" aria-label="Cerrar" (click)="close()">
+          &times;
+        </button>
+      }
+
+      <div class="toast-center__info">
+        <strong>{{ t.title }}</strong>
+        <p>{{ t.body }}</p>
+      </div>
+
+      <div class="toast-center__actions">
+        @for (action of t.actions; track action.label) {
+          <button
+            type="button"
+            class="toast-center__btn"
+            [class.toast-center__btn--primary]="action.variant === 'primary'"
+            [class.toast-center__btn--danger]="action.variant === 'danger'"
+            (click)="action.run()"
+          >
+            {{ action.label }}
+          </button>
+        }
+      </div>
+
+      @if (pendingCount() > 0) {
+        <span
+          class="toast-center__count"
+          [attr.aria-label]="pendingCount() + ' avisos más en cola'"
+        >
+          +{{ pendingCount() }}
+        </span>
+      }
+    </aside>
+  </div>
+}

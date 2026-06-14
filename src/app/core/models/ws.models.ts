@@ -167,21 +167,42 @@ export type SocialWsEvent =
  * conseguidos en ese match, el total acumulado y el movimiento de posición. En una
  * derrota `pointsAwarded` es `0` y `previousPosition`/`newPosition` no cambian.
  */
-export type CampaignWsEvent = WsEventBase<
-  'CAMPAIGN_MATCH_POINTS',
-  {
-    matchId: string;
-    rivalId: string;
-    won: boolean;
-    pointsAwarded: number;
-    totalPoints: number;
-    previousPosition: number;
-    newPosition: number;
-  }
->;
+export type CampaignWsEvent =
+  | WsEventBase<
+      'CAMPAIGN_MATCH_POINTS',
+      {
+        matchId: string;
+        rivalId: string;
+        won: boolean;
+        pointsAwarded: number;
+        totalPoints: number;
+        previousPosition: number;
+        newPosition: number;
+      }
+    >
+  | WsEventBase<
+      'CAMPAIGN_BOT_UNLOCKED',
+      {
+        botId: string;
+        matchId: string;
+      }
+    >;
 
 /** Payload de `CAMPAIGN_MATCH_POINTS`. */
-export type CampaignMatchPointsPayload = CampaignWsEvent['payload'];
+export type CampaignMatchPointsPayload = Extract<
+  CampaignWsEvent,
+  { eventType: 'CAMPAIGN_MATCH_POINTS' }
+>['payload'];
+
+/**
+ * Payload de `CAMPAIGN_BOT_UNLOCKED` (§9.6): el BE avisa que el jugador desbloqueó
+ * un bot de campaña para el modo casual (historial neto `>= 3` a favor). El front
+ * no calcula la condición; solo reacciona al push.
+ */
+export type CampaignBotUnlockedPayload = Extract<
+  CampaignWsEvent,
+  { eventType: 'CAMPAIGN_BOT_UNLOCKED' }
+>['payload'];
 
 /** Eventos del canal /user/queue/chat (§9.5d/§9.6). chatId top-level. */
 export type ChatWsEvent =

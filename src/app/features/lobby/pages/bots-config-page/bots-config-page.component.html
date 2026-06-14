@@ -15,14 +15,14 @@
         <p>{{ catalogError() }}</p>
         <button type="button" class="t3-btn t3-btn--neutral" (click)="retry()">Reintentar</button>
       </div>
-    } @else if (bots().length === 0) {
+    } @else if (totalBots() === 0) {
       <div class="bots-config__state" role="status">
         <p>No hay bots disponibles en este momento.</p>
         <button type="button" class="t3-btn t3-btn--neutral" (click)="retry()">Reintentar</button>
       </div>
     } @else {
-      <div class="bots-config__grid" role="radiogroup" aria-label="Catálogo de bots">
-        @for (bot of bots(); track bot.botId) {
+      <div class="bots-config__grid" role="radiogroup" aria-label="Bots casuales">
+        @for (bot of casualBots(); track bot.botId) {
           <app-bot-card
             [bot]="bot"
             [selected]="selectedBotId() === bot.botId"
@@ -31,6 +31,32 @@
           />
         }
       </div>
+
+      @if (campaignBots().length > 0) {
+        <section class="bots-config__section" aria-labelledby="campaign-bots-title">
+          <div class="bots-config__section-head">
+            <h2 id="campaign-bots-title" class="bots-config__section-title">Rivales de campaña</h2>
+            <p class="bots-config__section-hint">
+              Los desbloqueás jugando el modo campaña: cuando tu historial contra un bot queda 3 o
+              más victorias por encima de las derrotas, pasa a estar disponible acá para siempre.
+            </p>
+          </div>
+          <div
+            class="bots-config__grid"
+            role="radiogroup"
+            aria-label="Bots de campaña desbloqueados"
+          >
+            @for (bot of campaignBots(); track bot.botId) {
+              <app-bot-card
+                [bot]="bot"
+                [selected]="selectedBotId() === bot.botId"
+                [disabled]="creatingMatch()"
+                (select)="onSelectBot($event)"
+              />
+            }
+          </div>
+        </section>
+      }
     }
 
     @if (createMatchError()) {

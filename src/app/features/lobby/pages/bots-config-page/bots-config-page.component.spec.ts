@@ -7,7 +7,7 @@ import { Subject, of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { BotsConfigPageComponent } from './bots-config-page.component';
 import { BotsApiService } from '../../services/bots-api.service';
-import type { Bot } from '../../../../core/models/bot.models';
+import type { Bot, BotCatalog } from '../../../../core/models/bot.models';
 import type { CreateBotMatchResponse } from '../../../../core/models/match.models';
 
 const BOTS: Bot[] = [
@@ -15,6 +15,11 @@ const BOTS: Bot[] = [
   { botId: 'b2', name: 'La Pescadora' },
   { botId: 'b3', name: 'El Temerario' },
 ];
+
+/** Envuelve una lista de bots casuales en la forma de respuesta de GET /bots. */
+function catalog(casual: Bot[], campaignUnlocked: Bot[] = []): BotCatalog {
+  return { casual, campaignUnlocked };
+}
 
 function makeBots(n: number): Bot[] {
   return Array.from({ length: n }, (_, i) => ({
@@ -40,7 +45,7 @@ describe('BotsConfigPageComponent', () => {
   });
 
   it('(a) muestra loading mientras se obtiene el catálogo', () => {
-    const subj = new Subject<Bot[]>();
+    const subj = new Subject<BotCatalog>();
     setup({ getBots: () => subj.asObservable(), createBotMatch: () => of({ matchId: 'x' }) });
 
     const fixture = TestBed.createComponent(BotsConfigPageComponent);
@@ -51,7 +56,7 @@ describe('BotsConfigPageComponent', () => {
   });
 
   it('(b) renderiza el catálogo cuando llega la respuesta', () => {
-    setup({ getBots: () => of(BOTS), createBotMatch: () => of({ matchId: 'x' }) });
+    setup({ getBots: () => of(catalog(BOTS)), createBotMatch: () => of({ matchId: 'x' }) });
     const fixture = TestBed.createComponent(BotsConfigPageComponent);
     fixture.detectChanges();
 
@@ -60,8 +65,34 @@ describe('BotsConfigPageComponent', () => {
     expect(cards.length).toBe(BOTS.length);
   });
 
+  it('(b2) muestra los bots de campaña desbloqueados en su propia sección', () => {
+    const campaignBots: Bot[] = [{ botId: 'c42', name: 'Cacho Medina' }];
+    setup({
+      getBots: () => of(catalog(BOTS, campaignBots)),
+      createBotMatch: () => of({ matchId: 'x' }),
+    });
+    const fixture = TestBed.createComponent(BotsConfigPageComponent);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.campaignBots().length).toBe(1);
+    expect(fixture.componentInstance.totalBots()).toBe(BOTS.length + 1);
+
+    const section = fixture.debugElement.query(By.css('.bots-config__section'));
+    expect(section).toBeTruthy();
+    const allCards = fixture.debugElement.queryAll(By.css('app-bot-card'));
+    expect(allCards.length).toBe(BOTS.length + 1);
+  });
+
+  it('(b3) sin bots de campaña no renderiza la sección', () => {
+    setup({ getBots: () => of(catalog(BOTS)), createBotMatch: () => of({ matchId: 'x' }) });
+    const fixture = TestBed.createComponent(BotsConfigPageComponent);
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.query(By.css('.bots-config__section'))).toBeNull();
+  });
+
   it('(c) tap en una tarjeta mueve la selección (radio)', () => {
-    setup({ getBots: () => of(BOTS), createBotMatch: () => of({ matchId: 'x' }) });
+    setup({ getBots: () => of(catalog(BOTS)), createBotMatch: () => of({ matchId: 'x' }) });
     const fixture = TestBed.createComponent(BotsConfigPageComponent);
     fixture.detectChanges();
 
@@ -72,7 +103,7 @@ describe('BotsConfigPageComponent', () => {
   });
 
   it('(d) CTA deshabilitado sin selección; habilitado con selección', () => {
-    setup({ getBots: () => of(BOTS), createBotMatch: () => of({ matchId: 'x' }) });
+    setup({ getBots: () => of(catalog(BOTS)), createBotMatch: () => of({ matchId: 'x' }) });
     const fixture = TestBed.createComponent(BotsConfigPageComponent);
     fixture.detectChanges();
 
@@ -86,7 +117,7 @@ describe('BotsConfigPageComponent', () => {
   // T009 — US2: BEST_OF_3 → gamesToPlay: 3 (nunca 2)
   it('(e) POST dispara con body correcto (BEST_OF_3 → gamesToPlay: 3) y navega a /match/:matchId', async () => {
     const createSpy = vi.fn().mockReturnValue(of({ matchId: 'm-99' } as CreateBotMatchResponse));
-    setup({ getBots: () => of(BOTS), createBotMatch: createSpy });
+    setup({ getBots: () => of(catalog(BOTS)), createBotMatch: createSpy });
 
     const fixture = TestBed.createComponent(BotsConfigPageComponent);
     fixture.detectChanges();
@@ -105,7 +136,7 @@ describe('BotsConfigPageComponent', () => {
   // T009 — US2: BEST_OF_1 → gamesToPlay: 1
   it('BEST_OF_1 → gamesToPlay: 1', () => {
     const createSpy = vi.fn().mockReturnValue(of({ matchId: 'm-1' } as CreateBotMatchResponse));
-    setup({ getBots: () => of(BOTS), createBotMatch: createSpy });
+    setup({ getBots: () => of(catalog(BOTS)), createBotMatch: createSpy });
 
     const fixture = TestBed.createComponent(BotsConfigPageComponent);
     fixture.detectChanges();
@@ -122,7 +153,7 @@ describe('BotsConfigPageComponent', () => {
   // T009 — US2: BEST_OF_5 → gamesToPlay: 5
   it('BEST_OF_5 → gamesToPlay: 5', () => {
     const createSpy = vi.fn().mockReturnValue(of({ matchId: 'm-5' } as CreateBotMatchResponse));
-    setup({ getBots: () => of(BOTS), createBotMatch: createSpy });
+    setup({ getBots: () => of(catalog(BOTS)), createBotMatch: createSpy });
 
     const fixture = TestBed.createComponent(BotsConfigPageComponent);
     fixture.detectChanges();
@@ -137,7 +168,7 @@ describe('BotsConfigPageComponent', () => {
   });
 
   it('(f) error 404 al crear: recarga catálogo y resetea selección', () => {
-    const getBotsSpy = vi.fn().mockReturnValue(of(BOTS));
+    const getBotsSpy = vi.fn().mockReturnValue(of(catalog(BOTS)));
     const createSpy = vi
       .fn()
       .mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
@@ -162,7 +193,7 @@ describe('BotsConfigPageComponent', () => {
     const createSpy = vi
       .fn()
       .mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
-    setup({ getBots: () => of(BOTS), createBotMatch: createSpy });
+    setup({ getBots: () => of(catalog(BOTS)), createBotMatch: createSpy });
 
     const fixture = TestBed.createComponent(BotsConfigPageComponent);
     fixture.detectChanges();
@@ -189,7 +220,7 @@ describe('BotsConfigPageComponent', () => {
           }),
       ),
     );
-    setup({ getBots: () => of(BOTS), createBotMatch: createSpy });
+    setup({ getBots: () => of(catalog(BOTS)), createBotMatch: createSpy });
 
     const fixture = TestBed.createComponent(BotsConfigPageComponent);
     fixture.detectChanges();
@@ -213,7 +244,7 @@ describe('BotsConfigPageComponent', () => {
           }),
       ),
     );
-    setup({ getBots: () => of(BOTS), createBotMatch: createSpy });
+    setup({ getBots: () => of(catalog(BOTS)), createBotMatch: createSpy });
 
     const fixture = TestBed.createComponent(BotsConfigPageComponent);
     fixture.detectChanges();
@@ -237,7 +268,7 @@ describe('BotsConfigPageComponent', () => {
           }),
       ),
     );
-    setup({ getBots: () => of(BOTS), createBotMatch: createSpy });
+    setup({ getBots: () => of(catalog(BOTS)), createBotMatch: createSpy });
 
     const fixture = TestBed.createComponent(BotsConfigPageComponent);
     fixture.detectChanges();
@@ -264,7 +295,7 @@ describe('BotsConfigPageComponent', () => {
           }),
       ),
     );
-    setup({ getBots: () => of(BOTS), createBotMatch: createSpy });
+    setup({ getBots: () => of(catalog(BOTS)), createBotMatch: createSpy });
 
     const fixture = TestBed.createComponent(BotsConfigPageComponent);
     fixture.detectChanges();
@@ -288,7 +319,7 @@ describe('BotsConfigPageComponent', () => {
           }),
       ),
     );
-    setup({ getBots: () => of(BOTS), createBotMatch: createSpy });
+    setup({ getBots: () => of(catalog(BOTS)), createBotMatch: createSpy });
 
     const fixture = TestBed.createComponent(BotsConfigPageComponent);
     fixture.detectChanges();
@@ -304,7 +335,7 @@ describe('BotsConfigPageComponent', () => {
   it('(h) doble tap dispara una sola request', () => {
     const subj = new Subject<CreateBotMatchResponse>();
     const createSpy = vi.fn().mockReturnValue(subj.asObservable());
-    setup({ getBots: () => of(BOTS), createBotMatch: createSpy });
+    setup({ getBots: () => of(catalog(BOTS)), createBotMatch: createSpy });
 
     const fixture = TestBed.createComponent(BotsConfigPageComponent);
     fixture.detectChanges();
@@ -319,7 +350,7 @@ describe('BotsConfigPageComponent', () => {
   });
 
   it('error al cargar catálogo: muestra copy + opción Reintentar', () => {
-    const calls = [throwError(() => new HttpErrorResponse({ status: 500 })), of(BOTS)];
+    const calls = [throwError(() => new HttpErrorResponse({ status: 500 })), of(catalog(BOTS))];
     const getBotsSpy = vi.fn().mockImplementation(() => calls.shift());
     setup({ getBots: getBotsSpy, createBotMatch: () => of({ matchId: 'x' }) });
 
@@ -331,11 +362,11 @@ describe('BotsConfigPageComponent', () => {
     fixture.componentInstance.retry();
     fixture.detectChanges();
     expect(fixture.componentInstance.catalogError()).toBeNull();
-    expect(fixture.componentInstance.bots().length).toBe(BOTS.length);
+    expect(fixture.componentInstance.totalBots()).toBe(BOTS.length);
   });
 
   it('estado vacío cuando el catálogo devuelve []', () => {
-    setup({ getBots: () => of([]), createBotMatch: () => of({ matchId: 'x' }) });
+    setup({ getBots: () => of(catalog([])), createBotMatch: () => of({ matchId: 'x' }) });
     const fixture = TestBed.createComponent(BotsConfigPageComponent);
     fixture.detectChanges();
 
@@ -345,7 +376,7 @@ describe('BotsConfigPageComponent', () => {
   });
 
   it('botón Volver navega a /lobby', () => {
-    setup({ getBots: () => of(BOTS), createBotMatch: () => of({ matchId: 'x' }) });
+    setup({ getBots: () => of(catalog(BOTS)), createBotMatch: () => of({ matchId: 'x' }) });
     const fixture = TestBed.createComponent(BotsConfigPageComponent);
     fixture.detectChanges();
 
@@ -360,7 +391,7 @@ describe('BotsConfigPageComponent', () => {
   // mantiene a la bottom bar como hermano siguiente (no como hijo) para que el
   // padding-bottom reservado pueda evitar el overlap.
   it('US3: con 30 bots renderiza la grilla completa y la bottom bar queda fuera del scroll', () => {
-    setup({ getBots: () => of(makeBots(30)), createBotMatch: () => of({ matchId: 'x' }) });
+    setup({ getBots: () => of(catalog(makeBots(30))), createBotMatch: () => of({ matchId: 'x' }) });
     const fixture = TestBed.createComponent(BotsConfigPageComponent);
     fixture.detectChanges();
 
@@ -377,7 +408,7 @@ describe('BotsConfigPageComponent', () => {
 
   // US3: CTA "Crear partida" usa clase t3-btn--primary
   it('US3: CTA "Crear partida" tiene clase t3-btn--primary cuando está habilitado', () => {
-    setup({ getBots: () => of(BOTS), createBotMatch: () => of({ matchId: 'x' }) });
+    setup({ getBots: () => of(catalog(BOTS)), createBotMatch: () => of({ matchId: 'x' }) });
     const fixture = TestBed.createComponent(BotsConfigPageComponent);
     fixture.detectChanges();
 
@@ -391,7 +422,7 @@ describe('BotsConfigPageComponent', () => {
 
   // US3: CTA deshabilitado cuando no hay selección
   it('US3: CTA tiene atributo disabled cuando canCreate() es false', () => {
-    setup({ getBots: () => of(BOTS), createBotMatch: () => of({ matchId: 'x' }) });
+    setup({ getBots: () => of(catalog(BOTS)), createBotMatch: () => of({ matchId: 'x' }) });
     const fixture = TestBed.createComponent(BotsConfigPageComponent);
     fixture.detectChanges();
 
@@ -403,7 +434,7 @@ describe('BotsConfigPageComponent', () => {
   // US3: estado busy muestra spinner y aria-busy
   it('US3: estado busy muestra aria-busy="true" durante la creación', () => {
     const createSubj = new Subject<CreateBotMatchResponse>();
-    setup({ getBots: () => of(BOTS), createBotMatch: () => createSubj.asObservable() });
+    setup({ getBots: () => of(catalog(BOTS)), createBotMatch: () => createSubj.asObservable() });
 
     const fixture = TestBed.createComponent(BotsConfigPageComponent);
     fixture.detectChanges();

@@ -4,7 +4,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { BotsApiService } from './bots-api.service';
 import { environment } from '../../../../environments/environment';
-import type { Bot } from '../../../core/models/bot.models';
+import type { BotCatalog } from '../../../core/models/bot.models';
 import type { CreateBotMatchResponse } from '../../../core/models/match.models';
 
 describe('BotsApiService', () => {
@@ -21,16 +21,19 @@ describe('BotsApiService', () => {
 
   afterEach(() => httpMock.verify());
 
-  it('getBots(): GET /bots y mapea el array de respuesta', () => {
-    const bots: Bot[] = [{ botId: 'b1', name: 'El Mentiroso' }];
-    let result: Bot[] | null = null;
+  it('getBots(): GET /bots y mapea las listas casual y campaignUnlocked', () => {
+    const catalog: BotCatalog = {
+      casual: [{ botId: 'b1', name: 'El Mentiroso' }],
+      campaignUnlocked: [{ botId: 'c42', name: 'Cacho Medina' }],
+    };
+    let result: BotCatalog | null = null;
     service.getBots().subscribe((res) => (result = res));
 
     const req = httpMock.expectOne(`${environment.apiUrl}/bots`);
     expect(req.request.method).toBe('GET');
-    req.flush(bots);
+    req.flush(catalog);
 
-    expect(result).toEqual(bots);
+    expect(result).toEqual(catalog);
   });
 
   it('createBotMatch(): POST /matches/bot con gamesToPlay: 1', () => {

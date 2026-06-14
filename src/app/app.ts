@@ -1,5 +1,5 @@
-import { Component, effect, inject, untracked } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, computed, effect, inject, untracked } from '@angular/core';
+import { Router, RouterOutlet } from '@angular/router';
 import { AuthService } from './core/auth/auth.service';
 import { AudioPlaybackService } from './core/services/audio-playback.service';
 import { PresenceCoordinatorService } from './core/services/presence-coordinator.service';
@@ -8,13 +8,14 @@ import { UiClickSoundService } from './core/services/ui-click-sound.service';
 import { ProfileNotificationService } from './features/profile/services/profile-notification.service';
 import { CampaignPointsService } from './features/campaign/services/campaign-points.service';
 import { SocialStore } from './features/social/services/social.store';
-import { InvitationToastComponent } from './features/social/components/invitation-toast/invitation-toast.component';
 import { GlobalHeaderComponent } from './shared/components/global-header/global-header.component';
+import { ToastCenterComponent } from './shared/components/toast-center/toast-center.component';
+import type { ToastVM } from './shared/components/toast-center/toast.model';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, GlobalHeaderComponent, InvitationToastComponent],
+  imports: [RouterOutlet, GlobalHeaderComponent, ToastCenterComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
@@ -24,11 +25,105 @@ export class App {
   readonly profileNotifications = inject(ProfileNotificationService);
   readonly campaignPoints = inject(CampaignPointsService);
   readonly social = inject(SocialStore);
+  private readonly router = inject(Router);
   private readonly uiClickSound = inject(UiClickSoundService);
   private readonly audioPlayback = inject(AudioPlaybackService);
   readonly serverWake = inject(ServerWakeService);
 
   private backendBooted = false;
+
+  /**
+   * Cola unificada de toasts. Las cuatro fuentes (invitaciones, solicitudes de
+   * amistad, logros y bots desbloqueados) se ordenan por prioridad y se muestra
+   * solo la cabeza; al resolver/descartar el actual, su fuente se limpia y la
+   * próxima pasa a ser cabeza automáticamente. Las invitaciones van primero
+   * porque expiran.
+   */
+  private readonly toastQueue = computed<ToastVM[]>(() => {
+    const queue: ToastVM[] = [];
+
+    const invitation = this.social.incomingInvitationToast();
+    if (invitation) {
+      queue.push({
+        key: `invitation:${invitation.invitationId}`,
+        title: invitation.senderUsername,
+        body: 'Te invitó a jugar una partida',
+        actions: [
+          {
+            label: 'Aceptar',
+            variant: 'primary',
+            run: () =>
+              this.social.acceptInvitation(invitation.invitationId, (targetId) => {
+                void this.router.navigate(['/match', targetId]);
+              }),
+          },
+          {
+            label: 'Rechazar',
+            variant: 'danger',
+            run: () => this.social.declineInvitation(invitation.invitationId),
+          },
+        ],
+      });
+    }
+
+    const requester = this.social.incomingToast();
+    if (requester) {
+      queue.push({
+        key: `friend:${requester}`,
+        title: requester,
+        body: 'Te envió una solicitud de amistad',
+        actions: [
+          {
+            label: 'Aceptar',
+            variant: 'primary',
+            run: () => this.social.acceptRequest(requester),
+          },
+          {
+            label: 'Rechazar',
+            variant: 'danger',
+            run: () => this.social.declineRequest(requester),
+          },
+        ],
+        onClose: () => this.social.dismissToast(),
+      });
+    }
+
+    const achievement = this.profileNotifications.current();
+    if (achievement) {
+      queue.push({
+        key: `achievement:${achievement.achievement.achievementCode}`,
+        title: achievement.name,
+        body: achievement.description,
+        actions: [
+          { label: 'Cerrar', variant: 'neutral', run: () => this.profileNotifications.dismiss() },
+        ],
+      });
+    }
+
+    const botUnlock = this.campaignPoints.botUnlocked();
+    if (botUnlock) {
+      queue.push({
+        key: `bot-unlock:${botUnlock.botId}`,
+        title: '¡Rival desbloqueado!',
+        body: 'Sumaste un bot de campaña al modo casual. Lo encontrás en "Partida vs bots".',
+        actions: [
+          {
+            label: 'Cerrar',
+            variant: 'neutral',
+            run: () => this.campaignPoints.dismissBotUnlock(),
+          },
+        ],
+      });
+    }
+
+    return queue;
+  });
+
+  /** Toast visible (cabeza de la cola). */
+  readonly currentToast = computed<ToastVM | null>(() => this.toastQueue()[0] ?? null);
+
+  /** Cuántos toasts quedan esperando detrás del actual. */
+  readonly pendingToastCount = computed(() => Math.max(0, this.toastQueue().length - 1));
 
   constructor() {
     // Despierta Render + Neon antes que nada y muestra la overlay si tarda.

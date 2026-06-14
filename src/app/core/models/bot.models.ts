@@ -22,3 +22,14 @@ export interface Bot {
   /** Vector de personalidad. Opcional para futuras UI; no se renderiza en esta feature. */
   personality?: BotPersonality;
 }
+
+/**
+ * Respuesta de `GET /api/bots` (CONTRATOS_API §9.1). Depende del jugador: la API
+ * requiere Bearer token. `casual` son los bots de siempre; `campaignUnlocked` son
+ * los bots de campaña que **ese** jugador desbloqueó (historial neto `>= 3` a favor,
+ * §7.7). El BE garantiza que un bot de campaña nunca aparece en `casual`.
+ */
+export interface BotCatalog {
+  casual: Bot[];
+  campaignUnlocked: Bot[];
+}

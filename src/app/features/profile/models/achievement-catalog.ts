@@ -68,4 +68,10 @@ export const ACHIEVEMENT_CATALOG: Record<string, AchievementDefinition> = {
     name: 'Cien de cien',
     description: 'Le ganaste al menos una vez a cada uno de los 100 bots del modo campaña.',
   },
+  UNLOCK_ALL_CAMPAIGN_BOTS_IN_CASUAL: {
+    code: 'UNLOCK_ALL_CAMPAIGN_BOTS_IN_CASUAL',
+    name: 'Colección completa',
+    description:
+      'Desbloqueaste los 100 bots de campaña para el modo casual: historial neto de 3 o más a favor contra cada uno.',
+  },
 };

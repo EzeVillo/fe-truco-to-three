@@ -1,0 +1,188 @@
+.toast-center {
+  position: fixed;
+  right: var(--t3-gap-md);
+  bottom: var(--t3-gap-md);
+  left: var(--t3-gap-md);
+  z-index: 22;
+
+  @media (min-width: 1024px) {
+    left: auto;
+    width: 360px;
+  }
+
+  // Pila: cartas fantasma detrás de la principal para sugerir que hay más en cola.
+  &--stacked {
+    &::before,
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 100%;
+      border: 1px solid var(--t3-card-border);
+      border-radius: var(--t3-radius-md);
+      background-color: var(--t3-card-bg);
+      box-shadow: var(--t3-shadow-card);
+      z-index: -1;
+    }
+
+    &::before {
+      transform: translateY(-6px) scale(0.97);
+      opacity: 0.7;
+    }
+
+    &::after {
+      transform: translateY(-12px) scale(0.94);
+      opacity: 0.45;
+    }
+  }
+
+  &__card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--t3-gap-sm);
+    padding: var(--t3-gap-md);
+    border: 1px solid var(--t3-card-border);
+    border-radius: var(--t3-radius-md);
+    background-color: var(--t3-card-bg);
+    box-shadow: var(--t3-shadow-card);
+    color: var(--t3-text);
+  }
+
+  &__close {
+    position: absolute;
+    top: var(--t3-gap-xs);
+    right: var(--t3-gap-xs);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: var(--t3-radius-sm);
+    background: transparent;
+    color: var(--t3-text-muted);
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    transition:
+      color 120ms ease,
+      background-color 120ms ease;
+
+    @media (hover: hover) {
+      &:hover {
+        color: var(--t3-text);
+        background: var(--t3-card-border);
+      }
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--t3-gold-400);
+      outline-offset: 2px;
+    }
+  }
+
+  &__info {
+    min-width: 0;
+
+    // Reserva espacio para la "×" cuando el toast es descartable.
+    padding-right: 32px;
+
+    strong {
+      color: var(--t3-gold-500);
+    }
+
+    p {
+      margin: var(--t3-gap-xs) 0 0;
+      color: var(--t3-text-muted);
+      font-size: 0.85rem;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    gap: var(--t3-gap-xs);
+  }
+
+  &__btn {
+    flex: 1;
+    min-height: 44px;
+    padding: 0 var(--t3-gap-sm);
+    border: 1px solid var(--t3-card-border);
+    border-radius: var(--t3-radius-md);
+    background: transparent;
+    color: var(--t3-gold-500);
+    font: inherit;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition:
+      background-color 120ms ease,
+      border-color 120ms ease,
+      color 120ms ease;
+
+    @media (hover: hover) {
+      &:hover {
+        border-color: var(--t3-gold-400);
+      }
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--t3-gold-400);
+      outline-offset: 2px;
+    }
+  }
+
+  &__btn--primary {
+    border-color: transparent;
+    background: var(--t3-cta-bg);
+    color: var(--t3-cta-text-on);
+
+    @media (hover: hover) {
+      &:hover {
+        background: var(--t3-cta-bg-hover);
+        border-color: transparent;
+      }
+    }
+
+    &:active {
+      background: var(--t3-cta-bg-hover);
+    }
+  }
+
+  &__btn--danger {
+    border-color: var(--t3-danger-border);
+    background: var(--t3-danger-bg);
+    color: var(--t3-danger);
+
+    @media (hover: hover) {
+      &:hover {
+        border-color: var(--t3-danger);
+      }
+    }
+
+    &:active {
+      border-color: var(--t3-danger);
+    }
+  }
+
+  &__count {
+    position: absolute;
+    top: calc(-1 * var(--t3-gap-sm));
+    left: var(--t3-gap-md);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 var(--t3-gap-xs);
+    border-radius: 999px;
+    background: var(--t3-gold-500);
+    color: var(--t3-cta-text-on);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+}

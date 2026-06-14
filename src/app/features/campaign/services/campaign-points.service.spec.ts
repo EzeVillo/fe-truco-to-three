@@ -3,13 +3,18 @@ import { TestBed } from '@angular/core/testing';
 import { Subject, firstValueFrom } from 'rxjs';
 import { AuthStore } from '../../../core/auth/auth.store';
 import { SessionStorageService } from '../../../core/auth/session-storage.service';
-import type { CampaignWsEvent } from '../../../core/models/ws.models';
+import type {
+  CampaignBotUnlockedPayload,
+  CampaignMatchPointsPayload,
+  CampaignWsEvent,
+} from '../../../core/models/ws.models';
+import { AudioPlaybackService } from '../../../core/services/audio-playback.service';
 import { WebSocketService } from '../../../core/services/websocket.service';
 import { CampaignPointsService } from './campaign-points.service';
 
 function event(
   matchId: string,
-  overrides: Partial<CampaignWsEvent['payload']> = {},
+  overrides: Partial<CampaignMatchPointsPayload> = {},
 ): CampaignWsEvent {
   return {
     eventType: 'CAMPAIGN_MATCH_POINTS',
@@ -27,12 +32,17 @@ function event(
   };
 }
 
+function botUnlockedEvent(payload: CampaignBotUnlockedPayload): CampaignWsEvent {
+  return { eventType: 'CAMPAIGN_BOT_UNLOCKED', timestamp: 1, payload };
+}
+
 function setupWithSession(isGuest = false) {
   const events$ = new Subject<CampaignWsEvent>();
   const wsMock = {
     connect: vi.fn(),
     subscribe: vi.fn().mockReturnValue(events$.asObservable()),
   };
+  const audioMock = { preload: vi.fn(), play: vi.fn() };
 
   TestBed.configureTestingModule({
     providers: [
@@ -40,6 +50,7 @@ function setupWithSession(isGuest = false) {
       AuthStore,
       CampaignPointsService,
       { provide: WebSocketService, useValue: wsMock },
+      { provide: AudioPlaybackService, useValue: audioMock },
     ],
   });
 
@@ -57,7 +68,7 @@ function setupWithSession(isGuest = false) {
     });
   }
   const service = TestBed.inject(CampaignPointsService);
-  return { service, events$, wsMock };
+  return { service, events$, wsMock, audioMock };
 }
 
 describe('CampaignPointsService', () => {
@@ -105,6 +116,27 @@ describe('CampaignPointsService', () => {
     const payload = await pending;
     expect(payload?.matchId).toBe('match-2');
     expect(payload?.pointsAwarded).toBe(200);
+  });
+
+  it('CAMPAIGN_BOT_UNLOCKED setea el toast y reproduce el sonido', () => {
+    const { service, events$, audioMock } = setupWithSession();
+    service.start();
+
+    expect(service.botUnlocked()).toBeNull();
+    events$.next(botUnlockedEvent({ botId: 'c42', matchId: 'match-9' }));
+
+    expect(service.botUnlocked()).toEqual({ botId: 'c42', matchId: 'match-9' });
+    expect(audioMock.play).toHaveBeenCalledTimes(1);
+  });
+
+  it('dismissBotUnlock limpia el toast', () => {
+    const { service, events$ } = setupWithSession();
+    service.start();
+    events$.next(botUnlockedEvent({ botId: 'c42', matchId: 'match-9' }));
+
+    service.dismissBotUnlock();
+
+    expect(service.botUnlocked()).toBeNull();
   });
 
   it('emite null si el push no llega antes del timeout', async () => {

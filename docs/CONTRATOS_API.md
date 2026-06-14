@@ -2111,6 +2111,7 @@ La siguiente tabla lista todos los `achievementCode` que pueden desbloquearse:
 | `WIN_GAME_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS` | Ganar un game haciendo que el rival se pase de 3: cantaste truco cuando el rival no tenía cartas, el rival aceptó, y vos te fuiste al mazo dándole los puntos del truco, causando que se pase de 3 |
 | `REACH_CAMPAIGN_TOP_ONE`                                          | Alcanzar el puesto `#1` del ranking del modo campaña                                                                                                                                               |
 | `DEFEAT_ALL_CAMPAIGN_RIVALS`                                      | Ganarle al menos una vez a cada uno de los `100` bots del modo campaña (requiere llegar al `#1` y volver por los rivales salteados al subir)                                                       |
+| `UNLOCK_ALL_CAMPAIGN_BOTS_IN_CASUAL`                              | Desbloquear los `100` bots de campaña para el modo casual, es decir tener historial neto `>= 3` a favor (`wins - losses`) contra cada uno de ellos                                                 |
 
 ### 7.5.3 Catálogo de logros
 
@@ -2352,8 +2353,14 @@ Reglas de negocio:
 - Cada cruce queda registrado en un head-to-head por rival (`wins`/`losses`).
 - Llegar al `#1` desbloquea `REACH_CAMPAIGN_TOP_ONE`; ganarle al menos una vez a cada uno de los
   `100` bots desbloquea `DEFEAT_ALL_CAMPAIGN_RIVALS`.
+- Alcanzar historial neto `>= 3` a favor (`wins - losses`) contra un bot lo **desbloquea para el
+  modo casual** de forma **permanente** (no se revierte aunque el neto vuelva a bajar). Las partidas
+  casuales **no** afectan el head-to-head de campaña. Desbloquear los `100` otorga
+  `UNLOCK_ALL_CAMPAIGN_BOTS_IN_CASUAL`. Cada desbloqueo emite por WebSocket un evento
+  `CAMPAIGN_BOT_UNLOCKED` (payload `{ botId, matchId }`).
 
-Los bots de campaña **no** aparecen en `GET /api/bots` (catálogo de bots casuales).
+Los bots de campaña **no** aparecen en la lista `casual` de `GET /api/bots`; aparecen en la lista
+`campaignUnlocked` solo una vez desbloqueados por el jugador (ver 9.1).
 
 ### 7.7.1 Obtener la campaña
 
@@ -2534,6 +2541,7 @@ bajos cuando aplique. Si el valor no coincide, la API responde `400` con
 - `WIN_GAME_BUST_RIVAL_VIA_FOLD_AFTER_ACCEPTED_TRUCO_WITH_NO_CARDS`
 - `REACH_CAMPAIGN_TOP_ONE`
 - `DEFEAT_ALL_CAMPAIGN_RIVALS`
+- `UNLOCK_ALL_CAMPAIGN_BOTS_IN_CASUAL`
 
 ## 9. WebSocket / STOMP
 
@@ -2571,7 +2579,8 @@ Suscripciones permitidas por interceptor:
 - `/user/queue/social` - eventos de amistades e invitaciones
 - `/user/queue/profile` - eventos de logros del perfil
 - `/user/queue/campaign` - resultado de puntos al terminar un match de campaña (
-  `CAMPAIGN_MATCH_POINTS`)
+  `CAMPAIGN_MATCH_POINTS`) y desbloqueo de un bot de campaña para el modo casual
+  (`CAMPAIGN_BOT_UNLOCKED`, payload `{ botId, matchId }`)
 - `/user/queue/presence` - cambios de presencia/ocupación del usuario (`PRESENCE_UPDATED`)
 
 - `/topic/public-match-lobby` - stream compartido del lobby publico de matches
@@ -3125,68 +3134,53 @@ No se reenvian al espectador los eventos privados por asiento:
 
 `GET /api/bots`
 
-No requiere autenticacion.
+Requiere Bearer token (la respuesta depende del jugador: incluye los bots de campaña que **ese**
+jugador haya desbloqueado).
 
-Response `200`:
+Response `200`: objeto con dos listas. `casual` son los bots del modo casual de siempre;
+`campaignUnlocked` son los bots de campaña que el jugador desbloqueó (historial neto `>= 3` a favor;
+ver 7.7). Ambas listas usan el mismo formato de bot. Un bot de campaña nunca aparece en `casual`.
 
 ```json
-[
-  {
-    "botId": "00000000-0000-0000-0000-000000000001",
-    "name": "El Mentiroso",
-    "personality": {
-      "mentiroso": 90,
-      "pescador": 20,
-      "temerario": 70,
-      "envidoso": 50,
-      "aguantador": 30
+{
+  "casual": [
+    {
+      "botId": "00000000-0000-0000-0000-000000000001",
+      "name": "El Mentiroso",
+      "personality": {
+        "mentiroso": 90,
+        "pescador": 20,
+        "temerario": 70,
+        "envidoso": 50,
+        "aguantador": 30
+      }
+    },
+    {
+      "botId": "00000000-0000-0000-0000-000000000005",
+      "name": "El Equilibrado",
+      "personality": {
+        "mentiroso": 50,
+        "pescador": 50,
+        "temerario": 50,
+        "envidoso": 50,
+        "aguantador": 50
+      }
     }
-  },
-  {
-    "botId": "00000000-0000-0000-0000-000000000002",
-    "name": "El Pescador",
-    "personality": {
-      "mentiroso": 30,
-      "pescador": 90,
-      "temerario": 40,
-      "envidoso": 60,
-      "aguantador": 70
+  ],
+  "campaignUnlocked": [
+    {
+      "botId": "c0000000-0000-0000-0000-000000000042",
+      "name": "Cacho Medina",
+      "personality": {
+        "mentiroso": 58,
+        "pescador": 47,
+        "temerario": 61,
+        "envidoso": 44,
+        "aguantador": 35
+      }
     }
-  },
-  {
-    "botId": "00000000-0000-0000-0000-000000000003",
-    "name": "El Temerario",
-    "personality": {
-      "mentiroso": 60,
-      "pescador": 30,
-      "temerario": 95,
-      "envidoso": 70,
-      "aguantador": 15
-    }
-  },
-  {
-    "botId": "00000000-0000-0000-0000-000000000004",
-    "name": "El Cauteloso",
-    "personality": {
-      "mentiroso": 15,
-      "pescador": 50,
-      "temerario": 20,
-      "envidoso": 40,
-      "aguantador": 85
-    }
-  },
-  {
-    "botId": "00000000-0000-0000-0000-000000000005",
-    "name": "El Equilibrado",
-    "personality": {
-      "mentiroso": 50,
-      "pescador": 50,
-      "temerario": 50,
-      "envidoso": 50,
-      "aguantador": 50
-    }
-  }
-]
+  ]
+}
 ```
 
 Parametros de personalidad (todos en rango 1-100):

@@ -50,7 +50,8 @@ export class BotsConfigPageComponent implements OnInit {
     inject(DestroyRef).onDestroy(() => this.navigationLock.set(false));
   }
 
-  readonly bots = signal<Bot[]>([]);
+  readonly casualBots = signal<Bot[]>([]);
+  readonly campaignBots = signal<Bot[]>([]);
   readonly loadingCatalog = signal<boolean>(true);
   readonly catalogError = signal<string | null>(null);
   readonly selectedBotId = signal<string | null>(null);
@@ -58,11 +59,14 @@ export class BotsConfigPageComponent implements OnInit {
   readonly creatingMatch = signal<boolean>(false);
   readonly createMatchError = signal<string | null>(null);
 
+  /** Total de bots elegibles (casuales + campaña desbloqueados). */
+  readonly totalBots = computed(() => this.casualBots().length + this.campaignBots().length);
+
   readonly canCreate = computed(
     () =>
       !this.creatingMatch() &&
       !this.loadingCatalog() &&
-      this.bots().length > 0 &&
+      this.totalBots() > 0 &&
       this.selectedBotId() !== null,
   );
 
@@ -76,14 +80,16 @@ export class BotsConfigPageComponent implements OnInit {
     this.catalogError.set(null);
 
     this.api.getBots().subscribe({
-      next: (bots) => {
-        this.bots.set(bots);
+      next: (catalog) => {
+        this.casualBots.set(catalog.casual ?? []);
+        this.campaignBots.set(catalog.campaignUnlocked ?? []);
         this.loadingCatalog.set(false);
       },
       error: (err: unknown) => {
         console.error('[BotsConfigPage] error cargando catálogo', err);
         this.catalogError.set(getErrorCopy('BOT_CATALOG', err));
-        this.bots.set([]);
+        this.casualBots.set([]);
+        this.campaignBots.set([]);
         this.loadingCatalog.set(false);
       },
     });

@@ -53,4 +53,9 @@ describe('Contract: Campaign WS points', () => {
     expect(content).toContain('"pointsAwarded"');
     expect(content).toContain('"totalPoints"');
   });
+
+  it('documenta el desbloqueo de bot de campaña para el modo casual', () => {
+    expect(content).toContain('CAMPAIGN_BOT_UNLOCKED');
+    expect(content).toContain('{ botId, matchId }');
+  });
 });

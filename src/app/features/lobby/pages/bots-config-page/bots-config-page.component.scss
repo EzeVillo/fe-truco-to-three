@@ -44,6 +44,30 @@
     gap: 12px;
   }
 
+  &__section {
+    margin-top: 24px;
+  }
+
+  &__section-head {
+    margin-bottom: 12px;
+    padding-top: 16px;
+    border-top: 1px solid var(--t3-card-border);
+  }
+
+  &__section-title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--t3-gold-500);
+  }
+
+  &__section-hint {
+    margin: 6px 0 0;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--t3-text-muted);
+  }
+
   &__state {
     display: flex;
     flex-direction: column;

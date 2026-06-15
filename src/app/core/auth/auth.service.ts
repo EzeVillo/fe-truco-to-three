@@ -22,15 +22,25 @@ export class AuthService {
   private readonly baseUrl = `${environment.apiUrl}/auth`;
 
   register(req: RegisterRequest): Observable<FullAuthResponse> {
-    return this.http
-      .post<FullAuthResponse>(`${this.baseUrl}/register`, req)
-      .pipe(tap((response) => this.authStore.setSession(response)));
+    return this.http.post<FullAuthResponse>(`${this.baseUrl}/register`, req).pipe(
+      tap((response) => {
+        this.authStore.setSession(response);
+        // El principal cambió (p. ej. de invitado a la cuenta nueva): rebindear el
+        // socket para que las colas POR USUARIO de STOMP queden atadas al token nuevo.
+        this.webSocketService.rebindCredentials();
+      }),
+    );
   }
 
   login(req: LoginRequest): Observable<FullAuthResponse> {
-    return this.http
-      .post<FullAuthResponse>(`${this.baseUrl}/login`, req)
-      .pipe(tap((response) => this.authStore.setSession(response)));
+    return this.http.post<FullAuthResponse>(`${this.baseUrl}/login`, req).pipe(
+      tap((response) => {
+        this.authStore.setSession(response);
+        // Mismo motivo que en register: la sesión STOMP previa (invitado/otra cuenta)
+        // quedaría atada al principal viejo y no recibiría los eventos del nuevo.
+        this.webSocketService.rebindCredentials();
+      }),
+    );
   }
 
   guest(): Observable<GuestAuthResponse> {

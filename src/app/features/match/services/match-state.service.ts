@@ -226,6 +226,15 @@ export class MatchStateService {
     });
 
     this.subscriptions.push(connSub);
+
+    // Una acción del jugador falló en la red: recargamos el snapshot para
+    // reconciliar el estado real. El snapshot, al aplicarse, libera el lock
+    // optimista (clearActionPending en fetchSnapshot), así no quedan acciones
+    // obsoletas del turno anterior re-habilitadas ni la UI trabada para siempre.
+    const actionErrorSub = this.matchActions.actionError$.subscribe(() => {
+      this.triggerRefetch();
+    });
+    this.subscriptions.push(actionErrorSub);
   }
 
   destroy(): void {

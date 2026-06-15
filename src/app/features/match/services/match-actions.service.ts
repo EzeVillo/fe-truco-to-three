@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { catchError, EMPTY, type Observable } from 'rxjs';
+import { catchError, EMPTY, Subject, type Observable } from 'rxjs';
 import type {
   PlayCardRequest,
   CallEnvidoRequest,
@@ -30,16 +30,25 @@ export class MatchActionsService {
    * primer evento WS, donde `availableActions` aún refleja el turno anterior y
    * los flags anti-doble-tap por botón no alcanzan (bloquean solo el mismo botón).
    *
-   * Reset (en orden de probabilidad):
+   * El lock SOLO se libera con algo del backend (socket o API), nunca por tiempo:
    *  - el primer evento transaccional / snapshot que aplica el nuevo estado
    *    (`MatchStateService.clearActionPending()`),
-   *  - un error HTTP de la propia request,
-   *  - un timeout de seguridad, por si el evento se pierde y no hay re-fetch.
+   *  - el re-fetch del snapshot tras un error de la request (ver `actionError$`),
+   *    cuyo snapshot al aplicarse limpia el lock.
+   *
+   * No hay timeout de seguridad: si el backend tarda, la UI espera congelada en
+   * vez de re-habilitar acciones potencialmente obsoletas del turno anterior.
    */
   private readonly _actionPending = signal<boolean>(false);
   readonly actionPending = this._actionPending.asReadonly();
-  private pendingTimerId: ReturnType<typeof setTimeout> | null = null;
-  private static readonly PENDING_SAFETY_MS = 6000;
+
+  /**
+   * Notifica que una request de acción falló (red/timeout/4xx/5xx). El dueño del
+   * estado (`MatchStateService`) reacciona re-fetcheando el snapshot para recargar
+   * el match y reconciliar `availableActions`; ese re-fetch libera el lock.
+   */
+  private readonly _actionError$ = new Subject<void>();
+  readonly actionError$ = this._actionError$.asObservable();
 
   /** §4.7 POST /api/matches/{matchId}/truco */
   callTruco(matchId: string): Observable<void> {
@@ -79,53 +88,46 @@ export class MatchActionsService {
    * Prende el lock optimista igual que una acción de juego: abandonar congela
    * el tablero (cartas + cantos + respuestas) en el acto, cerrando la ventana
    * entre el tap de "Abandonar" y el evento MATCH_ABANDONED que abre el modal
-   * de derrota. Ante error HTTP se libera el lock (no llegó al backend).
+   * de derrota. Ante error de la request se dispara el re-fetch del snapshot.
    */
   abandon(matchId: string): Observable<void> {
+    const url = `${this.base}/${matchId}/abandon`;
     this.setActionPending();
-    return this.http.post<void>(`${this.base}/${matchId}/abandon`, undefined).pipe(
-      catchError((err: unknown) => {
-        console.warn('[match-actions] Request failed:', `${this.base}/${matchId}/abandon`, err);
-        this.clearActionPending();
-        return EMPTY;
-      }),
-    );
+    return this.http
+      .post<void>(url, undefined)
+      .pipe(catchError((err: unknown) => this.handleActionError(url, err)));
   }
 
-  /** Prende el lock optimista y arma el timeout de seguridad que lo libera. */
+  /** Prende el lock optimista. Solo lo libera el backend (socket o re-fetch). */
   private setActionPending(): void {
     this._actionPending.set(true);
-    if (this.pendingTimerId !== null) {
-      clearTimeout(this.pendingTimerId);
-    }
-    this.pendingTimerId = setTimeout(
-      () => this.clearActionPending(),
-      MatchActionsService.PENDING_SAFETY_MS,
-    );
   }
 
   /** Limpia el lock optimista. Lo llama `MatchStateService` al aplicar nuevo estado. */
   clearActionPending(): void {
-    if (this.pendingTimerId !== null) {
-      clearTimeout(this.pendingTimerId);
-      this.pendingTimerId = null;
-    }
     this._actionPending.set(false);
   }
 
   /**
    * Dispara una acción mutante del jugador prendiendo el lock optimista. Ante
-   * error HTTP, lo libera (la acción no llegó al backend, no habrá evento que
-   * lo limpie) y silencia el error igual que `post()`.
+   * error de la request, delega en `handleActionError` (re-fetch del snapshot).
    */
   private mutate<T>(url: string, body: T | undefined): Observable<void> {
     this.setActionPending();
-    return this.http.post<void>(url, body).pipe(
-      catchError((err: unknown) => {
-        console.warn('[match-actions] Request failed:', url, err);
-        this.clearActionPending();
-        return EMPTY;
-      }),
-    );
+    return this.http
+      .post<void>(url, body)
+      .pipe(catchError((err: unknown) => this.handleActionError(url, err)));
+  }
+
+  /**
+   * Maneja el fallo de una request de acción: lo silencia (solo `console.warn`)
+   * y emite `actionError$` para que `MatchStateService` re-fetchee el snapshot.
+   * No limpia el lock acá a propósito: la UI queda congelada hasta que el snapshot
+   * recargado se aplique y lo libere, evitando re-habilitar acciones obsoletas.
+   */
+  private handleActionError(url: string, err: unknown): Observable<never> {
+    console.warn('[match-actions] Request failed:', url, err);
+    this._actionError$.next();
+    return EMPTY;
   }
 }

@@ -86,11 +86,7 @@ describe('WebSocketService', () => {
     Object.defineProperty(client, 'connected', { value: true, configurable: true });
     service.subscribe<unknown>('/user/queue/match').subscribe();
 
-    expect(subscribeSpy).toHaveBeenCalledWith(
-      '/user/queue/match',
-      expect.any(Function),
-      undefined,
-    );
+    expect(subscribeSpy).toHaveBeenCalledWith('/user/queue/match', expect.any(Function), undefined);
   });
 
   it('vuelve a suscribirse cuando el WebSocket reconecta', () => {
@@ -164,6 +160,45 @@ describe('WebSocketService', () => {
     await beforeConnect;
 
     expect(client.connectHeaders['Authorization']).toBe('Bearer fresh-token');
+  });
+
+  it('rebindCredentials reconecta con el token vigente cuando el cliente ya está activo', async () => {
+    store.setSession({
+      playerId: 'guest-1',
+      username: null,
+      accessToken: 'guest-token',
+      refreshToken: null,
+      accessTokenExpiresIn: 900,
+      refreshTokenExpiresIn: 0,
+    } as never);
+
+    service.connect();
+    const client = (service as unknown as { client: Client }).client;
+    Object.defineProperty(client, 'active', { value: true, configurable: true });
+
+    store.replaceSession({
+      playerId: 'player-1',
+      username: 'juancho',
+      accessToken: 'user-token',
+      refreshToken: 'refresh-1',
+      accessTokenExpiresIn: 900,
+      refreshTokenExpiresIn: 2592000,
+    });
+
+    service.rebindCredentials();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(client.deactivate).toHaveBeenCalled();
+    expect(client.connectHeaders['Authorization']).toBe('Bearer user-token');
+  });
+
+  it('rebindCredentials conecta de cero si todavía no hay cliente activo', () => {
+    const connectSpy = vi.spyOn(service, 'connect');
+
+    service.rebindCredentials();
+
+    expect(connectSpy).toHaveBeenCalledTimes(1);
   });
 
   it('ante error STOMP de autenticación fuerza refresh y reconecta con el token nuevo', async () => {

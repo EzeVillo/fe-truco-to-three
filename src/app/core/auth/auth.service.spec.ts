@@ -33,6 +33,7 @@ describe('AuthService', () => {
   let httpMock: HttpTestingController;
   let store: InstanceType<typeof AuthStore>;
   let wsDisconnect: ReturnType<typeof vi.fn>;
+  let wsRebind: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     const fakeStorage: Record<string, string> = {};
@@ -45,6 +46,7 @@ describe('AuthService', () => {
     });
 
     wsDisconnect = vi.fn();
+    wsRebind = vi.fn();
 
     TestBed.configureTestingModule({
       providers: [
@@ -53,7 +55,10 @@ describe('AuthService', () => {
         SessionStorageService,
         AuthStore,
         AuthService,
-        { provide: WebSocketService, useValue: { disconnect: wsDisconnect } },
+        {
+          provide: WebSocketService,
+          useValue: { disconnect: wsDisconnect, rebindCredentials: wsRebind },
+        },
       ],
     });
 
@@ -85,6 +90,13 @@ describe('AuthService', () => {
       httpReq.flush(FULL_RESPONSE);
       expect(emitted).toBe(true);
     });
+
+    it('rebindea el WebSocket al nuevo principal tras registrarse', () => {
+      service.register({ username: 'juancho', password: 'Clave1!' }).subscribe();
+      httpMock.expectOne('/api/auth/register').flush(FULL_RESPONSE);
+
+      expect(wsRebind).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('login()', () => {
@@ -104,6 +116,13 @@ describe('AuthService', () => {
       expect(httpReq.request.method).toBe('POST');
       httpReq.flush(FULL_RESPONSE);
       expect(emitted).toBe(true);
+    });
+
+    it('rebindea el WebSocket al nuevo principal tras loguearse', () => {
+      service.login({ username: 'juancho', password: 'Clave1!' }).subscribe();
+      httpMock.expectOne('/api/auth/login').flush(FULL_RESPONSE);
+
+      expect(wsRebind).toHaveBeenCalledTimes(1);
     });
   });
 

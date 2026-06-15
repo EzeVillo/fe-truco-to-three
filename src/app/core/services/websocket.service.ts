@@ -146,6 +146,25 @@ export class WebSocketService implements OnDestroy {
     });
   }
 
+  /**
+   * Rebindea la conexión STOMP a las credenciales vigentes. Necesario cuando el
+   * principal autenticado cambia sin recargar la página (típicamente al pasar de
+   * invitado a una cuenta real tras login/registro): `connect()` es idempotente
+   * (no-op si el cliente ya está activo), así que la sesión STOMP seguiría atada
+   * al usuario anterior y los eventos de `/user/queue/**` (colas POR USUARIO) nunca
+   * llegarían al nuevo principal — el tablero, hidratado por snapshot REST, se ve
+   * bien pero queda congelado tras la primera acción hasta un refresh manual.
+   *
+   * Si todavía no hay cliente activo, delega en `connect()` (alta normal).
+   */
+  rebindCredentials(): void {
+    if (this.client?.active) {
+      this.reconnect();
+    } else {
+      this.connect();
+    }
+  }
+
   private buildBrokerUrl(): string {
     const baseUrl = new URL(environment.wsUrl, window.location.origin);
     baseUrl.protocol = baseUrl.protocol === 'https:' ? 'wss:' : 'ws:';

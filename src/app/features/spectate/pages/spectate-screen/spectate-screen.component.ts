@@ -23,6 +23,8 @@ import {
   type EnvidoResultDialogData,
 } from '../../../match/components/envido-result-dialog/envido-result-dialog.component';
 import { SpectateStateService } from '../../services/spectate-state.service';
+import { BotsApiService } from '../../../lobby/services/bots-api.service';
+import { getErrorCopy } from '../../../../shared/error-copy/error-copy';
 import { MatchEventQueueService } from '../../../match/services/match-event-queue.service';
 import { MatchCallAudioService } from '../../../match/services/match-call-audio.service';
 import { BackgroundMusicService } from '../../../match/services/background-music.service';
@@ -58,6 +60,7 @@ export class SpectateScreenComponent implements OnInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly vcr = inject(ViewContainerRef);
   readonly spectateService = inject(SpectateStateService);
+  private readonly botsApi = inject(BotsApiService);
   private readonly eventQueue = inject(MatchEventQueueService);
   private readonly callAudio = inject(MatchCallAudioService);
   private readonly backgroundMusic = inject(BackgroundMusicService);
@@ -89,7 +92,39 @@ export class SpectateScreenComponent implements OnInit, OnDestroy {
   private readonly callDisplayTimers = new Map<string, number>();
   private _callHydratedMatchId: string | null = null;
 
+  // Control de avance manual (§9.2b): las partidas bot-vs-bot no avanzan solas, el
+  // creador dispara cada jugada con un POST .../advance. Solo el dueño puede
+  // espectar una bot-vs-bot, así que basta detectar que es bot-vs-bot para mostrar
+  // el control. Se "engancha" en true al ver las manos boca arriba (no-nulas solo
+  // en bot-vs-bot) y no vuelve a apagarse aunque entre rondas queden null.
+  readonly isBotVsBot = signal<boolean>(false);
+  readonly advancing = signal<boolean>(false);
+  readonly advanceError = signal<string | null>(null);
+
+  /** El control de avance solo aplica mientras la serie sigue en curso. */
+  readonly canAdvance = computed<boolean>(() => {
+    const v = this.matchView();
+    return (
+      this.isBotVsBot() &&
+      !!v &&
+      v.status === 'IN_PROGRESS' &&
+      !this.advancing() &&
+      !this.spectateService.isProcessingDelay()
+    );
+  });
+
+  private _advanceSub?: Subscription;
+
   constructor() {
+    // Latch de bot-vs-bot: en cuanto el snapshot trae alguna mano boca arriba,
+    // sabemos que es una partida bot-vs-bot de la que somos dueños.
+    effect(() => {
+      const round = this.spectateService.matchState()?.roundGame;
+      if (round && (round.handPlayerOne !== null || round.handPlayerTwo !== null)) {
+        this.isBotVsBot.set(true);
+      }
+    });
+
     // Hidratación: si entramos a mirar con un canto sin resolver ya en curso, el
     // evento WS original ya pasó; el snapshot lo refleja vía derivePendingCall.
     effect(() => {
@@ -105,6 +140,13 @@ export class SpectateScreenComponent implements OnInit, OnDestroy {
       const pending = derivePendingCall(state);
       if (!pending) {
         return;
+      }
+      // Si el canto pendiente es un envido, recordamos el asiento del cantor: sin
+      // esto, al refrescar con un envido en curso no llegó el ENVIDO_CALLED en vivo
+      // y handleCallDisplay no podría inferir el respondedor cuando llegue
+      // ENVIDO_RESOLVED, dejando sin mostrar la respuesta (¡Quiero!/¡No quiero!).
+      if (state.roundGame.roundStatus === 'ENVIDO_IN_PROGRESS') {
+        this.lastEnvidoCallerSeat = pending.seat;
       }
       (pending.seat === 'PLAYER_ONE' ? this.selfCallText : this.opponentCallText).set(pending.text);
     });
@@ -179,6 +221,7 @@ export class SpectateScreenComponent implements OnInit, OnDestroy {
     this._envidoSub?.unsubscribe();
     this._matchEndedSub?.unsubscribe();
     this._eventSub?.unsubscribe();
+    this._advanceSub?.unsubscribe();
     this.clearAllCallDisplayTimers();
     this.dialog.closeAll();
     this.spectateService.destroy();
@@ -219,7 +262,8 @@ export class SpectateScreenComponent implements OnInit, OnDestroy {
     // ENVIDO_RESOLVED no trae responderSeat: se infiere como rival del cantor.
     if (event.eventType === 'ENVIDO_RESOLVED') {
       const response = (event.payload as { response: string }).response;
-      const text = response === 'QUIERO' ? '¡Quiero!' : response === 'NO_QUIERO' ? '¡No quiero!' : null;
+      const text =
+        response === 'QUIERO' ? '¡Quiero!' : response === 'NO_QUIERO' ? '¡No quiero!' : null;
       const callerSeat = this.lastEnvidoCallerSeat;
       this.lastEnvidoCallerSeat = null;
       if (!text || !callerSeat) {
@@ -387,6 +431,31 @@ export class SpectateScreenComponent implements OnInit, OnDestroy {
     } catch {
       // El audio nunca debe romper el flujo visual.
     }
+  }
+
+  /**
+   * Dispara la próxima acción de la partida bot-vs-bot (§9.2b). El nuevo estado
+   * llega por el canal de espectador, así que acá solo manejamos el ciclo de la
+   * request (bloquear reentradas y reportar error). El `204` es idempotente:
+   * si la serie ya terminó, el botón ya estará oculto vía `canAdvance`.
+   */
+  onAdvance(): void {
+    if (!this.canAdvance()) {
+      return;
+    }
+    this.advancing.set(true);
+    this.advanceError.set(null);
+    this._advanceSub?.unsubscribe();
+    this._advanceSub = this.botsApi.advanceBotVsBotMatch(this.matchId()).subscribe({
+      next: () => {
+        this.advancing.set(false);
+      },
+      error: (err: unknown) => {
+        console.error('[SpectateScreen] error avanzando partida bot-vs-bot', err);
+        this.advanceError.set(getErrorCopy('ADVANCE_BOT_VS_BOT_MATCH', err));
+        this.advancing.set(false);
+      },
+    });
   }
 
   goBack(): void {

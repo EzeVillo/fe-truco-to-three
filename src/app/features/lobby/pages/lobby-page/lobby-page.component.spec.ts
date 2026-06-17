@@ -45,9 +45,25 @@ describe('LobbyPageComponent', () => {
     expect(text).toContain('Buscá rival automáticamente y jugá online');
 
     const buttons = fixture.debugElement.queryAll(By.css('.lobby__cta'));
-    buttons[2].nativeElement.click();
+    buttons[3].nativeElement.click();
 
     expect(navSpy).toHaveBeenCalledWith('/lobby/quick-match');
+  });
+
+  it('renderiza el CTA "Mirar dos bots" y navega a /lobby/bots-duel', () => {
+    const fixture = TestBed.createComponent(LobbyPageComponent);
+    const router = TestBed.inject(Router);
+    const navSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Mirar dos bots');
+
+    const buttons = fixture.debugElement.queryAll(By.css('.lobby__cta'));
+    buttons[2].nativeElement.click();
+
+    expect(navSpy).toHaveBeenCalledWith('/lobby/bots-duel');
   });
 
   it('renderiza el CTA "Modo campaña" y navega a /lobby/campaign', () => {
@@ -123,7 +139,7 @@ describe('LobbyPageComponent', () => {
 
     fixture.detectChanges();
     const buttons = fixture.debugElement.queryAll(By.css('.lobby__cta'));
-    buttons[4].nativeElement.click();
+    buttons[5].nativeElement.click();
 
     expect(navSpy).toHaveBeenCalledWith('/reglas');
   });

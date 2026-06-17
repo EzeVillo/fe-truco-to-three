@@ -14,6 +14,12 @@ export interface SeatView {
   score: number;
   gamesWon: number;
   handCards: Card[] | null;
+  /**
+   * Mano del asiento boca arriba para el espectador de una partida bot-vs-bot
+   * (§9.2b). `null` salvo en ese modo; cuando está, el área renderiza estas cartas
+   * reveladas en vez de dorsos. No se usa en el flujo de jugador.
+   */
+  revealedHandCards: Card[] | null;
   handCount: number;
   playedInCurrentHand: Card | null;
   playedInPreviousHands: (Card | null)[];
@@ -53,6 +59,46 @@ function seatCard(
   seat: ViewerSeat,
 ): Card | null {
   return seat === 'PLAYER_ONE' ? playedHand.cardPlayerOne : playedHand.cardPlayerTwo;
+}
+
+function cardKey(card: Card): string {
+  return `${card.suit}-${card.number}`;
+}
+
+/**
+ * Mano boca arriba de un asiento, presente solo al espectar bot-vs-bot (§9.2b).
+ * `undefined`/`null` en el flujo de jugador y en spectate con humanos.
+ *
+ * Filtra las cartas que el asiento ya bajó a la mesa (en `playedHands`/`currentHand`)
+ * para que la mano siga exactamente al tablero, sin depender del orden/timing de
+ * `PLAYER_HAND_UPDATED`: el descarte queda atado al mismo `CARD_PLAYED` que pinta
+ * la carta jugada, así no se ve la carta dos veces.
+ */
+function handBySeat(
+  round: {
+    handPlayerOne?: Card[] | null;
+    handPlayerTwo?: Card[] | null;
+    playedHands: PlayedHand[];
+    currentHand: { cardPlayerOne: Card | null; cardPlayerTwo: Card | null };
+  },
+  seat: ViewerSeat,
+): Card[] | null {
+  const hand = (seat === 'PLAYER_ONE' ? round.handPlayerOne : round.handPlayerTwo) ?? null;
+  if (hand === null) {
+    return null;
+  }
+  const playedKeys = new Set<string>();
+  for (const h of round.playedHands) {
+    const card = seatCard(h, seat);
+    if (card !== null) {
+      playedKeys.add(cardKey(card));
+    }
+  }
+  const current = seatCard(round.currentHand, seat);
+  if (current !== null) {
+    playedKeys.add(cardKey(current));
+  }
+  return hand.filter((card) => !playedKeys.has(cardKey(card)));
 }
 
 function playedBySeat(
@@ -102,6 +148,7 @@ export function deriveMatchView(state: MatchState): MatchView {
         score: selfScore,
         gamesWon: selfGamesWon,
         handCards: null,
+        revealedHandCards: null,
         handCount: 0,
         playedInCurrentHand: null,
         playedInPreviousHands: [],
@@ -113,6 +160,7 @@ export function deriveMatchView(state: MatchState): MatchView {
         score: opponentScore,
         gamesWon: opponentGamesWon,
         handCards: null,
+        revealedHandCards: null,
         handCount: 0,
         playedInCurrentHand: null,
         playedInPreviousHands: [],
@@ -173,6 +221,8 @@ export function deriveMatchView(state: MatchState): MatchView {
       score: selfScore,
       gamesWon: selfGamesWon,
       handCards: round.myCards,
+      // Solo no-nula al espectar bot-vs-bot: la mano propia boca arriba.
+      revealedHandCards: handBySeat(round, selfSeat),
       handCount: selfHandCount,
       playedInCurrentHand: seatCard(round.currentHand, selfSeat),
       playedInPreviousHands: round.playedHands.map((h: PlayedHand) => seatCard(h, selfSeat)),
@@ -184,6 +234,9 @@ export function deriveMatchView(state: MatchState): MatchView {
       score: opponentScore,
       gamesWon: opponentGamesWon,
       handCards: null,
+      // Solo no-nula al espectar bot-vs-bot: la mano del rival boca arriba. En el
+      // resto queda null y el área de rival renderiza dorsos por `handCount`.
+      revealedHandCards: handBySeat(round, oppSeat),
       handCount: opponentHandCount,
       playedInCurrentHand: seatCard(round.currentHand, oppSeat),
       playedInPreviousHands: round.playedHands.map((h: PlayedHand) => seatCard(h, oppSeat)),

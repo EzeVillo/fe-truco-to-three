@@ -24,6 +24,19 @@
   height: 56px;
 }
 
+// Mano del rival revelada (spectate bot-vs-bot): fila plana, una al lado de otra,
+// con el mismo tamaño que la mano propia (.player-area__cards).
+.opponent-area__revealed {
+  display: flex;
+  gap: var(--t3-gap-xs);
+  justify-content: center;
+  align-items: center;
+}
+
+.opponent-area__revealed-card app-card-view {
+  width: 56px;
+}
+
 .opponent-area__card-wrapper {
   width: 40px;
   flex-shrink: 0;
@@ -70,5 +83,9 @@
   .opponent-area__card-wrapper {
     width: 48px;
     margin-left: -24px;
+  }
+
+  .opponent-area__revealed-card app-card-view {
+    width: 88px;
   }
 }

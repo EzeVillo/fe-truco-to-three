@@ -181,6 +181,15 @@ export interface HandDealtPayload {
   cards: Card[];
 }
 
+/**
+ * Variante de `HAND_DEALT` re-difundida al espectador de una partida bot-vs-bot
+ * (§9.5g): trae las manos de ambos asientos en lugar de una sola por asiento.
+ */
+export interface HandDealtBothPayload {
+  player_one: Card[];
+  player_two: Card[];
+}
+
 export interface AvailableActionsUpdatedPayload {
   seat: Seat;
   availableActions: AvailableAction[];

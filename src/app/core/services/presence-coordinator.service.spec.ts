@@ -18,6 +18,7 @@ function busyMatch(id = 'match-1'): UserPresenceResponse {
     rematch: null,
     quickMatch: null,
     spectating: null,
+    ownedBotMatch: null,
   };
 }
 
@@ -30,6 +31,7 @@ function freePresence(): UserPresenceResponse {
     rematch: null,
     quickMatch: null,
     spectating: null,
+    ownedBotMatch: null,
   };
 }
 
@@ -42,6 +44,7 @@ function rematchPresence(originMatchId = 'origin-1'): UserPresenceResponse {
     rematch: { id: 'session-1', originMatchId },
     quickMatch: null,
     spectating: null,
+    ownedBotMatch: null,
   };
 }
 
@@ -54,6 +57,7 @@ function spectatingPresence(matchId = 'spectate-1'): UserPresenceResponse {
     rematch: null,
     quickMatch: null,
     spectating: { matchId },
+    ownedBotMatch: null,
   };
 }
 

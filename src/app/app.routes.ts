@@ -36,6 +36,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'lobby/bots-duel',
+    canMatch: [authGuard],
+    loadComponent: () =>
+      import('./features/lobby/pages/bot-vs-bot-config-page/bot-vs-bot-config-page.component').then(
+        (m) => m.BotVsBotConfigPageComponent,
+      ),
+  },
+  {
     path: 'lobby/campaign',
     canMatch: [authGuard],
     loadComponent: () =>

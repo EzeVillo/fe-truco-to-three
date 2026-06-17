@@ -2,10 +2,19 @@
   @if (spectator()) {
     <span class="player-area__name">{{ self().username }}</span>
     <div class="player-area__cards">
-      @for (_ of [].constructor(self().handCount); track $index) {
-        <div class="player-area__card-wrapper">
-          <app-card-view [card]="null" />
-        </div>
+      @if (self().revealedHandCards?.length) {
+        <!-- Spectate bot-vs-bot: la mano propia (PLAYER_ONE) va boca arriba (§9.2b). -->
+        @for (card of self().revealedHandCards; track $index) {
+          <div class="player-area__card-wrapper">
+            <app-card-view [card]="card" />
+          </div>
+        }
+      } @else {
+        @for (_ of [].constructor(self().handCount); track $index) {
+          <div class="player-area__card-wrapper">
+            <app-card-view [card]="null" />
+          </div>
+        }
       }
     </div>
   } @else {

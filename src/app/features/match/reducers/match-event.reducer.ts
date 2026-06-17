@@ -17,6 +17,7 @@ import type {
   MatchForfeitedPayload,
   HandResolvedPayload,
   HandDealtPayload,
+  HandDealtBothPayload,
   AvailableActionsUpdatedPayload,
   PlayerHandUpdatedPayload,
   ActionDeadlineSetPayload,
@@ -231,8 +232,24 @@ export function applyMatchEvent(state: MatchState, event: MatchWsEvent): MatchSt
     }
 
     case 'HAND_DEALT': {
-      const payload = event.payload as HandDealtPayload;
-      if (!state.roundGame || payload.seat !== state.viewerSeat) {
+      if (!state.roundGame) {
+        return state;
+      }
+      const payload = event.payload as HandDealtPayload | HandDealtBothPayload;
+      // Variante bot-vs-bot (spectate): ambas manos boca arriba a la vez.
+      if ('player_one' in payload || 'player_two' in payload) {
+        const both = payload as HandDealtBothPayload;
+        return {
+          ...state,
+          roundGame: {
+            ...state.roundGame,
+            handPlayerOne: both.player_one ?? null,
+            handPlayerTwo: both.player_two ?? null,
+          },
+        };
+      }
+      // Variante por asiento (jugador): solo la mano propia.
+      if (payload.seat !== state.viewerSeat) {
         return state;
       }
       return {

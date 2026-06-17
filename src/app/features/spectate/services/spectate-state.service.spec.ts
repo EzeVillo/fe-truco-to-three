@@ -43,7 +43,9 @@ describe('SpectateStateService', () => {
       subscribe: vi.fn().mockReturnValue(wsSubject.asObservable()),
     };
 
-    apiGetSpy = vi.fn().mockReturnValue({ subscribe: (_: unknown) => ({ unsubscribe: () => undefined }) });
+    apiGetSpy = vi
+      .fn()
+      .mockReturnValue({ subscribe: (_: unknown) => ({ unsubscribe: () => undefined }) });
 
     TestBed.configureTestingModule({
       providers: [
@@ -91,15 +93,24 @@ describe('SpectateStateService', () => {
         roundStatus: 'PLAYING',
         currentTrucoCall: null,
         currentEnvidoCall: null,
+        currentTrucoCaller: null,
+        currentEnvidoCaller: null,
         winner: null,
         playedHands: [],
         currentHand: { cardPlayerOne: null, cardPlayerTwo: null, mano: 'alice' },
         actionDeadline: null,
         turnDurationMillis: null,
         actionDeadlineSeat: null,
+        handPlayerOne: null,
+        handPlayerTwo: null,
       },
     });
-    wsSubject.next({ eventType: 'SPECTATE_STATE', stateVersion: 1, timestamp: Date.now(), payload: { matchState: snap } });
+    wsSubject.next({
+      eventType: 'SPECTATE_STATE',
+      stateVersion: 1,
+      timestamp: Date.now(),
+      payload: { matchState: snap },
+    });
 
     const state = service.matchState();
     expect(state?.roundGame?.myCards).toEqual([]);
@@ -156,12 +167,16 @@ describe('SpectateStateService', () => {
             roundStatus: 'PLAYING',
             currentTrucoCall: null,
             currentEnvidoCall: null,
+            currentTrucoCaller: null,
+            currentEnvidoCaller: null,
             winner: null,
             playedHands: [],
             currentHand: { cardPlayerOne: null, cardPlayerTwo: null, mano: 'alice' },
             actionDeadline: 1000,
             turnDurationMillis: 30000,
             actionDeadlineSeat: 'PLAYER_ONE',
+            handPlayerOne: null,
+            handPlayerTwo: null,
           },
         }),
       },
@@ -185,7 +200,12 @@ describe('SpectateStateService', () => {
     service.destroy();
     // Después de destroy, los eventos no producen cambios de estado
     const stateBefore = service.matchState();
-    wsSubject.next({ eventType: 'SPECTATE_STATE', stateVersion: 99, timestamp: Date.now(), payload: { matchState: makeSnap() } });
+    wsSubject.next({
+      eventType: 'SPECTATE_STATE',
+      stateVersion: 99,
+      timestamp: Date.now(),
+      payload: { matchState: makeSnap() },
+    });
     expect(service.matchState()).toBe(stateBefore);
   });
 });

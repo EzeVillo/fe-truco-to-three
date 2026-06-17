@@ -176,6 +176,7 @@ describe('GlobalHeaderComponent', () => {
               rematch: null,
               quickMatch: null,
               spectating: null,
+              ownedBotMatch: null,
             }),
           },
         },
@@ -337,6 +338,7 @@ describe('GlobalHeaderComponent', () => {
       rematch: null,
       quickMatch: null,
       spectating: null,
+      ownedBotMatch: null,
     });
 
     const fixture = TestBed.createComponent(GlobalHeaderComponent);
@@ -350,6 +352,66 @@ describe('GlobalHeaderComponent', () => {
     expect(hasLeave).toBe(false);
   });
 
+  it('espectando la bot-match propia: ofrece "Abandonar partida" en vez de "Dejar de ver"', async () => {
+    await setupRoutedHeader('/spectate/bot-duel-1', {
+      busy: true,
+      match: null,
+      league: null,
+      cup: null,
+      rematch: null,
+      quickMatch: null,
+      spectating: { matchId: 'bot-duel-1' },
+      ownedBotMatch: { matchId: 'bot-duel-1', status: 'IN_PROGRESS' },
+    });
+
+    const fixture = TestBed.createComponent(GlobalHeaderComponent);
+    fixture.detectChanges();
+    openMenu(fixture);
+
+    const el = fixture.nativeElement as HTMLElement;
+    const labels = Array.from(
+      el.querySelectorAll<HTMLButtonElement>('button.global-header__menu-item'),
+    ).map((b) => b.textContent ?? '');
+
+    expect(labels.some((t) => t.includes('Abandonar partida'))).toBe(true);
+    expect(labels.some((t) => t.includes('Dejar de ver'))).toBe(false);
+  });
+
+  it('abandona la bot-match propia desde spectate con el id del match espectado', async () => {
+    await setupRoutedHeader('/spectate/bot-duel-1', {
+      busy: true,
+      match: null,
+      league: null,
+      cup: null,
+      rematch: null,
+      quickMatch: null,
+      spectating: { matchId: 'bot-duel-1' },
+      ownedBotMatch: { matchId: 'bot-duel-1', status: 'IN_PROGRESS' },
+    });
+    const dialog = TestBed.inject(MatDialog) as unknown as { open: ReturnType<typeof vi.fn> };
+    dialog.open.mockReturnValue({ afterClosed: () => of(true) });
+
+    const fixture = TestBed.createComponent(GlobalHeaderComponent);
+    fixture.detectChanges();
+    const abandonSpy = vi
+      .spyOn(fixture.componentInstance['botsApi'], 'abandonBotVsBotMatch')
+      .mockReturnValue(of(undefined));
+    const playerAbandonSpy = vi
+      .spyOn(fixture.componentInstance['matchActions'], 'abandon')
+      .mockReturnValue(of(undefined));
+    openMenu(fixture);
+
+    const el = fixture.nativeElement as HTMLElement;
+    const abandonBtn = Array.from(
+      el.querySelectorAll<HTMLButtonElement>('button.global-header__menu-item'),
+    ).find((b) => (b.textContent ?? '').includes('Abandonar partida'));
+    abandonBtn?.click();
+
+    // La bot-match propia usa el endpoint dedicado, no el abandono de partida con humanos.
+    expect(abandonSpy).toHaveBeenCalledWith('bot-duel-1');
+    expect(playerAbandonSpy).not.toHaveBeenCalled();
+  });
+
   it('abandonar partida no navega directo al lobby; espera el modal de resultado', async () => {
     const router = await setupRoutedHeader('/match/abc-123', {
       busy: true,
@@ -359,6 +421,7 @@ describe('GlobalHeaderComponent', () => {
       rematch: null,
       quickMatch: null,
       spectating: null,
+      ownedBotMatch: null,
     });
     const dialog = TestBed.inject(MatDialog) as unknown as {
       open: ReturnType<typeof vi.fn>;
@@ -396,6 +459,7 @@ describe('GlobalHeaderComponent', () => {
       rematch: null,
       quickMatch: null,
       spectating: null,
+      ownedBotMatch: null,
     });
 
     const fixture = TestBed.createComponent(GlobalHeaderComponent);

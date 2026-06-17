@@ -33,6 +33,17 @@ function oppositeSeat(seat: ViewerSeat): ViewerSeat {
   return seat === 'PLAYER_ONE' ? 'PLAYER_TWO' : 'PLAYER_ONE';
 }
 
+/** Mapea un username al asiento correspondiente, o `null` si no coincide con ninguno. */
+function usernameToSeat(username: string, state: MatchState): ViewerSeat | null {
+  if (username === state.playerOneUsername) {
+    return 'PLAYER_ONE';
+  }
+  if (username === state.playerTwoUsername) {
+    return 'PLAYER_TWO';
+  }
+  return null;
+}
+
 /**
  * Determina qué asiento debe responder el canto pendiente. Durante un canto sin
  * resolver el reloj corre sobre el respondedor (`actionDeadlineSeat`); si no hay
@@ -60,14 +71,28 @@ export function derivePendingCall(state: MatchState): PendingCallDisplay | null 
     return null;
   }
 
-  const text =
-    round.roundStatus === 'TRUCO_IN_PROGRESS' && round.currentTrucoCall !== null
-      ? TRUCO_TEXT[round.currentTrucoCall]
-      : round.roundStatus === 'ENVIDO_IN_PROGRESS' && round.currentEnvidoCall !== null
-        ? ENVIDO_TEXT[round.currentEnvidoCall]
-        : undefined;
+  const isTruco = round.roundStatus === 'TRUCO_IN_PROGRESS' && round.currentTrucoCall !== null;
+  const isEnvido = round.roundStatus === 'ENVIDO_IN_PROGRESS' && round.currentEnvidoCall !== null;
+
+  const text = isTruco
+    ? TRUCO_TEXT[round.currentTrucoCall as string]
+    : isEnvido
+      ? ENVIDO_TEXT[round.currentEnvidoCall as string]
+      : undefined;
   if (!text) {
     return null;
+  }
+
+  // Si el snapshot trae el cantor explícito (solo espectador, §4.15), ubicamos el
+  // bubble directamente sobre su asiento. Es más robusto que inferir el respondedor:
+  // en bot-vs-bot no hay reloj (actionDeadlineSeat null) ni availableActions, así
+  // que la inferencia caería y el canto pendiente no se mostraría al refrescar.
+  const callerUsername = isTruco ? round.currentTrucoCaller : round.currentEnvidoCaller;
+  if (callerUsername) {
+    const callerSeat = usernameToSeat(callerUsername, state);
+    if (callerSeat) {
+      return { seat: callerSeat, text };
+    }
   }
 
   const responderSeat = resolveResponderSeat(round, state.viewerSeat);

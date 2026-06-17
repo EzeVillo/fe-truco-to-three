@@ -179,7 +179,7 @@
                 }
               </button>
             }
-            @if (isSpectating()) {
+            @if (isSpectating() && !isOwnedBotMatchSpectate()) {
               <button type="button" class="global-header__menu-item" (click)="leaveSpectate()">
                 Dejar de ver
               </button>

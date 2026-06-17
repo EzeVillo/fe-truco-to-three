@@ -684,6 +684,38 @@ describe('MatchScreenComponent', () => {
       expect(matchCallAudioService.playForEvent).toHaveBeenCalledWith(event);
     });
 
+    it('muestra la respuesta tras refresh, hidratando el cantor desde el snapshot (sin ENVIDO_CALLED previo)', () => {
+      // Escenario refresh: el rival (PLAYER_TWO) cantó envido antes de recargar.
+      // El ENVIDO_CALLED ya pasó y no se reemite; el snapshot trae el envido en
+      // curso con el cantor. Sin hidratar lastEnvidoCallerSeat, la respuesta no se
+      // mostraría al avanzar la jugada.
+      setupComponent({ matchId: 'test-match' });
+      matchStateService.state.set({
+        ...mockMatchViewerPlayerOne,
+        roundGame: {
+          ...mockMatchViewerPlayerOne.roundGame!,
+          roundStatus: 'ENVIDO_IN_PROGRESS',
+          currentEnvidoCall: 'ENVIDO',
+          currentEnvidoCaller: 'martina',
+        },
+      });
+      fixture.detectChanges();
+
+      // El canto se hidrata sobre el rival (martina = PLAYER_TWO = bubble opponent).
+      expect(fixture.componentInstance.opponentCallText()).toBe('¡Envido!');
+
+      matchStateService.matchEvent$.next({
+        matchId: 'test-match',
+        eventType: 'ENVIDO_RESOLVED',
+        timestamp: Date.now(),
+        payload: { response: 'QUIERO', winnerSeat: 'PLAYER_ONE' },
+        stateVersion: 2,
+      });
+
+      // Cantó PLAYER_TWO → responde PLAYER_ONE (local) → selfCallText.
+      expect(fixture.componentInstance.selfCallText()).toBe('¡Quiero!');
+    });
+
     it('auto-limpia selfCallText de QUIERO a los 3 segundos', () => {
       setupComponent({ matchId: 'test-match' });
       matchStateService.state.set(mockMatchViewerPlayerOne);

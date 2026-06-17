@@ -18,6 +18,7 @@ import { PresenceCoordinatorService } from '../../../core/services/presence-coor
 import { NavigationLockService } from '../../../core/services/navigation-lock.service';
 import { SpectatorCountStore } from '../../services/spectator-count.store';
 import { MatchActionsService } from '../../../features/match/services/match-actions.service';
+import { BotsApiService } from '../../../features/lobby/services/bots-api.service';
 import { BackgroundMusicService } from '../../../features/match/services/background-music.service';
 import { EffectsVolumeService } from '../../../core/services/effects-volume.service';
 import { MatchesApiService } from '../../../features/lobby/services/matches-api.service';
@@ -43,6 +44,7 @@ export class GlobalHeaderComponent {
   private readonly router = inject(Router);
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly matchActions = inject(MatchActionsService);
+  private readonly botsApi = inject(BotsApiService);
   private readonly matchesApi = inject(MatchesApiService);
   readonly backgroundMusic = inject(BackgroundMusicService);
   readonly effectsVolume = inject(EffectsVolumeService);
@@ -72,6 +74,26 @@ export class GlobalHeaderComponent {
   readonly inMatch = computed(() => /^\/match\//.test(this.currentUrl()));
   /** Estando como espectador (`/spectate/:id`), se ofrece "Dejar de ver" en el menú. */
   readonly isSpectating = computed(() => /^\/spectate\//.test(this.currentUrl()));
+
+  /** matchId actual cuando se está espectando (`/spectate/:id`). */
+  readonly currentSpectateMatchId = computed(() => {
+    const url = this.currentUrl();
+    const match = /^\/spectate\/([^\/]+)/.exec(url);
+    return match ? match[1] : null;
+  });
+
+  /**
+   * El espectador es el dueño de la bot-match (§9.2b) que está mirando. En ese
+   * caso no se puede "dejar de ver" (ocupación por autoría): la única salida es
+   * abandonar la partida, igual que un jugador, con el mismo contrato.
+   */
+  readonly isOwnedBotMatchSpectate = computed(() => {
+    const owned = this.presenceCoordinator.presence()?.ownedBotMatch ?? null;
+    const spectateId = this.currentSpectateMatchId();
+    return (
+      this.isSpectating() && owned !== null && spectateId !== null && owned.matchId === spectateId
+    );
+  });
   readonly busy = computed(
     () => this.inMatch() || this.presenceCoordinator.busy() || this.navigationLock.locked(),
   );
@@ -112,7 +134,13 @@ export class GlobalHeaderComponent {
   });
 
   readonly showAbandonMatch = computed(
-    () => this.currentMatchId() !== null && this.isActiveMatch(),
+    () =>
+      (this.currentMatchId() !== null && this.isActiveMatch()) || this.isOwnedBotMatchSpectate(),
+  );
+
+  /** Id de la partida abandonable: la del match activo o, si no, la bot-match propia espectada. */
+  readonly abandonableMatchId = computed(
+    () => this.currentMatchId() ?? this.currentSpectateMatchId(),
   );
   readonly showLeaveWaitingRoom = computed(
     () => this.currentMatchId() !== null && this.isWaitingMatch(),
@@ -195,7 +223,7 @@ export class GlobalHeaderComponent {
 
   onAbandonClick(): void {
     this.closeMenu();
-    const matchId = this.currentMatchId();
+    const matchId = this.abandonableMatchId();
     if (!matchId) {
       return;
     }
@@ -212,14 +240,21 @@ export class GlobalHeaderComponent {
       autoFocus: 'button',
       restoreFocus: true,
     });
+    // La bot-match propia (§9.2b) se abandona por su endpoint dedicado
+    // (POST /api/matches/bot-vs-bot/{id}/abandon), distinto del abandono de
+    // partida con humanos (§4.12). El creador la corta desde el modo espectador.
+    const isBotMatch = this.isOwnedBotMatchSpectate();
     ref.afterClosed().subscribe((confirmed) => {
       if (confirmed === true) {
-        this.matchActions.abandon(matchId).subscribe({
+        const abandon$ = isBotMatch
+          ? this.botsApi.abandonBotVsBotMatch(matchId)
+          : this.matchActions.abandon(matchId);
+        abandon$.subscribe({
           next: () => {
-            // El evento MATCH_ABANDONED abre el modal de derrota en la pantalla de partida.
+            // El evento MATCH_ABANDONED abre el modal de resultado (partida o espectador).
           },
           error: () => {
-            // Error silencioso; el usuario permanece en la pantalla del match.
+            // Error silencioso; el usuario permanece en la pantalla actual.
           },
         });
       }

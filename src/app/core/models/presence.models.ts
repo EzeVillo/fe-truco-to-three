@@ -31,6 +31,16 @@ export interface PresenceSpectating {
   matchId: string;
 }
 
+/**
+ * Partida bot-vs-bot (§9.2b) de la que el usuario es dueño y que aún no terminó.
+ * Marca ocupación por autoría, independiente de `spectating` (mirar es opcional):
+ * permite redirigir al dueño a la partida al reconectar aunque no esté suscripto.
+ */
+export interface PresenceOwnedBotMatch {
+  matchId: string;
+  status: PresenceMatchStatus;
+}
+
 export interface UserPresenceResponse {
   busy: boolean;
   match: PresenceMatch | null;
@@ -40,6 +50,8 @@ export interface UserPresenceResponse {
   quickMatch: PresenceQuickMatch | null;
   /** No-nulo mientras el usuario tenga ≥1 suscripción de spectate activa (§7.6). */
   spectating: PresenceSpectating | null;
+  /** No-nulo mientras el usuario sea dueño de una bot-match en curso (§9.2b). */
+  ownedBotMatch: PresenceOwnedBotMatch | null;
 }
 
 export interface PresenceWsEvent {
@@ -65,6 +77,13 @@ export function derivePresenceDestination(presence: UserPresenceResponse): Prese
 
   if (presence.spectating) {
     return { kind: 'spectate', matchId: presence.spectating.matchId };
+  }
+
+  // Dueño de una bot-match en curso que todavía no la está espectando (típico al
+  // reconectar): lo llevamos a mirarla. Si ya la espectaba, `spectating` ya cubrió
+  // este id arriba.
+  if (presence.ownedBotMatch) {
+    return { kind: 'spectate', matchId: presence.ownedBotMatch.matchId };
   }
 
   return { kind: 'none' };

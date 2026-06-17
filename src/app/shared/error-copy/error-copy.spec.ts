@@ -166,6 +166,38 @@ describe('getErrorCopy — SPECTATE', () => {
   });
 });
 
+describe('getErrorCopy — ADVANCE_BOT_VS_BOT_MATCH', () => {
+  it('401 → string vacío', () => {
+    expect(getErrorCopy('ADVANCE_BOT_VS_BOT_MATCH', httpErr(401))).toBe('');
+  });
+
+  it('404 → copy de partida inexistente/terminada', () => {
+    expect(getErrorCopy('ADVANCE_BOT_VS_BOT_MATCH', httpErr(404))).toBe(
+      'Esta partida ya no existe o terminó.',
+    );
+  });
+
+  it('422 → copy de no autorizado a avanzar', () => {
+    expect(getErrorCopy('ADVANCE_BOT_VS_BOT_MATCH', httpErr(422))).toBe(
+      'No podés avanzar esta partida.',
+    );
+  });
+
+  it('0 y 5xx → copy de reintento', () => {
+    const expected = 'No pudimos avanzar la jugada. Reintentá.';
+    expect(getErrorCopy('ADVANCE_BOT_VS_BOT_MATCH', httpErr(0))).toBe(expected);
+    expect(getErrorCopy('ADVANCE_BOT_VS_BOT_MATCH', httpErr(500))).toBe(expected);
+  });
+
+  it('nunca expone el message crudo del backend', () => {
+    for (const status of [404, 422, 500]) {
+      expect(getErrorCopy('ADVANCE_BOT_VS_BOT_MATCH', httpErr(status))).not.toContain(
+        'BE-secret-leak',
+      );
+    }
+  });
+});
+
 describe('busyReasonCopy — SPECTATING', () => {
   const { busyReasonCopy } = require('./error-copy');
 

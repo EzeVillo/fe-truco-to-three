@@ -15,6 +15,7 @@ const _presenceCheck = {
   rematch: null,
   quickMatch: null,
   spectating: null,
+  ownedBotMatch: null,
 } satisfies UserPresenceResponse;
 
 const _eventCheck = {
@@ -60,6 +61,7 @@ describe('Contract: presencia / reconexion §7.6', () => {
       rematch: { id: 'session-1', originMatchId: 'origin-1' },
       quickMatch: null,
       spectating: null,
+      ownedBotMatch: null,
     };
 
     expect(derivePresenceDestination(presence)).toEqual({ kind: 'match', matchId: 'match-1' });
@@ -74,6 +76,7 @@ describe('Contract: presencia / reconexion §7.6', () => {
       rematch: { id: 'session-1', originMatchId: 'origin-1' },
       quickMatch: null,
       spectating: null,
+      ownedBotMatch: null,
     };
 
     expect(derivePresenceDestination(presence)).toEqual({
@@ -91,6 +94,7 @@ describe('Contract: presencia / reconexion §7.6', () => {
       rematch: null,
       quickMatch: null,
       spectating: { matchId: 'spectate-match-abc' },
+      ownedBotMatch: null,
     };
 
     expect(derivePresenceDestination(presence)).toEqual({
@@ -108,8 +112,27 @@ describe('Contract: presencia / reconexion §7.6', () => {
       rematch: null,
       quickMatch: null,
       spectating: { matchId: 'spectate-match-abc' },
+      ownedBotMatch: null,
     };
     expect(derivePresenceDestination(presence).kind).toBe('match');
+  });
+
+  it('derivePresenceDestination manda al dueño de una bot-match a espectarla', () => {
+    const presence: UserPresenceResponse = {
+      busy: true,
+      match: null,
+      league: null,
+      cup: null,
+      rematch: null,
+      quickMatch: null,
+      spectating: null,
+      ownedBotMatch: { matchId: 'bot-duel-1', status: 'IN_PROGRESS' },
+    };
+
+    expect(derivePresenceDestination(presence)).toEqual({
+      kind: 'spectate',
+      matchId: 'bot-duel-1',
+    });
   });
 
   it('derivePresenceDestination ignora usuario libre y torneos en v1', () => {
@@ -121,6 +144,7 @@ describe('Contract: presencia / reconexion §7.6', () => {
       rematch: null,
       quickMatch: null,
       spectating: null,
+      ownedBotMatch: null,
     };
     const tournamentOnly: UserPresenceResponse = {
       busy: true,
@@ -130,6 +154,7 @@ describe('Contract: presencia / reconexion §7.6', () => {
       rematch: null,
       quickMatch: null,
       spectating: null,
+      ownedBotMatch: null,
     };
     const quickMatchOnly: UserPresenceResponse = {
       busy: true,
@@ -139,6 +164,7 @@ describe('Contract: presencia / reconexion §7.6', () => {
       rematch: null,
       quickMatch: { status: 'SEARCHING', enqueuedAt: '2026-05-20T10:00:00Z' },
       spectating: null,
+      ownedBotMatch: null,
     };
 
     expect(derivePresenceDestination(free)).toEqual({ kind: 'none' });

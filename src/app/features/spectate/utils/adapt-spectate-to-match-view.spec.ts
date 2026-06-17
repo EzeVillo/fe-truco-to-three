@@ -35,12 +35,16 @@ describe('adaptSpectateToMatchState', () => {
         roundStatus: 'PLAYING',
         currentTrucoCall: null,
         currentEnvidoCall: null,
+        currentTrucoCaller: null,
+        currentEnvidoCaller: null,
         winner: null,
         playedHands: [],
         currentHand: { cardPlayerOne: null, cardPlayerTwo: null, mano: 'alice' },
         actionDeadline: null,
         turnDurationMillis: null,
         actionDeadlineSeat: null,
+        handPlayerOne: null,
+        handPlayerTwo: null,
       },
     });
     const result = adaptSpectateToMatchState(state);
@@ -55,12 +59,16 @@ describe('adaptSpectateToMatchState', () => {
         roundStatus: 'PLAYING',
         currentTrucoCall: null,
         currentEnvidoCall: null,
+        currentTrucoCaller: null,
+        currentEnvidoCaller: null,
         winner: null,
         playedHands: [],
         currentHand: { cardPlayerOne: null, cardPlayerTwo: null, mano: 'alice' },
         actionDeadline: null,
         turnDurationMillis: null,
         actionDeadlineSeat: null,
+        handPlayerOne: null,
+        handPlayerTwo: null,
       },
     });
     const result = adaptSpectateToMatchState(state);

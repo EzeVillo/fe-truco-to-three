@@ -9,12 +9,12 @@
 
 .played-cards-area__grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(48px, 60px));
+  grid-template-columns: repeat(3, minmax(44px, 56px));
   grid-template-rows: repeat(2, auto);
   gap: var(--t3-gap-xs);
   place-content: center;
   width: 100%;
-  max-width: 220px;
+  max-width: 200px;
 }
 
 .played-cards-area__item {

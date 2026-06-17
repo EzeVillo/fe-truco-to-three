@@ -287,6 +287,13 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
       if (!pending) {
         return;
       }
+      // Si el canto pendiente es un envido, recordamos el asiento del cantor: sin
+      // esto, al refrescar con un envido en curso no llegó el ENVIDO_CALLED en vivo
+      // y handleMatchEvent no podría inferir el respondedor cuando llegue
+      // ENVIDO_RESOLVED, dejando sin mostrar la respuesta (¡Quiero!/¡No quiero!).
+      if (state.roundGame.roundStatus === 'ENVIDO_IN_PROGRESS') {
+        this.lastEnvidoCallerSeat = pending.seat;
+      }
       const isSelf = pending.seat === state.viewerSeat;
       (isSelf ? this.selfCallText : this.opponentCallText).set(pending.text);
     });

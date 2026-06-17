@@ -21,6 +21,10 @@ export class LobbyPageComponent {
     void this.router.navigateByUrl('/lobby/vs-bots');
   }
 
+  goToBotsDuel(): void {
+    void this.router.navigateByUrl('/lobby/bots-duel');
+  }
+
   goToCampaign(): void {
     void this.router.navigateByUrl('/lobby/campaign');
   }

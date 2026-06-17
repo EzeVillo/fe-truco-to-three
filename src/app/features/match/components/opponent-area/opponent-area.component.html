@@ -2,11 +2,23 @@
   @if (spectator()) {
     <span class="opponent-area__name">{{ opponent().username }}</span>
   }
-  <div class="opponent-area__cards">
-    @for (_ of [].constructor(opponent().handCount); track $index) {
-      <div class="opponent-area__card-wrapper">
-        <app-card-view [card]="null" />
-      </div>
-    }
-  </div>
+  @if (opponent().revealedHandCards?.length) {
+    <!-- Spectate bot-vs-bot: mano del rival boca arriba y plana (no en abanico),
+         igual que la mano propia, para verlas una al lado de la otra (§9.2b). -->
+    <div class="opponent-area__revealed">
+      @for (card of opponent().revealedHandCards; track $index) {
+        <div class="opponent-area__revealed-card">
+          <app-card-view [card]="card" />
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="opponent-area__cards">
+      @for (_ of [].constructor(opponent().handCount); track $index) {
+        <div class="opponent-area__card-wrapper">
+          <app-card-view [card]="null" />
+        </div>
+      }
+    </div>
+  }
 </div>

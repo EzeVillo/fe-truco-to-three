@@ -29,6 +29,7 @@ describe('PresenceApiService', () => {
       rematch: null,
       quickMatch: null,
       spectating: null,
+      ownedBotMatch: null,
     };
     let result: UserPresenceResponse | null = null;
 

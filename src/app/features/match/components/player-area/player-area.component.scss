@@ -22,12 +22,11 @@
   gap: var(--t3-gap-xs);
   justify-content: center;
   align-items: center;
-  padding: var(--t3-gap-xs);
-  min-height: calc(64px * 3 / 2 + var(--t3-gap-xs) * 2);
+  min-height: calc(56px * 3 / 2 + var(--t3-gap-xs) * 2);
 }
 
 .player-area__card-wrapper app-card-view {
-  width: 64px;
+  width: 56px;
 }
 
 @media (min-width: 1024px) {

@@ -11,6 +11,8 @@ import type { FriendBusyReason } from '../../core/models/social.models';
 export type ErrorCopyScope =
   | 'BOT_CATALOG'
   | 'CREATE_BOT_MATCH'
+  | 'CREATE_BOT_VS_BOT_MATCH'
+  | 'ADVANCE_BOT_VS_BOT_MATCH'
   | 'MATCH_LOAD'
   | 'REMATCH'
   | 'PROFILE'
@@ -105,6 +107,46 @@ export function getErrorCopy(scope: ErrorCopyScope, error: unknown): string {
       default:
         if (status >= 500 && status < 600) {
           return 'No pudimos crear la partida. Reintentá en unos segundos.';
+        }
+        return FALLBACK;
+    }
+  }
+
+  if (scope === 'CREATE_BOT_VS_BOT_MATCH') {
+    switch (status) {
+      case 401:
+        return '';
+      case 403:
+        return 'No tenés permiso para crear esta partida.';
+      case 404:
+        return 'Alguno de los bots ya no está disponible, actualizá la lista.';
+      case 409:
+      case 422:
+        // Incluye "ya estás ocupado" (otra bot-match en curso, partida, cola, etc.).
+        return 'No podés crear esta partida ahora: terminá la que tenés en curso.';
+      case 0:
+        return 'No pudimos crear la partida. Reintentá en unos segundos.';
+      default:
+        if (status >= 500 && status < 600) {
+          return 'No pudimos crear la partida. Reintentá en unos segundos.';
+        }
+        return FALLBACK;
+    }
+  }
+
+  if (scope === 'ADVANCE_BOT_VS_BOT_MATCH') {
+    switch (status) {
+      case 401:
+        return '';
+      case 404:
+        return 'Esta partida ya no existe o terminó.';
+      case 422:
+        return 'No podés avanzar esta partida.';
+      case 0:
+        return 'No pudimos avanzar la jugada. Reintentá.';
+      default:
+        if (status >= 500 && status < 600) {
+          return 'No pudimos avanzar la jugada. Reintentá.';
         }
         return FALLBACK;
     }

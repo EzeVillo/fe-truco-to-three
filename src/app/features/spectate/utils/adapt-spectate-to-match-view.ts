@@ -13,6 +13,8 @@ function adaptRound(round: SpectateRoundState): RoundState {
     roundStatus: round.roundStatus,
     currentTrucoCall: round.currentTrucoCall,
     currentEnvidoCall: round.currentEnvidoCall,
+    currentTrucoCaller: round.currentTrucoCaller,
+    currentEnvidoCaller: round.currentEnvidoCaller,
     winner: round.winner,
     availableActions: [],
     playedHands: round.playedHands,
@@ -20,6 +22,9 @@ function adaptRound(round: SpectateRoundState): RoundState {
     actionDeadline: round.actionDeadline,
     turnDurationMillis: round.turnDurationMillis,
     actionDeadlineSeat: round.actionDeadlineSeat,
+    // Manos boca arriba en bot-vs-bot; null en spectate con humanos.
+    handPlayerOne: round.handPlayerOne,
+    handPlayerTwo: round.handPlayerTwo,
   };
 }
 

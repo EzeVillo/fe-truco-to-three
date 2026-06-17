@@ -295,6 +295,24 @@ describe('applyMatchEvent', () => {
       const next = applyMatchEvent(state, event);
       expect(next.roundGame?.myCards).toEqual(state.roundGame!.myCards);
     });
+
+    it('variante bot-vs-bot: setea ambas manos sin tocar myCards', () => {
+      const state = makeState({ viewerSeat: 'PLAYER_ONE' });
+      const event = makeEvent('HAND_DEALT', {
+        player_one: [
+          { suit: 'ESPADA', number: 1 },
+          { suit: 'BASTO', number: 7 },
+        ],
+        player_two: [{ suit: 'COPA', number: 5 }],
+      });
+      const next = applyMatchEvent(state, event);
+      expect(next.roundGame?.handPlayerOne).toEqual([
+        { suit: 'ESPADA', number: 1 },
+        { suit: 'BASTO', number: 7 },
+      ]);
+      expect(next.roundGame?.handPlayerTwo).toEqual([{ suit: 'COPA', number: 5 }]);
+      expect(next.roundGame?.myCards).toEqual(state.roundGame!.myCards);
+    });
   });
 
   describe('MATCH_FINISHED', () => {

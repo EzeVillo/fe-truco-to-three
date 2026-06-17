@@ -121,4 +121,48 @@ describe('derivePendingCall', () => {
     });
     expect(derivePendingCall(state)).toBeNull();
   });
+
+  // Espectador bot-vs-bot: sin reloj (actionDeadlineSeat null) ni availableActions,
+  // la inferencia del respondedor cae. El cantor explícito del snapshot resuelve.
+  it('usa el cantor explícito del truco cuando no hay reloj ni acciones (spectate)', () => {
+    const state = withRound({
+      roundStatus: 'TRUCO_IN_PROGRESS',
+      currentTrucoCall: 'TRUCO',
+      currentTrucoCaller: 'martina', // PLAYER_TWO
+      actionDeadlineSeat: null,
+      availableActions: [],
+    });
+    expect(derivePendingCall(state)).toEqual({ seat: 'PLAYER_TWO', text: '¡Truco!' });
+  });
+
+  it('usa el cantor explícito del envido cuando no hay reloj ni acciones (spectate)', () => {
+    const state = withRound({
+      roundStatus: 'ENVIDO_IN_PROGRESS',
+      currentEnvidoCall: 'REAL_ENVIDO',
+      currentEnvidoCaller: 'juancho', // PLAYER_ONE
+      actionDeadlineSeat: null,
+      availableActions: [],
+    });
+    expect(derivePendingCall(state)).toEqual({ seat: 'PLAYER_ONE', text: '¡Real envido!' });
+  });
+
+  it('el cantor explícito tiene prioridad sobre la inferencia por reloj', () => {
+    const state = withRound({
+      roundStatus: 'TRUCO_IN_PROGRESS',
+      currentTrucoCall: 'TRUCO',
+      currentTrucoCaller: 'martina', // PLAYER_TWO cantó
+      actionDeadlineSeat: 'PLAYER_TWO', // reloj sobre PLAYER_TWO ⇒ inferencia diría PLAYER_ONE
+    });
+    expect(derivePendingCall(state)).toEqual({ seat: 'PLAYER_TWO', text: '¡Truco!' });
+  });
+
+  it('cae a la inferencia si el cantor explícito no coincide con ningún jugador', () => {
+    const state = withRound({
+      roundStatus: 'TRUCO_IN_PROGRESS',
+      currentTrucoCall: 'TRUCO',
+      currentTrucoCaller: 'desconocido',
+      actionDeadlineSeat: 'PLAYER_ONE',
+    });
+    expect(derivePendingCall(state)).toEqual({ seat: 'PLAYER_TWO', text: '¡Truco!' });
+  });
 });

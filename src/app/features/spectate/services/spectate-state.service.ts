@@ -150,6 +150,15 @@ export class SpectateStateService {
         break;
       }
 
+      // Eventos privados por asiento re-difundidos en bot-vs-bot (§9.5g). La mano
+      // boca arriba se reconstruye en deriveMatchView a partir de HAND_DEALT (y del
+      // snapshot) menos las cartas ya jugadas, así que PLAYER_HAND_UPDATED es
+      // redundante; se descarta para no meter ruido en la cola/versionado.
+      // AVAILABLE_ACTIONS_UPDATED nunca le interesa a un espectador.
+      case 'PLAYER_HAND_UPDATED':
+      case 'AVAILABLE_ACTIONS_UPDATED':
+        break;
+
       case 'SPECTATOR_COUNT_CHANGED': {
         const payload = event.payload as { spectatorCount: number };
         const expectedVersion = this.lastVersion + 1;

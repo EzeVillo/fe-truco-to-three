@@ -74,10 +74,21 @@ export interface RoundState {
   // Canto de envido pendiente de respuesta; null si no hay envido en curso o ya
   // se resolvió. Fuente: docs/CONTRATOS_API.md §8.2 (RoundStateResponse).
   currentEnvidoCall: EnvidoCall | null;
+  // Username de quien cantó el truco/envido pendiente. Solo se pueblan al espectar
+  // (snapshot §4.15); en el flujo de jugador quedan `undefined` y la vista cae a
+  // inferir el cantor desde el respondedor. Ver derivePendingCall.
+  currentTrucoCaller?: string | null;
+  currentEnvidoCaller?: string | null;
   winner: string | null;
   availableActions: AvailableAction[];
   playedHands: PlayedHand[];
   currentHand: CurrentHand;
+  // Cartas en mano de cada asiento, boca arriba. Solo se pueblan al espectar una
+  // partida bot-vs-bot (§9.2b): el creador ve ambas manos. En el flujo de jugador
+  // y en spectate con humanos quedan `undefined`/`null` y la vista cae al
+  // comportamiento normal (mano propia desde `myCards`, rival con dorsos).
+  handPlayerOne?: Card[] | null;
+  handPlayerTwo?: Card[] | null;
   // Temporizador de turno — fuente: docs/CONTRATOS_API.md §4.14 y §4.18.
   // Los tres campos son consistentes entre sí: o los tres con valor (reloj
   // activo) o los tres null (sin reloj). Ver feature 013-turn-timer.
@@ -188,6 +199,24 @@ export interface CreateBotMatchRequest {
 
 export interface CreateBotMatchResponse {
   /** UUID del match recién creado. Usado para navegar a /match/:matchId. */
+  matchId: string;
+}
+
+/**
+ * §9.2b POST /api/matches/bot-vs-bot — crea una partida entre dos bots que el
+ * usuario (dueño) puede espectar. Los dos bots deben ser distintos.
+ */
+export interface CreateBotVsBotMatchRequest {
+  /** UUID del primer bot. */
+  botOneId: string;
+  /** UUID del segundo bot, distinto de `botOneId`. */
+  botTwoId: string;
+  /** Partidas totales de la serie (mejor de N). Valores válidos: 1, 3, 5. */
+  gamesToPlay: 1 | 3 | 5;
+}
+
+export interface CreateBotVsBotMatchResponse {
+  /** UUID del match creado. Usado para navegar a /spectate/:matchId. */
   matchId: string;
 }
 

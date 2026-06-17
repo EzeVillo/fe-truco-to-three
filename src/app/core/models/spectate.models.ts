@@ -2,7 +2,7 @@
 // Fuente autoritativa: docs/CONTRATOS_API.md §4.15/§4.16/§7.4.5/§9.6
 
 import type { MatchStatus, RoundStatus, TrucoCall, EnvidoCall } from './enums';
-import type { PlayedHand, CurrentHand, ViewerSeat } from './match.models';
+import type { PlayedHand, CurrentHand, ViewerSeat, Card } from './match.models';
 
 /** Partida espectable de un amigo (§7.4.5). Llega en la lista de amigos y sus deltas. */
 export interface SpectatableMatch {
@@ -17,12 +17,27 @@ export interface SpectateRoundState {
   roundStatus: RoundStatus;
   currentTrucoCall: TrucoCall | null;
   currentEnvidoCall: EnvidoCall | null;
+  /**
+   * Username de quien cantó el truco/envido pendiente. Solo lo expone el snapshot
+   * de espectador (§4.15): permite ubicar el bubble sobre el cantor sin inferir el
+   * respondedor (que falla en bot-vs-bot, sin reloj ni availableActions). `null`
+   * si no hay canto sin resolver de ese tipo.
+   */
+  currentTrucoCaller: string | null;
+  currentEnvidoCaller: string | null;
   winner: string | null;
   playedHands: PlayedHand[];
   currentHand: CurrentHand;
   actionDeadline: number | null;
   turnDurationMillis: number | null;
   actionDeadlineSeat: ViewerSeat | null;
+  /**
+   * Cartas en mano de cada asiento, boca arriba. No-nulas solo en partidas
+   * bot-vs-bot (§9.2b), donde el creador ve ambas manos; `null` en spectate de
+   * partidas con humanos.
+   */
+  handPlayerOne: Card[] | null;
+  handPlayerTwo: Card[] | null;
 }
 
 /** Snapshot público del match visible al espectador (§4.15 + SPECTATE_STATE §9.6). */

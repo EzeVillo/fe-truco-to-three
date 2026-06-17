@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import type { MatchState } from '../../../core/models/match.models';
 import { deriveMatchView } from './derive-match-view';
 import {
   mockMatchViewerPlayerOne,
@@ -99,6 +100,56 @@ describe('deriveMatchView', () => {
     const stateWithoutRound = { ...mockMatchEmptyTable, roundGame: null };
     const view = deriveMatchView(stateWithoutRound);
     expect(view.availableActions).toEqual([]);
+  });
+
+  describe('manos boca arriba (spectate bot-vs-bot §9.2b)', () => {
+    it('sin handPlayerOne/Two no hay manos reveladas (se cae a dorsos/myCards)', () => {
+      const view = deriveMatchView(mockMatchViewerPlayerOne);
+      expect(view.self.revealedHandCards).toBeNull();
+      expect(view.opponent.revealedHandCards).toBeNull();
+      expect(view.self.handCards).toEqual(mockMatchViewerPlayerOne.roundGame!.myCards);
+      expect(view.opponent.handCards).toBeNull();
+    });
+
+    it('expone ambas manos reveladas y filtra las cartas ya jugadas en mesa', () => {
+      const state: MatchState = {
+        ...mockMatchViewerPlayerOne,
+        roundGame: {
+          ...mockMatchViewerPlayerOne.roundGame!,
+          // Mano "repartida" completa de cada asiento (lo que llega en HAND_DEALT).
+          handPlayerOne: [
+            { suit: 'ORO', number: 3 },
+            { suit: 'ESPADA', number: 1 },
+            { suit: 'BASTO', number: 7 },
+          ],
+          handPlayerTwo: [
+            { suit: 'COPA', number: 5 },
+            { suit: 'ESPADA', number: 4 },
+            { suit: 'ORO', number: 2 },
+          ],
+          // PLAYER_ONE bajó el 3 de oro y PLAYER_TWO el 5 de copa (en playedHands).
+          playedHands: [
+            {
+              cardPlayerOne: { suit: 'ORO', number: 3 },
+              cardPlayerTwo: { suit: 'COPA', number: 5 },
+              winner: 'juancho',
+            },
+          ],
+          currentHand: { cardPlayerOne: null, cardPlayerTwo: null, mano: 'juancho' },
+        },
+      };
+
+      const view = deriveMatchView(state);
+      // Quedan las dos cartas no jugadas de cada asiento.
+      expect(view.self.revealedHandCards).toEqual([
+        { suit: 'ESPADA', number: 1 },
+        { suit: 'BASTO', number: 7 },
+      ]);
+      expect(view.opponent.revealedHandCards).toEqual([
+        { suit: 'ESPADA', number: 4 },
+        { suit: 'ORO', number: 2 },
+      ]);
+    });
   });
 
   describe('temporizador de turno (013-turn-timer)', () => {

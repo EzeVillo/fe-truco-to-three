@@ -1,5 +1,4 @@
 <section class="spectate-screen" aria-label="Mirando una partida">
-
   @if (spectateService.loading()) {
     <div class="spectate-screen__loading">
       <p class="spectate-screen__loading-text">Cargando partida...</p>
@@ -21,6 +20,43 @@
       [timerRemainingFraction]="timerRemainingFraction()"
       [timerIsUrgent]="timerIsUrgent()"
     />
-  }
 
+    @if (isBotVsBot()) {
+      <div
+        class="spectate-screen__advance"
+        role="region"
+        aria-label="Control de la partida bot-vs-bot"
+      >
+        @if (advanceError()) {
+          <p class="spectate-screen__advance-error" role="alert">{{ advanceError() }}</p>
+        }
+        <button
+          type="button"
+          class="t3-btn t3-btn--primary spectate-screen__advance-btn"
+          [disabled]="!canAdvance()"
+          [attr.aria-busy]="advancing() ? 'true' : null"
+          [attr.aria-label]="advancing() ? 'Avanzando…' : 'Avanzar jugada'"
+          (click)="onAdvance()"
+        >
+          @if (advancing()) {
+            <span class="spectate-screen__advance-spinner" aria-hidden="true"></span>
+          } @else {
+            <svg
+              class="spectate-screen__advance-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <polyline points="6 5 13 12 6 19" />
+              <polyline points="12 5 19 12 12 19" />
+            </svg>
+          }
+        </button>
+      </div>
+    }
+  }
 </section>

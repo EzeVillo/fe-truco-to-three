@@ -135,6 +135,9 @@ export class CampaignPageComponent implements OnInit {
   }
 
   onRowClick(entry: CampaignRankingEntry): void {
+    if (this.challengeBlocked()) {
+      return;
+    }
     if (!entry.player && !entry.challengeable) {
       this.dialog.open(CampaignBotLockedDialogComponent, {
         panelClass: 'campaign-bot-locked-dialog',

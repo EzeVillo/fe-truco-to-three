@@ -463,4 +463,108 @@ describe('CampaignPageComponent', () => {
     const playerRow = fixture.debugElement.query(By.css('.campaign__row--player'));
     expect(playerRow.query(By.css('.campaign__row-record'))).toBeNull();
   });
+
+  it('onRowClick abre el modal de bot bloqueado para un rival no desafiable', () => {
+    const response = campaignResponse({
+      ranking: [
+        rankingEntry({
+          position: 50,
+          participantId: 'c50',
+          displayName: 'Bot lejano',
+          challengeable: false,
+          player: false,
+        }),
+        rankingEntry({ position: 42, participantId: 'p1', displayName: null, player: true }),
+      ],
+    });
+    setup({ getCampaign: () => of(response), createChallenge: () => of(CHALLENGE) });
+    const fixture = TestBed.createComponent(CampaignPageComponent);
+    fixture.detectChanges();
+
+    const dialog = TestBed.inject(MatDialog);
+    const openSpy = vi.spyOn(dialog, 'open').mockReturnValue({} as ReturnType<MatDialog['open']>);
+
+    const locked = rankingEntry({
+      position: 50,
+      participantId: 'c50',
+      challengeable: false,
+      player: false,
+    });
+    fixture.componentInstance.onRowClick(locked);
+
+    expect(openSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('onRowClick NO abre el modal mientras un desafío está en vuelo', () => {
+    const subj = new Subject<CreateCampaignChallengeResponse>();
+    const createSpy = vi.fn().mockReturnValue(subj.asObservable());
+    const response = campaignResponse({
+      ranking: [
+        rankingEntry({
+          position: 50,
+          participantId: 'c50',
+          displayName: 'Bot lejano',
+          challengeable: false,
+          player: false,
+        }),
+        rankingEntry({ position: 41, participantId: 'c41', challengeable: true }),
+        rankingEntry({ position: 42, participantId: 'p1', displayName: null, player: true }),
+      ],
+    });
+    setup({ getCampaign: () => of(response), createChallenge: createSpy });
+    const fixture = TestBed.createComponent(CampaignPageComponent);
+    fixture.detectChanges();
+
+    const dialog = TestBed.inject(MatDialog);
+    const openSpy = vi.spyOn(dialog, 'open').mockReturnValue({} as ReturnType<MatDialog['open']>);
+
+    // Disparamos un desafío (queda en vuelo porque el Subject no emite).
+    fixture.componentInstance.onChallenge(
+      rankingEntry({ position: 41, participantId: 'c41', challengeable: true }),
+    );
+    expect(fixture.componentInstance.challengeBlocked()).toBe(true);
+
+    const locked = rankingEntry({
+      position: 50,
+      participantId: 'c50',
+      challengeable: false,
+      player: false,
+    });
+    fixture.componentInstance.onRowClick(locked);
+
+    expect(openSpy).not.toHaveBeenCalled();
+  });
+
+  it('onRowClick NO abre el modal cuando hay un desafío activo previo', () => {
+    const response = campaignResponse({
+      activeChallengeMatchId: 'm-en-curso',
+      ranking: [
+        rankingEntry({
+          position: 50,
+          participantId: 'c50',
+          displayName: 'Bot lejano',
+          challengeable: false,
+          player: false,
+        }),
+        rankingEntry({ position: 42, participantId: 'p1', displayName: null, player: true }),
+      ],
+    });
+    setup({ getCampaign: () => of(response), createChallenge: () => of(CHALLENGE) });
+    const fixture = TestBed.createComponent(CampaignPageComponent);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.challengeBlocked()).toBe(true);
+
+    const dialog = TestBed.inject(MatDialog);
+    const openSpy = vi.spyOn(dialog, 'open').mockReturnValue({} as ReturnType<MatDialog['open']>);
+
+    const locked = rankingEntry({
+      position: 50,
+      participantId: 'c50',
+      challengeable: false,
+      player: false,
+    });
+    fixture.componentInstance.onRowClick(locked);
+
+    expect(openSpy).not.toHaveBeenCalled();
+  });
 });

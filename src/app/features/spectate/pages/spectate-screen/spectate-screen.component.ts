@@ -113,6 +113,13 @@ export class SpectateScreenComponent implements OnInit, OnDestroy {
     );
   });
 
+  /**
+   * Ruta de salida al cerrar/terminar: las partidas bot-vs-bot vuelven al lobby
+   * (se entraron desde `lobby/bots-duel`); espectar a un amigo vuelve a la lista
+   * de amigos. El latch `isBotVsBot` ya está decidido para cuando termina el match.
+   */
+  readonly exitRoute = computed<string[]>(() => (this.isBotVsBot() ? ['/lobby'] : ['/friends']));
+
   private _advanceSub?: Subscription;
 
   constructor() {
@@ -375,7 +382,7 @@ export class SpectateScreenComponent implements OnInit, OnDestroy {
     this.playSpectatorOutcomeCue();
     ref.afterClosed().subscribe(() => {
       this.eventQueue.resumeAck();
-      void this.router.navigate(['/friends']);
+      void this.router.navigate(this.exitRoute());
     });
   }
 
@@ -459,6 +466,6 @@ export class SpectateScreenComponent implements OnInit, OnDestroy {
   }
 
   goBack(): void {
-    void this.router.navigate(['/friends']);
+    void this.router.navigate(this.exitRoute());
   }
 }

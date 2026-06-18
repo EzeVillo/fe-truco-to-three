@@ -239,7 +239,7 @@ describe('SpectateScreenComponent', () => {
     expect(el.textContent ?? '').not.toContain('Estás mirando');
   });
 
-  it('al terminar el match abre el diálogo y al cerrarlo navega a /friends', () => {
+  it('al terminar el match (espectando a un amigo) abre el diálogo y al cerrarlo navega a /friends', () => {
     mockService.loading.set(false);
     mockService.matchState.set(makeMatchState());
     fixture.detectChanges();
@@ -258,6 +258,31 @@ describe('SpectateScreenComponent', () => {
     afterClosed$.complete();
 
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/friends']);
+  });
+
+  it('al terminar el match bot-vs-bot abre el diálogo y al cerrarlo navega a /lobby', () => {
+    mockService.loading.set(false);
+    mockService.matchState.set(makeMatchState({ roundGame: makeBotVsBotRound() }));
+    fixture.detectChanges();
+
+    // El latch isBotVsBot ya debe estar activado por el snapshot con manos boca arriba.
+    expect(fixture.componentInstance.isBotVsBot()).toBe(true);
+
+    mockService.matchEnded$.next({
+      winnerSeat: 'PLAYER_ONE',
+      gamesWonPlayerOne: 2,
+      gamesWonPlayerTwo: 1,
+      reason: 'FINISHED',
+    });
+
+    expect(dialogMock.open).toHaveBeenCalled();
+    expect(routerSpy.navigate).not.toHaveBeenCalledWith(['/lobby']);
+
+    afterClosed$.next();
+    afterClosed$.complete();
+
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['/lobby']);
+    expect(routerSpy.navigate).not.toHaveBeenCalledWith(['/friends']);
   });
 
   it('muestra la respuesta de truco (¡No quiero!) sobre el asiento que respondió', () => {

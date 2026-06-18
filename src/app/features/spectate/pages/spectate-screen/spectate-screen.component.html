@@ -7,7 +7,7 @@
     <div class="spectate-screen__error">
       <p class="spectate-screen__error-text">{{ spectateService.error() }}</p>
       <button type="button" class="t3-btn t3-btn--neutral" (click)="goBack()">
-        Volver a amigos
+        {{ isBotVsBot() ? 'Volver al lobby' : 'Volver a amigos' }}
       </button>
     </div>
   } @else if (matchView()) {

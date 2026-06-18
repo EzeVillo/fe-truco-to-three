@@ -31,8 +31,12 @@ export class MatchActionsService {
    * los flags anti-doble-tap por botón no alcanzan (bloquean solo el mismo botón).
    *
    * El lock SOLO se libera con algo del backend (socket o API), nunca por tiempo:
-   *  - el primer evento transaccional / snapshot que aplica el nuevo estado
-   *    (`MatchStateService.clearActionPending()`),
+   *  - el evento derivado `AVAILABLE_ACTIONS_UPDATED` para el asiento del viewer
+   *    (`MatchStateService.applyDerivedEvent()`), que es cuando `availableActions`
+   *    se refresca de verdad — liberarlo antes (en un transaccional como
+   *    `CARD_PLAYED`) deja una ventana de flicker con acciones obsoletas;
+   *  - eventos que resetean la ronda/partida (`ROUND_STARTED`, `GAME_STARTED`,
+   *    `MATCH_*`) como safety net si el derivado no llega;
    *  - el re-fetch del snapshot tras un error de la request (ver `actionError$`),
    *    cuyo snapshot al aplicarse limpia el lock.
    *

@@ -12,6 +12,7 @@ import type {
   GameWonPayload,
   EnvidoResolvedPayload,
   GameScoreChangedPayload,
+  AvailableActionsUpdatedPayload,
 } from '../models/match-ws-events';
 import { applyMatchEvent, applyMatchDerivedEvent } from '../reducers/match-event.reducer';
 import { MatchEventQueueService } from './match-event-queue.service';
@@ -396,10 +397,24 @@ export class MatchStateService {
     const next = applyMatchEvent(current, event);
     this.state.set(next);
     this.lastApplied = event.stateVersion;
-    // El backend confirmó: el nuevo estado (con sus availableActions) ya es la
-    // fuente de verdad, así que liberamos el lock optimista. Si quedaran botones
-    // habilitados que no corresponden, los deshabilita availableActions, no el lock.
-    this.matchActions.clearActionPending();
+    // El lock optimista NO se libera en cualquier evento transaccional: hacerlo
+    // en `CARD_PLAYED` (lo que llegaba antes) deja una ventana donde
+    // `actionPending=false` pero `availableActions` aún refleja el turno anterior,
+    // porque las acciones solo las refresca el evento derivado
+    // `AVAILABLE_ACTIONS_UPDATED` (otro canal WS). En esa ventana los botones se
+    // re-habilitan con acciones obsoletas por unos ms → flicker.
+    // El release autoritativo está en `applyDerivedEvent` (AVAILABLE_ACTIONS_UPDATED
+    // del viewer). Acá sólo un safety net para eventos que resetean la ronda/partida
+    // (availableActions → []), así el lock no queda trabado si el derivado no llega.
+    if (
+      event.eventType === 'ROUND_STARTED' ||
+      event.eventType === 'GAME_STARTED' ||
+      event.eventType === 'MATCH_FINISHED' ||
+      event.eventType === 'MATCH_ABANDONED' ||
+      event.eventType === 'MATCH_FORFEITED'
+    ) {
+      this.matchActions.clearActionPending();
+    }
     this.matchEvent$.next(event);
 
     if (
@@ -451,6 +466,18 @@ export class MatchStateService {
     }
     const next = applyMatchDerivedEvent(current, event);
     this.state.set(next);
+    // Release autoritativo del lock optimista: el backend refrescó las
+    // `availableActions` del viewer, así que el nuevo estado ya es la fuente de
+    // verdad y no hay riesgo de re-habilitar acciones obsoletas. Liberar acá (y no
+    // en el evento transaccional) cierra la ventana de flicker entre el tap del
+    // jugador y la confirmación del backend. Sólo cuando el asiento es el del viewer
+    // (el reducer ignora los demás, pero el lock tampoco debe soltarse con ellos).
+    if (
+      event.eventType === 'AVAILABLE_ACTIONS_UPDATED' &&
+      (event.payload as AvailableActionsUpdatedPayload).seat === current.viewerSeat
+    ) {
+      this.matchActions.clearActionPending();
+    }
   }
 
   private triggerRefetch(): void {

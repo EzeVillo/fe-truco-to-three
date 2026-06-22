@@ -9,6 +9,15 @@ const VOLUME_STORAGE_KEY = 't3.bgMusic.volume';
 /** Volumen inicial bajo: la música arranca encendida pero discreta. */
 const DEFAULT_VOLUME = 0.15;
 
+/**
+ * Fade-in al (re)arrancar. Además de suavizar la entrada, enmascara el
+ * fragmento bufferizado de la posición anterior que iOS/WebKit desagota al
+ * reanudar el AudioContext suspendido: suena a gain 0 y sólo se escucha desde
+ * el rebobinado. Sin esto, al reentrar a una partida se oía "seguir donde
+ * quedó" y luego el arranque desde el principio.
+ */
+const FADE_IN_SECONDS = 0.6;
+
 type AudioContextCtor = typeof AudioContext;
 
 /**
@@ -69,18 +78,28 @@ export class BackgroundMusicService {
   stop(): void {
     this.active = false;
     this.detachUnlock();
-    // En iOS el audio ruteado por el grafo (MediaElementSource → GainNode →
-    // destination) no corta al instante con `pause()`: queda un tail bufferizado
-    // sonando un par de segundos. Bajamos el gain a 0 para silenciar de
-    // inmediato y suspendemos el contexto para frenar el grafo; el próximo
-    // `start()` reanuda y `applyVolume()` restaura el volumen.
+    this.silence();
+  }
+
+  /**
+   * Silencia de inmediato y frena el grafo. En iOS el audio ruteado por el grafo
+   * (MediaElementSource → GainNode → destination) no corta al instante con
+   * `pause()`: queda un tail bufferizado sonando un par de segundos. Bajamos el
+   * gain a 0 para silenciar ya y suspendemos el contexto para frenar el grafo;
+   * el próximo `tryPlay()` reanuda y `fadeInVolume()` restaura el volumen.
+   */
+  private silence(): void {
     if (this.gainNode) {
-      this.gainNode.gain.value = 0;
+      const gain = this.gainNode.gain;
+      try {
+        gain.cancelScheduledValues?.(this.audioContext?.currentTime ?? 0);
+      } catch {
+        // Sin API de scheduling (entorno de test): basta con fijar el valor.
+      }
+      gain.value = 0;
     }
-    if (this.audio) {
-      this.audio.pause();
-    }
-    void this.audioContext?.suspend().catch(() => undefined);
+    this.audio?.pause();
+    void this.audioContext?.suspend?.().catch(() => undefined);
   }
 
   /** Enciende/apaga la música; persiste la preferencia. */
@@ -91,7 +110,9 @@ export class BackgroundMusicService {
 
     if (!next) {
       this.detachUnlock();
-      this.audio?.pause();
+      // `silence()` (no sólo `audio.pause()`): en iOS el tail del grafo seguía
+      // sonando ~3 s tras mutear. Bajar el gain y suspender corta al instante.
+      this.silence();
       return;
     }
     if (this.active) {
@@ -172,9 +193,51 @@ export class BackgroundMusicService {
   private applyVolume(): void {
     const value = this._volume();
     if (this.gainNode) {
-      this.gainNode.gain.value = value;
+      const gain = this.gainNode.gain;
+      const context = this.audioContext;
+      // Cancelar cualquier rampa de fade en curso para que el cambio de volumen
+      // del slider mande; si no hay API de scheduling (test), fijar el valor.
+      if (context && typeof gain.cancelScheduledValues === 'function') {
+        try {
+          const now = context.currentTime;
+          gain.cancelScheduledValues(now);
+          gain.setValueAtTime(value, now);
+          return;
+        } catch {
+          // Cae al asignado directo.
+        }
+      }
+      gain.value = value;
     } else if (this.audio) {
       this.audio.volume = value;
+    }
+  }
+
+  /**
+   * Sube el volumen desde 0 con un fade corto. La rampa se programa contra el
+   * reloj del contexto (aunque esté suspendido): cuando se reanuda, el fragmento
+   * bufferizado de la posición anterior se desagota a gain 0 y sólo se oye desde
+   * el rebobinado. Sin API de scheduling (test) fija el valor directamente.
+   */
+  private fadeInVolume(): void {
+    const target = this._volume();
+    const gain = this.gainNode?.gain;
+    if (!gain) {
+      this.applyVolume();
+      return;
+    }
+    const context = this.audioContext;
+    if (!context || typeof gain.setValueAtTime !== 'function') {
+      gain.value = target;
+      return;
+    }
+    try {
+      const now = context.currentTime;
+      gain.cancelScheduledValues(now);
+      gain.setValueAtTime(0, now);
+      gain.linearRampToValueAtTime(target, now + FADE_IN_SECONDS);
+    } catch {
+      gain.value = target;
     }
   }
 
@@ -183,7 +246,7 @@ export class BackgroundMusicService {
       return;
     }
     this.ensureGraph();
-    this.applyVolume();
+    this.fadeInVolume();
     // El AudioContext arranca suspended hasta un gesto del usuario (iOS/Chrome).
     // Si el resume es rechazado (WebKit exigiendo gesto), el `<audio>` sonaría
     // mudo a través del grafo suspendido sin que `play()` rechace: re-armamos

@@ -171,6 +171,9 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  // Elimina el zoom por doble-tap (y el delay de 300ms) en táctil.
+  // Mantiene el pinch-to-zoom para accesibilidad.
+  touch-action: manipulation;
 }
 
 // =============================================================================

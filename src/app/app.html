@@ -10,7 +10,7 @@
         <button type="button" class="server-wake__btn" (click)="serverWake.retry()">
           Reintentar
         </button>
-      } @else {
+      } @else if (serverWake.coldStart()) {
         <h2 class="server-wake__title">El servidor que "pagó" el dev:</h2>
         <img
           class="server-wake__meme"
@@ -20,6 +20,10 @@
         <p class="server-wake__text">
           Esto puede tardar unos minutos la primera vez. Lo hacemos solo cuando estuvo inactivo.
         </p>
+        <div class="server-wake__spinner" aria-hidden="true"></div>
+      } @else {
+        <h2 class="server-wake__title">Reconectando…</h2>
+        <p class="server-wake__text">Estamos verificando la conexión con el servidor.</p>
         <div class="server-wake__spinner" aria-hidden="true"></div>
       }
     </div>

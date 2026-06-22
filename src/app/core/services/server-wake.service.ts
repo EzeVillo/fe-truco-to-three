@@ -71,6 +71,15 @@ export class ServerWakeService {
     () => (this._status() === 'waking' && this.graceElapsed()) || this._status() === 'error',
   );
 
+  /**
+   * `true` cuando un ping de readiness ya falló en el ciclo actual: confirma que
+   * el backend está dormido y el arranque va a tardar. Distingue el loader liviano
+   * (verificación rápida tras inactividad, server probablemente vivo) del cartel
+   * con imagen (cold start real). Se resetea al empezar cada wake loop.
+   */
+  private readonly _coldStart = signal(false);
+  readonly coldStart = this._coldStart.asReadonly();
+
   private started = false;
   private graceTimer: ReturnType<typeof setTimeout> | null = null;
   private idleMonitorsAttached = false;
@@ -110,6 +119,7 @@ export class ServerWakeService {
 
   private async runWakeLoop(immediate = false): Promise<void> {
     this.graceElapsed.set(immediate);
+    this._coldStart.set(false);
     this._status.set('waking');
 
     // `immediate`: ya sospechamos sleep (volvimos de un background largo), así que
@@ -129,9 +139,11 @@ export class ServerWakeService {
           return;
         }
         // Primer fallo: ya sabemos que hay que esperar. Mostrar overlay de inmediato
-        // sin aguardar la gracia (que sólo servía para absorber respuestas rápidas OK).
+        // sin aguardar la gracia (que sólo servía para absorber respuestas rápidas OK)
+        // y escalar del loader liviano al cartel con imagen (cold start confirmado).
         this.clearGraceTimer();
         this.graceElapsed.set(true);
+        this._coldStart.set(true);
         await delay(ServerWakeService.POLL_INTERVAL_MS);
       }
       this._status.set('error');

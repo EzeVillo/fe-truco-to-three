@@ -102,6 +102,13 @@ export class MatchStateService {
   private wasConnected = false;
   private refreshing = false;
   private ensuringRoster = false;
+  /**
+   * El fin del match (`matchEnded$`) se emite una sola vez por partida. Sin esto,
+   * cada re-bootstrap sobre un match ya `FINISHED` (reconexión del WS tras quedar
+   * inactivo en la pantalla final) lo re-emitía, reabriendo el diálogo de
+   * resultado y re-disparando el SFX de victoria. Se resetea en `init()`.
+   */
+  private matchEndedEmitted = false;
 
   init(matchId: string): void {
     this.currentMatchId = matchId;
@@ -110,6 +117,7 @@ export class MatchStateService {
     this.state.set(null);
     this.lastApplied = 0;
     this.lastSeenVersion = 0;
+    this.matchEndedEmitted = false;
     this.buffer = [];
     this.derivedBuffer = [];
     // El conteo de espectadores arranca en 0 y se alimenta de SPECTATOR_COUNT_CHANGED:
@@ -546,6 +554,9 @@ export class MatchStateService {
   }
 
   private emitMatchEnded(event: MatchWsEvent): void {
+    if (this.matchEndedEmitted) {
+      return;
+    }
     const payload = event.payload as {
       winnerSeat: 'PLAYER_ONE' | 'PLAYER_TWO';
       gamesWonPlayerOne: number;
@@ -558,6 +569,7 @@ export class MatchStateService {
           ? 'ABANDONED'
           : 'FORFEITED';
 
+    this.matchEndedEmitted = true;
     this.matchEnded$.next({
       winnerSeat: payload.winnerSeat,
       gamesWonPlayerOne: payload.gamesWonPlayerOne,
@@ -567,11 +579,15 @@ export class MatchStateService {
   }
 
   private emitMatchEndedFromState(state: MatchState): void {
+    if (this.matchEndedEmitted) {
+      return;
+    }
     // When loading an already-finished match, we don't know the exact reason
     // Default to FINISHED; this is an edge case
     const winnerSeat: 'PLAYER_ONE' | 'PLAYER_TWO' =
       state.matchWinner === state.playerOneUsername ? 'PLAYER_ONE' : 'PLAYER_TWO';
 
+    this.matchEndedEmitted = true;
     this.matchEnded$.next({
       winnerSeat,
       gamesWonPlayerOne: state.gamesWonPlayerOne,

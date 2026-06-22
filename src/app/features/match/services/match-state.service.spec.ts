@@ -13,7 +13,7 @@ import { MatchEventQueueService } from './match-event-queue.service';
 import { SpectatorCountStore } from '../../../shared/services/spectator-count.store';
 import { WebSocketService } from '../../../core/services/websocket.service';
 import { environment } from '../../../../environments/environment';
-import type { MatchWsEvent, MatchDerivedEvent } from '../models/match-ws-events';
+import type { MatchWsEvent, MatchDerivedEvent, MatchEndedEvent } from '../models/match-ws-events';
 
 class MockWebSocketService {
   readonly connected = new BehaviorSubject<boolean>(false);
@@ -619,6 +619,50 @@ describe('MatchStateService', () => {
         },
         stateVersion: 1,
       });
+    });
+  });
+
+  describe('idempotencia del fin de match (inactividad en la pantalla final)', () => {
+    function flushFinishedReconnect(): void {
+      const req = httpMock.expectOne(`${environment.apiUrl}/matches/test-match`);
+      req.flush({
+        matchId: 'test-match',
+        status: 'FINISHED',
+        viewerSeat: 'PLAYER_ONE',
+        playerOneUsername: 'juancho',
+        playerTwoUsername: 'martina',
+        gamesToPlay: 3,
+        scorePlayerOne: 0,
+        scorePlayerTwo: 0,
+        gamesWonPlayerOne: 2,
+        gamesWonPlayerTwo: 1,
+        matchWinner: 'juancho',
+        roundGame: null,
+        stateVersion: 10,
+      });
+    }
+
+    it('no re-emite matchEnded$ cuando una reconexión re-bootstrapea un match ya FINISHED', () => {
+      service.init('test-match');
+      flushSnapshot();
+
+      const ended: MatchEndedEvent[] = [];
+      service.matchEnded$.subscribe((e) => ended.push(e));
+
+      // 1ª reconexión: el snapshot vuelve FINISHED → emite el fin una sola vez.
+      mockWsService.connected.next(false);
+      mockWsService.connected.next(true);
+      flushFinishedReconnect();
+      expect(ended).toHaveLength(1);
+      expect(ended[0].winnerSeat).toBe('PLAYER_ONE');
+
+      // 2ª reconexión (seguir inactivo en la pantalla final): el WS cae y vuelve,
+      // el snapshot sigue FINISHED. NO debe re-emitir: si lo hiciera, se reabriría
+      // el diálogo de resultado y volvería a sonar el SFX de victoria.
+      mockWsService.connected.next(false);
+      mockWsService.connected.next(true);
+      flushFinishedReconnect();
+      expect(ended).toHaveLength(1);
     });
   });
 

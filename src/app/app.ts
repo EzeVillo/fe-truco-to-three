@@ -139,24 +139,6 @@ export class App {
       });
     }
 
-    // Versión nueva lista mientras el usuario está en partida: no recargamos solos
-    // (le cortaríamos el juego), le ofrecemos hacerlo cuando quiera. En rutas
-    // seguras este toast no aparece porque el effect recarga automáticamente.
-    if (this.swUpdate.updateReady() && this.isInMatch()) {
-      queue.push({
-        key: 'app-update',
-        title: 'Hay una versión nueva',
-        body: 'Actualizá cuando termines esta partida para evitar errores.',
-        actions: [
-          {
-            label: 'Actualizar ahora',
-            variant: 'primary',
-            run: () => void this.swUpdate.applyUpdate(),
-          },
-        ],
-      });
-    }
-
     return queue;
   });
 
@@ -189,8 +171,9 @@ export class App {
 
     // Cuando hay versión nueva lista y el usuario NO está en partida, activamos y
     // recargamos solos: es un parpadeo y garantiza que el FE quede alineado con el
-    // contrato del BE. En partida, el toast de arriba deja la decisión al usuario;
-    // al salir a una ruta segura, este effect dispara la recarga.
+    // contrato del BE. Mientras esté en partida no hacemos nada (no le cortamos el
+    // juego); al salir a una ruta segura, este effect se reevalúa y dispara la
+    // recarga automáticamente.
     effect(() => {
       if (this.swUpdate.updateReady() && !this.isInMatch()) {
         untracked(() => void this.swUpdate.applyUpdate());

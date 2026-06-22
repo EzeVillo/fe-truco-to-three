@@ -135,6 +135,19 @@ describe('AudioEngineService', () => {
     expect(hook).toHaveBeenCalled();
   });
 
+  it('corre los hooks de onHidden al pasar a background', async () => {
+    const engine = makeEngine();
+    const hook = vi.fn();
+    engine.onHidden(hook);
+    engine.start();
+
+    (globalThis.document as unknown as { visibilityState: string }).visibilityState = 'hidden';
+    listeners.get('visibilitychange')?.();
+    await flush();
+
+    expect(hook).toHaveBeenCalled();
+  });
+
   it('un hook que lanza no frena a los demás', async () => {
     const engine = makeEngine();
     const boom = vi.fn(() => {

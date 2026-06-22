@@ -105,6 +105,17 @@ describe('BackgroundMusicService', () => {
     expect(localStorage.getItem('t3.bgMusic.enabled')).toBe('false');
   });
 
+  it('no reproduce con la app en background (visibilityState hidden)', () => {
+    // Un evento de la partida re-dispara start() mientras el celu está guardado:
+    // la música no debe sonar sola. El play se retoma al volver a foreground.
+    const service = makeService(); // inyecta con el document real (TestBed lo necesita)
+    vi.stubGlobal('document', { visibilityState: 'hidden' });
+
+    service.start();
+
+    expect(createdAudios[0]?.play).not.toHaveBeenCalled();
+  });
+
   it('start() con música apagada no crea ni reproduce audio', () => {
     localStorage.setItem('t3.bgMusic.enabled', 'false');
     const service = makeService();

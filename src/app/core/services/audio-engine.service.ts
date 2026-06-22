@@ -49,6 +49,8 @@ export class AudioEngineService {
   private readonly unlockListeners = new Set<() => void>();
   /** Trabajo a correr al volver a foreground (reintento de play de la música). */
   private readonly resumeListeners = new Set<() => void>();
+  /** Trabajo a correr al pasar a background (pausar la música para que no suene oculta). */
+  private readonly hiddenListeners = new Set<() => void>();
 
   private readonly _unlocked = signal(false);
   /** ¿Ya hubo un gesto que desbloqueó la reproducción? */
@@ -88,6 +90,11 @@ export class AudioEngineService {
   /** Registra trabajo a ejecutar al volver a foreground (idempotente por referencia). */
   onResume(callback: () => void): void {
     this.resumeListeners.add(callback);
+  }
+
+  /** Registra trabajo a ejecutar al pasar a background/oculto (idempotente por referencia). */
+  onHidden(callback: () => void): void {
+    this.hiddenListeners.add(callback);
   }
 
   /**
@@ -175,6 +182,10 @@ export class AudioEngineService {
     const handler = () => {
       if (document.visibilityState === 'visible') {
         this.recover();
+      } else {
+        // Pasó a background: que cada servicio frene lo suyo (la música no debe
+        // seguir/arrancar sonando con la pantalla apagada o la app en segundo plano).
+        this.runListeners(this.hiddenListeners);
       }
     };
     this.visibilityHandler = handler;

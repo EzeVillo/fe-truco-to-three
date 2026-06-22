@@ -88,6 +88,10 @@ export class BackgroundMusicService {
     this.hooksRegistered = true;
     this.engine.onUnlock(() => this.resumeIfActive());
     this.engine.onResume(() => this.resumeIfActive());
+    // Al pasar a background frenamos: sin esto la música puede arrancar sola con el
+    // celu guardado (un evento de la partida re-dispara `start()` y, con el contexto
+    // compartido ya autorizado, iOS deja sonar `audio.play()` aunque no haya foco).
+    this.engine.onHidden(() => this.silence());
   }
 
   private resumeIfActive(): void {
@@ -246,6 +250,12 @@ export class BackgroundMusicService {
 
   private tryPlay(): void {
     if (!this.audio) {
+      return;
+    }
+    // Nunca reproducir con la app oculta: `start()` se re-dispara en cada evento de
+    // la partida, así que sin este gate la música podía sonar sola en background.
+    // Al volver a foreground, el hook `onResume` del engine la retoma.
+    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
       return;
     }
     this.ensureGraph();

@@ -1,3 +1,4 @@
+import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BACKGROUND_MUSIC_PATH, BackgroundMusicService } from './background-music.service';
 
@@ -10,12 +11,18 @@ interface AudioMock {
   pause: ReturnType<typeof vi.fn>;
 }
 
+/** El servicio ahora inyecta `AudioEngineService`, así que se resuelve vía TestBed. */
+function makeService(): BackgroundMusicService {
+  return TestBed.inject(BackgroundMusicService);
+}
+
 describe('BackgroundMusicService', () => {
   let createdAudios: AudioMock[];
 
   beforeEach(() => {
     createdAudios = [];
     localStorage.clear();
+    TestBed.configureTestingModule({});
 
     vi.stubGlobal('Audio', function AudioMock(this: AudioMock, src: string) {
       this.src = src;
@@ -34,14 +41,14 @@ describe('BackgroundMusicService', () => {
   });
 
   it('arranca encendida a volumen bajo por defecto', () => {
-    const service = new BackgroundMusicService();
+    const service = makeService();
 
     expect(service.enabled()).toBe(true);
     expect(service.volume()).toBeCloseTo(0.15);
   });
 
   it('start() reproduce la pista en loop al volumen actual', () => {
-    const service = new BackgroundMusicService();
+    const service = makeService();
 
     service.start();
 
@@ -53,7 +60,7 @@ describe('BackgroundMusicService', () => {
   });
 
   it('al reentrar a un match rebobina la pista al inicio', () => {
-    const service = new BackgroundMusicService();
+    const service = makeService();
     service.start();
 
     // Simula que la pista avanzó durante la primera partida.
@@ -68,7 +75,7 @@ describe('BackgroundMusicService', () => {
   });
 
   it('start() repetido durante la partida no rebobina (es idempotente)', () => {
-    const service = new BackgroundMusicService();
+    const service = makeService();
     service.start();
 
     // El componente re-dispara start() en cada acción mientras IN_PROGRESS.
@@ -79,7 +86,7 @@ describe('BackgroundMusicService', () => {
   });
 
   it('stop() pausa la pista', () => {
-    const service = new BackgroundMusicService();
+    const service = makeService();
     service.start();
 
     service.stop();
@@ -88,7 +95,7 @@ describe('BackgroundMusicService', () => {
   });
 
   it('toggleEnabled apaga, pausa y persiste la preferencia', () => {
-    const service = new BackgroundMusicService();
+    const service = makeService();
     service.start();
 
     service.toggleEnabled();
@@ -100,7 +107,7 @@ describe('BackgroundMusicService', () => {
 
   it('start() con música apagada no crea ni reproduce audio', () => {
     localStorage.setItem('t3.bgMusic.enabled', 'false');
-    const service = new BackgroundMusicService();
+    const service = makeService();
 
     service.start();
 
@@ -108,7 +115,7 @@ describe('BackgroundMusicService', () => {
   });
 
   it('setVolume clampea a [0,1], lo aplica al audio y lo persiste', () => {
-    const service = new BackgroundMusicService();
+    const service = makeService();
     service.start();
 
     service.setVolume(2);
@@ -125,7 +132,7 @@ describe('BackgroundMusicService', () => {
     localStorage.setItem('t3.bgMusic.enabled', 'true');
     localStorage.setItem('t3.bgMusic.volume', '0.5');
 
-    const service = new BackgroundMusicService();
+    const service = makeService();
 
     expect(service.enabled()).toBe(true);
     expect(service.volume()).toBeCloseTo(0.5);
@@ -155,10 +162,12 @@ describe('BackgroundMusicService', () => {
         };
         this.createGain = () => ({ ...gain, connect: vi.fn() });
       });
+      // El engine resuelve el contexto desde `window` (como SFX y clicks).
+      vi.stubGlobal('window', { AudioContext: globalThis.AudioContext });
     });
 
     it('el volumen se gobierna por el GainNode, no por audio.volume', () => {
-      const service = new BackgroundMusicService();
+      const service = makeService();
       service.start();
 
       service.setVolume(0.8);

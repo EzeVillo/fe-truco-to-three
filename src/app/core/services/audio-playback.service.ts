@@ -1,50 +1,24 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { AudioEngineService } from './audio-engine.service';
 import { EffectsVolumeService } from './effects-volume.service';
 
-type AudioContextCtor = typeof AudioContext;
-
-/** Resuelve el constructor de AudioContext (incluye el prefijo webkit de iOS). */
-function resolveAudioContextCtor(): AudioContextCtor | null {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-  const w = window as unknown as {
-    AudioContext?: AudioContextCtor;
-    webkitAudioContext?: AudioContextCtor;
-  };
-  return w.AudioContext ?? w.webkitAudioContext ?? null;
-}
-
 /**
- * Canal único de reproducción de SFX puntuales (cantos, carta tirada, jingles de
- * resultado, logro). Punto de verdad del **desbloqueo de audio en iOS/WebKit**.
+ * Canal de reproducción de SFX puntuales (cantos, carta tirada, jingles de
+ * resultado, logro). Decodifica cada pista una vez a un `AudioBuffer` y dispara un
+ * `AudioBufferSourceNode` por evento: latencia casi nula (clave para el SFX de
+ * carta) y solapamiento de disparos.
  *
- * Por qué centralizado: en WebKit la reproducción de audio queda bloqueada hasta
- * un gesto del usuario. Antes cada servicio enganchaba su propio unlock en el
- * constructor (lazy): los listeners se registraban recién al primer inject —
- * p. ej. al entrar a espectar— es decir *después* del tap de navegación, con lo
- * que el primer SFX de la primera partida no sonaba. Aquí el unlock se ancla una
- * sola vez al bootstrap (`start()` desde `App`), de modo que los listeners de
- * gesto están activos desde el primer toque de la sesión, sin depender de cuándo
- * se cree cada servicio de audio.
+ * El contexto, el desbloqueo en iOS y la recuperación al volver del background los
+ * gobierna el {@link AudioEngineService} compartido: acá sólo se reproduce. Si no
+ * hay Web Audio (entorno de test/desktop viejo) se cae a `HTMLAudioElement`,
+ * precalentado muteado en el primer gesto (vía `onUnlock` del engine).
  *
- * Por qué Web Audio: con un único `AudioContext`, un solo `resume()` en el primer
- * gesto desbloquea **toda** reproducción futura —cualquier buffer, en cualquier
- * momento, dentro o fuera de un gesto— sin tener que "precalentar" cada pista. Un
- * `AudioBufferSourceNode` decodificado además suena con latencia casi nula
- * (clave para el SFX de carta) y permite solapar disparos. Si la Web Audio API no
- * está disponible (entorno de test/desktop viejo) se cae a `HTMLAudioElement`,
- * conservando el viejo precalentado muteado en el gesto como desbloqueo.
- *
- * Todo es no-bloqueante: cualquier fallo se traga (try/catch) y nunca rompe el
- * flujo visual de la partida.
+ * Todo es no-bloqueante: cualquier fallo se traga y nunca rompe el flujo visual.
  */
 @Injectable({ providedIn: 'root' })
 export class AudioPlaybackService {
+  private readonly engine = inject(AudioEngineService);
   private readonly effectsVolume = inject(EffectsVolumeService);
-
-  private context: AudioContext | null = null;
-  private useFallback = false;
 
   /** Buffers ya decodificados, por path. */
   private readonly buffers = new Map<string, AudioBuffer>();
@@ -55,81 +29,22 @@ export class AudioPlaybackService {
   /** Elementos `<audio>` del fallback, por path. */
   private readonly fallbackAudios = new Map<string, HTMLAudioElement>();
 
-  private gestureHandler: (() => void) | null = null;
+  private started = false;
 
-  private readonly _unlocked = signal(false);
-  /** ¿Ya hubo un gesto que desbloqueó la reproducción? */
-  readonly unlocked = this._unlocked.asReadonly();
-
-  private visibilityHandler: (() => void) | null = null;
+  /** ¿Ya hubo un gesto que desbloqueó la reproducción? (delegado al engine). */
+  readonly unlocked = this.engine.unlocked;
 
   /**
-   * Ancla el desbloqueo al primer gesto del usuario y la recuperación al volver
-   * del background. Idempotente. Llamar una vez al bootstrap (`App`) para que
-   * los listeners existan antes de cualquier navegación.
+   * Registra en el engine el precalentado del fallback `<audio>` para el primer
+   * gesto. Idempotente. El gesto y la recuperación por foreground los ancla el
+   * propio engine (`AudioEngineService.start()`).
    */
   start(): void {
-    if (typeof document === 'undefined') {
+    if (this.started) {
       return;
     }
-    this.ensureContext();
-    this.attachGesture();
-    this.attachVisibilityRecovery();
-  }
-
-  private attachGesture(): void {
-    if (this.gestureHandler || typeof document === 'undefined') {
-      return;
-    }
-    const handler = () => this.unlock();
-    this.gestureHandler = handler;
-    document.addEventListener('pointerdown', handler);
-    document.addEventListener('touchend', handler);
-    document.addEventListener('keydown', handler);
-  }
-
-  /**
-   * Recuperación tras salir y volver a la app en iOS/WebKit: al ir a background
-   * (o al ceder el audio a otra app) el contexto queda `interrupted` —estado
-   * propio de WebKit, distinto de `suspended`— y no vuelve solo a `running`. Sin
-   * esto, al regresar a la pestaña los SFX quedan mudos. Al volver a visible (o
-   * restaurar desde el bfcache vía `pageshow`) reanudamos; si WebKit exige un
-   * gesto nuevo para reanudar, re-armamos el unlock para que el próximo toque
-   * lo haga.
-   */
-  private attachVisibilityRecovery(): void {
-    if (this.visibilityHandler || typeof document === 'undefined') {
-      return;
-    }
-    const handler = () => {
-      if (document.visibilityState === 'visible') {
-        this.recoverFromInterruption();
-      }
-    };
-    this.visibilityHandler = handler;
-    document.addEventListener('visibilitychange', handler);
-    window.addEventListener('pageshow', handler);
-  }
-
-  private recoverFromInterruption(): void {
-    const context = this.context;
-    if (!context || context.state === 'running') {
-      return;
-    }
-    context
-      .resume()
-      .then(() => {
-        if (context.state !== 'running') {
-          this.rearmGestureUnlock();
-        }
-      })
-      .catch(() => this.rearmGestureUnlock());
-  }
-
-  /** El resume sin gesto falló: volvemos al modo "esperando el primer toque". */
-  private rearmGestureUnlock(): void {
-    this._unlocked.set(false);
-    this.attachGesture();
+    this.started = true;
+    this.engine.onUnlock(() => this.unlockFallback());
   }
 
   /**
@@ -137,7 +52,6 @@ export class AudioPlaybackService {
    * descarga. No requiere gesto: sólo hace fetch + decode. Idempotente por path.
    */
   preload(paths: Iterable<string>): void {
-    this.ensureContext();
     for (const path of paths) {
       this.registered.add(path);
       this.loadBuffer(path);
@@ -146,31 +60,30 @@ export class AudioPlaybackService {
 
   /**
    * Tras pedir un `resume()` por un SFX, sólo se reproduce si el contexto quedó
-   * corriendo dentro de esta ventana. Si tardó más (p. ej. el resume quedó
-   * colgado en background y recién resolvió al volver a la app), el SFX ya es
-   * viejo y se descarta.
+   * corriendo dentro de esta ventana. Si tardó más (p. ej. el resume quedó colgado
+   * en background y recién resolvió al volver a la app), el SFX ya es viejo y se
+   * descarta.
    */
   private static readonly RESUME_GRACE_MS = 250;
 
   /** Reproduce una pista. Si todavía se está decodificando, suena al terminar. */
   play(path: string): void {
     this.registered.add(path);
-    this.ensureContext();
+    const context = this.engine.getContext();
 
-    if (this.useFallback || !this.context) {
+    if (this.engine.usingFallback || !context) {
       this.playFallback(path);
       return;
     }
 
-    // `!== 'running'` y no `=== 'suspended'`: al volver del background iOS deja
-    // el contexto en `interrupted` (estado WebKit) y también hay que reanudarlo.
-    if (this.context.state !== 'running') {
+    // `!== 'running'` y no `=== 'suspended'`: al volver del background iOS deja el
+    // contexto en `interrupted` (estado WebKit) y también hay que reanudarlo.
+    if (context.state !== 'running') {
       // Nunca agendar un source sobre un contexto parado: WebKit lo encola y lo
       // dispara cuando el contexto se reanuda, aunque sea minutos después (p. ej.
-      // el jingle del final de la partida sonando más tarde en el lobby). Se
-      // intenta reanudar y, sólo si quedó corriendo enseguida, se reproduce;
-      // si no, este SFX se pierde (es un realce, no puede sonar a destiempo).
-      const context = this.context;
+      // el jingle del final de la partida sonando más tarde en el lobby). Se intenta
+      // reanudar y, sólo si quedó corriendo enseguida, se reproduce; si no, este SFX
+      // se pierde (es un realce, no puede sonar a destiempo).
       const requestedAt = Date.now();
       this.loadBuffer(path); // que decodifique igual, para los próximos disparos
       context
@@ -194,22 +107,6 @@ export class AudioPlaybackService {
     this.loadBuffer(path, true);
   }
 
-  private ensureContext(): void {
-    if (this.context || this.useFallback) {
-      return;
-    }
-    const Ctor = resolveAudioContextCtor();
-    if (!Ctor) {
-      this.useFallback = true;
-      return;
-    }
-    try {
-      this.context = new Ctor();
-    } catch {
-      this.useFallback = true;
-    }
-  }
-
   private loadBuffer(path: string, playWhenReady = false): void {
     const existing = this.buffers.get(path);
     if (existing) {
@@ -218,7 +115,7 @@ export class AudioPlaybackService {
       }
       return;
     }
-    const context = this.context;
+    const context = this.engine.getContext();
     if (!context) {
       if (playWhenReady) {
         this.playFallback(path);
@@ -253,13 +150,13 @@ export class AudioPlaybackService {
   }
 
   private playBuffer(buffer: AudioBuffer): void {
-    const context = this.context;
+    const context = this.engine.getContext();
     if (!context) {
       return;
     }
-    // Cinturón para los caminos diferidos (decode al vuelo): si el contexto se
-    // paró mientras tanto, descartar — un source agendado acá quedaría encolado
-    // y sonaría a destiempo al próximo resume.
+    // Cinturón para los caminos diferidos (decode al vuelo): si el contexto se paró
+    // mientras tanto, descartar — un source agendado acá quedaría encolado y sonaría
+    // a destiempo al próximo resume.
     if (context.state !== 'running') {
       return;
     }
@@ -282,45 +179,11 @@ export class AudioPlaybackService {
     }
   }
 
-  /** Desbloqueo en el gesto: reanuda el contexto (Web Audio) o precalienta `<audio>`. */
-  private unlock(): void {
-    this.ensureContext();
-    const context = this.context;
-    if (!context) {
-      this.unlockFallback();
-      this.finishUnlock();
-      return;
-    }
-    if (context.state !== 'running') {
-      context
-        .resume()
-        .then(() => this.finishUnlock())
-        .catch(() => undefined);
-    } else {
-      this.finishUnlock();
-    }
-  }
-
-  private finishUnlock(): void {
-    if (this._unlocked()) {
-      return;
-    }
-    this._unlocked.set(true);
-    this.detachGesture();
-  }
-
-  private detachGesture(): void {
-    if (!this.gestureHandler || typeof document === 'undefined') {
-      return;
-    }
-    document.removeEventListener('pointerdown', this.gestureHandler);
-    document.removeEventListener('touchend', this.gestureHandler);
-    document.removeEventListener('keydown', this.gestureHandler);
-    this.gestureHandler = null;
-  }
-
   /** Reproduce y pausa en silencio cada pista registrada para desbloquearla en iOS. */
   private unlockFallback(): void {
+    if (!this.engine.usingFallback) {
+      return;
+    }
     for (const path of this.registered) {
       const audio = this.getFallbackAudio(path);
       if (!audio) {

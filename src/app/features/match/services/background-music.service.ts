@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
+import { AudioEngineService } from '../../../core/services/audio-engine.service';
 
 /** Pista de fondo (guitarra criolla). Servida desde `public/`. */
 export const BACKGROUND_MUSIC_PATH = 'audio/bp6zflyzky4-spanish-guitar-acoustic-538756.mp3';
@@ -10,40 +11,35 @@ const VOLUME_STORAGE_KEY = 't3.bgMusic.volume';
 const DEFAULT_VOLUME = 0.15;
 
 /**
- * Fade-in al (re)arrancar. Además de suavizar la entrada, enmascara el
- * fragmento bufferizado de la posición anterior que iOS/WebKit desagota al
- * reanudar el AudioContext suspendido: suena a gain 0 y sólo se escucha desde
- * el rebobinado. Sin esto, al reentrar a una partida se oía "seguir donde
- * quedó" y luego el arranque desde el principio.
+ * Fade-in al (re)arrancar. Suaviza la entrada y enmascara el fragmento bufferizado
+ * de la posición anterior que iOS/WebKit desagota al reanudar: suena a gain 0 y sólo
+ * se escucha desde el rebobinado.
  */
 const FADE_IN_SECONDS = 0.6;
 
-type AudioContextCtor = typeof AudioContext;
-
 /**
  * Música de fondo de la partida (modo jugador y espectador). Mantiene un único
- * `HTMLAudioElement` en loop. El estado (encendida + volumen) se persiste en
- * localStorage para respetar la preferencia del usuario entre partidas.
+ * `HTMLAudioElement` en loop, ruteado por un `GainNode` para poder controlar el
+ * volumen en iOS (donde `HTMLMediaElement.volume` es de solo lectura). El estado
+ * (encendida + volumen) se persiste en localStorage entre partidas.
  *
- * Volumen en iOS: `HTMLMediaElement.volume` es de **solo lectura** en WebKit
- * (iPhone/iPad, tanto Safari como Chrome) — asignarlo no hace nada y el slider
- * quedaría inerte. Para poder controlarlo se enruta el audio por la Web Audio
- * API y se ajusta un `GainNode`, cuyo `gain` sí es escribible en iOS. Si la Web
- * Audio API no está disponible (p. ej. entorno de test) se cae a `audio.volume`,
- * que alcanza en desktop.
+ * El `AudioContext`, el desbloqueo en el primer gesto y la recuperación al volver
+ * del background los gobierna el {@link AudioEngineService} compartido. Esta clase
+ * **no** suspende el contexto al silenciar (lo comparte con los SFX y los clicks):
+ * baja su propio `GainNode` a 0 y pausa el `<audio>`, lo que ya corta el sonido.
+ * Para reanudar tras un gesto/foreground se registra en `onUnlock`/`onResume`.
  *
- * Autoplay: los navegadores bloquean `play()` (y dejan el AudioContext
- * `suspended`) hasta la primera interacción del usuario. Si el `play()` inicial
- * es rechazado, se reintenta una sola vez al primer gesto (pointerdown/keydown).
+ * Si la Web Audio API no está disponible (entorno de test) se cae a `audio.volume`.
  */
 @Injectable({ providedIn: 'root' })
 export class BackgroundMusicService {
+  private readonly engine = inject(AudioEngineService);
+
   private audio: HTMLAudioElement | null = null;
-  private audioContext: AudioContext | null = null;
   private gainNode: GainNode | null = null;
   private graphReady = false;
   private active = false;
-  private unlockHandler: (() => void) | null = null;
+  private hooksRegistered = false;
 
   private readonly _enabled = signal<boolean>(this.readEnabled());
   /** ¿El usuario quiere escuchar música? (toggle de mute). */
@@ -54,8 +50,8 @@ export class BackgroundMusicService {
   readonly volume = this._volume.asReadonly();
 
   /**
-   * Arranca la música al entrar a una partida. Idempotente: el componente la
-   * llama en un effect que se re-dispara en cada acción mientras la partida está
+   * Arranca la música al entrar a una partida. Idempotente: el componente la llama
+   * en un effect que se re-dispara en cada acción mientras la partida está
    * IN_PROGRESS, así que sólo rebobina en la transición inactivo→activo (primera
    * entrada o reentrada). El servicio es singleton y reutiliza el mismo
    * `HTMLAudioElement` entre partidas, por eso hay que rebobinar a mano.
@@ -63,7 +59,7 @@ export class BackgroundMusicService {
   start(): void {
     const wasActive = this.active;
     this.active = true;
-    this.attachVisibilityResume();
+    this.registerEngineHooks();
     if (!this._enabled()) {
       return;
     }
@@ -77,29 +73,44 @@ export class BackgroundMusicService {
   /** Detiene la música al salir de la partida. */
   stop(): void {
     this.active = false;
-    this.detachUnlock();
     this.silence();
   }
 
   /**
-   * Silencia de inmediato y frena el grafo. En iOS el audio ruteado por el grafo
-   * (MediaElementSource → GainNode → destination) no corta al instante con
-   * `pause()`: queda un tail bufferizado sonando un par de segundos. Bajamos el
-   * gain a 0 para silenciar ya y suspendemos el contexto para frenar el grafo;
-   * el próximo `tryPlay()` reanuda y `fadeInVolume()` restaura el volumen.
+   * Reintenta el play al primer gesto y al volver del background: el `<audio>.play()`
+   * y el resume del contexto requieren un gesto en iOS. El engine corre estos hooks;
+   * sólo actúan si la música está activa y encendida. Idempotente.
+   */
+  private registerEngineHooks(): void {
+    if (this.hooksRegistered) {
+      return;
+    }
+    this.hooksRegistered = true;
+    this.engine.onUnlock(() => this.resumeIfActive());
+    this.engine.onResume(() => this.resumeIfActive());
+  }
+
+  private resumeIfActive(): void {
+    if (this.active && this._enabled()) {
+      this.tryPlay();
+    }
+  }
+
+  /**
+   * Silencia de inmediato bajando el gain a 0 y pausando el `<audio>`. No suspende el
+   * contexto: es compartido con los SFX y los clicks, suspenderlo los apagaría.
    */
   private silence(): void {
     if (this.gainNode) {
       const gain = this.gainNode.gain;
       try {
-        gain.cancelScheduledValues?.(this.audioContext?.currentTime ?? 0);
+        gain.cancelScheduledValues?.(this.engine.getContext()?.currentTime ?? 0);
       } catch {
         // Sin API de scheduling (entorno de test): basta con fijar el valor.
       }
       gain.value = 0;
     }
     this.audio?.pause();
-    void this.audioContext?.suspend?.().catch(() => undefined);
   }
 
   /** Enciende/apaga la música; persiste la preferencia. */
@@ -109,9 +120,6 @@ export class BackgroundMusicService {
     this.persistEnabled(next);
 
     if (!next) {
-      this.detachUnlock();
-      // `silence()` (no sólo `audio.pause()`): en iOS el tail del grafo seguía
-      // sonando ~3 s tras mutear. Bajar el gain y suspender corta al instante.
       this.silence();
       return;
     }
@@ -130,9 +138,8 @@ export class BackgroundMusicService {
   }
 
   /**
-   * Rebobina la pista al inicio. En iOS/WebKit asignar `currentTime` puede
-   * lanzar si el audio todavía no cargó metadata; va envuelto para no romper el
-   * arranque (el audio es enhancement).
+   * Rebobina la pista al inicio. En iOS/WebKit asignar `currentTime` puede lanzar si
+   * el audio todavía no cargó metadata; va envuelto para no romper el arranque.
    */
   private rewind(): void {
     if (!this.audio) {
@@ -160,31 +167,29 @@ export class BackgroundMusicService {
   }
 
   /**
-   * Enruta el `<audio>` por un GainNode para poder controlar el volumen en iOS.
-   * Sin Web Audio (entorno de test) no hace nada y se usa `audio.volume`.
+   * Enruta el `<audio>` por un GainNode (del contexto compartido) para controlar el
+   * volumen en iOS. Sin Web Audio (entorno de test) no hace nada y se usa
+   * `audio.volume`.
    */
   private ensureGraph(): void {
     if (this.graphReady || !this.audio) {
       return;
     }
-    const Ctor = this.resolveAudioContextCtor();
-    if (!Ctor) {
+    const context = this.engine.getContext();
+    if (!context) {
       return;
     }
     try {
-      const context = new Ctor();
       const source = context.createMediaElementSource(this.audio);
       const gain = context.createGain();
       gain.gain.value = this._volume();
       source.connect(gain);
       gain.connect(context.destination);
-      this.audioContext = context;
       this.gainNode = gain;
       this.graphReady = true;
       // El elemento va a nivel pleno; el gain pasa a gobernar el volumen real.
       this.audio.volume = 1;
     } catch {
-      this.audioContext = null;
       this.gainNode = null;
       this.graphReady = false;
     }
@@ -194,9 +199,9 @@ export class BackgroundMusicService {
     const value = this._volume();
     if (this.gainNode) {
       const gain = this.gainNode.gain;
-      const context = this.audioContext;
-      // Cancelar cualquier rampa de fade en curso para que el cambio de volumen
-      // del slider mande; si no hay API de scheduling (test), fijar el valor.
+      const context = this.engine.getContext();
+      // Cancelar cualquier rampa de fade en curso para que el cambio del slider
+      // mande; si no hay API de scheduling (test), fijar el valor.
       if (context && typeof gain.cancelScheduledValues === 'function') {
         try {
           const now = context.currentTime;
@@ -214,10 +219,8 @@ export class BackgroundMusicService {
   }
 
   /**
-   * Sube el volumen desde 0 con un fade corto. La rampa se programa contra el
-   * reloj del contexto (aunque esté suspendido): cuando se reanuda, el fragmento
-   * bufferizado de la posición anterior se desagota a gain 0 y sólo se oye desde
-   * el rebobinado. Sin API de scheduling (test) fija el valor directamente.
+   * Sube el volumen desde 0 con un fade corto. La rampa se programa contra el reloj
+   * del contexto; sin API de scheduling (test) fija el valor directamente.
    */
   private fadeInVolume(): void {
     const target = this._volume();
@@ -226,7 +229,7 @@ export class BackgroundMusicService {
       this.applyVolume();
       return;
     }
-    const context = this.audioContext;
+    const context = this.engine.getContext();
     if (!context || typeof gain.setValueAtTime !== 'function') {
       gain.value = target;
       return;
@@ -247,81 +250,17 @@ export class BackgroundMusicService {
     }
     this.ensureGraph();
     this.fadeInVolume();
-    // El AudioContext arranca suspended hasta un gesto del usuario (iOS/Chrome).
-    // Si el resume es rechazado (WebKit exigiendo gesto), el `<audio>` sonaría
-    // mudo a través del grafo suspendido sin que `play()` rechace: re-armamos
-    // el unlock para reintentar todo al próximo toque.
-    void this.audioContext?.resume().catch(() => this.attachUnlock());
+    // Reanuda el contexto compartido si iOS lo suspendió; si exige un gesto nuevo,
+    // el hook de `onUnlock`/`onResume` reintenta al próximo toque/foreground.
+    this.engine.resume();
     try {
       const result = this.audio.play();
       if (result) {
-        result.catch(() => this.attachUnlock());
+        result.catch(() => undefined);
       }
     } catch {
-      this.attachUnlock();
+      // El audio es un realce: un fallo no debe romper el flujo de la partida.
     }
-  }
-
-  private visibilityHandler: (() => void) | null = null;
-
-  /**
-   * Retoma la música al volver del background en iOS/WebKit: al salir de la app
-   * el sistema pausa el `<audio>` y deja el AudioContext `interrupted` (estado
-   * WebKit, distinto de `suspended`), y nada de eso se revierte solo al volver.
-   * Al pasar a visible (o restaurar desde el bfcache vía `pageshow`), si la
-   * partida sigue activa y la música encendida, se reintenta el play completo
-   * (resume del contexto incluido). Si WebKit exige un gesto nuevo, `tryPlay`
-   * ya re-arma el unlock. El handler queda anclado de por vida (servicio root)
-   * y se autoexcluye con `active`/`enabled`.
-   */
-  private attachVisibilityResume(): void {
-    if (this.visibilityHandler || typeof document === 'undefined') {
-      return;
-    }
-    const handler = () => {
-      if (document.visibilityState !== 'visible') {
-        return;
-      }
-      if (this.active && this._enabled()) {
-        this.tryPlay();
-      }
-    };
-    this.visibilityHandler = handler;
-    document.addEventListener('visibilitychange', handler);
-    window.addEventListener('pageshow', handler);
-  }
-
-  /** Reintenta el play al primer gesto del usuario (autoplay bloqueado). */
-  private attachUnlock(): void {
-    if (this.unlockHandler || typeof document === 'undefined') {
-      return;
-    }
-    const handler = () => {
-      this.detachUnlock();
-      if (this.active && this._enabled()) {
-        this.tryPlay();
-      }
-    };
-    this.unlockHandler = handler;
-    document.addEventListener('pointerdown', handler, { once: true });
-    document.addEventListener('keydown', handler, { once: true });
-  }
-
-  private detachUnlock(): void {
-    if (!this.unlockHandler || typeof document === 'undefined') {
-      return;
-    }
-    document.removeEventListener('pointerdown', this.unlockHandler);
-    document.removeEventListener('keydown', this.unlockHandler);
-    this.unlockHandler = null;
-  }
-
-  private resolveAudioContextCtor(): AudioContextCtor | null {
-    if (typeof AudioContext !== 'undefined') {
-      return AudioContext;
-    }
-    const webkit = (globalThis as { webkitAudioContext?: AudioContextCtor }).webkitAudioContext;
-    return webkit ?? null;
   }
 
   private readEnabled(): boolean {

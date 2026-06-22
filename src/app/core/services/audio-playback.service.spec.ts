@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { AudioEngineService } from './audio-engine.service';
 import { AudioPlaybackService } from './audio-playback.service';
 import { EffectsVolumeService } from './effects-volume.service';
 
@@ -72,7 +73,6 @@ describe('AudioPlaybackService', () => {
     });
     vi.stubGlobal('window', {
       AudioContext: globalThis.AudioContext,
-      // `pageshow` (recuperación al volver del background) se ancla en window.
       addEventListener: (type: string, handler: () => void) => listeners.set(type, handler),
       removeEventListener: (type: string) => listeners.delete(type),
     });
@@ -192,67 +192,6 @@ describe('AudioPlaybackService', () => {
     expect(contexts[0].sources[0].start).toHaveBeenCalledWith(0);
   });
 
-  it('start engancha el gesto y al dispararlo reanuda y marca unlocked', async () => {
-    const service = makeService();
-    service.start();
-    contexts[0].state = 'suspended';
-
-    expect(service.unlocked()).toBe(false);
-    listeners.get('pointerdown')?.();
-    await flush();
-
-    expect(contexts[0].resume).toHaveBeenCalledOnce();
-    expect(service.unlocked()).toBe(true);
-    // Tras desbloquear, los listeners se desenganchan.
-    expect(listeners.has('pointerdown')).toBe(false);
-  });
-
-  it('start es idempotente: no engancha el gesto dos veces', () => {
-    const addSpy = vi.spyOn(
-      globalThis.document as unknown as { addEventListener: () => void },
-      'addEventListener',
-    );
-    const service = makeService();
-
-    service.start();
-    service.start();
-
-    // 4 tipos de evento en document (pointerdown/touchend/keydown del gesto +
-    // visibilitychange de la recuperación), una sola vez cada uno.
-    expect(addSpy).toHaveBeenCalledTimes(4);
-  });
-
-  it('al volver a visible reanuda un contexto interrumpido por iOS', async () => {
-    const service = makeService();
-    service.start();
-    listeners.get('pointerdown')?.(); // unlock inicial
-    await flush();
-    // iOS deja el contexto fuera de `running` al ir a background.
-    contexts[0].state = 'suspended';
-
-    listeners.get('visibilitychange')?.();
-    await flush();
-
-    expect(contexts[0].resume).toHaveBeenCalled();
-  });
-
-  it('re-arma el unlock por gesto si el resume al volver a visible falla', async () => {
-    const service = makeService();
-    service.start();
-    listeners.get('pointerdown')?.(); // unlock inicial: desengancha el gesto
-    await flush();
-    expect(listeners.has('pointerdown')).toBe(false);
-
-    contexts[0].state = 'suspended';
-    contexts[0].resume = vi.fn().mockRejectedValue(new Error('needs gesture'));
-    listeners.get('visibilitychange')?.();
-    await flush();
-
-    // Sin resume posible, vuelve a esperar un gesto del usuario.
-    expect(service.unlocked()).toBe(false);
-    expect(listeners.has('pointerdown')).toBe(true);
-  });
-
   it('no propaga errores de un buffer source roto', async () => {
     const service = makeService();
     service.preload(['/a.mp3']);
@@ -275,7 +214,7 @@ describe('AudioPlaybackService', () => {
 
     beforeEach(() => {
       createdAudios = [];
-      // Sin AudioContext → fallback. Los listeners de recuperación igual se anclan.
+      // Sin AudioContext → fallback. El gesto lo ancla el engine.
       vi.stubGlobal('window', {
         addEventListener: (type: string, handler: () => void) => listeners.set(type, handler),
         removeEventListener: (type: string) => listeners.delete(type),
@@ -313,10 +252,12 @@ describe('AudioPlaybackService', () => {
       expect(createdAudios[0].play).toHaveBeenCalledOnce();
     });
 
-    it('en el gesto precalienta muteadas las pistas registradas', () => {
+    it('en el primer gesto precalienta muteadas las pistas registradas', () => {
+      const engine = TestBed.inject(AudioEngineService);
       const service = makeService();
       service.preload(['/a.mp3', '/b.mp3']);
-      service.start();
+      service.start(); // registra el precalentado del fallback como hook de unlock
+      engine.start(); // ancla el gesto
 
       listeners.get('pointerdown')?.();
 

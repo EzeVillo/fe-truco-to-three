@@ -3,6 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs/operators';
 import { AuthService } from './core/auth/auth.service';
+import { AudioEngineService } from './core/services/audio-engine.service';
 import { AudioPlaybackService } from './core/services/audio-playback.service';
 import { PresenceCoordinatorService } from './core/services/presence-coordinator.service';
 import { ServerWakeService } from './core/services/server-wake.service';
@@ -29,6 +30,7 @@ export class App {
   readonly campaignPoints = inject(CampaignPointsService);
   readonly social = inject(SocialStore);
   private readonly router = inject(Router);
+  private readonly audioEngine = inject(AudioEngineService);
   private readonly uiClickSound = inject(UiClickSoundService);
   private readonly audioPlayback = inject(AudioPlaybackService);
   readonly serverWake = inject(ServerWakeService);
@@ -162,7 +164,9 @@ export class App {
     });
 
     // Audio: no toca el backend y debe anclar el desbloqueo de iOS al primer
-    // gesto desde el bootstrap, así que arranca de inmediato.
+    // gesto desde el bootstrap, así que arranca de inmediato. El engine ancla el
+    // contexto único + el gesto/recovery; los servicios registran su parte.
+    this.audioEngine.start();
     this.uiClickSound.start();
     this.audioPlayback.start();
 

@@ -38,6 +38,12 @@ export class ServerWakeService {
   private static readonly IDLE_RECHECK_MS = 10 * 60_000;
   /** Cada cuánto se evalúa la inactividad mientras la pestaña está visible. */
   private static readonly IDLE_CHECK_INTERVAL_MS = 60_000;
+  /**
+   * Si la pestaña estuvo oculta al menos esto al volver a primer plano, asumimos
+   * que el backend pudo dormirse (Render free tier) y mostramos la overlay sin la
+   * gracia: aparece de entrada en vez de a mitad de la primera acción del usuario.
+   */
+  private static readonly BACKGROUND_RESUME_IMMEDIATE_MS = ServerWakeService.IDLE_RECHECK_MS;
 
   private readonly _status = signal<ServerWakeStatus>('idle');
   readonly status = this._status.asReadonly();
@@ -70,6 +76,8 @@ export class ServerWakeService {
   private idleMonitorsAttached = false;
   /** Último momento en que el backend respondió una request (HTTP o wake). */
   private lastBackendActivity = Date.now();
+  /** Momento en que la pestaña pasó a oculta; `null` mientras está visible. */
+  private hiddenSince: number | null = null;
 
   /** Idempotente: arranca el poll una sola vez por ciclo de vida. */
   start(): void {
@@ -100,11 +108,16 @@ export class ServerWakeService {
     this.start();
   }
 
-  private async runWakeLoop(): Promise<void> {
-    this.graceElapsed.set(false);
+  private async runWakeLoop(immediate = false): Promise<void> {
+    this.graceElapsed.set(immediate);
     this._status.set('waking');
 
-    this.graceTimer = setTimeout(() => this.graceElapsed.set(true), ServerWakeService.GRACE_MS);
+    // `immediate`: ya sospechamos sleep (volvimos de un background largo), así que
+    // no esperamos la gracia — la overlay se muestra de una. En el resto de los
+    // casos la gracia absorbe los readiness que responden rápido sin parpadear.
+    if (!immediate) {
+      this.graceTimer = setTimeout(() => this.graceElapsed.set(true), ServerWakeService.GRACE_MS);
+    }
 
     const deadline = Date.now() + ServerWakeService.MAX_TOTAL_MS;
     try {
@@ -186,25 +199,41 @@ export class ServerWakeService {
     }
     this.idleMonitorsAttached = true;
 
-    const checkIfVisible = () => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        this.hiddenSince = Date.now();
+        return;
+      }
+      // Volvió a primer plano: si estuvo oculta lo suficiente, asumimos sleep del
+      // backend y saltamos la gracia para que la overlay aparezca de entrada.
+      const hiddenMs = this.hiddenSince === null ? 0 : Date.now() - this.hiddenSince;
+      this.hiddenSince = null;
+      this.recheckIfIdle(hiddenMs >= ServerWakeService.BACKGROUND_RESUME_IMMEDIATE_MS);
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    // Restauración desde el bfcache de iOS: la página estuvo congelada, mismo
+    // riesgo de sleep → overlay sin gracia (no-op si todavía no estaba `ready`).
+    window.addEventListener('pageshow', () => this.recheckIfIdle(true));
+    setInterval(() => {
       if (document.visibilityState === 'visible') {
         this.recheckIfIdle();
       }
-    };
-    document.addEventListener('visibilitychange', checkIfVisible);
-    window.addEventListener('pageshow', checkIfVisible);
-    setInterval(checkIfVisible, ServerWakeService.IDLE_CHECK_INTERVAL_MS);
+    }, ServerWakeService.IDLE_CHECK_INTERVAL_MS);
   }
 
-  /** Re-corre el wake loop sólo si está `ready` y el backend lleva idle el umbral. */
-  private recheckIfIdle(): void {
+  /**
+   * Re-corre el wake loop sólo si está `ready` y el backend lleva idle el umbral.
+   * Con `immediate`, el wake loop muestra la overlay sin la gracia de 2.5s (se usa
+   * al volver de un background largo, donde el sleep de Render es probable).
+   */
+  private recheckIfIdle(immediate = false): void {
     if (this._status() !== 'ready') {
       return;
     }
     if (Date.now() - this.lastBackendActivity < ServerWakeService.IDLE_RECHECK_MS) {
       return;
     }
-    void this.runWakeLoop();
+    void this.runWakeLoop(immediate);
   }
 
   private clearGraceTimer(): void {

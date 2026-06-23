@@ -12,6 +12,13 @@ export interface MatchEventQueueDeps {
   getViewerSeat: () => string | null;
   applyTransactional: (event: MatchWsEvent) => void;
   applyDerived: (event: MatchDerivedEvent) => void;
+  /**
+   * Duración (ms) del canto que dispara un evento, o 0 si no tiene canto / aún
+   * no se conoce. Cuando es > 0, la cola no procesa el próximo evento hasta que
+   * el canto termine de sonar (gate por audio). Opcional: sin proveedor no hay
+   * gate y la cola se comporta sólo con los delays temporales.
+   */
+  getCallAudioDurationMs?: (event: MatchWsEvent) => number;
 }
 
 type QueuedMatchEvent =
@@ -27,6 +34,9 @@ export class MatchEventQueueService {
   private deps: MatchEventQueueDeps | null = null;
   private lastAppliedEventType: string | null = null;
   private lastAppliedSeat: string | null = null;
+  // Timestamp (epoch ms) hasta el que la cola no debe procesar el próximo
+  // evento porque todavía está sonando el canto del evento recién aplicado.
+  private audioGateUntilMs = 0;
 
   private readonly _isProcessingDelay = signal<boolean>(false);
   readonly isProcessingDelay = this._isProcessingDelay.asReadonly();
@@ -126,6 +136,7 @@ export class MatchEventQueueService {
     this.queue = [];
     this.processing = false;
     this.pausedForAck = false;
+    this.audioGateUntilMs = 0;
     this._isProcessingDelay.set(false);
   }
 
@@ -153,7 +164,13 @@ export class MatchEventQueueService {
     const item = this.queue[0];
     this.processing = true;
 
-    if (item.delayMs === 0) {
+    // El delay efectivo es el mayor entre el delay temporal del evento y lo que
+    // reste del canto en curso (gate por audio): el próximo evento no avanza
+    // hasta que el canto recién aplicado termine de sonar.
+    const gateRemainingMs = Math.max(0, this.audioGateUntilMs - Date.now());
+    const effectiveDelayMs = Math.max(item.delayMs, gateRemainingMs);
+
+    if (effectiveDelayMs === 0) {
       this.queue.shift();
       this.applyItem(item);
       this.processing = false;
@@ -173,7 +190,7 @@ export class MatchEventQueueService {
       this.processing = false;
       this.updateProcessingDelayState();
       this.schedule();
-    }, item.delayMs);
+    }, effectiveDelayMs);
   }
 
   private cancelTimer(): void {
@@ -207,6 +224,13 @@ export class MatchEventQueueService {
       this.deps.applyTransactional(item.event);
       this.lastAppliedEventType = item.event.eventType;
       this.lastAppliedSeat = (item.event.payload as { seat?: string }).seat ?? null;
+      // applyTransactional ya disparó el canto (vía matchEvent$): si tiene una
+      // duración conocida, abrimos el gate para que el próximo evento espere a
+      // que termine de sonar antes de aplicarse.
+      const callDurationMs = this.deps.getCallAudioDurationMs?.(item.event) ?? 0;
+      if (callDurationMs > 0) {
+        this.audioGateUntilMs = Date.now() + callDurationMs;
+      }
     } else {
       this.deps.applyDerived(item.event);
     }

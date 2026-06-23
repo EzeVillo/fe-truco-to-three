@@ -131,6 +131,19 @@ export class MatchCallAudioService {
     this.playback.play(path);
   }
 
+  /**
+   * Duración (ms) del canto asociado a un evento, o 0 si el evento no tiene
+   * canto o su pista aún no se conoce. La usa la cola de eventos para no avanzar
+   * al próximo evento hasta que termine de sonar el canto recién aplicado.
+   */
+  getCallDurationMs(event: MatchWsEvent): number {
+    const path = resolveMatchCallAudioPath(event);
+    if (!path) {
+      return 0;
+    }
+    return this.playback.getDurationMs(path);
+  }
+
   /** Sonido de carta arrojada. Se invoca al aplicar CARD_PLAYED (post-delay). */
   playCardThrow(): void {
     this.playback.play(MATCH_CARD_THROW_AUDIO_PATH);

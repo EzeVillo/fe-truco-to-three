@@ -434,6 +434,50 @@ describe('MatchEventQueueService', () => {
       expect(transactionalSpy).toHaveBeenCalledTimes(2);
     });
 
+    it('gate de audio: el próximo evento no avanza hasta que termine el canto', () => {
+      // Cola con un proveedor de duración: el canto dura 1500 ms, más que el
+      // delay temporal de 600 ms del evento siguiente.
+      service = new MatchEventQueueService();
+      service.init({
+        getViewerSeat: () => 'PLAYER_ONE',
+        applyTransactional: transactionalSpy,
+        applyDerived: derivedSpy,
+        getCallAudioDurationMs: (e) => (e.eventType === 'TRUCO_CALLED' ? 1500 : 0),
+      });
+
+      const trucoEvent: MatchWsEvent = {
+        matchId: 'm1',
+        eventType: 'TRUCO_CALLED',
+        timestamp: 1,
+        payload: { callerSeat: 'PLAYER_TWO', call: 'TRUCO' },
+        stateVersion: 2,
+      };
+      const cardEvent: MatchWsEvent = {
+        matchId: 'm1',
+        eventType: 'CARD_PLAYED',
+        timestamp: 2,
+        payload: { seat: 'PLAYER_TWO', card: { suit: 'ESPADA', number: 1 } },
+        stateVersion: 3,
+      };
+
+      service.enqueueTransactional(trucoEvent);
+      service.enqueueTransactional(cardEvent);
+
+      // El canto se aplica tras su delay temporal (600 ms) y abre el gate (1500 ms).
+      vi.advanceTimersByTime(600);
+      expect(transactionalSpy).toHaveBeenCalledTimes(1);
+      expect(transactionalSpy).toHaveBeenNthCalledWith(1, trucoEvent);
+
+      // A los 600 ms (delay normal de la carta) el canto aún suena: no avanza.
+      vi.advanceTimersByTime(600);
+      expect(transactionalSpy).toHaveBeenCalledTimes(1);
+
+      // Cumplidos los 1500 ms del canto, el evento siguiente se aplica.
+      vi.advanceTimersByTime(900);
+      expect(transactionalSpy).toHaveBeenCalledTimes(2);
+      expect(transactionalSpy).toHaveBeenNthCalledWith(2, cardEvent);
+    });
+
     it('coalescing: dos TURN_CHANGED consecutivos del mismo seat se colapsan', () => {
       const turn1: MatchWsEvent = {
         matchId: 'm1',

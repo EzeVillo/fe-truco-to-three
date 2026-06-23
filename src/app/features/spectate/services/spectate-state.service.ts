@@ -13,6 +13,7 @@ import type {
 } from '../../match/models/match-ws-events';
 import { applyMatchEvent, applyMatchDerivedEvent } from '../../match/reducers/match-event.reducer';
 import { MatchEventQueueService } from '../../match/services/match-event-queue.service';
+import { MatchCallAudioService } from '../../match/services/match-call-audio.service';
 import { WebSocketService } from '../../../core/services/websocket.service';
 import { SpectateApiService } from './spectate-api.service';
 import { spectateErrorCopy, getErrorCopy } from '../../../shared/error-copy/error-copy';
@@ -50,6 +51,7 @@ export class SpectateStateService {
   private readonly wsService = inject(WebSocketService);
   private readonly apiService = inject(SpectateApiService);
   private readonly eventQueue = inject(MatchEventQueueService);
+  private readonly callAudio = inject(MatchCallAudioService);
   private readonly countStore = inject(SpectatorCountStore);
 
   /** Estado adaptado del espectador (usado por deriveMatchView en la pantalla). */
@@ -92,6 +94,7 @@ export class SpectateStateService {
       getViewerSeat: () => null,
       applyTransactional: (e) => this.applyAndEmit(e),
       applyDerived: (e) => this.applyDerived(e),
+      getCallAudioDurationMs: (e) => this.callAudio.getCallDurationMs(e),
     });
 
     this.wsService.connect();

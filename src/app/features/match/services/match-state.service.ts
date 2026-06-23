@@ -16,6 +16,7 @@ import type {
 } from '../models/match-ws-events';
 import { applyMatchEvent, applyMatchDerivedEvent } from '../reducers/match-event.reducer';
 import { MatchEventQueueService } from './match-event-queue.service';
+import { MatchCallAudioService } from './match-call-audio.service';
 import { MatchActionsService } from './match-actions.service';
 import { SpectatorCountStore } from '../../../shared/services/spectator-count.store';
 
@@ -70,6 +71,7 @@ export class MatchStateService {
   private readonly eventQueue = inject(MatchEventQueueService);
   private readonly matchActions = inject(MatchActionsService);
   private readonly spectatorCountStore = inject(SpectatorCountStore);
+  private readonly callAudio = inject(MatchCallAudioService);
 
   readonly state = signal<MatchState | null>(null);
   readonly loading = signal<boolean>(false);
@@ -133,6 +135,7 @@ export class MatchStateService {
       getViewerSeat: () => this.state()?.viewerSeat ?? null,
       applyTransactional: (e) => this.applyAndIncrement(e),
       applyDerived: (e) => this.applyDerivedEvent(e),
+      getCallAudioDurationMs: (e) => this.callAudio.getCallDurationMs(e),
     });
 
     // Establece la conexión WebSocket si no está activa

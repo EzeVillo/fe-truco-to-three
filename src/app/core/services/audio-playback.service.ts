@@ -66,6 +66,24 @@ export class AudioPlaybackService {
    */
   private static readonly RESUME_GRACE_MS = 250;
 
+  /**
+   * Duración en milisegundos de una pista, si ya se conoce: del `AudioBuffer`
+   * decodificado (camino Web Audio) o del `<audio>` del fallback con metadata
+   * cargada. Devuelve 0 si todavía no se conoce — el llamador la trata como
+   * "sin gate" (no espera). No fuerza fetch/decode: es una consulta best-effort.
+   */
+  getDurationMs(path: string): number {
+    const buffer = this.buffers.get(path);
+    if (buffer && Number.isFinite(buffer.duration)) {
+      return buffer.duration * 1000;
+    }
+    const fallback = this.fallbackAudios.get(path);
+    if (fallback && Number.isFinite(fallback.duration)) {
+      return fallback.duration * 1000;
+    }
+    return 0;
+  }
+
   /** Reproduce una pista. Si todavía se está decodificando, suena al terminar. */
   play(path: string): void {
     this.registered.add(path);

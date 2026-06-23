@@ -259,7 +259,16 @@ export class BackgroundMusicService {
       return;
     }
     this.ensureGraph();
-    this.fadeInVolume();
+    // El fade-in sólo corresponde en un (re)arranque real desde silencio: primera
+    // entrada, reentrada o resume tras background (ahí el `<audio>` está pausado).
+    // `start()` se re-dispara en CADA acción de la partida (el effect del componente
+    // observa el snapshot, que cambia al tirar carta/cantar); sin este guard, cada
+    // jugada bajaba el gain a 0 y lo volvía a subir en 0.6s — la música "se agachaba"
+    // en cada acción. Si ya está sonando, no tocamos el volumen.
+    const wasPaused = this.audio.paused;
+    if (wasPaused) {
+      this.fadeInVolume();
+    }
     // Reanuda el contexto compartido si iOS lo suspendió; si exige un gesto nuevo,
     // el hook de `onUnlock`/`onResume` reintenta al próximo toque/foreground.
     this.engine.resume();

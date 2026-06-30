@@ -10,44 +10,44 @@
   } @else {
     <h2 id="rematch-title" class="rematch-dialog__title">Revancha</h2>
 
-    @if (opponentWants()) {
-      <p class="rematch-dialog__hint rematch-dialog__hint--wants">El rival quiere revancha</p>
-    }
-
-    @if (waitingForOpponent()) {
-      <p class="rematch-dialog__hint">Esperando al rival…</p>
-    }
-
-    @if (opponentLeft()) {
-      <p class="rematch-dialog__hint rematch-dialog__hint--closed">El rival no quiere revancha</p>
-    }
-
-    @if (expired()) {
-      <p class="rematch-dialog__hint rematch-dialog__hint--closed">La revancha venció</p>
-    }
-
-    @if (isOpen() && remainingSeconds() > 0) {
-      <p class="rematch-dialog__countdown">{{ remainingSeconds() }}s</p>
-    }
-
-    @if (errorMessage()) {
-      <p class="rematch-dialog__error" role="alert">{{ errorMessage() }}</p>
-    }
-
-    <div class="rematch-dialog__actions">
-      @if (canAccept()) {
-        <button type="button" class="t3-btn t3-btn--primary" cdkFocusInitial (click)="onAccept()">
-          Revancha
-        </button>
+    @if (bothWantRematch()) {
+      <div class="rematch-dialog__starting">
+        <mat-spinner diameter="28" class="rematch-dialog__spinner" />
+        <p class="rematch-dialog__hint rematch-dialog__hint--wants">¡Revancha! Empezando…</p>
+      </div>
+    } @else {
+      @if (opponentWants()) {
+        <p class="rematch-dialog__hint rematch-dialog__hint--wants">El rival quiere revancha</p>
       }
-      <button
-        type="button"
-        class="t3-btn t3-btn--neutral"
-        [disabled]="bothWantRematch()"
-        (click)="onLeave()"
-      >
-        Salir
-      </button>
-    </div>
+
+      @if (waitingForOpponent()) {
+        <p class="rematch-dialog__hint">Esperando al rival…</p>
+      }
+
+      @if (opponentLeft()) {
+        <p class="rematch-dialog__hint rematch-dialog__hint--closed">El rival no quiere revancha</p>
+      }
+
+      @if (expired()) {
+        <p class="rematch-dialog__hint rematch-dialog__hint--closed">La revancha venció</p>
+      }
+
+      @if (isOpen() && remainingSeconds() > 0) {
+        <p class="rematch-dialog__countdown">{{ remainingSeconds() }}s</p>
+      }
+
+      @if (errorMessage()) {
+        <p class="rematch-dialog__error" role="alert">{{ errorMessage() }}</p>
+      }
+
+      <div class="rematch-dialog__actions">
+        @if (canAccept()) {
+          <button type="button" class="t3-btn t3-btn--primary" cdkFocusInitial (click)="onAccept()">
+            Revancha
+          </button>
+        }
+        <button type="button" class="t3-btn t3-btn--neutral" (click)="onLeave()">Salir</button>
+      </div>
+    }
   }
 </div>

@@ -191,7 +191,7 @@ describe('RematchDialogComponent', () => {
     expect(mockDialogRef.close).toHaveBeenCalledWith({ confirmedMatchId: null });
   });
 
-  it('"Salir" queda deshabilitado cuando ambos aceptaron (revancha inminente)', () => {
+  it('muestra loader sin botones cuando ambos aceptaron (revancha inminente)', () => {
     mockRematchState.session.set(
       makeSession({
         status: 'OPEN',
@@ -201,13 +201,13 @@ describe('RematchDialogComponent', () => {
     );
     fixture.detectChanges();
 
+    // Ya no hay botón "Salir" deshabilitado: se reemplaza por un loader.
     const btns: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll('button'));
     const salirBtn = btns.find((b) => b.textContent?.trim() === 'Salir');
-    expect(salirBtn?.disabled).toBe(true);
+    expect(salirBtn).toBeUndefined();
 
-    salirBtn?.click();
-    expect(mockRematchState.leave).not.toHaveBeenCalled();
-    expect(mockDialogRef.close).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('mat-spinner')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Revancha! Empezando');
   });
 
   // --- navegación en CONFIRMED ---

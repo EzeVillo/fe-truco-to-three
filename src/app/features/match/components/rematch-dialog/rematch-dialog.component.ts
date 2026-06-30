@@ -8,6 +8,7 @@ import {
   type OnDestroy,
 } from '@angular/core';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RematchStateService } from '../../services/rematch-state.service';
 import {
   canAccept,
@@ -34,7 +35,7 @@ export interface RematchDialogResult {
 @Component({
   selector: 'app-rematch-dialog',
   standalone: true,
-  imports: [MatDialogModule],
+  imports: [MatDialogModule, MatProgressSpinnerModule],
   templateUrl: './rematch-dialog.component.html',
   styleUrl: './rematch-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

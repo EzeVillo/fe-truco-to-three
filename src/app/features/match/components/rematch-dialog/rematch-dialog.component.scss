@@ -38,6 +38,17 @@
     letter-spacing: 0.04em;
   }
 
+  &__starting {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--t3-gap-sm);
+  }
+
+  &__spinner {
+    --mdc-circular-progress-active-indicator-color: var(--t3-gold-400);
+  }
+
   &__confirmed {
     margin: 0;
     font-size: 1.2rem;

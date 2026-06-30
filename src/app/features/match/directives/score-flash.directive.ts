@@ -6,7 +6,7 @@ import { Directive, ElementRef, effect, inject, input } from '@angular/core';
  * entrar al match), solo en cambios posteriores.
  *
  * Usa `transform` + `filter: brightness` (compositables, sin tocar color) vía Web
- * Animations API. Respeta `prefers-reduced-motion`.
+ * Animations API.
  */
 @Directive({
   selector: '[appScoreFlash]',
@@ -36,7 +36,7 @@ export class ScoreFlashDirective {
 
   private flash(): void {
     const el = this.host.nativeElement;
-    if (typeof el.animate !== 'function' || this.prefersReducedMotion()) {
+    if (typeof el.animate !== 'function') {
       return;
     }
     el.animate(
@@ -46,12 +46,6 @@ export class ScoreFlashDirective {
         { transform: 'scale(1)', filter: 'brightness(1)' },
       ],
       { duration: ScoreFlashDirective.DURATION_MS, easing: ScoreFlashDirective.EASE_OUT },
-    );
-  }
-
-  private prefersReducedMotion(): boolean {
-    return (
-      typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
     );
   }
 }

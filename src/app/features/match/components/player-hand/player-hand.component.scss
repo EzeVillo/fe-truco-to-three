@@ -37,9 +37,15 @@
 // animación corre solo al montar (repartir la ronda), no al reordenar la mano tras
 // jugar. `backwards` mantiene el estado inicial durante el delay (oculta hasta que
 // le toca) y libera al estilo normal al terminar (respeta --blocked).
-@media (prefers-reduced-motion: no-preference) {
+// La animación corre por defecto; solo se desactiva si el usuario pide reduce
+// (patrón robusto: Safari/iOS a veces no matchea `no-preference` como se espera).
+.player-hand__card-btn {
+  animation: player-hand-deal var(--t3-duration-card) var(--t3-ease-out) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
   .player-hand__card-btn {
-    animation: player-hand-deal var(--t3-duration-card) var(--t3-ease-out) backwards;
+    animation: none;
   }
 }
 

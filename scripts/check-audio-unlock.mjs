@@ -17,6 +17,7 @@
  *   - core/services/audio-playback.service.ts   (el canal central)
  *   - core/services/ui-click-sound.service.ts   (Web Audio propio + fallback)
  *   - features/match/services/background-music.service.ts (loop con MediaElement)
+ *   - features/match/services/turn-timer-sound.service.ts  (tic-tac en loop con MediaElement)
  *
  * Uso:
  *   node scripts/check-audio-unlock.mjs             # revisión normal
@@ -46,6 +47,7 @@ const ALLOWLIST = new Set([
   'src/app/core/services/audio-playback.service.ts',
   'src/app/core/services/ui-click-sound.service.ts',
   'src/app/features/match/services/background-music.service.ts',
+  'src/app/features/match/services/turn-timer-sound.service.ts',
 ]);
 
 /** Patrón de creación de audio crudo. */

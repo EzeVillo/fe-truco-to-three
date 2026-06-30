@@ -55,6 +55,7 @@ import {
   type MatchOutcomeLevel,
 } from '../../services/match-call-audio.service';
 import { BackgroundMusicService } from '../../services/background-music.service';
+import { TurnTimerSoundService } from '../../services/turn-timer-sound.service';
 import { CardPreloadService } from '../../services/card-preload.service';
 import { PresenceCoordinatorService } from '../../../../core/services/presence-coordinator.service';
 import { getErrorCopy } from '../../../../shared/error-copy/error-copy';
@@ -192,6 +193,18 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   /** Urgencia: quedan ≤ 5 s (FR-006). */
   readonly timerIsUrgent = computed(() => this.timerActive() && isUrgent(this.timerRemainingMs()));
 
+  /**
+   * El plazo en rojo corre sobre el asiento propio: dispara el tic-tac de urgencia.
+   * Se exige `remaining > 0` para cortar el sonido en cuanto se agota (no quedarse
+   * sonando en el instante 0 mientras el backend resuelve el timeout). Sólo el turno
+   * propio: el tic-tac es una alerta accionable para que el jugador no pierda por
+   * tiempo; en el turno del rival no hay nada que hacer y sólo molestaría.
+   */
+  readonly turnTimerUrgentForSelf = computed(() => {
+    const remaining = this.timerRemainingMs();
+    return this.matchView()?.deadlineIsSelf === true && remaining > 0 && isUrgent(remaining);
+  });
+
   /** El plazo propio se agotó antes de la resolución del backend (FR-008). */
   readonly viewerActionTimedOut = computed(() => {
     const v = this.matchView();
@@ -210,6 +223,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   private readonly campaignPoints = inject(CampaignPointsService);
   private readonly matchCallAudioService = inject(MatchCallAudioService);
   private readonly backgroundMusic = inject(BackgroundMusicService);
+  private readonly turnTimerSound = inject(TurnTimerSoundService);
   private readonly cardPreload = inject(CardPreloadService);
   private readonly presenceCoordinator = inject(PresenceCoordinatorService);
   private readonly matchesApiService = inject(MatchesApiService);
@@ -246,6 +260,16 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
         this.backgroundMusic.start();
       } else {
         this.backgroundMusic.stop();
+      }
+    });
+
+    // Tic-tac de urgencia cuando el plazo propio entra en rojo (≤ 5 s). El effect se
+    // re-evalúa en cada tick del temporizador (nowMs), arrancando/cortando el loop.
+    effect(() => {
+      if (this.turnTimerUrgentForSelf()) {
+        this.turnTimerSound.start();
+      } else {
+        this.turnTimerSound.stop();
       }
     });
 
@@ -381,6 +405,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.backgroundMusic.stop();
+    this.turnTimerSound.stop();
     this._paramSub?.unsubscribe();
     this._preGameClosedSub?.unsubscribe();
     this._endedSub?.unsubscribe();

@@ -16,6 +16,7 @@ export type ErrorCopyScope =
   | 'MATCH_LOAD'
   | 'REMATCH'
   | 'PROFILE'
+  | 'MATCH_HISTORY'
   | 'CREATE_MATCH'
   | 'JOIN_MATCH'
   | 'QUICK_MATCH'
@@ -184,6 +185,21 @@ export function getErrorCopy(scope: ErrorCopyScope, error: unknown): string {
       default:
         if (status >= 500 && status < 600) {
           return 'No pudimos cargar el perfil. Reintentá.';
+        }
+        return FALLBACK;
+    }
+  }
+
+  if (scope === 'MATCH_HISTORY') {
+    switch (status) {
+      case 401:
+        return '';
+      case 0:
+      case -1:
+        return 'No pudimos cargar tu historial. Reintentá.';
+      default:
+        if (status >= 500 && status < 600) {
+          return 'No pudimos cargar tu historial. Reintentá.';
         }
         return FALLBACK;
     }

@@ -150,6 +150,24 @@
                   {{ userLabel() }}
                 </span>
               }
+              @if (authStore.isGuest()) {
+                <button
+                  type="button"
+                  class="global-header__menu-item"
+                  (click)="onGuestHistoryClick()"
+                >
+                  Historial
+                </button>
+              } @else {
+                <a
+                  class="global-header__menu-item"
+                  routerLink="/history"
+                  data-ui-click
+                  (click)="closeMenu()"
+                >
+                  Historial
+                </a>
+              }
             }
             @if (showFriends()) {
               @if (authStore.isGuest()) {

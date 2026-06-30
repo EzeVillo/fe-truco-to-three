@@ -1,0 +1,67 @@
+<section class="history-page" aria-labelledby="history-title">
+  <div class="history-page__inner">
+    <header class="history-page__header">
+      <app-back-button (back)="goBack()" />
+      <div>
+        <p class="history-page__eyebrow">Historial</p>
+        <h1 id="history-title" class="history-page__title">Tus últimas partidas</h1>
+      </div>
+    </header>
+
+    @if (loading()) {
+      <p class="history-page__state">Cargando historial...</p>
+    } @else if (error()) {
+      <div class="history-page__state history-page__state--error">
+        <p>{{ error() }}</p>
+        <button type="button" class="t3-btn t3-btn--primary" (click)="loadHistory()">
+          Reintentar
+        </button>
+      </div>
+    } @else if (entries().length === 0) {
+      <p class="history-page__empty">
+        Todavía no jugaste ninguna partida. ¡Cuando termines una, va a aparecer acá!
+      </p>
+    } @else {
+      <ul class="history-page__list">
+        @for (entry of entries(); track entry.matchId) {
+          <li
+            class="history-page__match"
+            [class.history-page__match--won]="entry.outcome === 'WON'"
+            [class.history-page__match--lost]="entry.outcome === 'LOST'"
+          >
+            <div class="history-page__match-top">
+              <span class="history-page__opponent">
+                @if (entry.opponentIsBot) {
+                  <span class="history-page__rival-badge" aria-label="Rival bot">🤖</span>
+                } @else {
+                  <span class="history-page__rival-badge" aria-label="Rival humano">👤</span>
+                }
+                {{ entry.opponentName }}
+              </span>
+              <span
+                class="history-page__outcome"
+                [class.history-page__outcome--won]="entry.outcome === 'WON'"
+                [class.history-page__outcome--lost]="entry.outcome === 'LOST'"
+              >
+                {{ outcomeLabel(entry) }}
+              </span>
+            </div>
+            <div class="history-page__match-bottom">
+              <div class="history-page__score-row">
+                <span class="history-page__score" aria-label="Marcador de juegos">
+                  {{ scoreLabel(entry) }}
+                </span>
+                @if (endReasonNote(entry); as note) {
+                  <span class="history-page__note">{{ note }}</span>
+                }
+              </div>
+              <time class="history-page__date" [attr.datetime]="entry.endedAt">{{
+                endedAt(entry)
+              }}</time>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</section>

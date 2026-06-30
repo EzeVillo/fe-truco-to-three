@@ -192,6 +192,15 @@ export class GlobalHeaderComponent {
   }
 
   /**
+   * Invitado tocando "Historial": el historial exige cuenta (los guests no lo
+   * acumulan). Abre el modal de registro, igual que "Mi perfil".
+   */
+  onGuestHistoryClick(): void {
+    this.closeMenu();
+    this.guestRegisterPrompt.prompt({ returnUrl: '/history' });
+  }
+
+  /**
    * Invitado tocando "Amigos": la sección de amigos exige cuenta. Abre el modal
    * de registro y, al confirmar, vuelve a /friends ya registrado.
    */

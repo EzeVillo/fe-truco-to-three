@@ -184,17 +184,17 @@ Devuelve como máximo **5** partidas, **más reciente primero**.
 }
 ```
 
-| Campo                        | Tipo    | Descripción                                                                  |
-|------------------------------|---------|------------------------------------------------------------------------------|
-| `entries`                    | array   | Hasta 5 partidas, ordenadas por `endedAt` descendente                        |
-| `entries[].matchId`          | string  | Identificador de la partida                                                  |
-| `entries[].opponentName`     | string  | Username del rival, o `displayName` si es bot (`Desconocido` si no resuelve) |
-| `entries[].opponentIsBot`    | boolean | `true` si el rival fue un bot                                                |
-| `entries[].outcome`          | string  | Resultado para el jugador: `WON` o `LOST`                                    |
-| `entries[].endReason`        | string  | Cómo terminó: `FINISHED`, `ABANDONED` o `FORFEITED`                          |
-| `entries[].ownGamesWon`      | int     | Juegos ganados por el jugador                                                |
-| `entries[].opponentGamesWon` | int     | Juegos ganados por el rival                                                  |
-| `entries[].endedAt`          | long    | Fecha de fin (epoch millis)                                                  |
+| Campo                        | Tipo    | Descripción                                                               |
+|------------------------------|---------|---------------------------------------------------------------------------|
+| `entries`                    | array   | Hasta 5 partidas, ordenadas por `endedAt` descendente                     |
+| `entries[].matchId`          | string  | Identificador de la partida                                               |
+| `entries[].opponentName`     | string  | Username del rival, o `displayName` si es bot (`Invitado` si no resuelve) |
+| `entries[].opponentIsBot`    | boolean | `true` si el rival fue un bot                                             |
+| `entries[].outcome`          | string  | Resultado para el jugador: `WON` o `LOST`                                 |
+| `entries[].endReason`        | string  | Cómo terminó: `FINISHED`, `ABANDONED` o `FORFEITED`                       |
+| `entries[].ownGamesWon`      | int     | Juegos ganados por el jugador                                             |
+| `entries[].opponentGamesWon` | int     | Juegos ganados por el rival                                               |
+| `entries[].endedAt`          | long    | Fecha de fin (epoch millis)                                               |
 
 **Notas:**
 

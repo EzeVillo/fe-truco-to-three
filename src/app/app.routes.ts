@@ -92,6 +92,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'history',
+    canMatch: [authGuard],
+    loadComponent: () =>
+      import('./features/history/pages/history-page/history-page.component').then(
+        (m) => m.HistoryPageComponent,
+      ),
+  },
+  {
     path: 'friends',
     canMatch: [authGuard],
     loadComponent: () =>

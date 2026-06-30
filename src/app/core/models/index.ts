@@ -4,5 +4,6 @@
 export * from './enums';
 export * from './auth.models';
 export * from './match.models';
+export * from './match-history.models';
 export * from './profile.models';
 export * from './ws.models';

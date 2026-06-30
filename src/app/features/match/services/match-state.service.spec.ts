@@ -367,6 +367,30 @@ describe('MatchStateService', () => {
       expect(TestBed.inject(SpectatorCountStore).count()).toBe(1);
     });
 
+    it('siembra el conteo desde el snapshot REST al entrar/recargar (§4.14)', () => {
+      service.init('test-match');
+      const req = httpMock.expectOne(`${environment.apiUrl}/matches/test-match`);
+      req.flush({
+        matchId: 'test-match',
+        status: 'IN_PROGRESS',
+        viewerSeat: 'PLAYER_ONE',
+        playerOneUsername: 'juancho',
+        playerTwoUsername: 'martina',
+        gamesToPlay: 3,
+        scorePlayerOne: 1,
+        scorePlayerTwo: 0,
+        gamesWonPlayerOne: 0,
+        gamesWonPlayerTwo: 0,
+        matchWinner: null,
+        spectatorCount: 4,
+        roundGame: null,
+        stateVersion: 1,
+      });
+
+      // El badge debe estar disponible sin esperar el próximo SPECTATOR_COUNT_CHANGED.
+      expect(TestBed.inject(SpectatorCountStore).count()).toBe(4);
+    });
+
     it('no rompe la reconciliación: un evento de juego posterior se aplica normal', () => {
       const eventSubject = mockWsService.getEventSubject();
       service.init('test-match');

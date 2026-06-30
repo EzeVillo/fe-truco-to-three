@@ -682,6 +682,7 @@ Response `200`:
   "gamesWonPlayerOne": 1,
   "gamesWonPlayerTwo": 0,
   "matchWinner": null,
+  "spectatorCount": 3,
   "stateVersion": 5,
   "lobby": null,
   "roundGame": {
@@ -741,6 +742,10 @@ Response `200`:
 - `gamesToPlay` es el formato de la serie (mejor de N): `1`, `3` o `5`
 - `scorePlayerOne` y `scorePlayerTwo` representan el puntaje del game actual y viven a nivel
   `match`
+- `spectatorCount` es la cantidad de espectadores activos en la partida al momento de la consulta.
+  Permite que el jugador conozca el conteo al entrar/reconectar sin esperar el próximo push WS
+  `SPECTATOR_COUNT_CHANGED` (§ eventos derivados), que lo mantiene actualizado en vivo. Es el mismo
+  valor que ve el espectador en `GET /api/matches/{matchId}/spectate` (`countActiveByMatchId`)
 - `roundGame` es `null` si la partida no está `IN_PROGRESS`
 - `lobby` es la **vista de sala de espera**: `null` salvo que la partida esté en
   `WAITING_FOR_PLAYERS` o `READY`. Es mutuamente excluyente con `roundGame` (nunca ambos no-null).

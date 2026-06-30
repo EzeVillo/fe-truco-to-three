@@ -134,6 +134,11 @@ export interface MatchState {
   gamesWonPlayerOne: number;
   gamesWonPlayerTwo: number;
   matchWinner: string | null;
+  // Cantidad de espectadores activos al momento de la consulta REST (§4.14).
+  // Permite mostrar el conteo al entrar/reconectar sin esperar el próximo push
+  // WS SPECTATOR_COUNT_CHANGED, que lo mantiene en vivo. Opcional por
+  // compatibilidad con respuestas previas a su incorporación.
+  spectatorCount?: number;
   roundGame: RoundState | null; // null si status !== 'IN_PROGRESS'
   // Vista de sala de espera (§4.14). Sólo no-null en WAITING_FOR_PLAYERS/READY y
   // mutuamente excluyente con roundGame. Trae joinCode + visibilidad para el host.

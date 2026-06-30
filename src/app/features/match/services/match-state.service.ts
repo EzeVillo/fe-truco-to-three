@@ -122,8 +122,9 @@ export class MatchStateService {
     this.matchEndedEmitted = false;
     this.buffer = [];
     this.derivedBuffer = [];
-    // El conteo de espectadores arranca en 0 y se alimenta de SPECTATOR_COUNT_CHANGED:
-    // el snapshot REST del jugador (§4.14) no lo incluye (feature 026).
+    // El conteo de espectadores arranca en 0; lo siembra el snapshot REST (§4.14,
+    // campo `spectatorCount`) al entrar/recargar y lo mantiene en vivo el push
+    // SPECTATOR_COUNT_CHANGED (feature 026).
     this.spectatorCountStore.reset();
 
     this.unsubscribeAll();
@@ -327,6 +328,13 @@ export class MatchStateService {
         this.state.set(snapshot);
         this.lastApplied = snapshot.stateVersion;
         this.lastSeenVersion = snapshot.stateVersion;
+        // El snapshot REST ahora trae el conteo de espectadores (§4.14): lo
+        // sembramos al entrar/recargar/reconectar para que el badge esté presente
+        // sin esperar el próximo push SPECTATOR_COUNT_CHANGED. Sólo si viene en la
+        // respuesta (campo opcional); si no, se conserva lo último que dejó el WS.
+        if (typeof snapshot.spectatorCount === 'number') {
+          this.spectatorCountStore.set(snapshot.spectatorCount);
+        }
         // Un re-fetch (hueco/reconexión) reemplaza el estado completo: el lock
         // optimista ya no aplica, lo limpiamos para no dejar la UI trabada.
         this.matchActions.clearActionPending();

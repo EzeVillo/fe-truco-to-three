@@ -273,6 +273,12 @@ describe('getErrorCopy — SOCIAL', () => {
     ).toBe(expected);
   });
 
+  it('FriendLimitReachedException → copy de máximo de amigos alcanzado', () => {
+    expect(getErrorCopy('SOCIAL', httpErrWithCode(422, 'FriendLimitReachedException'))).toBe(
+      'Alguno de los dos ya alcanzó el máximo de amigos permitido.',
+    );
+  });
+
   it('0 (red/offline) y 5xx → copy de red', () => {
     const expected = 'No pudimos conectarnos. Reintentá en unos segundos.';
     expect(getErrorCopy('SOCIAL', httpErr(0))).toBe(expected);

@@ -30,8 +30,14 @@ Errores:
 - `404` si el `username` no existe (`SocialUserNotFoundException`)
 - `409` si ya existe una solicitud pendiente (`FriendshipRequestAlreadyPendingException`) o una
   amistad aceptada (`FriendshipAlreadyExistsException`) entre ambos usuarios
-- `422` si se envia una solicitud a si mismo (`CannotFriendYourselfException`) o el destinatario
-  desactivó la recepción de solicitudes de amistad (`FriendRequestsNotAcceptedException`)
+- `422` si se envia una solicitud a si mismo (`CannotFriendYourselfException`), el destinatario
+  desactivó la recepción de solicitudes de amistad (`FriendRequestsNotAcceptedException`), o el
+  solicitante o el destinatario ya alcanzaron el máximo de amigos (`FriendLimitReachedException`)
+
+> El máximo de amigos por jugador es configurable (`truco.social.friendship.max-friends`, default
+> `10`). Ver [Límite de amigos configurable](#límite-de-amigos-configurable). El límite se valida en
+> ambos lados: no se puede enviar una solicitud si el solicitante está lleno ni si el destinatario
+> lo está, y también se revalida al aceptar.
 
 > El destinatario puede desactivar la recepción de solicitudes desde
 > [Preferencias sociales](#preferencias-sociales). Cuando está desactivada, los demás no pueden
@@ -50,8 +56,13 @@ Errores:
   (`SocialFeatureRequiresRegisteredUserException`)
 - `404` si el `username` no existe (`SocialUserNotFoundException`) o no hay una solicitud pendiente
   de ese usuario (`FriendshipNotFoundException`)
-- `422` si la solicitud no esta `PENDING` (`FriendshipNotPendingException`) o el usuario
-  autenticado no es el destinatario (`OnlyAddresseeCanRespondFriendRequestException`)
+- `422` si la solicitud no esta `PENDING` (`FriendshipNotPendingException`), el usuario
+  autenticado no es el destinatario (`OnlyAddresseeCanRespondFriendRequestException`), o el que
+  acepta o el solicitante ya alcanzaron el máximo de amigos (`FriendLimitReachedException`)
+
+> El límite se revalida al aceptar porque entre el envío y la aceptación cualquiera de los dos
+> jugadores pudo haber llegado al máximo. Ver
+> [Límite de amigos configurable](#límite-de-amigos-configurable).
 
 ## Rechazar amistad
 
@@ -337,6 +348,18 @@ Errores:
 - `404` si la invitacion no existe (`ResourceInvitationNotFoundException`)
 - `422` si la invitacion no esta `PENDING` (`ResourceInvitationNotPendingException`) o el usuario
   autenticado no es el remitente (`OnlySenderCanCancelResourceInvitationException`)
+
+## Límite de amigos configurable
+
+El máximo de amistades `ACCEPTED` por jugador es parametrizable:
+
+- Property: `truco.social.friendship.max-friends`
+- Default en `application.yaml`: `10`
+
+El límite cuenta solo amistades aceptadas (las solicitudes pendientes no suman) y aplica por igual a
+ambos jugadores. Se valida tanto al **enviar** la solicitud (bloquea si el solicitante o el
+destinatario ya están llenos) como al **aceptarla** (bloquea si quien acepta o el solicitante
+llegaron al máximo en el ínterin), devolviendo `422 FriendLimitReachedException`.
 
 ## Expiracion configurable de invitaciones
 

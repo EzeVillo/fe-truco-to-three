@@ -60,6 +60,21 @@ describe('deriveMatchView', () => {
     expect(view.opponent.playedInPreviousHands[0]?.number).toBe(5);
   });
 
+  it('deriva handWinners por mano resuelta relativo al asiento del viewer', () => {
+    // mockMatchViewerPlayerOne tiene una mano previa ganada por 'juancho' (self=PLAYER_ONE).
+    const viewOne = deriveMatchView(mockMatchViewerPlayerOne);
+    expect(viewOne.handWinners).toEqual(['self']);
+
+    // Visto desde PLAYER_TWO, esa misma mano la ganó el rival.
+    const viewTwo = deriveMatchView(mockMatchViewerPlayerTwo);
+    expect(viewTwo.handWinners).toEqual(['opponent']);
+  });
+
+  it('handWinners es vacío sin roundGame', () => {
+    const view = deriveMatchView({ ...mockMatchEmptyTable, roundGame: null });
+    expect(view.handWinners).toEqual([]);
+  });
+
   it('maps current hand cards correctly', () => {
     const view = deriveMatchView(mockMatchAsymmetricHand);
     expect(view.self.playedInCurrentHand?.number).toBe(7);

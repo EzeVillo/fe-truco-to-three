@@ -3,7 +3,11 @@
     <!-- Row 0: opponent -->
     @for (card of opponentRow(); track $index) {
       @if (card) {
-        <app-card-view [card]="card" class="played-cards-area__item" />
+        <app-card-view
+          [card]="card"
+          class="played-cards-area__item played-cards-area__item--opponent"
+          [class.played-cards-area__item--winner]="opponentWinnerFlags()[$index]"
+        />
       } @else {
         <div class="played-cards-area__slot-empty played-cards-area__item"></div>
       }
@@ -15,7 +19,12 @@
     <!-- Row 1: player -->
     @for (card of selfRow(); track $index) {
       @if (card) {
-        <app-card-view [card]="card" class="played-cards-area__item" />
+        <app-card-view
+          [card]="card"
+          [appCardFlight]="card"
+          class="played-cards-area__item played-cards-area__item--self"
+          [class.played-cards-area__item--winner]="selfWinnerFlags()[$index]"
+        />
       } @else {
         <div class="played-cards-area__slot-empty played-cards-area__item"></div>
       }

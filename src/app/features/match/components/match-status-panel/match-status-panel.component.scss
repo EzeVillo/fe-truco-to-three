@@ -131,13 +131,39 @@
 .status-panel__call-text {
   font-size: 0.625rem;
   line-height: 1.3;
+
+  // Altura reservada siempre (haya canto o no) para no mover el layout: el panel
+  // entra justo en alto a 600px. El valor del canto vive en un hijo condicional.
   min-height: calc(0.625rem * 1.3);
   font-weight: 600;
   color: var(--t3-gold-500);
   max-width: 70px;
+}
+
+.status-panel__call-text-value {
+  display: inline-block;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  vertical-align: bottom;
+
+  // El canto irrumpe: pop corto (scale + opacity) cuando aparece. @starting-style
+  // dispara en la inserción del nodo; nunca scale desde 0 (parte de 0.8).
+  transform-origin: center bottom;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .status-panel__call-text-value {
+    transition:
+      opacity var(--t3-duration-pop) var(--t3-ease-out),
+      transform var(--t3-duration-pop) var(--t3-ease-out);
+
+    @starting-style {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+  }
 }
 
 .status-panel__call-text--centered {

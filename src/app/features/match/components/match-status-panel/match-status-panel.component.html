@@ -16,7 +16,11 @@
           <span class="status-panel__label">VOS</span>
         </div>
         <span class="status-panel__player-name">{{ view().self.username }}</span>
-        <span class="status-panel__call-text">{{ selfCallText() || ' ' }}</span>
+        <span class="status-panel__call-text">
+          @if (selfCallText(); as text) {
+            <span class="status-panel__call-text-value">{{ text }}</span>
+          }
+        </span>
       </div>
 
       <div class="status-panel__score-col">
@@ -43,7 +47,11 @@
           }
         </div>
         <span class="status-panel__player-name">{{ view().opponent.username }}</span>
-        <span class="status-panel__call-text">{{ opponentCallText() || ' ' }}</span>
+        <span class="status-panel__call-text">
+          @if (opponentCallText(); as text) {
+            <span class="status-panel__call-text-value">{{ text }}</span>
+          }
+        </span>
       </div>
     </div>
 

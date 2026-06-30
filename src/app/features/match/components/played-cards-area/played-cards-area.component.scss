@@ -20,6 +20,32 @@
 .played-cards-area__item {
   width: 100%;
   aspect-ratio: 2 / 3;
+  border-radius: var(--t3-radius-sm);
+}
+
+// Carta del rival entrando a la mesa: cae desde su zona (arriba) con fade + scale
+// corto. @starting-style dispara solo en la inserción del elemento, así las cartas
+// ya en mesa no re-animan. Solo transform/opacity (GPU, sin reflow).
+// La carta propia NO se anima por CSS: la directiva appCardFlight hace el vuelo
+// (FLIP) desde su posición en la mano, ver card-flight.directive.ts.
+@media (prefers-reduced-motion: no-preference) {
+  app-card-view.played-cards-area__item--opponent {
+    transition:
+      opacity var(--t3-duration-card) var(--t3-ease-out),
+      transform var(--t3-duration-card) var(--t3-ease-out);
+
+    @starting-style {
+      opacity: 0;
+      transform: translateY(-45%) scale(0.92);
+    }
+  }
+}
+
+// Glow dorado de la carta que ganó su mano. La clase se agrega cuando la mano se
+// resuelve (sobre un elemento ya presente), así la transición lo hace aparecer.
+app-card-view.played-cards-area__item--winner {
+  box-shadow: var(--t3-card-win-glow);
+  transition: box-shadow var(--t3-duration-glow) var(--t3-ease-out);
 }
 
 .played-cards-area__slot-empty {

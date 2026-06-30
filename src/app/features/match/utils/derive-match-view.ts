@@ -38,6 +38,12 @@ export interface MatchView {
   currentTurnUsername: string | null;
   roundStatus: string | null;
   playedHandsCount: number;
+  /**
+   * Ganador de cada mano ya resuelta, en orden cronológico (paralelo a
+   * `playedInPreviousHands`). `'tie'` = parda (sin ganador). Lo consume el área de
+   * cartas para resaltar la carta ganadora de cada mano.
+   */
+  handWinners: ('self' | 'opponent' | 'tie')[];
   availableActions: AvailableAction[];
   currentTrucoCall: TrucoCall | null;
   // Temporizador de turno (feature 013-turn-timer)
@@ -170,6 +176,7 @@ export function deriveMatchView(state: MatchState): MatchView {
       currentTurnUsername: null,
       roundStatus: null,
       playedHandsCount: 0,
+      handWinners: [],
       availableActions: [],
       currentTrucoCall: null,
       actionDeadline: null,
@@ -179,6 +186,15 @@ export function deriveMatchView(state: MatchState): MatchView {
   }
 
   const round = state.roundGame;
+  const handWinners: ('self' | 'opponent' | 'tie')[] = round.playedHands.map((h) => {
+    if (h.winner === selfUsername) {
+      return 'self';
+    }
+    if (h.winner === opponentUsername) {
+      return 'opponent';
+    }
+    return 'tie';
+  });
   const selfPlayedInHands = playedBySeat(round.playedHands, selfSeat);
   const opponentPlayedInHands = playedBySeat(round.playedHands, oppSeat);
   const selfPlayedCurrent =
@@ -246,6 +262,7 @@ export function deriveMatchView(state: MatchState): MatchView {
     currentTurnUsername,
     roundStatus: round.roundStatus,
     playedHandsCount: round.playedHands.length,
+    handWinners,
     availableActions: round.availableActions,
     currentTrucoCall: round.currentTrucoCall,
     actionDeadline: round.actionDeadline,

@@ -11,7 +11,7 @@
           !playCardsEnabled() || isProcessingDelay() || actionPending()
         "
         appTapAction
-        (tap)="onCardClick(card)"
+        (tap)="onCardClick(card, $event)"
       >
         <app-card-view [card]="card" />
       </button>

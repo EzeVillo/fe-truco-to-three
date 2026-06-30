@@ -37,6 +37,7 @@ function createMockView(deadlineSeat: 'PLAYER_ONE' | 'PLAYER_TWO' | null = null)
     currentTurnUsername: 'juancho',
     roundStatus: 'PLAYING',
     playedHandsCount: 0,
+    handWinners: [],
     availableActions: [],
     currentTrucoCall: null,
     actionDeadline: deadlineSeat === null ? null : 1_000_030_000,

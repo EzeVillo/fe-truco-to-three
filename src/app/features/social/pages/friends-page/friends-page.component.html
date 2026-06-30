@@ -6,7 +6,21 @@
         <p class="friends-page__eyebrow">Social</p>
         <h1 id="friends-title" class="friends-page__title">Amigos</h1>
       </div>
+      <button
+        type="button"
+        class="t3-btn t3-btn--icon friends-page__settings-button"
+        [attr.aria-pressed]="store.preferences()?.acceptsFriendRequests ?? true"
+        title="Preferencias de solicitudes de amistad"
+        aria-label="Preferencias de solicitudes de amistad"
+        (click)="onOpenPreferences()"
+      >
+        <mat-icon>settings</mat-icon>
+      </button>
     </header>
+
+    @if (store.preferencesError(); as preferencesErr) {
+      <p class="friends-page__state friends-page__state--error">{{ preferencesErr }}</p>
+    }
 
     <app-add-friend-form [errorMessage]="store.actionError()" (submitRequest)="onSend($event)" />
 

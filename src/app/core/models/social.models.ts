@@ -101,3 +101,11 @@ export interface OutgoingFriendshipRequest {
 export interface CreateFriendshipRequestPayload {
   username: string;
 }
+
+// ─── Preferencias sociales (feature 027) ─────────────────────────────────────
+// Fuente: docs/contratos/06-social.md §Preferencias sociales.
+
+/** GET/PUT /api/social/preferences (§Preferencias sociales). */
+export interface SocialPreferences {
+  acceptsFriendRequests: boolean;
+}

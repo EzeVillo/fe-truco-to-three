@@ -6,7 +6,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { of } from 'rxjs';
 import { FriendsPageComponent } from './friends-page.component';
 import { SocialStore } from '../../services/social.store';
-import type { FriendSummary } from '../../../../core/models/social.models';
+import type { FriendSummary, SocialPreferences } from '../../../../core/models/social.models';
 
 describe('FriendsPageComponent', () => {
   let fixture: ComponentFixture<FriendsPageComponent>;
@@ -19,6 +19,8 @@ describe('FriendsPageComponent', () => {
   const friends = signal<FriendSummary[]>([]);
   const incoming = signal<{ requesterUsername: string }[]>([]);
   const outgoing = signal<{ addresseeUsername: string }[]>([]);
+  const preferences = signal<SocialPreferences | null>({ acceptsFriendRequests: true });
+  const preferencesError = signal<string | null>(null);
 
   const storeMock = {
     loading,
@@ -28,6 +30,8 @@ describe('FriendsPageComponent', () => {
     friends,
     incoming,
     outgoing,
+    preferences,
+    preferencesError,
     friendsCount: signal(0),
     incomingCount: signal(0),
     start: vi.fn(),
@@ -39,6 +43,7 @@ describe('FriendsPageComponent', () => {
     cancelRequest: vi.fn(),
     removeFriend: vi.fn(),
     inviteFriend: vi.fn(),
+    setAcceptsFriendRequests: vi.fn(),
   };
 
   const dialogMock = { open: vi.fn(() => ({ afterClosed: () => of(true) })) };
@@ -51,6 +56,8 @@ describe('FriendsPageComponent', () => {
     friends.set([]);
     incoming.set([]);
     outgoing.set([]);
+    preferences.set({ acceptsFriendRequests: true });
+    preferencesError.set(null);
     vi.clearAllMocks();
     routerMock.navigate.mockReturnValue(Promise.resolve(true));
 

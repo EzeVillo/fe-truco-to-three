@@ -11,6 +11,7 @@ import type {
   IncomingResourceInvitation,
   OutgoingFriendshipRequest,
   OutgoingResourceInvitation,
+  SocialPreferences,
 } from '../../../core/models/social.models';
 
 /**
@@ -119,5 +120,15 @@ export class SocialApiService {
     return this.http.get<OutgoingResourceInvitation[]>(
       `${this.baseUrl}/social/invitations/outgoing`,
     );
+  }
+
+  // ─── Preferencias sociales (feature 027) — docs/contratos/06-social.md ──────
+
+  getPreferences(): Observable<SocialPreferences> {
+    return this.http.get<SocialPreferences>(`${this.baseUrl}/social/preferences`);
+  }
+
+  updatePreferences(payload: SocialPreferences): Observable<SocialPreferences> {
+    return this.http.put<SocialPreferences>(`${this.baseUrl}/social/preferences`, payload);
   }
 }

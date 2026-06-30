@@ -55,6 +55,9 @@ function setup(opts: { self?: string; guest?: boolean; authed?: boolean } = {}) 
     cancelInvitation: vi.fn().mockReturnValue(of(undefined)),
     listIncomingInvitations: vi.fn().mockReturnValue(of([])),
     listOutgoingInvitations: vi.fn().mockReturnValue(of([])),
+    // Preferencias sociales (feature 027)
+    getPreferences: vi.fn().mockReturnValue(of({ acceptsFriendRequests: true })),
+    updatePreferences: vi.fn().mockReturnValue(of({ acceptsFriendRequests: true })),
   };
   const wsMock = {
     connect: vi.fn(),

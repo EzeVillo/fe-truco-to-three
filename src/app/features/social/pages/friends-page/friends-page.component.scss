@@ -25,6 +25,33 @@
     gap: var(--t3-gap-md);
   }
 
+  &__settings-button {
+    margin-left: auto;
+    flex: 0 0 auto;
+    background: transparent;
+    border-color: transparent;
+    color: var(--t3-text-muted);
+
+    @media (hover: hover) {
+      &:hover {
+        opacity: 0.85;
+      }
+    }
+
+    &:active {
+      opacity: 0.7;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--t3-gold-400);
+      outline-offset: 2px;
+    }
+
+    &[aria-pressed='false'] {
+      color: var(--t3-danger);
+    }
+  }
+
   &__eyebrow {
     margin: 0 0 var(--t3-gap-xs);
     color: var(--t3-text-muted);
@@ -125,6 +152,10 @@
     background-color 120ms ease,
     border-color 120ms ease,
     color 120ms ease;
+
+  &--icon {
+    padding: 0 var(--t3-gap-sm);
+  }
 }
 
 .t3-btn--primary {

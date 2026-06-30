@@ -283,6 +283,8 @@ export function getErrorCopy(scope: ErrorCopyScope, error: unknown): string {
         return 'Ya son amigos.';
       case 'FriendshipRequestAlreadyPendingException':
         return 'Ya hay una solicitud de amistad pendiente con este usuario.';
+      case 'FriendRequestsNotAcceptedException':
+        return 'Este usuario no está aceptando solicitudes de amistad por ahora.';
     }
     switch (status) {
       case 401:

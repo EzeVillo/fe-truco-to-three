@@ -25,6 +25,7 @@ import type {
   IncomingResourceInvitation,
   OutgoingFriendshipRequest,
   OutgoingResourceInvitation,
+  SocialPreferences,
 } from '../../../core/models/social.models';
 import type {
   FriendAvailabilityDelta,
@@ -51,6 +52,11 @@ interface SocialState {
   incomingInvitationToast: IncomingResourceInvitation | null;
   /** Error de la última acción de invitar/cancelar/aceptar/rechazar (copy del front). */
   inviteActionError: string | null;
+  // ─── Preferencias sociales (feature 027) ───────────────────────────────────
+  /** `null` mientras no se cargaron (bootstrap pendiente o falló). */
+  preferences: SocialPreferences | null;
+  /** Error de la última actualización de preferencias (copy del front). */
+  preferencesError: string | null;
 }
 
 const INITIAL: SocialState = {
@@ -64,6 +70,8 @@ const INITIAL: SocialState = {
   outgoingInvitations: [],
   incomingInvitationToast: null,
   inviteActionError: null,
+  preferences: null,
+  preferencesError: null,
 };
 
 // ─── Helpers puros de reconciliación (idempotentes por username) ─────────────
@@ -375,8 +383,16 @@ export const SocialStore = signalStore(
         outgoing: api.listOutgoing(),
         outgoingInvitations: api.listOutgoingInvitations(),
         incomingInvitations: api.listIncomingInvitations(),
+        preferences: api.getPreferences(),
       }).subscribe({
-        next: ({ friends, incoming, outgoing, outgoingInvitations, incomingInvitations }) => {
+        next: ({
+          friends,
+          incoming,
+          outgoing,
+          outgoingInvitations,
+          incomingInvitations,
+          preferences,
+        }) => {
           // Re-surface (D5): si hay una invitación a partida pendiente recibida y no
           // hay toast vigente, mostrarla como toast (sin lista persistente).
           const pendingIncoming = incomingInvitations.find(
@@ -390,6 +406,7 @@ export const SocialStore = signalStore(
               (i) => i.status === 'PENDING' && i.targetType === 'MATCH',
             ),
             incomingInvitationToast: store.incomingInvitationToast() ?? pendingIncoming ?? null,
+            preferences,
             loading: false,
           });
         },
@@ -617,6 +634,25 @@ export const SocialStore = signalStore(
       /** Descarta el toast de invitación recibida sin rechazarla. */
       dismissInvitationToast(): void {
         patchState(store, { incomingInvitationToast: null });
+      },
+
+      // ─── Preferencias sociales (feature 027) ─────────────────────────────
+
+      /** Actualiza `acceptsFriendRequests` (optimista con rollback ante fallo). */
+      setAcceptsFriendRequests(acceptsFriendRequests: boolean): void {
+        const previous = store.preferences();
+        patchState(store, {
+          preferences: { acceptsFriendRequests },
+          preferencesError: null,
+        });
+        api.updatePreferences({ acceptsFriendRequests }).subscribe({
+          error: (err: unknown) => {
+            patchState(store, {
+              preferences: previous,
+              preferencesError: getErrorCopy('SOCIAL', err),
+            });
+          },
+        });
       },
     };
   }),

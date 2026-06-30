@@ -3,6 +3,7 @@ import type { OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { MatDialog } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
 import { BackButtonComponent } from '../../../../shared/components/back-button';
 import {
   ConfirmDialogComponent,
@@ -21,6 +22,7 @@ type FriendsTab = 'friends' | 'incoming' | 'outgoing';
   standalone: true,
   imports: [
     BackButtonComponent,
+    MatIconModule,
     AddFriendFormComponent,
     FriendRowComponent,
     IncomingRequestRowComponent,
@@ -114,6 +116,31 @@ export class FriendsPageComponent implements OnInit {
     void this.router
       .navigate(['/lobby/online'], { queryParams: { inviteFriend: username } })
       .finally(() => this.creatingMatchFor.set(null));
+  }
+
+  /** Confirma el cambio de `acceptsFriendRequests` antes de aplicarlo (toggle). */
+  onOpenPreferences(): void {
+    const current = this.store.preferences()?.acceptsFriendRequests ?? true;
+    const next = !current;
+    this.confirm(
+      next
+        ? {
+            title: '¿Volver a aceptar solicitudes de amistad?',
+            message: 'Otros jugadores van a poder enviarte solicitudes de amistad de nuevo.',
+            confirmLabel: 'Aceptar solicitudes',
+            cancelLabel: 'Cancelar',
+            variant: 'primary',
+          }
+        : {
+            title: '¿Dejar de aceptar solicitudes de amistad?',
+            message:
+              'Nadie va a poder enviarte nuevas solicitudes. Las pendientes no se ven afectadas y vos podés seguir enviando solicitudes a otros.',
+            confirmLabel: 'Dejar de aceptar',
+            cancelLabel: 'Cancelar',
+            variant: 'destructive',
+          },
+      () => this.store.setAcceptsFriendRequests(next),
+    );
   }
 
   onRemove(username: string): void {

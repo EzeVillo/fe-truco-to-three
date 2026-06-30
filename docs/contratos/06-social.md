@@ -30,7 +30,13 @@ Errores:
 - `404` si el `username` no existe (`SocialUserNotFoundException`)
 - `409` si ya existe una solicitud pendiente (`FriendshipRequestAlreadyPendingException`) o una
   amistad aceptada (`FriendshipAlreadyExistsException`) entre ambos usuarios
-- `422` si se envia una solicitud a si mismo (`CannotFriendYourselfException`)
+- `422` si se envia una solicitud a si mismo (`CannotFriendYourselfException`) o el destinatario
+  desactivó la recepción de solicitudes de amistad (`FriendRequestsNotAcceptedException`)
+
+> El destinatario puede desactivar la recepción de solicitudes desde
+> [Preferencias sociales](#preferencias-sociales). Cuando está desactivada, los demás no pueden
+> enviarle nuevas solicitudes, pero **él sí puede seguir enviando** solicitudes a otros. Las
+> solicitudes pendientes previas a la desactivación no se ven afectadas.
 
 ## Aceptar amistad
 
@@ -98,6 +104,52 @@ Errores:
   con ese usuario (`FriendshipNotFoundException`)
 - `422` si la amistad no esta `ACCEPTED` (`FriendshipNotAcceptedException`) o el usuario
   autenticado no participa de ella (`PlayerNotPartOfFriendshipException`)
+
+## Preferencias sociales
+
+Preferencias de privacidad del jugador autenticado. Por defecto todas las preferencias están en su
+valor permisivo (un jugador que nunca las tocó acepta solicitudes de amistad).
+
+### Obtener mis preferencias
+
+`GET /api/social/preferences`
+
+Response `200`:
+
+```json
+{
+  "acceptsFriendRequests": true
+}
+```
+
+Errores:
+
+- `401` si el token es invalido, esta ausente o pertenece a un guest
+  (`SocialFeatureRequiresRegisteredUserException`)
+
+### Actualizar mis preferencias
+
+`PUT /api/social/preferences`
+
+Request:
+
+```json
+{
+  "acceptsFriendRequests": false
+}
+```
+
+Response `200`: las preferencias actualizadas (mismo shape que el `GET`).
+
+`acceptsFriendRequests` es obligatorio. Si se desactiva (`false`), los demás jugadores reciben
+`422 FriendRequestsNotAcceptedException` al intentar enviarle una solicitud de amistad; las
+solicitudes pendientes previas no se ven afectadas y el jugador puede seguir enviando solicitudes.
+
+Errores:
+
+- `400` si el body es invalido o falta `acceptsFriendRequests`
+- `401` si el token es invalido, esta ausente o pertenece a un guest
+  (`SocialFeatureRequiresRegisteredUserException`)
 
 ## Listar amigos
 
@@ -340,7 +392,10 @@ Disponibilidad de amigos, snapshot al suscribirse a `/user/queue/social`:
         "online": true,
         "availability": "BUSY",
         "busyReason": "IN_MATCH",
-        "spectatableMatch": { "id": "8b9c5936-9a1f-45ec-a587-24306689f6f7", "status": "IN_PROGRESS" }
+        "spectatableMatch": {
+          "id": "8b9c5936-9a1f-45ec-a587-24306689f6f7",
+          "status": "IN_PROGRESS"
+        }
       },
       {
         "friendUsername": "agus",

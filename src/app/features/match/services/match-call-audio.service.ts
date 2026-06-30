@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { AudioPlaybackService } from '../../../core/services/audio-playback.service';
 import { NOTIFICATION_CUE_AUDIO_PATH } from '../../../core/services/notification-cue-audio.service';
-import type { MatchWsEvent } from '../models/match-ws-events';
+import type { MatchWsEvent, TrucoRespondedPayload } from '../models/match-ws-events';
 
 export interface MatchCallAudioAsset {
   key: string;
@@ -78,6 +78,25 @@ const ALL_MATCH_AUDIO_PATHS: readonly string[] = [
   ...Object.values(MATCH_OUTCOME_AUDIO_PATHS).flatMap((outcome) => [outcome.win, outcome.lose]),
 ];
 
+/**
+ * Indica si el canto del evento debe frenar la cola hasta terminar de sonar
+ * (gate por audio). Sólo los cierres de mano por decisión del jugador: el canto
+ * marca el fin de la jugada y no queremos que el siguiente evento lo pise.
+ * TRUCO_RESPONDED gatea únicamente cuando la respuesta es el combo
+ * QUIERO_Y_ME_VOY_AL_MAZO; QUIERO/NO_QUIERO simples no frenan la cola.
+ */
+export function eventGatesOnAudio(event: MatchWsEvent): boolean {
+  switch (event.eventType) {
+    case 'ENVIDO_RESOLVED':
+    case 'FOLDED':
+      return true;
+    case 'TRUCO_RESPONDED':
+      return (event.payload as TrucoRespondedPayload).response === 'QUIERO_Y_ME_VOY_AL_MAZO';
+    default:
+      return false;
+  }
+}
+
 export function resolveMatchCallAudioPath(event: MatchWsEvent): string | null {
   switch (event.eventType) {
     case 'TRUCO_CALLED': {
@@ -132,11 +151,17 @@ export class MatchCallAudioService {
   }
 
   /**
-   * Duración (ms) del canto asociado a un evento, o 0 si el evento no tiene
-   * canto o su pista aún no se conoce. La usa la cola de eventos para no avanzar
-   * al próximo evento hasta que termine de sonar el canto recién aplicado.
+   * Duración (ms) que la cola debe esperar a que termine de sonar el canto del
+   * evento antes de avanzar al próximo (gate por audio), o 0 si el evento no
+   * gatea. Sólo gatean los cierres de mano cuyo canto no debe quedar pisado por
+   * lo que sigue: ENVIDO_RESOLVED, FOLDED ("me voy al mazo") y TRUCO_RESPONDED
+   * sólo cuando es QUIERO_Y_ME_VOY_AL_MAZO. El resto de los cantos (TRUCO/ENVIDO
+   * cantado, QUIERO/NO_QUIERO al truco) suenan pero no frenan la cola.
    */
   getCallDurationMs(event: MatchWsEvent): number {
+    if (!eventGatesOnAudio(event)) {
+      return 0;
+    }
     const path = resolveMatchCallAudioPath(event);
     if (!path) {
       return 0;

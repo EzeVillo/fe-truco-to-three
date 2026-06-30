@@ -5,8 +5,7 @@
  * El FE no deriva progresión: `challengeable`, posiciones y puntos llegan del BE.
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readContrato, readFullContract } from './_docs';
 import type {
   CampaignRankingEntry,
   CampaignRecord,
@@ -54,10 +53,9 @@ const _challengeResCheck: CreateCampaignChallengeResponse = {
 void _recordCheck;
 
 function campaignSection(): string {
-  const docsPath = resolve(process.cwd(), 'docs/CONTRATOS_API.md');
-  const content = readFileSync(docsPath, 'utf-8');
-  const sectionMatch = content.match(/##\s*7\.7\s+Modo Campaña[\s\S]*?(?=\n##\s*8\.|$)/);
-  expect(sectionMatch, 'Sección §7.7 Modo Campaña no encontrada en CONTRATOS_API.md').toBeTruthy();
+  const content = readContrato('07-perfil-presencia.md');
+  const sectionMatch = content.match(/##\s*Modo Campaña[\s\S]*?(?=\n##\s*WebSocket|$)/);
+  expect(sectionMatch, 'Sección Modo Campaña no encontrada en 07-perfil-presencia.md').toBeTruthy();
   return sectionMatch![0];
 }
 
@@ -119,7 +117,7 @@ describe('Contract: Modo Campaña §7.7', () => {
   });
 
   it('los logros de campaña están en la lista de achievementCode (§8)', () => {
-    const content = readFileSync(resolve(process.cwd(), 'docs/CONTRATOS_API.md'), 'utf-8');
+    const content = readFullContract();
     expect(content).toContain('- `REACH_CAMPAIGN_TOP_ONE`');
     expect(content).toContain('- `DEFEAT_ALL_CAMPAIGN_RIVALS`');
   });

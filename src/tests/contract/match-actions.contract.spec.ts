@@ -8,8 +8,7 @@
  * este test falla en build time gracias a `satisfies`.
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readContrato } from './_docs';
 import type {
   PlayCardRequest,
   CallEnvidoRequest,
@@ -45,13 +44,8 @@ void _respondEnvidoKeysCheck;
 
 // ─── Tests de enums case-sensitive ──────────────────────────────────────────
 
-function getContractSection(): string {
-  const docsPath = resolve(process.cwd(), 'docs/CONTRATOS_API.md');
-  return readFileSync(docsPath, 'utf-8');
-}
-
 describe('Contract: Match actions REST §4.6–§4.11 + §8.1', () => {
-  const content = getContractSection();
+  const content = readContrato('02-matches.md');
 
   it('PlayCardRequest contiene exactamente {suit, number}', () => {
     const req: PlayCardRequest = { suit: 'ESPADA', number: 7 };
@@ -120,7 +114,8 @@ describe('Contract: Match actions REST §4.6–§4.11 + §8.1', () => {
 
   it('docs/CONTRATOS_API.md §8.1 define enums case-sensitive', () => {
     // Buscar la sección de enums
-    const sectionMatch = content.match(/##\s*8\.?\s+Enums?[\s\S]*?(?=##|\Z|$)/);
-    expect(sectionMatch, 'Sección §8 no encontrada').toBeTruthy();
+    const convenciones = readContrato('00-convenciones.md');
+    const sectionMatch = convenciones.match(/##\s*Enums y valores permitidos[\s\S]*?(?=\n##\s|$)/);
+    expect(sectionMatch, 'Sección Enums no encontrada en 00-convenciones.md').toBeTruthy();
   });
 });

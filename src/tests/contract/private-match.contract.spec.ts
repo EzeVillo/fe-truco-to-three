@@ -10,8 +10,7 @@
  * en build time gracias a `satisfies` y en runtime por las aserciones.
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readContrato } from './_docs';
 import type {
   CreateMatchRequest,
   CreateMatchResponse,
@@ -71,15 +70,15 @@ describe('Contract: Partida privada por código', () => {
 
   // ─── Verificación documental ────────────────────────────────────────────
   it('docs §4.1 documenta POST /api/matches con gamesToPlay {1,3,5} y visibility', () => {
-    const content = readFileSync(resolve(process.cwd(), 'docs/CONTRATOS_API.md'), 'utf-8');
-    const section = content.match(/###\s*4\.1\s+Crear partida([\s\S]*?)(?=###)/)?.[1] ?? '';
+    const content = readContrato('02-matches.md');
+    const section = content.match(/##\s*Crear partida([\s\S]*?)(?=\n##\s)/)?.[1] ?? '';
     expect(section).toContain('gamesToPlay');
     expect(section).toMatch(/`1`,\s*`3`,\s*`5`/);
     expect(section).toContain('visibility');
   });
 
   it('docs §8.2 lista READY entre los status de MatchStateResponse', () => {
-    const content = readFileSync(resolve(process.cwd(), 'docs/CONTRATOS_API.md'), 'utf-8');
+    const content = readContrato('00-convenciones.md');
     expect(content).toMatch(/MatchStateResponse\.status[\s\S]*?READY/);
   });
 });

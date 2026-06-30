@@ -9,8 +9,7 @@
  * este test falla en build time gracias a `satisfies`.
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readContrato } from './_docs';
 import type {
   CreateBotMatchRequest,
   CreateBotMatchResponse,
@@ -77,14 +76,14 @@ describe('Contract: POST /api/matches/bot §9.2', () => {
 
   // ─── Verificación documental §9.2 ──────────────────────────────────────────
   it('docs/CONTRATOS_API.md §9.2 describe gamesToPlay como "Partidas totales de la serie"', () => {
-    const docsPath = resolve(process.cwd(), 'docs/CONTRATOS_API.md');
-    const content = readFileSync(docsPath, 'utf-8');
+    const content = readContrato('08-bots.md');
 
-    // Extraer sección §9.2 Crear partida contra bot
-    const sectionMatch = content.match(
-      /###\s*9\.2\s+Crear partida contra bot([\s\S]*?)(?=###|\Z|$)/,
-    );
-    expect(sectionMatch, 'Sección §9.2 no encontrada en CONTRATOS_API.md').toBeTruthy();
+    // Extraer sección Crear partida contra bot
+    const sectionMatch = content.match(/##\s*Crear partida contra bot([\s\S]*?)(?=\n##\s|$)/);
+    expect(
+      sectionMatch,
+      'Sección Crear partida contra bot no encontrada en 08-bots.md',
+    ).toBeTruthy();
 
     const section = sectionMatch![1];
 

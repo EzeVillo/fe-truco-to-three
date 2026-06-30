@@ -5,8 +5,7 @@
  * BEST_OF_1 -> 1, BEST_OF_3 -> 3, BEST_OF_5 -> 5.
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readContrato } from './_docs';
 import type { QuickMatchRequest, QuickMatchResponse } from '../../app/core/models/match.models';
 import { seriesFormatToGamesToPlay } from '../../app/core/models/match.models';
 
@@ -24,12 +23,9 @@ void _reqKeysCheck;
 void _resKeysCheck;
 
 function quickMatchSection(): string {
-  const docsPath = resolve(process.cwd(), 'docs/CONTRATOS_API.md');
-  const content = readFileSync(docsPath, 'utf-8');
-  const sectionMatch = content.match(
-    /###\s*9\.3\s+Quick Match[\s\S]*?(?=---\s*##\s*10\.|##\s*10\.|$)/,
-  );
-  expect(sectionMatch, 'Seccion §9.3 Quick Match no encontrada en CONTRATOS_API.md').toBeTruthy();
+  const content = readContrato('08-bots.md');
+  const sectionMatch = content.match(/##\s*Quick Match[\s\S]*$/);
+  expect(sectionMatch, 'Seccion Quick Match no encontrada en 08-bots.md').toBeTruthy();
   return sectionMatch![0];
 }
 

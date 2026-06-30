@@ -9,13 +9,12 @@
  * detectan si el contrato cambió sin actualizar el TS.
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import type {
   PublicMatchLobbyItem,
   PublicMatchLobbyUpsertEvent,
   PublicMatchLobbyRemovedEvent,
 } from '../../app/features/lobby/models/public-match-lobby.models';
+import { readContrato } from './_docs';
 
 // ─── Paridad de campos via `satisfies` (compile-time) ───────────────────────
 
@@ -103,7 +102,7 @@ describe('Contract: Lobby público de matches', () => {
   // ─── Verificación documental ────────────────────────────────────────────
 
   it('docs §4.3 documenta GET /api/matches/public con los campos del item', () => {
-    const content = readFileSync(resolve(process.cwd(), 'docs/CONTRATOS_API.md'), 'utf-8');
+    const content = readContrato('02-matches.md');
     expect(content).toContain('GET /api/matches/public');
     for (const field of [
       'matchId',
@@ -118,7 +117,7 @@ describe('Contract: Lobby público de matches', () => {
   });
 
   it('docs §9.4 documenta los eventos de lobby público', () => {
-    const content = readFileSync(resolve(process.cwd(), 'docs/CONTRATOS_API.md'), 'utf-8');
+    const content = readContrato('02-matches.md');
     expect(content).toContain('PUBLIC_MATCH_LOBBY_UPSERT');
     expect(content).toContain('PUBLIC_MATCH_LOBBY_REMOVED');
   });

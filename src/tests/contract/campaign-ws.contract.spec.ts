@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import type { CampaignWsEvent } from '../../app/core/models/ws.models';
+import { readContrato } from './_docs';
 
 /**
  * Contract test — canal /user/queue/campaign (§9.6).
@@ -25,7 +24,7 @@ const _campaignMatchPoints = {
 void _campaignMatchPoints;
 
 function contract(): string {
-  return readFileSync(resolve(process.cwd(), 'docs/CONTRATOS_API.md'), 'utf-8');
+  return readContrato('07-perfil-presencia.md');
 }
 
 describe('Contract: Campaign WS points', () => {

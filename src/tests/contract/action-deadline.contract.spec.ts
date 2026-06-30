@@ -8,16 +8,15 @@
  * Feature 013-turn-timer.
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import type {
   MatchDerivedEventType,
   ActionDeadlineSetPayload,
 } from '../../app/features/match/models/match-ws-events';
 import type { RoundState } from '../../app/core/models/match.models';
+import { readContrato } from './_docs';
 
 function getContract(): string {
-  return readFileSync(resolve(process.cwd(), 'docs/CONTRATOS_API.md'), 'utf-8');
+  return readContrato('02-matches.md');
 }
 
 // Compile-time shape check del payload de ACTION_DEADLINE_SET.

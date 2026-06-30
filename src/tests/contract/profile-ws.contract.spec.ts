@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import type { ProfileWsEvent } from '../../app/core/models/profile.models';
+import { readContrato } from './_docs';
 
 const _achievementUnlocked = {
   eventType: 'ACHIEVEMENT_UNLOCKED',
@@ -17,7 +16,7 @@ const _achievementUnlocked = {
 void _achievementUnlocked;
 
 function contract(): string {
-  return readFileSync(resolve(process.cwd(), 'docs/CONTRATOS_API.md'), 'utf-8');
+  return readContrato('07-perfil-presencia.md');
 }
 
 describe('Contract: Profile WS achievements', () => {

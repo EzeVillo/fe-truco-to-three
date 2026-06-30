@@ -1,10 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import type {
   AchievementCatalogEntry,
   AchievementsCatalogResponse,
 } from '../../app/core/models/profile.models';
+import { readContrato } from './_docs';
 
 const _catalog = {
   achievements: [
@@ -19,7 +18,7 @@ void _catalog;
 void _entry;
 
 function contract(): string {
-  return readFileSync(resolve(process.cwd(), 'docs/CONTRATOS_API.md'), 'utf-8');
+  return readContrato('07-perfil-presencia.md');
 }
 
 describe('Contract: Catálogo de logros', () => {

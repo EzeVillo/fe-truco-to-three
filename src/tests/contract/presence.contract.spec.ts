@@ -1,11 +1,10 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   derivePresenceDestination,
   type PresenceWsEvent,
   type UserPresenceResponse,
 } from '../../app/core/models/presence.models';
+import { readFullContract } from './_docs';
 
 const _presenceCheck = {
   busy: true,
@@ -28,7 +27,7 @@ void _presenceCheck;
 void _eventCheck;
 
 function docs(): string {
-  return readFileSync(resolve(process.cwd(), 'docs/CONTRATOS_API.md'), 'utf-8');
+  return readFullContract();
 }
 
 describe('Contract: presencia / reconexion §7.6', () => {

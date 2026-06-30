@@ -6,8 +6,7 @@
  * (o viceversa), los `satisfies` fallan en build time y los `expect` en runtime.
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readFullContract } from './_docs';
 import type {
   CreateResourceInvitationPayload,
   CreateResourceInvitationResponse,
@@ -21,7 +20,7 @@ import type {
 } from '../../app/core/models/social.models';
 import type { SocialWsEvent } from '../../app/core/models/ws.models';
 
-const CONTRACT = readFileSync(resolve(__dirname, '../../../docs/CONTRATOS_API.md'), 'utf-8');
+const CONTRACT = readFullContract();
 
 // ─── Paridad de forma via `satisfies` (compile-time) ─────────────────────────
 

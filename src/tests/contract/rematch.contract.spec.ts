@@ -10,8 +10,7 @@
  *   RematchStateService normaliza siempre a epochMillis.
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readContrato } from './_docs';
 import type {
   RematchAvailablePayload,
   RematchOpponentWantsPayload,
@@ -27,8 +26,7 @@ import type {
 } from '../../app/features/match/models/rematch.models';
 
 function getContractDoc(): string {
-  const docsPath = resolve(process.cwd(), 'docs/CONTRATOS_API.md');
-  return readFileSync(docsPath, 'utf-8');
+  return readContrato('02-matches.md');
 }
 
 // Compile-time shape checks via satisfies

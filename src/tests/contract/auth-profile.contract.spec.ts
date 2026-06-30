@@ -1,12 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import type {
   CurrentIdentityResponse,
   FullAuthResponse,
   GuestAuthResponse,
 } from '../../app/core/models/auth.models';
 import type { PlayerProfile } from '../../app/core/models/profile.models';
+import { readFullContract } from './_docs';
 
 const _fullAuth = {
   playerId: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
@@ -52,7 +51,7 @@ void _currentIdentity;
 void _profile;
 
 function contract(): string {
-  return readFileSync(resolve(process.cwd(), 'docs/CONTRATOS_API.md'), 'utf-8');
+  return readFullContract();
 }
 
 describe('Contract: Auth y perfil de jugador', () => {

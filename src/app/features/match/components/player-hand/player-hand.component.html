@@ -3,6 +3,7 @@
     @for (card of hand; track card.suit + card.number) {
       <button
         class="player-hand__card-btn"
+        [style.animation-delay.ms]="$index * 70"
         type="button"
         [disabled]="
           !playCardsEnabled() || isPlayingCard() || isProcessingDelay() || actionPending()

@@ -32,6 +32,29 @@
   width: 64px;
 }
 
+// Reparto inicial: cada carta entra desde abajo con fade + scale, escalonada por
+// el animation-delay inline (índice × 70 ms). Como el @for trackea por carta, la
+// animación corre solo al montar (repartir la ronda), no al reordenar la mano tras
+// jugar. `backwards` mantiene el estado inicial durante el delay (oculta hasta que
+// le toca) y libera al estilo normal al terminar (respeta --blocked).
+@media (prefers-reduced-motion: no-preference) {
+  .player-hand__card-btn {
+    animation: player-hand-deal var(--t3-duration-card) var(--t3-ease-out) backwards;
+  }
+}
+
+@keyframes player-hand-deal {
+  from {
+    opacity: 0;
+    transform: translateY(22%) scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @media (min-width: 1024px) {
   .player-hand {
     min-height: calc(88px * 3 / 2 + var(--t3-gap-sm) * 2);

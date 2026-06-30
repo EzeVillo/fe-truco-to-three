@@ -62,6 +62,7 @@
 }
 
 .status-panel__turn-dot {
+  position: relative;
   width: 5px;
   height: 5px;
   border-radius: 50%;
@@ -73,6 +74,37 @@
   &.active {
     background-color: var(--t3-gold-500);
     box-shadow: 0 0 3px var(--t3-gold-500);
+  }
+
+  // Ping de atención sobre el asiento en turno (cuando no hay reloj de turno, que
+  // ya tiene su propia animación). Anillo que escala y se desvanece en loop; solo
+  // transform/opacity (GPU). Gateado tras reduced-motion más abajo.
+  &.active::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 50%;
+    border: 1px solid var(--t3-gold-500);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .status-panel__turn-dot.active::after {
+    animation: turn-dot-ping 1.6s var(--t3-ease-out) infinite;
+  }
+}
+
+@keyframes turn-dot-ping {
+  0% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(2.6);
   }
 }
 
@@ -107,6 +139,45 @@
       var(--t3-timer-urgent) calc(var(--t3-timer-fill) * 360deg),
       var(--t3-timer-track) 0
     );
+  }
+}
+
+// Latido del anillo en turno: scale sutil + glow dorado en loop. Señala el turno
+// con reloj sin agregar un segundo aro que compita con la cuenta regresiva. El
+// scale (transform) es GPU; el glow va de spread 0 (invisible) a un blur leve.
+// El color del glow del latido sigue al anillo: dorado normal, rojo en urgente.
+// Son dos animaciones distintas (no una con var() en el keyframe) porque al
+// cambiar una custom property usada dentro de @keyframes varios navegadores no
+// re-evalúan el color de una animación ya en curso, y quedaría dorado en urgente.
+@media (prefers-reduced-motion: no-preference) {
+  .status-panel__turn-ring {
+    animation: turn-ring-beat 1.6s var(--t3-ease-in-out) infinite;
+
+    &.is-urgent {
+      animation-name: turn-ring-beat-urgent;
+    }
+  }
+}
+
+@keyframes turn-ring-beat {
+  0%,
+  100% {
+    box-shadow: 0 0 1px 0 var(--t3-gold-500);
+  }
+
+  50% {
+    box-shadow: 0 0 6px 1px var(--t3-gold-500);
+  }
+}
+
+@keyframes turn-ring-beat-urgent {
+  0%,
+  100% {
+    box-shadow: 0 0 1px 0 var(--t3-timer-urgent);
+  }
+
+  50% {
+    box-shadow: 0 0 6px 1px var(--t3-timer-urgent);
   }
 }
 

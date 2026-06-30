@@ -24,9 +24,13 @@
       </div>
 
       <div class="status-panel__score-col">
-        <span class="status-panel__score">{{ view().self.score }}</span>
+        <span class="status-panel__score" [appScoreFlash]="view().self.score">{{
+          view().self.score
+        }}</span>
         <span class="status-panel__divider">—</span>
-        <span class="status-panel__score">{{ view().opponent.score }}</span>
+        <span class="status-panel__score" [appScoreFlash]="view().opponent.score">{{
+          view().opponent.score
+        }}</span>
       </div>
 
       <div class="status-panel__player-col status-panel__player-col--right">

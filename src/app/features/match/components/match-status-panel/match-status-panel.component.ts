@@ -1,9 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import type { MatchView } from '../../utils/derive-match-view';
+import { ScoreFlashDirective } from '../../directives/score-flash.directive';
 
 @Component({
   selector: 'app-match-status-panel',
   standalone: true,
+  imports: [ScoreFlashDirective],
   templateUrl: './match-status-panel.component.html',
   styleUrl: './match-status-panel.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -89,10 +89,8 @@
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .status-panel__turn-dot.active::after {
-    animation: turn-dot-ping 1.6s var(--t3-ease-out) infinite;
-  }
+.status-panel__turn-dot.active::after {
+  animation: turn-dot-ping 1.6s var(--t3-ease-out) infinite;
 }
 
 @keyframes turn-dot-ping {
@@ -126,6 +124,15 @@
   );
   transition: background 0.2s linear;
 
+  // Latido del anillo en turno: scale sutil + glow dorado en loop. Señala el turno
+  // con reloj sin agregar un segundo aro que compita con la cuenta regresiva. El
+  // scale (transform) es GPU; el glow va de spread 0 (invisible) a un blur leve.
+  // El color del glow del latido sigue al anillo: dorado normal, rojo en urgente.
+  // Son dos animaciones distintas (no una con var() en el keyframe) porque al
+  // cambiar una custom property usada dentro de @keyframes varios navegadores no
+  // re-evalúan el color de una animación ya en curso, y quedaría dorado en urgente.
+  animation: turn-ring-beat 1.6s var(--t3-ease-in-out) infinite;
+
   &::after {
     content: '';
     position: absolute;
@@ -139,23 +146,7 @@
       var(--t3-timer-urgent) calc(var(--t3-timer-fill) * 360deg),
       var(--t3-timer-track) 0
     );
-  }
-}
-
-// Latido del anillo en turno: scale sutil + glow dorado en loop. Señala el turno
-// con reloj sin agregar un segundo aro que compita con la cuenta regresiva. El
-// scale (transform) es GPU; el glow va de spread 0 (invisible) a un blur leve.
-// El color del glow del latido sigue al anillo: dorado normal, rojo en urgente.
-// Son dos animaciones distintas (no una con var() en el keyframe) porque al
-// cambiar una custom property usada dentro de @keyframes varios navegadores no
-// re-evalúan el color de una animación ya en curso, y quedaría dorado en urgente.
-@media (prefers-reduced-motion: no-preference) {
-  .status-panel__turn-ring {
-    animation: turn-ring-beat 1.6s var(--t3-ease-in-out) infinite;
-
-    &.is-urgent {
-      animation-name: turn-ring-beat-urgent;
-    }
+    animation-name: turn-ring-beat-urgent;
   }
 }
 
@@ -222,18 +213,13 @@
   // El canto irrumpe: pop corto (scale + opacity) cuando aparece. @starting-style
   // dispara en la inserción del nodo; nunca scale desde 0 (parte de 0.8).
   transform-origin: center bottom;
-}
+  transition:
+    opacity var(--t3-duration-pop) var(--t3-ease-out),
+    transform var(--t3-duration-pop) var(--t3-ease-out);
 
-@media (prefers-reduced-motion: no-preference) {
-  .status-panel__call-text-value {
-    transition:
-      opacity var(--t3-duration-pop) var(--t3-ease-out),
-      transform var(--t3-duration-pop) var(--t3-ease-out);
-
-    @starting-style {
-      opacity: 0;
-      transform: scale(0.8);
-    }
+  @starting-style {
+    opacity: 0;
+    transform: scale(0.8);
   }
 }
 

@@ -9,7 +9,7 @@ import { CardFlightService } from '../services/card-flight.service';
  * (carta del rival, espectador, reconexión) cae a un fade + scale en el lugar.
  *
  * Solo `transform`/`opacity` (GPU, sin reflow) y vía Web Animations API
- * (interrumpible, fuera del hilo principal). Respeta `prefers-reduced-motion`.
+ * (interrumpible, fuera del hilo principal).
  */
 @Directive({
   selector: '[appCardFlight]',
@@ -30,8 +30,8 @@ export class CardFlightDirective {
 
   constructor() {
     afterNextRender(() => {
-      // Sin Web Animations API (p. ej. jsdom en tests) o con reduced-motion no se anima.
-      if (typeof this.host.nativeElement.animate !== 'function' || this.prefersReducedMotion()) {
+      // Sin Web Animations API (p. ej. jsdom en tests) no se anima.
+      if (typeof this.host.nativeElement.animate !== 'function') {
         return;
       }
       const origin = this.flight.consumeOrigin(this.card());
@@ -74,12 +74,6 @@ export class CardFlightDirective {
         { transform: 'scale(1)', opacity: 1 },
       ],
       { duration: CardFlightDirective.POP_MS, easing: CardFlightDirective.EASE_OUT, fill: 'both' },
-    );
-  }
-
-  private prefersReducedMotion(): boolean {
-    return (
-      typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
     );
   }
 }

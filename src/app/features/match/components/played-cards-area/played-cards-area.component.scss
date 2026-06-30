@@ -28,16 +28,14 @@
 // ya en mesa no re-animan. Solo transform/opacity (GPU, sin reflow).
 // La carta propia NO se anima por CSS: la directiva appCardFlight hace el vuelo
 // (FLIP) desde su posición en la mano, ver card-flight.directive.ts.
-@media (prefers-reduced-motion: no-preference) {
-  app-card-view.played-cards-area__item--opponent {
-    transition:
-      opacity var(--t3-duration-card) var(--t3-ease-out),
-      transform var(--t3-duration-card) var(--t3-ease-out);
+app-card-view.played-cards-area__item--opponent {
+  transition:
+    opacity var(--t3-duration-card) var(--t3-ease-out),
+    transform var(--t3-duration-card) var(--t3-ease-out);
 
-    @starting-style {
-      opacity: 0;
-      transform: translateY(-45%) scale(0.92);
-    }
+  @starting-style {
+    opacity: 0;
+    transform: translateY(-45%) scale(0.92);
   }
 }
 

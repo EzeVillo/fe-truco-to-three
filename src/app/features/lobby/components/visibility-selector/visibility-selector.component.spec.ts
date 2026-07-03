@@ -30,7 +30,7 @@ describe('VisibilitySelectorComponent', () => {
     let emitted: Visibility | null = null;
     fixture.componentInstance.visibilityChange.subscribe((v) => (emitted = v));
     const buttons = fixture.nativeElement.querySelectorAll('button');
-    buttons[0].click(); // Pública
+    buttons[1].click(); // Pública
     expect(emitted).toBe('PUBLIC');
   });
 });

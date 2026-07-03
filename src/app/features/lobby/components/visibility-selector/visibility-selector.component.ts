@@ -9,8 +9,8 @@ interface VisibilityOption {
 }
 
 const OPTIONS: VisibilityOption[] = [
-  { value: VISIBILITY.PUBLIC, label: 'Pública', ariaLabel: 'Partida pública, visible en el lobby' },
   { value: VISIBILITY.PRIVATE, label: 'Privada', ariaLabel: 'Partida privada, solo por código' },
+  { value: VISIBILITY.PUBLIC, label: 'Pública', ariaLabel: 'Partida pública, visible en el lobby' },
 ];
 
 @Component({

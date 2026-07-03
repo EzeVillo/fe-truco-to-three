@@ -457,6 +457,12 @@ describe('GlobalHeaderComponent', () => {
     ).find((b) => (b.textContent ?? '').includes('Abandonar partida'));
   }
 
+  function logoutButton(el: HTMLElement): HTMLButtonElement | undefined {
+    return Array.from(
+      el.querySelectorAll<HTMLButtonElement>('button.global-header__menu-item'),
+    ).find((b) => (b.textContent ?? '').trim() === 'Salir');
+  }
+
   it('en /match activo deshabilita "Abandonar partida" cuando no es tu turno', async () => {
     await setupRoutedHeader('/match/abc-123', {
       busy: true,
@@ -474,9 +480,10 @@ describe('GlobalHeaderComponent', () => {
     fixture.detectChanges();
     openMenu(fixture);
 
-    const btn = abandonButton(fixture.nativeElement as HTMLElement);
-    expect(btn).toBeTruthy();
-    expect(btn?.disabled).toBe(true);
+    const el = fixture.nativeElement as HTMLElement;
+    expect(abandonButton(el)?.disabled).toBe(true);
+    // "Salir" (logout) sigue el mismo gating.
+    expect(logoutButton(el)?.disabled).toBe(true);
   });
 
   it('en /match activo habilita "Abandonar partida" cuando es tu turno', async () => {
@@ -496,9 +503,9 @@ describe('GlobalHeaderComponent', () => {
     fixture.detectChanges();
     openMenu(fixture);
 
-    const btn = abandonButton(fixture.nativeElement as HTMLElement);
-    expect(btn).toBeTruthy();
-    expect(btn?.disabled).toBe(false);
+    const el = fixture.nativeElement as HTMLElement;
+    expect(abandonButton(el)?.disabled).toBe(false);
+    expect(logoutButton(el)?.disabled).toBe(false);
   });
 
   it('espectando la bot-match propia: "Abandonar partida" queda habilitado aunque el store diga que no es tu turno', async () => {
@@ -518,10 +525,10 @@ describe('GlobalHeaderComponent', () => {
     fixture.detectChanges();
     openMenu(fixture);
 
-    const btn = abandonButton(fixture.nativeElement as HTMLElement);
-    expect(btn).toBeTruthy();
+    const el = fixture.nativeElement as HTMLElement;
     // No estás jugando literalmente: el gating por turno no aplica.
-    expect(btn?.disabled).toBe(false);
+    expect(abandonButton(el)?.disabled).toBe(false);
+    expect(logoutButton(el)?.disabled).toBe(false);
   });
 
   it('en sala de espera ofrece "Salir de la sala" y no "Abandonar partida"', async () => {

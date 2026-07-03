@@ -141,13 +141,14 @@ export class GlobalHeaderComponent {
   );
 
   /**
-   * "Abandonar partida" se deshabilita cuando NO es el turno del visor, pero sólo
-   * si el visor es un jugador sentado de una partida activa (`isActiveMatch`, ruta
-   * `/match/:id`). Al espectar o mirar una bot-vs-bot propia (`isOwnedBotMatchSpectate`,
-   * ruta `/spectate/:id`) `isActiveMatch` es false: el botón queda siempre habilitado,
-   * porque ahí no estás jugando literalmente.
+   * Los botones de salida ("Abandonar partida" y "Salir"/logout) se deshabilitan
+   * cuando NO es el turno del visor, pero sólo si el visor es un jugador sentado de
+   * una partida activa (`isActiveMatch`, ruta `/match/:id`). Al espectar o mirar una
+   * bot-vs-bot propia (`/spectate/:id`), o fuera de partida (lobby, amigos…),
+   * `isActiveMatch` es false: quedan siempre habilitados, porque ahí no estás
+   * jugando literalmente.
    */
-  readonly abandonDisabled = computed(
+  readonly exitDisabled = computed(
     () => this.isActiveMatch() && !this.matchTurnStore.viewerCanAct(),
   );
 
@@ -246,7 +247,7 @@ export class GlobalHeaderComponent {
   onAbandonClick(): void {
     // Defensa: fuera del turno propio en una partida activa no se abandona (el
     // botón ya va `disabled`, pero cubrimos invocaciones no-DOM).
-    if (this.abandonDisabled()) {
+    if (this.exitDisabled()) {
       return;
     }
     this.closeMenu();
@@ -339,6 +340,11 @@ export class GlobalHeaderComponent {
   }
 
   onLogoutClick(): void {
+    // Mismo gating que "Abandonar": jugando una partida activa sólo se sale en el
+    // turno propio. El botón ya va `disabled`; esto cubre invocaciones no-DOM.
+    if (this.exitDisabled()) {
+      return;
+    }
     this.closeMenu();
     const ref = this.dialog.open<ConfirmLogoutDialogComponent, void, boolean>(
       ConfirmLogoutDialogComponent,

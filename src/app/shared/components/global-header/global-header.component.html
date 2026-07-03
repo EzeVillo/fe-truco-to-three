@@ -206,10 +206,10 @@
               <button
                 type="button"
                 class="global-header__menu-item"
-                [class.global-header__menu-item--disabled]="abandonDisabled()"
-                [disabled]="abandonDisabled()"
-                [attr.aria-disabled]="abandonDisabled()"
-                [attr.title]="abandonDisabled() ? 'Podés abandonar sólo en tu turno' : null"
+                [class.global-header__menu-item--disabled]="exitDisabled()"
+                [disabled]="exitDisabled()"
+                [attr.aria-disabled]="exitDisabled()"
+                [attr.title]="exitDisabled() ? 'Podés abandonar sólo en tu turno' : null"
                 (click)="onAbandonClick()"
               >
                 Abandonar partida
@@ -224,7 +224,15 @@
                 Salir de la sala
               </button>
             }
-            <button type="button" class="global-header__menu-item" (click)="onLogoutClick()">
+            <button
+              type="button"
+              class="global-header__menu-item"
+              [class.global-header__menu-item--disabled]="exitDisabled()"
+              [disabled]="exitDisabled()"
+              [attr.aria-disabled]="exitDisabled()"
+              [attr.title]="exitDisabled() ? 'Podés salir sólo en tu turno' : null"
+              (click)="onLogoutClick()"
+            >
               Salir
             </button>
           </nav>

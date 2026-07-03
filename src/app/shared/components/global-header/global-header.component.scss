@@ -241,6 +241,20 @@
       color: var(--t3-text-muted);
       cursor: default;
     }
+
+    &--disabled,
+    &:disabled {
+      color: var(--t3-text-muted);
+      cursor: not-allowed;
+      opacity: 0.5;
+
+      @media (hover: hover) {
+        &:hover {
+          background: transparent;
+          color: var(--t3-text-muted);
+        }
+      }
+    }
   }
 
   &__menu-item-badge {

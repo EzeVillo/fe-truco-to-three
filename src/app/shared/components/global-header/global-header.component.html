@@ -203,7 +203,15 @@
               </button>
             }
             @if (showAbandonMatch()) {
-              <button type="button" class="global-header__menu-item" (click)="onAbandonClick()">
+              <button
+                type="button"
+                class="global-header__menu-item"
+                [class.global-header__menu-item--disabled]="abandonDisabled()"
+                [disabled]="abandonDisabled()"
+                [attr.aria-disabled]="abandonDisabled()"
+                [attr.title]="abandonDisabled() ? 'Podés abandonar sólo en tu turno' : null"
+                (click)="onAbandonClick()"
+              >
                 Abandonar partida
               </button>
             }

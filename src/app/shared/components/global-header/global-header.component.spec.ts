@@ -13,6 +13,7 @@ import { AuthStore } from '../../../core/auth/auth.store';
 import { SessionStorageService } from '../../../core/auth/session-storage.service';
 import { PresenceCoordinatorService } from '../../../core/services/presence-coordinator.service';
 import { SpectatorCountStore } from '../../services/spectator-count.store';
+import { MatchTurnStore } from '../../services/match-turn.store';
 import { ConfirmLogoutDialogComponent } from '../confirm-logout-dialog/confirm-logout-dialog.component';
 import type { FullAuthResponse } from '../../../core/models/auth.models';
 import type { UserPresenceResponse } from '../../../core/models/presence.models';
@@ -448,6 +449,79 @@ describe('GlobalHeaderComponent', () => {
 
     expect(abandonSpy).toHaveBeenCalledWith('abc-123');
     expect(navSpy).not.toHaveBeenCalledWith('/lobby');
+  });
+
+  function abandonButton(el: HTMLElement): HTMLButtonElement | undefined {
+    return Array.from(
+      el.querySelectorAll<HTMLButtonElement>('button.global-header__menu-item'),
+    ).find((b) => (b.textContent ?? '').includes('Abandonar partida'));
+  }
+
+  it('en /match activo deshabilita "Abandonar partida" cuando no es tu turno', async () => {
+    await setupRoutedHeader('/match/abc-123', {
+      busy: true,
+      match: { id: 'abc-123', status: 'IN_PROGRESS' },
+      league: null,
+      cup: null,
+      rematch: null,
+      quickMatch: null,
+      spectating: null,
+      ownedBotMatch: null,
+    });
+    TestBed.inject(MatchTurnStore).set(false);
+
+    const fixture = TestBed.createComponent(GlobalHeaderComponent);
+    fixture.detectChanges();
+    openMenu(fixture);
+
+    const btn = abandonButton(fixture.nativeElement as HTMLElement);
+    expect(btn).toBeTruthy();
+    expect(btn?.disabled).toBe(true);
+  });
+
+  it('en /match activo habilita "Abandonar partida" cuando es tu turno', async () => {
+    await setupRoutedHeader('/match/abc-123', {
+      busy: true,
+      match: { id: 'abc-123', status: 'IN_PROGRESS' },
+      league: null,
+      cup: null,
+      rematch: null,
+      quickMatch: null,
+      spectating: null,
+      ownedBotMatch: null,
+    });
+    TestBed.inject(MatchTurnStore).set(true);
+
+    const fixture = TestBed.createComponent(GlobalHeaderComponent);
+    fixture.detectChanges();
+    openMenu(fixture);
+
+    const btn = abandonButton(fixture.nativeElement as HTMLElement);
+    expect(btn).toBeTruthy();
+    expect(btn?.disabled).toBe(false);
+  });
+
+  it('espectando la bot-match propia: "Abandonar partida" queda habilitado aunque el store diga que no es tu turno', async () => {
+    await setupRoutedHeader('/spectate/bot-duel-1', {
+      busy: true,
+      match: null,
+      league: null,
+      cup: null,
+      rematch: null,
+      quickMatch: null,
+      spectating: { matchId: 'bot-duel-1' },
+      ownedBotMatch: { matchId: 'bot-duel-1', status: 'IN_PROGRESS' },
+    });
+    TestBed.inject(MatchTurnStore).set(false);
+
+    const fixture = TestBed.createComponent(GlobalHeaderComponent);
+    fixture.detectChanges();
+    openMenu(fixture);
+
+    const btn = abandonButton(fixture.nativeElement as HTMLElement);
+    expect(btn).toBeTruthy();
+    // No estás jugando literalmente: el gating por turno no aplica.
+    expect(btn?.disabled).toBe(false);
   });
 
   it('en sala de espera ofrece "Salir de la sala" y no "Abandonar partida"', async () => {

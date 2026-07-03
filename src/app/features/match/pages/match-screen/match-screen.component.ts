@@ -58,6 +58,7 @@ import { BackgroundMusicService } from '../../services/background-music.service'
 import { TurnTimerSoundService } from '../../services/turn-timer-sound.service';
 import { CardPreloadService } from '../../services/card-preload.service';
 import { PresenceCoordinatorService } from '../../../../core/services/presence-coordinator.service';
+import { MatchTurnStore } from '../../../../shared/services/match-turn.store';
 import { getErrorCopy } from '../../../../shared/error-copy/error-copy';
 import type {
   MatchEndedEvent,
@@ -226,6 +227,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   private readonly turnTimerSound = inject(TurnTimerSoundService);
   private readonly cardPreload = inject(CardPreloadService);
   private readonly presenceCoordinator = inject(PresenceCoordinatorService);
+  private readonly matchTurnStore = inject(MatchTurnStore);
   private readonly matchesApiService = inject(MatchesApiService);
   private readonly vcr = inject(ViewContainerRef);
   readonly chatStore = inject(ChatStore);
@@ -271,6 +273,17 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
       } else {
         this.turnTimerSound.stop();
       }
+    });
+
+    // Publica al store global "¿es tu turno?" para que el header habilite/deshabilite
+    // "Abandonar partida": sólo se puede abandonar cuando el visor tiene acciones
+    // disponibles (su turno). Fuera de una ronda en curso (sala de espera, entre
+    // rondas) queda habilitado. Sólo aplica a este jugador sentado; el header no
+    // lo usa al espectar ni en bot-vs-bot.
+    effect(() => {
+      const v = this.matchView();
+      const inProgress = v?.status === 'IN_PROGRESS';
+      this.matchTurnStore.set(!inProgress || v!.availableActions.length > 0);
     });
 
     // Inicia RematchStateService la primera vez que el estado de la partida carga.
@@ -418,6 +431,9 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     this.rematchStateService.reset();
     this.matchStateService.destroy();
     this.chatStore.leave();
+    // Al salir de la pantalla el gating de "Abandonar" ya no aplica: reset a
+    // habilitado para no arrastrar el último turno a la próxima pantalla.
+    this.matchTurnStore.reset();
   }
 
   private handleMatchEvent(event: MatchWsEvent): void {

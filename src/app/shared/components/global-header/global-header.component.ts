@@ -17,6 +17,7 @@ import { GuestRegisterPromptService } from '../../../core/auth/guest-register-pr
 import { PresenceCoordinatorService } from '../../../core/services/presence-coordinator.service';
 import { NavigationLockService } from '../../../core/services/navigation-lock.service';
 import { SpectatorCountStore } from '../../services/spectator-count.store';
+import { MatchTurnStore } from '../../services/match-turn.store';
 import { MatchActionsService } from '../../../features/match/services/match-actions.service';
 import { BotsApiService } from '../../../features/lobby/services/bots-api.service';
 import { BackgroundMusicService } from '../../../features/match/services/background-music.service';
@@ -40,6 +41,7 @@ export class GlobalHeaderComponent {
   private readonly presenceCoordinator = inject(PresenceCoordinatorService);
   private readonly navigationLock = inject(NavigationLockService);
   private readonly spectatorCountStore = inject(SpectatorCountStore);
+  private readonly matchTurnStore = inject(MatchTurnStore);
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
   private readonly host = inject(ElementRef<HTMLElement>);
@@ -138,6 +140,17 @@ export class GlobalHeaderComponent {
       (this.currentMatchId() !== null && this.isActiveMatch()) || this.isOwnedBotMatchSpectate(),
   );
 
+  /**
+   * "Abandonar partida" se deshabilita cuando NO es el turno del visor, pero sólo
+   * si el visor es un jugador sentado de una partida activa (`isActiveMatch`, ruta
+   * `/match/:id`). Al espectar o mirar una bot-vs-bot propia (`isOwnedBotMatchSpectate`,
+   * ruta `/spectate/:id`) `isActiveMatch` es false: el botón queda siempre habilitado,
+   * porque ahí no estás jugando literalmente.
+   */
+  readonly abandonDisabled = computed(
+    () => this.isActiveMatch() && !this.matchTurnStore.viewerCanAct(),
+  );
+
   /** Id de la partida abandonable: la del match activo o, si no, la bot-match propia espectada. */
   readonly abandonableMatchId = computed(
     () => this.currentMatchId() ?? this.currentSpectateMatchId(),
@@ -231,6 +244,11 @@ export class GlobalHeaderComponent {
   }
 
   onAbandonClick(): void {
+    // Defensa: fuera del turno propio en una partida activa no se abandona (el
+    // botón ya va `disabled`, pero cubrimos invocaciones no-DOM).
+    if (this.abandonDisabled()) {
+      return;
+    }
     this.closeMenu();
     const matchId = this.abandonableMatchId();
     if (!matchId) {

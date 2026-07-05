@@ -382,7 +382,7 @@ export class SpectateScreenComponent implements OnInit, OnDestroy {
     this.playSpectatorOutcomeCue();
     ref.afterClosed().subscribe(() => {
       this.eventQueue.resumeAck();
-      void this.router.navigate(this.exitRoute());
+      this.exitSpectate();
     });
   }
 
@@ -466,6 +466,15 @@ export class SpectateScreenComponent implements OnInit, OnDestroy {
   }
 
   goBack(): void {
-    void this.router.navigate(this.exitRoute());
+    this.exitSpectate();
+  }
+
+  /**
+   * Sale de la pantalla de espectador reemplazando la entrada `/spectate/:id` en el
+   * historial: al terminar la partida o dejar de espectar, "atrás" del navegador no
+   * debe devolver a un match ya cerrado.
+   */
+  private exitSpectate(): void {
+    void this.router.navigate(this.exitRoute(), { replaceUrl: true });
   }
 }

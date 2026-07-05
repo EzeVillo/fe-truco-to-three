@@ -602,7 +602,16 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
   }
 
   goToLobby(): void {
-    this.router.navigate(['/lobby']);
+    this.leaveMatchTo(['/lobby']);
+  }
+
+  /**
+   * Navega fuera de la partida reemplazando la entrada `/match/:id` en el historial.
+   * Al terminar, abandonar o fallar la carga, "atrás" del navegador no debe devolver a
+   * un match ya cerrado: por eso se reemplaza la URL en vez de apilar una entrada nueva.
+   */
+  private leaveMatchTo(commands: readonly unknown[]): void {
+    void this.router.navigate(commands as unknown[], { replaceUrl: true });
   }
 
   /** Marca al jugador listo (§4.5). La transicion al tablero llega por GAME_STARTED. */
@@ -652,7 +661,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     this.leaving.set(true);
     this.matchesApiService.leaveMatch(id).subscribe({
       next: () => {
-        this.router.navigate(['/lobby']);
+        this.leaveMatchTo(['/lobby']);
       },
       error: () => {
         this.leaving.set(false);
@@ -702,7 +711,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
       clearCampaignMatch(matchId);
       if (!payload) {
         // El push no llegó a tiempo: no bloqueamos al jugador, volvemos a la campaña.
-        void this.router.navigate(['/lobby/campaign']);
+        this.leaveMatchTo(['/lobby/campaign']);
         return;
       }
       this.openCampaignPointsDialog(payload);
@@ -731,7 +740,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
 
     dialogRef.afterClosed().subscribe(() => {
       // Tras los puntos volvemos a la campaña para ver el ranking actualizado.
-      void this.router.navigate(['/lobby/campaign']);
+      this.leaveMatchTo(['/lobby/campaign']);
     });
   }
 
@@ -748,7 +757,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     // volvemos directo al lobby. Sin esto, el getSession espurio "buscaba" una revancha
     // inexistente en esos finales.
     if (reason !== 'FINISHED') {
-      this.router.navigate(['/lobby']);
+      this.leaveMatchTo(['/lobby']);
       return;
     }
 
@@ -756,7 +765,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
     const matchId = this.matchId();
     const viewerSeat = this.matchStateService.state()?.viewerSeat;
     if (!matchId || !viewerSeat) {
-      this.router.navigate(['/lobby']);
+      this.leaveMatchTo(['/lobby']);
       return;
     }
 
@@ -768,7 +777,7 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
       },
       error: () => {
         // 404 o error: sin sesión de revancha → lobby.
-        this.router.navigate(['/lobby']);
+        this.leaveMatchTo(['/lobby']);
       },
     });
   }
@@ -793,9 +802,9 @@ export class MatchScreenComponent implements OnInit, OnDestroy {
         return;
       }
       if (result?.confirmedMatchId) {
-        this.router.navigate(['/match', result.confirmedMatchId]);
+        this.leaveMatchTo(['/match', result.confirmedMatchId]);
       } else {
-        this.router.navigate(['/lobby']);
+        this.leaveMatchTo(['/lobby']);
       }
     });
   }

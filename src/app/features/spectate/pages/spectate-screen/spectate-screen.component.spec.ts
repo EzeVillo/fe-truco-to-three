@@ -252,12 +252,13 @@ describe('SpectateScreenComponent', () => {
     });
 
     expect(dialogMock.open).toHaveBeenCalled();
-    expect(routerSpy.navigate).not.toHaveBeenCalledWith(['/friends']);
+    expect(routerSpy.navigate).not.toHaveBeenCalledWith(['/friends'], { replaceUrl: true });
 
     afterClosed$.next();
     afterClosed$.complete();
 
-    expect(routerSpy.navigate).toHaveBeenCalledWith(['/friends']);
+    // replaceUrl: al dejar de espectar, "atrás" no debe volver al match ya cerrado.
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['/friends'], { replaceUrl: true });
   });
 
   it('al terminar el match bot-vs-bot abre el diálogo y al cerrarlo navega a /lobby', () => {
@@ -276,13 +277,13 @@ describe('SpectateScreenComponent', () => {
     });
 
     expect(dialogMock.open).toHaveBeenCalled();
-    expect(routerSpy.navigate).not.toHaveBeenCalledWith(['/lobby']);
+    expect(routerSpy.navigate).not.toHaveBeenCalledWith(['/lobby'], { replaceUrl: true });
 
     afterClosed$.next();
     afterClosed$.complete();
 
-    expect(routerSpy.navigate).toHaveBeenCalledWith(['/lobby']);
-    expect(routerSpy.navigate).not.toHaveBeenCalledWith(['/friends']);
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['/lobby'], { replaceUrl: true });
+    expect(routerSpy.navigate).not.toHaveBeenCalledWith(['/friends'], { replaceUrl: true });
   });
 
   it('muestra la respuesta de truco (¡No quiero!) sobre el asiento que respondió', () => {

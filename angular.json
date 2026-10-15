@@ -55,6 +55,13 @@
               "outputHashing": "all",
               "serviceWorker": "ngsw-config.json"
             },
+            "netlify": {
+              "baseHref": "/truco-a-3/",
+              "outputPath": {
+                "base": "dist/netlify",
+                "browser": "truco-a-3"
+              }
+            },
             "development": {
               "optimization": false,
               "extractLicenses": false,

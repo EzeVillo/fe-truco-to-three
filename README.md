@@ -1,5 +1,9 @@
 # FeTrucoToThree
 
+El despliegue preparado para `https://ezevillo.com/truco-a-3/` usa un sitio de Netlify
+independiente del portfolio. Ver [Migración y producción](docs/PRODUCCION.md) para configurar
+el proxy, publicar sin afectar la raíz y coordinar los cambios del backend.
+
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.12.
 
 ## Diseño Responsivo

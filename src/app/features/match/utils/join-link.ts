@@ -4,6 +4,6 @@ export function buildJoinUrl(joinCode: string): string {
     return '';
   }
 
-  const origin = globalThis.location?.origin ?? 'http://localhost:4200';
-  return new URL(`/join/${encodeURIComponent(trimmedCode)}`, origin).toString();
+  const baseUrl = globalThis.document?.baseURI ?? 'http://localhost:4200/';
+  return new URL(`join/${encodeURIComponent(trimmedCode)}`, baseUrl).toString();
 }

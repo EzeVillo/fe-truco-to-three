@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Actualizar el dominio base si cambia (actualmente: https://ezevillo.github.io/fe-truco-to-three) -->
+<!-- Actualizar el dominio base si cambia (actualmente: https://ezevillo.com/truco-a-3) -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://ezevillo.github.io/fe-truco-to-three/</loc>
+    <loc>https://ezevillo.com/truco-a-3/</loc>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://ezevillo.github.io/fe-truco-to-three/reglas</loc>
+    <loc>https://ezevillo.com/truco-a-3/reglas</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ezevillo.github.io/fe-truco-to-three/register</loc>
+    <loc>https://ezevillo.com/truco-a-3/register</loc>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://ezevillo.github.io/fe-truco-to-three/login</loc>
+    <loc>https://ezevillo.com/truco-a-3/login</loc>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>

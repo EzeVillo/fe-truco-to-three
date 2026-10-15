@@ -1,23 +1,22 @@
 User-agent: *
 
-# Nota: en GitHub Pages de proyecto este archivo se sirve bajo /fe-truco-to-three/,
-# no en la raíz del dominio, así que los crawlers no lo leen como robots.txt.
-# Se mantiene por si el sitio vuelve a un dominio propio; el sitemap se puede
-# registrar igual a mano en Search Console.
+# Este archivo vive bajo /truco-a-3/ y no sustituye /robots.txt del portfolio.
+# Registrar el sitemap en Search Console. Las reglas sólo tienen efecto si el
+# propietario del sitio las incorpora voluntariamente al robots.txt de la raíz.
 
 # Rutas públicas — indexables
-Allow: /fe-truco-to-three/$
-Allow: /fe-truco-to-three/reglas$
-Allow: /fe-truco-to-three/login$
-Allow: /fe-truco-to-three/register$
+Allow: /truco-a-3/$
+Allow: /truco-a-3/reglas$
+Allow: /truco-a-3/login$
+Allow: /truco-a-3/register$
 
 # Rutas autenticadas — no indexar
-Disallow: /fe-truco-to-three/lobby
-Disallow: /fe-truco-to-three/match
-Disallow: /fe-truco-to-three/profile
-Disallow: /fe-truco-to-three/friends
-Disallow: /fe-truco-to-three/spectate
-Disallow: /fe-truco-to-three/join
+Disallow: /truco-a-3/lobby
+Disallow: /truco-a-3/match
+Disallow: /truco-a-3/profile
+Disallow: /truco-a-3/friends
+Disallow: /truco-a-3/spectate
+Disallow: /truco-a-3/join
 
 # URL del sitemap — actualizar si cambia el dominio
-Sitemap: https://ezevillo.github.io/fe-truco-to-three/sitemap.xml
+Sitemap: https://ezevillo.com/truco-a-3/sitemap.xml

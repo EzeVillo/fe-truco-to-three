@@ -1,0 +1,17 @@
+# Añadir al sitio Netlify que actualmente posee ezevillo.com.
+# Reemplazar el origen por el subdominio REAL del nuevo sitio del juego.
+# Mantener los dos sitios en el mismo equipo de Netlify.
+# Conservar todas las reglas de otros proyectos y colocar estas antes del catch-all.
+# El origen del juego conserva /truco-a-3/ en sus archivos y rutas.
+
+[[redirects]]
+  from = "/truco-a-3"
+  to = "https://REEMPLAZAR-SITIO-TRUCO.netlify.app/truco-a-3/"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/truco-a-3/*"
+  to = "https://REEMPLAZAR-SITIO-TRUCO.netlify.app/truco-a-3/:splat"
+  status = 200
+  force = true

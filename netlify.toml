@@ -1,0 +1,32 @@
+[build]
+  command = "pnpm run build:netlify"
+  publish = "dist/netlify"
+
+[build.environment]
+  NODE_VERSION = "24"
+
+# Este sitio es el origen del juego; ezevillo.com pertenece al portfolio.
+[[redirects]]
+  from = "/"
+  to = "/truco-a-3/"
+  status = 302
+
+# Los archivos reales se sirven antes del fallback de navegación de Angular.
+[[redirects]]
+  from = "/truco-a-3/*"
+  to = "/truco-a-3/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Frame-Options = "DENY"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+# HTML, manifest y worker deben poder revalidarse después de cada despliegue.
+[[headers]]
+  for = "/truco-a-3/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"

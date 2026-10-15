@@ -8,6 +8,8 @@ export default [
       'dist/**',
       '.angular/**',
       'node_modules/**',
+      'android/**',
+      'ios/**',
       'coverage/**',
       '.claude/**',
       '**/*.spec.ts',
@@ -20,7 +22,7 @@ export default [
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        project: ['./tsconfig.app.json'],
+        project: ['./tsconfig.app.json', './tsconfig.spec.json'],
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -38,8 +40,8 @@ export default [
       // General
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'no-debugger': 'error',
-      'eqeqeq': ['error', 'always'],
-      'curly': 'error',
+      eqeqeq: ['error', 'always'],
+      curly: 'error',
     },
   },
   {

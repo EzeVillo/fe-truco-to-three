@@ -221,6 +221,11 @@ El agente **no** debe levantar el dev server, abrir el navegador, usar las herra
 - Header `app-header` (en `src/app/app.html`) es **sticky** y se muestra siempre; el bloque de logout sólo aparece autenticado.
 - La paleta y todos los tokens `--t3-…` viven en `src/styles.scss` (fuente autoritativa de valores; no copiar hex sueltos a otros archivos).
 
+### Producción y CORS
+
+- La web de producción debe publicarse únicamente en `https://ezevillo.com/truco-a-3/`; retirar GitHub Pages al completar la migración.
+- Además de la configuración del repo, actualizar `TRUCO_ALLOWED_ORIGINS` **en Render**: la variable externa prevalece sobre YAML y la comparten REST y WebSocket. Usar orígenes sin path; la configuración final excluye GitHub Pages y conserva los orígenes exactos de Capacitor. La herramienta MCP actualiza variables y dispara un redespliegue; verificar ese deploy y evitar disparar otro duplicado.
+
 ### Reglas de juego (matiz de implementación)
 
 - La modalidad **lobby vs bots** (feature `003`) es **1 vs 1** (usuario + 1 bot). Los selectores de "a cuántas" exponen series (1/3/5 partidas), nunca puntos de marcador estilo truco tradicional (15/30/falta).

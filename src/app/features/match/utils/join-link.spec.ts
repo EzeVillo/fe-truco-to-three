@@ -16,9 +16,9 @@ describe('Enlaces de invitación', () => {
     expect(buildJoinUrl('ABC123')).toBe('https://ezevillo.com/truco-a-3/join/ABC123');
   });
 
-  it('conserva el prefijo del despliegue anterior', () => {
-    setBase('https://ezevillo.github.io/fe-truco-to-three/');
-    expect(buildJoinUrl('ABC123')).toBe('https://ezevillo.github.io/fe-truco-to-three/join/ABC123');
+  it('respeta el prefijo de otra instalación de la aplicación', () => {
+    setBase('https://ejemplo.com/juego/');
+    expect(buildJoinUrl('ABC123')).toBe('https://ejemplo.com/juego/join/ABC123');
   });
 
   it('permite compartir en desarrollo desde la raíz', () => {

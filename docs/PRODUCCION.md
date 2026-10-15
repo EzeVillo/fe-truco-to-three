@@ -28,8 +28,8 @@ El fallback de Angular está acotado a `/truco-a-3/*`; los archivos existentes s
 normalmente y las rutas de navegación reciben `/truco-a-3/index.html`. No usar `force`
 en el fallback del sitio hijo: devolvería HTML en lugar de JavaScript, imágenes o el worker.
 
-`baseHref` vive en la configuración `netlify`, sin modificar el desarrollo local. El build
-anterior de GitHub Pages conserva `/fe-truco-to-three/` mediante su argumento de CLI.
+`baseHref` vive en la configuración `netlify`, sin modificar el desarrollo local.
+Netlify es el único destino de publicación web; se elimina el workflow de GitHub Pages.
 Los enlaces de invitación resuelven contra `document.baseURI`, para conservar el prefijo
 del sitio donde se abrió la app. Los metadatos y el sitemap apuntan al dominio nuevo.
 
@@ -59,8 +59,11 @@ se puede registrar `https://ezevillo.com/truco-a-3/sitemap.xml` en Search Consol
 
 Conservar las URLs HTTPS/WSS actuales hasta que se provisione y verifique cualquier
 dominio nuevo de API. El origen que debe autorizar el backend es `https://ezevillo.com`,
-sin path. Durante la transición también se conserva `https://ezevillo.github.io`.
+sin path. La configuración final no autoriza el sitio anterior de GitHub Pages.
 La variable `TRUCO_ALLOWED_ORIGINS` se comparte entre CORS y WebSocket.
+Actualizar también su valor **en el servicio de Render**, porque la variable externa
+prevalece sobre el YAML del backend. La herramienta MCP de Render actualiza las variables
+y dispara un redespliegue para aplicarlas; verificar ese deploy y no duplicarlo manualmente.
 
 El backend tiene su guía en `docs/PRODUCCION.md` del repositorio `api-truco-to-three`: el perfil `prod`
 debe estar activo al compilar el nativo y al ejecutarlo. Publicar esa imagen antes de
@@ -73,8 +76,12 @@ considerar aplicados los cambios de logging y exposición de diagnósticos.
 3. Crear el sitio del juego en Netlify; publicar `dist/netlify` con `netlify.toml`.
 4. Incorporar el proxy al sitio actual de `ezevillo.com`, conservando sus otras rutas.
 5. La validación visual y de navegación la hace el usuario, según `AGENTS.md`.
-6. Mantener GitHub Pages durante la transición. Ante un fallo, revertir el proxy al deploy
-   anterior; no reemplazar la raíz del dominio ni modificar el DNS para apuntar al juego.
+6. Cuando el nuevo sitio esté publicado, despublicar GitHub Pages desde la configuración
+   del repositorio o con `gh api --method DELETE repos/EzeVillo/fe-truco-to-three/pages`.
+   Verificar por la API de GitHub que Pages ya no esté habilitado. El workflow anterior
+   debe permanecer desactivado durante la transición y eliminado al integrar este cambio.
+7. Ante un fallo, restaurar un deploy anterior de Netlify. No reactivar la publicación
+   en GitHub Pages, reemplazar la raíz del dominio ni modificar el DNS para apuntar al juego.
 
 El cambio de `ezevillo.github.io` a `ezevillo.com` implica un nuevo origen: las sesiones y
 preferencias guardadas en localStorage no se transfieren automáticamente. Los usuarios

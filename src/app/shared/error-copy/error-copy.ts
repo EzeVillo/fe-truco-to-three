@@ -7,6 +7,7 @@
 
 import { HttpErrorResponse } from '@angular/common/http';
 import type { FriendBusyReason } from '../../core/models/social.models';
+import { RATE_LIMIT_COPY } from './rate-limit-copy';
 
 export type ErrorCopyScope =
   | 'BOT_CATALOG'
@@ -75,6 +76,10 @@ export function busyReasonCopy(reason: FriendBusyReason | null): string {
 
 export function getErrorCopy(scope: ErrorCopyScope, error: unknown): string {
   const status = error instanceof HttpErrorResponse ? error.status : -1;
+
+  if (status === 429) {
+    return RATE_LIMIT_COPY;
+  }
 
   if (scope === 'BOT_CATALOG') {
     switch (status) {

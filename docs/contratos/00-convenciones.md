@@ -261,3 +261,22 @@ bajos cuando aplique. Si el valor no coincide, la API responde `400` con
 - `DEFEAT_ALL_CAMPAIGN_RIVALS`
 - `UNLOCK_ALL_CAMPAIGN_BOTS_IN_CASUAL`
 
+
+## Rate limiting del ingreso de producción
+
+La API pública usa `https://truco-api.ezevillodev.workers.dev`, conservando paths,
+JWT y payloads REST/STOMP. El ingreso limita por IP de Cloudflare y responde `429`
+con `errorCode = RateLimitExceededException`, `message`, `timestamp` y `requestId`.
+Incluye `Retry-After: 60` y lo expone por CORS. El cliente debe mostrar copia propia,
+esperar antes de reintentar y nunca mostrar `message` crudo ni reintentar POST en bucle.
+
+Umbrales iniciales por minuto/IP: general 300, login 10, registro 5, invitado 10,
+refresh 60 y apertura WebSocket/info SockJS 20. Se acumulan la cuota general y la
+específica. Los contadores son aproximados, por ubicación de Cloudflare; no se aplican
+a frames dentro de una conexión WebSocket ya abierta. El chat conserva su cooldown.
+Los preflights no consumen cuota. Si falla el ingreso, puede responder `503` con
+`GatewayUnavailableException` y el mismo formato de error.
+
+El origen directo de Render devuelve `403 GatewayAccessDeniedException` cuando su
+protección está activa. El header privado del Worker no pertenece al contrato del
+cliente y nunca debe enviarse desde el frontend ni guardarse en él.

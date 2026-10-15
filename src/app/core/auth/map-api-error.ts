@@ -1,5 +1,6 @@
 import type { HttpErrorResponse } from '@angular/common/http';
 import type { UserFacingAuthError } from '../models/auth.models';
+import { RATE_LIMIT_COPY } from '../../shared/error-copy/rate-limit-copy';
 
 /**
  * Convierte un HttpErrorResponse del backend en un UserFacingAuthError tipado.
@@ -11,9 +12,12 @@ export function mapApiError(err: HttpErrorResponse): UserFacingAuthError {
     return { kind: 'network' };
   }
 
-  const body = err.error as { errorCode?: string; message?: string } | null | undefined;
-  const errorCode = body?.errorCode ?? '';
-  const message = body?.message ?? 'Error desconocido';
+  const body = err.error as { errorCode?: string } | null | undefined;
+  const errorCode = typeof body?.errorCode === 'string' ? body.errorCode : '';
+
+  if (err.status === 429) {
+    return { kind: 'server', message: RATE_LIMIT_COPY };
+  }
 
   if (err.status === 401) {
     return { kind: 'invalid-credentials' };
@@ -26,7 +30,7 @@ export function mapApiError(err: HttpErrorResponse): UserFacingAuthError {
   if (err.status === 400) {
     return {
       kind: 'validation',
-      message: message,
+      message: 'Revisá los datos ingresados e intentá de nuevo.',
       field: errorCode.includes('Field') ? errorCode : undefined,
     };
   }
@@ -38,5 +42,5 @@ export function mapApiError(err: HttpErrorResponse): UserFacingAuthError {
     };
   }
 
-  return { kind: 'server', message };
+  return { kind: 'server', message: 'Ocurrió un error. Intentá de nuevo.' };
 }

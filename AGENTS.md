@@ -223,7 +223,7 @@ El agente **no** debe levantar el dev server, abrir el navegador, usar las herra
 
 ### Producción y CORS
 
-- La web de producción debe publicarse únicamente en `https://ezevillo.com/truco-a-3/`; retirar GitHub Pages al completar la migración.
+- La web de producción se publica únicamente en `https://ezevillo.com/truco-a-3/`. GitHub Pages está deshabilitado; no reactivarlo. El sitio Netlify del juego es `ezevillo-truco-a-3` (rama `master`); el dominio principal sigue en el sitio de `ibit-to-btc` (rama `main`), con un proxy que conserva `/truco-a-3/`. Al publicar el portfolio, trasladar esas reglas sin reemplazar las rutas de otros proyectos.
 - Además de la configuración del repo, actualizar `TRUCO_ALLOWED_ORIGINS` **en Render**: la variable externa prevalece sobre YAML y la comparten REST y WebSocket. Usar orígenes sin path; la configuración final excluye GitHub Pages y conserva los orígenes exactos de Capacitor. La herramienta MCP actualiza variables y dispara un redespliegue; verificar ese deploy y evitar disparar otro duplicado.
 
 ### Reglas de juego (matiz de implementación)

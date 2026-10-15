@@ -6,12 +6,25 @@
 ezevillo.com/                  → sitio actual / futuro portfolio
 ezevillo.com/truco-a-3/*        → sitio Netlify del juego (mismo equipo)
                                 /truco-a-3/* en el origen
-frontend → HTTPS REST / WSS STOMP → api-truco-to-three.onrender.com
+frontend → truco-api.ezevillodev.workers.dev → api-truco-to-three.onrender.com
 ```
 
-El proxy de Netlify sólo entrega el frontend. El backend conserva su ingreso HTTPS/WSS
-en Render. No se agrega un gateway ni se reservan `/api`, `/ws`, `/assets` o la raíz
-del dominio del portfolio para este juego.
+El proxy de Netlify sólo entrega el frontend. Cloudflare Worker `truco-api` recibe
+REST y WebSocket por HTTPS/WSS, limita por IP/ruta y reenvía al origen en Render.
+No se reservan `/api`, `/ws`, `/assets` o la raíz del dominio del portfolio para el juego.
+No se modifican el DNS ni el Worker de IBIT.
+
+El frontend usa `https://truco-api.ezevillodev.workers.dev` en `environment.prod.ts`.
+Render exige una clave privada del Worker cuando `TRUCO_GATEWAY_ENABLED=true`; esa
+clave no se incluye en el frontend ni reemplaza el JWT del usuario. Los probes exactos
+de salud conservan acceso directo para Render. No llamar al origen como fallback:
+permitiría saltear el rate limiter y se rechaza con `403`.
+
+Límites iniciales por minuto/IP: general 300, login 10, registro 5, invitados 10,
+refresh 60 y apertura WebSocket/info SockJS 20. Los contadores son aproximados y por
+ubicación de Cloudflare. No se cuentan preflights ni frames WebSocket ya abiertos;
+el chat mantiene su cooldown. El `429` incluye `Retry-After: 60` expuesto por CORS y
+se muestra con copia controlada del frontend, sin reintentos automáticos de POST.
 
 ## Configuración publicada
 
@@ -29,9 +42,9 @@ el código de la función de tasas y su horario. Sólo cambiaron la configuraci�
 y un manifiesto interno de Netlify. No se publicó el portfolio local.
 
 GitHub Pages se deshabilitó y su API devuelve `404`; el workflow anterior está eliminado.
-Render tiene aplicados el perfil `prod` y los CORS sin GitHub Pages. La imagen nativa
-publicada es `ghcr.io/ezevillo/api-truco-to-three:096fd184`, con logging sin cuerpos y
-readiness comprobado contra PostgreSQL en CI. El código de esa imagen está en el
+Render tiene el perfil `prod` y los CORS sin GitHub Pages. El release nativo comprueba
+readiness contra PostgreSQL, logging sin cuerpos y rechazo de acceso directo al activar
+la protección del gateway en runtime. El código de producción está en el
 [PR 33 del backend](https://github.com/EzeVillo/api-truco-to-three/pull/33), cuya integración
 requiere la revisión exigida por GitHub antes de futuras releases desde `master`.
 
@@ -79,8 +92,7 @@ se puede registrar `https://ezevillo.com/truco-a-3/sitemap.xml` en Search Consol
 
 ## Backend
 
-Conservar las URLs HTTPS/WSS actuales hasta que se provisione y verifique cualquier
-dominio nuevo de API. El origen que debe autorizar el backend es `https://ezevillo.com`,
+La API pública es el Worker; el origen que debe autorizar el backend es `https://ezevillo.com`,
 sin path. La configuración final no autoriza el sitio anterior de GitHub Pages.
 La variable `TRUCO_ALLOWED_ORIGINS` se comparte entre CORS y WebSocket.
 Actualizar también su valor **en el servicio de Render**, porque la variable externa
@@ -95,14 +107,19 @@ considerar aplicados los cambios de logging y exposición de diagnósticos.
 
 1. Tests, lint y build de ambos repos; verificar los archivos generados.
 2. Preparar los orígenes autorizados del backend y publicar su imagen verificada.
-3. Crear el sitio del juego en Netlify; publicar `dist/netlify` con `netlify.toml`.
+3. Publicar el Worker y su secreto; publicar el FE que usa su URL y sólo entonces
+   activar `TRUCO_GATEWAY_ENABLED` junto a `TRUCO_GATEWAY_SECRET` en Render. La clave
+   debe coincidir con `GATEWAY_SECRET` de Cloudflare y ser independiente del JWT.
+   El Worker y sus comandos están en `gateway/` del repo backend.
 4. Incorporar el proxy al sitio actual de `ezevillo.com`, conservando sus otras rutas.
 5. La validación visual y de navegación la hace el usuario, según `AGENTS.md`.
 6. Cuando el nuevo sitio esté publicado, despublicar GitHub Pages desde la configuración
    del repositorio o con `gh api --method DELETE repos/EzeVillo/fe-truco-to-three/pages`.
    Verificar por la API de GitHub que Pages ya no esté habilitado. El workflow anterior
    debe permanecer desactivado durante la transición y eliminado al integrar este cambio.
-7. Ante un fallo, restaurar un deploy anterior de Netlify. No reactivar la publicación
+7. Ante un fallo, restaurar un deploy anterior de Netlify. Si el frontend anterior llama
+   directo a Render, primero desactivar temporalmente la protección del gateway en Render;
+   eso abre el bypass y debe revertirse al terminar la incidencia. No reactivar la publicación
    en GitHub Pages, reemplazar la raíz del dominio ni modificar el DNS para apuntar al juego.
 
 El cambio de `ezevillo.github.io` a `ezevillo.com` implica un nuevo origen: las sesiones y

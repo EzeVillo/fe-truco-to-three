@@ -179,3 +179,10 @@ Reglas:
 - revoca solo la sesion asociada al refresh token enviado
 - si el refresh token no existe, responde `204` igual
 
+
+
+## Límites de autenticación en producción
+
+Login, registro, invitados y refresh pueden devolver HTTP 429. Se aplican los límites
+y el contrato de errores documentados en [Convenciones](00-convenciones.md#rate-limiting-del-ingreso-de-producción).
+Los DTOs de éxito y la autenticación JWT no cambian.

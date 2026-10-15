@@ -1,4 +1,4 @@
-const backendUrl = 'https://api-truco-to-three.onrender.com';
+const backendUrl = 'https://truco-api.ezevillodev.workers.dev';
 
 export const environment = {
   production: true,

@@ -13,6 +13,28 @@ El proxy de Netlify sólo entrega el frontend. El backend conserva su ingreso HT
 en Render. No se agrega un gateway ni se reservan `/api`, `/ws`, `/assets` o la raíz
 del dominio del portfolio para este juego.
 
+## Configuración publicada
+
+Migración publicada el 15 de octubre de 2026 en el equipo Netlify `ezevillo`:
+
+| Sitio Netlify | Función | Repositorio y rama |
+| --- | --- | --- |
+| `ezevillo-truco-a-3` | Origen del juego: `https://ezevillo-truco-a-3.netlify.app/truco-a-3/` | `fe-truco-to-three`, `master` |
+| `neon-macaron-a52e5c` | Dueño de `ezevillo.com`; conserva IBIT y Git Review y añade el proxy de Truco | `ibit-to-btc`, `main` |
+
+Ambos sitios tienen publicación continua desde GitHub. El build del juego en Netlify
+verifica el prefijo y la PWA. La regla del dominio principal vive en el `netlify.toml`
+de `ibit-to-btc`; su publicación conservó los hashes de los archivos de contenido,
+el código de la función de tasas y su horario. Sólo cambiaron la configuración de rutas
+y un manifiesto interno de Netlify. No se publicó el portfolio local.
+
+GitHub Pages se deshabilitó y su API devuelve `404`; el workflow anterior está eliminado.
+Render tiene aplicados el perfil `prod` y los CORS sin GitHub Pages. La imagen nativa
+publicada es `ghcr.io/ezevillo/api-truco-to-three:096fd184`, con logging sin cuerpos y
+readiness comprobado contra PostgreSQL en CI. El código de esa imagen está en el
+[PR 33 del backend](https://github.com/EzeVillo/api-truco-to-three/pull/33), cuya integración
+requiere la revisión exigida por GitHub antes de futuras releases desde `master`.
+
 ## Build del sitio del juego
 
 ```powershell
@@ -40,9 +62,9 @@ los archivos para permitir actualizaciones de la PWA.
 
 ## Proxy en el sitio que posee ezevillo.com
 
-Usar `hosting/netlify-portfolio.example.toml` y reemplazar el origen por el sitio real
-recién creado, en el **mismo equipo de Netlify**. Conservar `/truco-a-3/` en el destino.
-La regla va antes de un catch-all y preserva todas las otras rutas del sitio.
+`hosting/netlify-portfolio.example.toml` contiene las reglas activas, con el origen real
+`ezevillo-truco-a-3.netlify.app`, en el **mismo equipo de Netlify**. Conservar `/truco-a-3/`
+en el destino. La regla va antes de un catch-all y preserva todas las otras rutas del sitio.
 
 El portfolio local `../ezevillo` aún no es el sitio publicado: su README advierte que
 el deploy actual de la raíz también sirve IBIT y Git Review. No reemplazar ese deploy
@@ -51,7 +73,7 @@ agregar únicamente el proxy de Truco al deploy actual; no modificar el HTML de 
 Cuando se publique el portfolio, trasladar también esta regla.
 
 Netlify no interpola variables de entorno dentro del campo `to` de los redirects TOML.
-No publicar el ejemplo con un origen inventado o el placeholder sin reemplazar.
+Si se cambia el sitio origen, actualizar ambas reglas con el hostname real antes de publicar.
 El `/robots.txt` del juego está bajo su subruta y no reemplaza el del portfolio;
 se puede registrar `https://ezevillo.com/truco-a-3/sitemap.xml` en Search Console.
 

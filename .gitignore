@@ -9,6 +9,8 @@
 # Node
 /node_modules
 /.netlify/
+/.wrangler/
+.dev.vars*
 npm-debug.log
 yarn-error.log
 

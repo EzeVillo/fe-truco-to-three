@@ -55,6 +55,13 @@
               "outputHashing": "all",
               "serviceWorker": "ngsw-config.json"
             },
+            "cloudflare": {
+              "baseHref": "/truco-a-3/",
+              "outputPath": {
+                "base": "dist/cloudflare",
+                "browser": ""
+              }
+            },
             "netlify": {
               "baseHref": "/truco-a-3/",
               "outputPath": {

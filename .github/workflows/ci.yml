@@ -26,4 +26,6 @@ jobs:
       - run: pnpm lint:hover
       - run: pnpm lint:audio
       - run: pnpm test --watch=false
-      - run: pnpm run build:netlify
+      - run: pnpm test:hosting
+      - run: pnpm run build:cloudflare
+      - run: pnpm run cloudflare:check

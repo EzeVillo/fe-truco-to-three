@@ -223,7 +223,7 @@ El agente **no** debe levantar el dev server, abrir el navegador, usar las herra
 
 ### Producción y CORS
 
-- La web de producción se publica únicamente en `https://ezevillo.com/truco-a-3/`. GitHub Pages está deshabilitado; no reactivarlo. El sitio Netlify del juego es `ezevillo-truco-a-3` (rama `master`); el dominio principal sigue en el sitio de `ibit-to-btc` (rama `main`), con un proxy que conserva `/truco-a-3/`. Al publicar el portfolio, trasladar esas reglas sin reemplazar las rutas de otros proyectos.
+- La URL pública sigue siendo `https://ezevillo.com/truco-a-3/`. La migración preparada el 29/10/2026 usa el Worker `ezevillo-truco-a-3` (rama `master`), enlazado por el portfolio mediante `TRUCO`. El hub quita el prefijo al pedir assets, pero Angular y la PWA conservan `/truco-a-3/`. Ver `docs/PRODUCCION.md`. Netlify queda como respaldo hasta verificar el cambio de dominio. GitHub Pages sigue deshabilitado; no reactivarlo.
 - Además de la configuración del repo, actualizar `TRUCO_ALLOWED_ORIGINS` **en Render**: la variable externa prevalece sobre YAML y la comparten REST y WebSocket. Usar orígenes sin path; la configuración final excluye GitHub Pages y conserva los orígenes exactos de Capacitor. La herramienta MCP actualiza variables y dispara un redespliegue; verificar ese deploy y evitar disparar otro duplicado.
 - La API de producción pasa por `https://truco-api.ezevillodev.workers.dev`, con rate limiting externo por IP/ruta. No usar `onrender.com` como fallback ni incluir la clave privada del gateway en el cliente. Un `429` muestra copia controlada y `Retry-After: 60`; no reintentar POST automáticamente. Configuración y tests del Worker: `gateway/` en el repositorio backend.
 

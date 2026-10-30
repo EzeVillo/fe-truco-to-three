@@ -1,5 +1,61 @@
 # Truco en ezevillo.com/truco-a-3
 
+## Migración preparada a Cloudflare — 29 de octubre de 2026
+
+La migración está preparada en el código; no acredita un despliegue ni un cambio
+de DNS. `wrangler.jsonc` publica `ezevillo-truco-a-3`, enlazado al portfolio por
+el service binding `TRUCO`. El hub quita `/truco-a-3/` antes de pedir archivos al
+servicio hijo y repone ese prefijo en redirects. El navegador conserva la URL.
+
+La configuración Angular `cloudflare` compila con `baseHref=/truco-a-3/` en
+`dist/cloudflare/`, que el hijo sirve desde su raíz. El checker del build valida
+canonical, manifest y los paths de `ngsw.json`. Las invitaciones y la PWA siguen
+bajo `/truco-a-3/`, sin ocupar la raíz del portfolio.
+
+```powershell
+pnpm install --frozen-lockfile
+pnpm lint
+pnpm test --watch=false
+pnpm test:hosting
+pnpm run build:cloudflare
+pnpm run cloudflare:check
+```
+
+El dry run sólo empaqueta. Los archivos existentes se sirven directamente; el
+handler `cloudflare/worker.mjs` devuelve el índice para navegaciones HTML a
+rutas de Angular y responde 404 para archivos inexistentes, JSON y escrituras.
+`cloudflare-headers.mjs` genera las cabeceras de seguridad y revalidación después
+del build. Se conserva el desarrollo local y el scope de la PWA.
+
+El workflow de Cloudflare verifica y publica desde `master`, usando los secretos
+de Actions `CLOUDFLARE_API_TOKEN` (Workers Scripts: Edit) y
+`CLOUDFLARE_ACCOUNT_ID` de la misma cuenta que el portfolio. El CI valida también
+el build y empaquetado en PRs, sin publicar. Para una primera carga manual,
+cuando se decida activar, usar `pnpm run cloudflare:deploy` después del build y
+de autenticar. Publicar el hijo antes que el hub; no asignarle el dominio al hijo.
+
+La coordinación de DNS, HTTPS, `www`, preview y recuperación está en
+`../portfolio/docs/cloudflare-migration.md`. Verificar en el hub la entrada con y
+sin barra, query strings, login y rutas profundas, invitaciones, JS/CSS, cartas,
+audio, manifest, `ngsw-worker.js` y `ngsw.json`. El scope y los archivos de la PWA
+deben permanecer bajo `/truco-a-3/`. Las pruebas automatizadas no abren el
+navegador ni levantan el dev server; los flujos contra producción se verifican
+al activar el dominio.
+
+Se conserva la URL `truco-api.ezevillodev.workers.dev`, su rate limiter y el
+backend Java en Render. El origen sigue siendo `https://ezevillo.com`: no cambiar
+CORS ni añadir previews a `TRUCO_ALLOWED_ORIGINS`. Mantener los orígenes exactos
+de Capacitor y la clave privada fuera del frontend.
+
+Netlify queda como respaldo: `pnpm run build:netlify` conserva su layout
+`dist/netlify/truco-a-3/` y las reglas de sus TOML. Detener sus builds automáticos
+durante la transición sin borrar los sitios. GitHub Pages sigue deshabilitado.
+
+## Histórico y recuperación: publicación en Netlify
+
+Las secciones siguientes conservan el procedimiento y los datos del despliegue
+anterior; el destino preparado nuevo se describe arriba.
+
 ## Arquitectura
 
 ```text

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { access, readFile } from 'node:fs/promises';
 
-const root = new URL('../dist/netlify/truco-a-3/', import.meta.url);
+const root = new URL(process.argv[2] || '../dist/netlify/truco-a-3/', import.meta.url);
 const publicUrl = 'https://ezevillo.com/truco-a-3/';
 const html = await readFile(new URL('index.html', root), 'utf8');
 const worker = JSON.parse(await readFile(new URL('ngsw.json', root), 'utf8'));

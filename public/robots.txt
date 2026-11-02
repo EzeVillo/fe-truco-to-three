@@ -1,22 +1,20 @@
 User-agent: *
 
-# Este archivo vive bajo /truco-a-3/ y no sustituye /robots.txt del portfolio.
-# Registrar el sitemap en Search Console. Las reglas sólo tienen efecto si el
-# propietario del sitio las incorpora voluntariamente al robots.txt de la raíz.
+# Reglas propias de truco.ezevillo.com.
 
 # Rutas públicas — indexables
-Allow: /truco-a-3/$
-Allow: /truco-a-3/reglas$
-Allow: /truco-a-3/login$
-Allow: /truco-a-3/register$
+Allow: /$
+Allow: /reglas$
+Allow: /login$
+Allow: /register$
 
 # Rutas autenticadas — no indexar
-Disallow: /truco-a-3/lobby
-Disallow: /truco-a-3/match
-Disallow: /truco-a-3/profile
-Disallow: /truco-a-3/friends
-Disallow: /truco-a-3/spectate
-Disallow: /truco-a-3/join
+Disallow: /lobby
+Disallow: /match
+Disallow: /profile
+Disallow: /friends
+Disallow: /spectate
+Disallow: /join
 
 # URL del sitemap — actualizar si cambia el dominio
-Sitemap: https://ezevillo.com/truco-a-3/sitemap.xml
+Sitemap: https://truco.ezevillo.com/sitemap.xml

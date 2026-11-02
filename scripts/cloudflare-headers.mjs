@@ -1,6 +1,6 @@
 import { writeFile } from 'node:fs/promises';
 
-// The hub removes /truco-a-3/ before requesting this asset service.
+// This service owns the root of truco.ezevillo.com.
 await writeFile(
   new URL('../dist/cloudflare/_headers', import.meta.url),
   `/*

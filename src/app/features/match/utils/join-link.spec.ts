@@ -11,9 +11,9 @@ describe('Enlaces de invitación', () => {
     document.head.prepend(base);
   }
 
-  it('conserva el prefijo de producción al compartir desde una partida', () => {
-    setBase('https://ezevillo.com/truco-a-3/');
-    expect(buildJoinUrl('ABC123')).toBe('https://ezevillo.com/truco-a-3/join/ABC123');
+  it('comparte desde la raíz del subdominio de producción', () => {
+    setBase('https://truco.ezevillo.com/');
+    expect(buildJoinUrl('ABC123')).toBe('https://truco.ezevillo.com/join/ABC123');
   });
 
   it('respeta el prefijo de otra instalación de la aplicación', () => {
@@ -27,8 +27,8 @@ describe('Enlaces de invitación', () => {
   });
 
   it('recorta espacios y codifica los caracteres del código', () => {
-    setBase('https://ezevillo.com/truco-a-3/');
-    expect(buildJoinUrl(' A/B? ')).toBe('https://ezevillo.com/truco-a-3/join/A%2FB%3F');
+    setBase('https://truco.ezevillo.com/');
+    expect(buildJoinUrl(' A/B? ')).toBe('https://truco.ezevillo.com/join/A%2FB%3F');
   });
 
   it('no genera enlaces para códigos vacíos', () => {

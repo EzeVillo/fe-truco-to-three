@@ -1,6 +1,6 @@
 # FeTrucoToThree
 
-El despliegue preparado para `https://ezevillo.com/truco-a-3/` usa Cloudflare Workers
+El despliegue preparado para `https://truco.ezevillo.com/` usa Cloudflare Workers
 con archivos estáticos, independiente del portfolio. Ver [Migración y producción](docs/PRODUCCION.md) para configurar
 el proxy, publicar sin afectar la raíz y coordinar los cambios del backend.
 

@@ -1,16 +1,16 @@
-# Truco en ezevillo.com/truco-a-3
+# Truco en truco.ezevillo.com
 
-## Migración preparada a Cloudflare — 29 de octubre de 2026
+Configuración preparada el 2 de noviembre de 2026. El frontend se publica en la
+raíz de `https://truco.ezevillo.com/`, con su propio origen y almacenamiento.
+No se conserva `/truco-a-3/`, no hay proxy del portfolio y no se mantienen
+redirects ni publicación en Netlify/GitHub Pages.
 
-La migración está preparada en el código; no acredita un despliegue ni un cambio
-de DNS. `wrangler.jsonc` publica `ezevillo-truco-a-3`, enlazado al portfolio por
-el service binding `TRUCO`. El hub quita `/truco-a-3/` antes de pedir archivos al
-servicio hijo y repone ese prefijo en redirects. El navegador conserva la URL.
+```text
+truco.ezevillo.com → ezevillo-truco-a-3 (archivos estáticos y fallback de Angular)
+frontend → truco-api.ezevillodev.workers.dev → api-truco-to-three.onrender.com
+```
 
-La configuración Angular `cloudflare` compila con `baseHref=/truco-a-3/` en
-`dist/cloudflare/`, que el hijo sirve desde su raíz. El checker del build valida
-canonical, manifest y los paths de `ngsw.json`. Las invitaciones y la PWA siguen
-bajo `/truco-a-3/`, sin ocupar la raíz del portfolio.
+## Build y verificación
 
 ```powershell
 pnpm install --frozen-lockfile
@@ -21,185 +21,32 @@ pnpm run build:cloudflare
 pnpm run cloudflare:check
 ```
 
-El dry run sólo empaqueta. Los archivos existentes se sirven directamente; el
-handler `cloudflare/worker.mjs` devuelve el índice para navegaciones HTML a
-rutas de Angular y responde 404 para archivos inexistentes, JSON y escrituras.
-`cloudflare-headers.mjs` genera las cabeceras de seguridad y revalidación después
-del build. Se conserva el desarrollo local y el scope de la PWA.
+Angular compila con `baseHref=/` en `dist/cloudflare/`. El checker verifica
+canonical, manifest y paths del service worker. La PWA usa scope `/` únicamente
+en su subdominio. Los enlaces de invitación se resuelven contra `document.baseURI`.
+No se agregan migraciones de sesiones, caches ni instalaciones anteriores.
 
-El workflow de Cloudflare verifica y publica desde `master`, usando los secretos
-de Actions `CLOUDFLARE_API_TOKEN` (Workers Scripts: Edit) y
-`CLOUDFLARE_ACCOUNT_ID` de la misma cuenta que el portfolio. El CI valida también
-el build y empaquetado en PRs, sin publicar. Para una primera carga manual,
-cuando se decida activar, usar `pnpm run cloudflare:deploy` después del build y
-de autenticar. Publicar el hijo antes que el hub; no asignarle el dominio al hijo.
+Cloudflare sirve primero los archivos. El handler interviene ante rutas de
+Angular solicitadas como HTML; assets faltantes, JSON y escrituras responden
+404. Los headers de seguridad/revalidación se generan después del build.
 
-La coordinación de DNS, HTTPS, `www`, preview y recuperación está en
-`../portfolio/docs/cloudflare-migration.md`. Verificar en el hub la entrada con y
-sin barra, query strings, login y rutas profundas, invitaciones, JS/CSS, cartas,
-audio, manifest, `ngsw-worker.js` y `ngsw.json`. El scope y los archivos de la PWA
-deben permanecer bajo `/truco-a-3/`. Las pruebas automatizadas no abren el
-navegador ni levantan el dev server; los flujos contra producción se verifican
-al activar el dominio.
+## Pendiente para publicar
 
-Se conserva la URL `truco-api.ezevillodev.workers.dev`, su rate limiter y el
-backend Java en Render. El origen sigue siendo `https://ezevillo.com`: no cambiar
-CORS ni añadir previews a `TRUCO_ALLOWED_ORIGINS`. Mantener los orígenes exactos
-de Capacitor y la clave privada fuera del frontend.
+1. Configurar la zona DNS en Cloudflare y los secretos de Actions
+   `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID` de la cuenta existente.
+2. Publicar desde `master` con su workflow o `pnpm run cloudflare:deploy` después
+   del build. Wrangler declara el Custom Domain `truco.ezevillo.com`.
+3. Publicar la configuración del gateway y el backend de producción preparados
+   en el `master` del backend. En Render fijar
+   `TRUCO_ALLOWED_ORIGINS=https://truco.ezevillo.com,https://localhost,capacitor://localhost`;
+   el valor externo prevalece sobre YAML y se comparte entre REST y WebSocket.
+   Conservar los orígenes exactos de Capacitor y los secretos existentes.
+4. Verificar login, invitaciones, recargas en rutas profundas, WebSocket, cartas,
+   audio, manifest y actualización de PWA. Las pruebas del repo son automatizadas;
+   no se abre el navegador ni se levanta el dev server durante la preparación.
+5. Desactivar la publicación antigua de Netlify. La guía común está en
+   `../portfolio/docs/cloudflare-migration.md`.
 
-Netlify queda como respaldo: `pnpm run build:netlify` conserva su layout
-`dist/netlify/truco-a-3/` y las reglas de sus TOML. Detener sus builds automáticos
-durante la transición sin borrar los sitios. GitHub Pages sigue deshabilitado.
-
-## Histórico y recuperación: publicación en Netlify
-
-Las secciones siguientes conservan el procedimiento y los datos del despliegue
-anterior; el destino preparado nuevo se describe arriba.
-
-## Arquitectura
-
-```text
-ezevillo.com/                  → sitio actual / futuro portfolio
-ezevillo.com/truco-a-3/*        → sitio Netlify del juego (mismo equipo)
-                                /truco-a-3/* en el origen
-frontend → truco-api.ezevillodev.workers.dev → api-truco-to-three.onrender.com
-```
-
-El proxy de Netlify sólo entrega el frontend. Cloudflare Worker `truco-api` recibe
-REST y WebSocket por HTTPS/WSS, limita por IP/ruta y reenvía al origen en Render.
-No se reservan `/api`, `/ws`, `/assets` o la raíz del dominio del portfolio para el juego.
-No se modifican el DNS ni el Worker de IBIT.
-
-El frontend usa `https://truco-api.ezevillodev.workers.dev` en `environment.prod.ts`.
-Render exige una clave privada del Worker cuando `TRUCO_GATEWAY_ENABLED=true`; esa
-clave no se incluye en el frontend ni reemplaza el JWT del usuario. Los probes exactos
-de salud conservan acceso directo para Render. No llamar al origen como fallback:
-permitiría saltear el rate limiter y se rechaza con `403`.
-
-Límites iniciales por minuto/IP: general 300, login 10, registro 5, invitados 10,
-refresh 60 y apertura WebSocket/info SockJS 20. Los contadores son aproximados y por
-ubicación de Cloudflare. No se cuentan preflights ni frames WebSocket ya abiertos;
-el chat mantiene su cooldown. El `429` incluye `Retry-After: 60` expuesto por CORS y
-se muestra con copia controlada del frontend, sin reintentos automáticos de POST.
-
-## Configuración publicada
-
-Migración publicada el 15 de octubre de 2026 en el equipo Netlify `ezevillo`:
-
-| Sitio Netlify | Función | Repositorio y rama |
-| --- | --- | --- |
-| `ezevillo-truco-a-3` | Origen del juego: `https://ezevillo-truco-a-3.netlify.app/truco-a-3/` | `fe-truco-to-three`, `master` |
-| `neon-macaron-a52e5c` | Dueño de `ezevillo.com`; conserva IBIT y Git Review y añade el proxy de Truco | `ibit-to-btc`, `main` |
-
-Ambos sitios tienen publicación continua desde GitHub. El build del juego en Netlify
-verifica el prefijo y la PWA. La regla del dominio principal vive en el `netlify.toml`
-de `ibit-to-btc`; su publicación conservó los hashes de los archivos de contenido,
-el código de la función de tasas y su horario. Sólo cambiaron la configuración de rutas
-y un manifiesto interno de Netlify. No se publicó el portfolio local.
-
-GitHub Pages se deshabilitó y su API devuelve `404`; el workflow anterior está eliminado.
-Render tiene el perfil `prod` y los CORS sin GitHub Pages. El release nativo comprueba
-readiness contra PostgreSQL, logging sin cuerpos y rechazo de acceso directo al activar
-la protección del gateway en runtime. El código de producción está en el
-[PR 33 del backend](https://github.com/EzeVillo/api-truco-to-three/pull/33), cuya integración
-requiere la revisión exigida por GitHub antes de futuras releases desde `master`.
-
-## Build del sitio del juego
-
-```powershell
-pnpm install --frozen-lockfile
-pnpm run build:netlify
-```
-
-`netlify.toml` publica `dist/netlify`, cuyo único contenido de aplicación está dentro de
-`truco-a-3/`. Se conservan los prefijos tanto en el sitio origen como en el proxy, lo que
-permite probar el mismo path en el subdominio Netlify y en el dominio público.
-
-El fallback de Angular está acotado a `/truco-a-3/*`; los archivos existentes se sirven
-normalmente y las rutas de navegación reciben `/truco-a-3/index.html`. No usar `force`
-en el fallback del sitio hijo: devolvería HTML en lugar de JavaScript, imágenes o el worker.
-
-`baseHref` vive en la configuración `netlify`, sin modificar el desarrollo local.
-Netlify es el único destino de publicación web; se elimina el workflow de GitHub Pages.
-Los enlaces de invitación resuelven contra `document.baseURI`, para conservar el prefijo
-del sitio donde se abrió la app. Los metadatos y el sitemap apuntan al dominio nuevo.
-
-El manifest usa `start_url` y `scope` relativos a su ubicación. El worker se registra junto
-a la aplicación, bajo `/truco-a-3/`; no debe registrarse en `/ngsw-worker.js` ni con scope `/`.
-Verificar en el build que `ngsw.json` sólo contiene URLs bajo `/truco-a-3/`. Se revalidan
-los archivos para permitir actualizaciones de la PWA.
-
-## Proxy en el sitio que posee ezevillo.com
-
-`hosting/netlify-portfolio.example.toml` contiene las reglas activas, con el origen real
-`ezevillo-truco-a-3.netlify.app`, en el **mismo equipo de Netlify**. Conservar `/truco-a-3/`
-en el destino. La regla va antes de un catch-all y preserva todas las otras rutas del sitio.
-
-El portfolio local `../ezevillo` aún no es el sitio publicado: su README advierte que
-el deploy actual de la raíz también sirve IBIT y Git Review. No reemplazar ese deploy
-por el portfolio sin trasladar previamente sus reglas y recursos. Para esta migración,
-agregar únicamente el proxy de Truco al deploy actual; no modificar el HTML de la raíz.
-Cuando se publique el portfolio, trasladar también esta regla.
-
-Netlify no interpola variables de entorno dentro del campo `to` de los redirects TOML.
-Si se cambia el sitio origen, actualizar ambas reglas con el hostname real antes de publicar.
-El `/robots.txt` del juego está bajo su subruta y no reemplaza el del portfolio;
-se puede registrar `https://ezevillo.com/truco-a-3/sitemap.xml` en Search Console.
-
-## Backend
-
-La API pública es el Worker; el origen que debe autorizar el backend es `https://ezevillo.com`,
-sin path. La configuración final no autoriza el sitio anterior de GitHub Pages.
-La variable `TRUCO_ALLOWED_ORIGINS` se comparte entre CORS y WebSocket.
-Actualizar también su valor **en el servicio de Render**, porque la variable externa
-prevalece sobre el YAML del backend. La herramienta MCP de Render actualiza las variables
-y dispara un redespliegue para aplicarlas; verificar ese deploy y no duplicarlo manualmente.
-
-El backend tiene su guía en `docs/PRODUCCION.md` del repositorio `api-truco-to-three`: el perfil `prod`
-debe estar activo al compilar el nativo y al ejecutarlo. Publicar esa imagen antes de
-considerar aplicados los cambios de logging y exposición de diagnósticos.
-
-## Publicación y rollback
-
-1. Tests, lint y build de ambos repos; verificar los archivos generados.
-2. Preparar los orígenes autorizados del backend y publicar su imagen verificada.
-3. Publicar el Worker y su secreto; publicar el FE que usa su URL y sólo entonces
-   activar `TRUCO_GATEWAY_ENABLED` junto a `TRUCO_GATEWAY_SECRET` en Render. La clave
-   debe coincidir con `GATEWAY_SECRET` de Cloudflare y ser independiente del JWT.
-   El Worker y sus comandos están en `gateway/` del repo backend.
-4. Incorporar el proxy al sitio actual de `ezevillo.com`, conservando sus otras rutas.
-5. La validación visual y de navegación la hace el usuario, según `AGENTS.md`.
-6. Cuando el nuevo sitio esté publicado, despublicar GitHub Pages desde la configuración
-   del repositorio o con `gh api --method DELETE repos/EzeVillo/fe-truco-to-three/pages`.
-   Verificar por la API de GitHub que Pages ya no esté habilitado. El workflow anterior
-   debe permanecer desactivado durante la transición y eliminado al integrar este cambio.
-7. Ante un fallo, restaurar un deploy anterior de Netlify. Si el frontend anterior llama
-   directo a Render, primero desactivar temporalmente la protección del gateway en Render;
-   eso abre el bypass y debe revertirse al terminar la incidencia. No reactivar la publicación
-   en GitHub Pages, reemplazar la raíz del dominio ni modificar el DNS para apuntar al juego.
-
-El cambio de `ezevillo.github.io` a `ezevillo.com` implica un nuevo origen: las sesiones y
-preferencias guardadas en localStorage no se transfieren automáticamente. Los usuarios
-registrados pueden volver a iniciar sesión; un invitado no conserva su sesión anterior.
-Las instalaciones previas de la PWA siguen asociadas al origen anterior.
-
-## Verificación sin navegador
-
-```powershell
-pnpm lint
-pnpm lint:styles
-pnpm lint:themes
-pnpm lint:hover
-pnpm lint:audio
-pnpm test --watch=false
-pnpm run build:netlify
-```
-
-No se levanta el dev server ni se hacen pruebas manuales en runtime desde el agente.
-
-## Referencias
-
-- [Proxies entre sitios Netlify](https://docs.netlify.com/manage/routing/redirects/rewrites-proxies/)
-- [Orden de redirects](https://docs.netlify.com/manage/routing/redirects/overview/)
-- [Ingreso HTTPS de Render](https://render.com/docs/web-services)
-- [AOT y perfiles](https://docs.spring.io/spring-boot/how-to/aot.html)
+La API conserva su gateway, su rate limiter y su origen Java en Render. No usar
+el `onrender.com` directo como fallback. La clave privada del gateway sigue
+fuera del cliente; el JWT del usuario conserva su función de autenticación.

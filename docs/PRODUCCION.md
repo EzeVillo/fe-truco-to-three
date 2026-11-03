@@ -1,6 +1,6 @@
 # Truco en truco.ezevillo.com
 
-Configuración preparada el 2 de noviembre de 2026. El frontend se publica en la
+Estado comprobado el 3 de noviembre de 2026. El frontend está publicado en la
 raíz de `https://truco.ezevillo.com/`, con su propio origen y almacenamiento.
 No se conserva `/truco-a-3/`, no hay proxy del portfolio y no se mantienen
 redirects ni publicación en Netlify/GitHub Pages.
@@ -30,22 +30,28 @@ Cloudflare sirve primero los archivos. El handler interviene ante rutas de
 Angular solicitadas como HTML; assets faltantes, JSON y escrituras responden
 404. Los headers de seguridad/revalidación se generan después del build.
 
-## Pendiente para publicar
+## Estado y publicaciones siguientes
 
-1. Configurar la zona DNS en Cloudflare y los secretos de Actions
-   `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID` de la cuenta existente.
-2. Publicar desde `master` con su workflow o `pnpm run cloudflare:deploy` después
-   del build. Wrangler declara el Custom Domain `truco.ezevillo.com`.
-3. Publicar la configuración del gateway y el backend de producción preparados
-   en el `master` del backend. En Render fijar
-   `TRUCO_ALLOWED_ORIGINS=https://truco.ezevillo.com,https://localhost,capacitor://localhost`;
-   el valor externo prevalece sobre YAML y se comparte entre REST y WebSocket.
-   Conservar los orígenes exactos de Capacitor y los secretos existentes.
-4. Verificar login, invitaciones, recargas en rutas profundas, WebSocket, cartas,
-   audio, manifest y actualización de PWA. Las pruebas del repo son automatizadas;
-   no se abre el navegador ni se levanta el dev server durante la preparación.
-5. Desactivar la publicación antigua de Netlify. La guía común está en
-   `../portfolio/docs/cloudflare-migration.md`.
+La zona DNS y el Custom Domain están activos. El usuario configuró los secretos
+de Actions `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID`; el workflow de `master`
+publicó correctamente el frontend. Para publicaciones manuales autorizadas,
+ejecutar `pnpm run cloudflare:deploy` después del build.
+
+El gateway está actualizado y Render ya aplica
+`TRUCO_ALLOWED_ORIGINS=https://truco.ezevillo.com,https://localhost,capacitor://localhost`.
+Se verificaron CORS, REST sin sesión, SockJS y apertura/respuesta WebSocket sin
+autenticación. Render conservó la misma imagen y los secretos existentes.
+El estado del backend se documenta en su propio `docs/PRODUCCION.md`.
+
+Los builds antiguos de Netlify están detenidos. La retirada de sus sitios se
+coordina desde `../portfolio/docs/cloudflare-migration.md`.
+
+## Validación pendiente
+
+Completar login, invitaciones, recargas en rutas profundas, eventos de partida,
+cartas, audio, manifest y actualización de PWA. La comprobación WebSocket sin
+sesión no demuestra esos flujos. Las pruebas del repo son automatizadas;
+el agente no abre el navegador ni levanta el dev server.
 
 La API conserva su gateway, su rate limiter y su origen Java en Render. No usar
 el `onrender.com` directo como fallback. La clave privada del gateway sigue

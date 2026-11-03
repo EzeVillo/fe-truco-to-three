@@ -6,7 +6,7 @@ test('Las navegaciones de Angular reciben el √≠ndice conservando HEAD y los par√
   for (const method of ['GET', 'HEAD']) {
     let received;
     const response = await worker.fetch(
-      new Request('https://ezevillo.com/auth/login?ref=test', {
+      new Request('https://truco.ezevillo.com/auth/login?ref=test', {
         method,
         headers: { Accept: 'text/html' },
       }),
@@ -20,7 +20,7 @@ test('Las navegaciones de Angular reciben el √≠ndice conservando HEAD y los par√
       },
     );
     assert.equal(response.status, 200);
-    assert.equal(received.url, 'https://ezevillo.com/');
+    assert.equal(received.url, 'https://truco.ezevillo.com/');
     assert.equal(received.method, method);
   }
 });
@@ -32,7 +32,7 @@ test('Los assets faltantes y las escrituras no reciben HTML de la aplicaci√≥n', 
     ['/auth/login', 'GET', 'application/json'],
   ]) {
     const response = await worker.fetch(
-      new Request(`https://ezevillo.com${path}`, { method, headers: { Accept: accept } }),
+      new Request(`https://truco.ezevillo.com${path}`, { method, headers: { Accept: accept } }),
       {},
     );
     assert.equal(response.status, 404);

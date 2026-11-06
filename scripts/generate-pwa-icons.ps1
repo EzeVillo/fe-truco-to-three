@@ -1,9 +1,9 @@
-# Genera los íconos PWA (512/192/180) a partir de public/icon2.png,
+# Genera los íconos PWA (512/192/180) a partir del maestro T3 de 1024 px,
 # centrados al 80% (zona segura maskable) sobre fondo verde de marca (#062618).
 Add-Type -AssemblyName System.Drawing
 $root = Split-Path $PSScriptRoot -Parent
 New-Item -ItemType Directory -Force (Join-Path $root 'public\icons') | Out-Null
-$src = [System.Drawing.Image]::FromFile((Join-Path $root 'public\icon.png'))
+$src = [System.Drawing.Image]::FromFile((Join-Path $root 'docs\branding\t3-master.png'))
 foreach ($size in 512, 192, 180) {
   $bmp = New-Object System.Drawing.Bitmap($size, $size)
   $g = [System.Drawing.Graphics]::FromImage($bmp)

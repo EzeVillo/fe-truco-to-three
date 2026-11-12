@@ -2,11 +2,8 @@ User-agent: *
 
 # Reglas propias de truco.ezevillo.com.
 
-# Rutas públicas — indexables
-Allow: /$
-Allow: /reglas$
-Allow: /login$
-Allow: /register$
+# El sitemap enumera las páginas públicas para búsqueda.
+# Las rutas de acceso y registro permiten el rastreo para comunicar noindex.
 
 # Rutas autenticadas — no indexar
 Disallow: /lobby

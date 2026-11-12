@@ -2,11 +2,11 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import worker from '../cloudflare/worker.mjs';
 
-test('Las navegaciones de Angular reciben el índice conservando HEAD y los parámetros públicos', async () => {
+test('Las navegaciones de acceso reciben el índice con noindex y conservan el método', async () => {
   for (const method of ['GET', 'HEAD']) {
     let received;
     const response = await worker.fetch(
-      new Request('https://truco.ezevillo.com/auth/login?ref=test', {
+      new Request('https://truco.ezevillo.com/login?ref=test', {
         method,
         headers: { Accept: 'text/html' },
       }),
@@ -20,6 +20,7 @@ test('Las navegaciones de Angular reciben el índice conservando HEAD y los par�
       },
     );
     assert.equal(response.status, 200);
+    assert.equal(response.headers.get('x-robots-tag'), 'noindex');
     assert.equal(received.url, 'https://truco.ezevillo.com/');
     assert.equal(received.method, method);
   }

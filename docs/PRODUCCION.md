@@ -1,9 +1,9 @@
 # Truco en truco.ezevillo.com
 
-Estado comprobado el 3 de noviembre de 2026. El frontend está publicado en la
-raíz de `https://truco.ezevillo.com/`, con su propio origen y almacenamiento.
-No se conserva `/truco-a-3/`, no hay proxy del portfolio y no se mantienen
-redirects ni publicación en Netlify/GitHub Pages.
+El frontend se publicó el 3 de noviembre de 2026 en la raíz de
+`https://truco.ezevillo.com/`, con su propio origen y almacenamiento.
+El portfolio lleva `https://ezevillo.com/truco-a-3/` a esa dirección mediante
+una redirección 301.
 
 ```text
 truco.ezevillo.com → ezevillo-truco-a-3 (archivos estáticos y fallback de Angular)
@@ -43,8 +43,9 @@ Se verificaron CORS, REST sin sesión, SockJS y apertura/respuesta WebSocket sin
 autenticación. Render conservó la misma imagen y los secretos existentes.
 El estado del backend se documenta en su propio `docs/PRODUCCION.md`.
 
-Los builds antiguos de Netlify están detenidos. La retirada de sus sitios se
-coordina desde `../portfolio/docs/cloudflare-migration.md`.
+El proyecto anterior de Netlify quedó desactivado el 12 de noviembre de 2026.
+La retirada de los cuatro sitios se documenta en
+`../portfolio/docs/cloudflare-migration.md`.
 
 ## Validación pendiente
 
